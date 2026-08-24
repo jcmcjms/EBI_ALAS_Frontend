@@ -1,24 +1,13 @@
 import * as React from "react"
 import {
-    Camera,
-    ChartBar,
     House,
-    Database,
-    FileCode,
-    FileText,
-    FileDoc,
-    Folder,
-    Question,
     ListChecks,
-    File,
-    MagnifyingGlass,
-    Gear,
+    ChartBar,
+    Folder,
     Users,
 } from "@phosphor-icons/react"
 
-import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
     Sidebar,
@@ -32,119 +21,70 @@ import {
 
 const data = {
     user: {
-        name: "shadcn",
-        email: "m@example.com",
+        name: "Admin Super",
+        role: "Super Administrator",
         avatar: "/avatars/shadcn.jpg",
     },
     navMain: [
         {
             title: "Dashboard",
             url: "#",
-            icon: House,
+            icon: House
         },
         {
-            title: "Lifecycle",
+            title: "Loan Monitoring",
             url: "#",
             icon: ListChecks,
         },
         {
-            title: "Analytics",
+            title: "Loan Creation",
             url: "#",
             icon: ChartBar,
         },
         {
-            title: "Projects",
+            title: "Reports",
             url: "#",
             icon: Folder,
+            isActive: true,
+            items: [
+                {
+                    title: "Dashboard Summary",
+                    url: "#"
+                },
+                {
+                    title: "Transaction Summary",
+                    url: "#"
+                },
+                {
+                    title: "Summary of Transaction Graphical",
+                    url: "#"
+                },
+                {
+                    title: "AO Performance",
+                    url: "#"
+                },
+                {
+                    title: "Realtime Transaction History Graphical",
+                    url: "#"
+                }
+            ]
         },
         {
-            title: "Team",
+            title: "Administration",
             url: "#",
             icon: Users,
-        },
-    ],
-    navClouds: [
-        {
-            title: "Capture",
-            icon: Camera,
-            isActive: true,
-            url: "#",
             items: [
                 {
-                    title: "Active Proposals",
-                    url: "#",
+                    title: "Loan Products",
+                    url: "#"
                 },
                 {
-                    title: "Archived",
-                    url: "#",
-                },
-            ],
+                    title: "Checker",
+                    url: "#"
+                }
+            ]
         },
-        {
-            title: "Proposal",
-            icon: FileText,
-            url: "#",
-            items: [
-                {
-                    title: "Active Proposals",
-                    url: "#",
-                },
-                {
-                    title: "Archived",
-                    url: "#",
-                },
-            ],
-        },
-        {
-            title: "Prompts",
-            icon: FileCode,
-            url: "#",
-            items: [
-                {
-                    title: "Active Proposals",
-                    url: "#",
-                },
-                {
-                    title: "Archived",
-                    url: "#",
-                },
-            ],
-        },
-    ],
-    navSecondary: [
-        {
-            title: "Settings",
-            url: "#",
-            icon: Gear,
-        },
-        {
-            title: "Get Help",
-            url: "#",
-            icon: Question,
-        },
-        {
-            title: "Search",
-            url: "#",
-            icon: MagnifyingGlass,
-        },
-    ],
-    documents: [
-        {
-            name: "Data Library",
-            url: "#",
-            icon: Database,
-        },
-        {
-            name: "Reports",
-            url: "#",
-            icon: File,
-        },
-        {
-            name: "Word Assistant",
-            url: "#",
-            icon: FileDoc,
-        },
-    ],
+    ]
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -154,20 +94,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
-                            asChild
+                            render={<a href="#" />}
                             className="data-[slot=sidebar-menu-button]:p-1.5!"
                         >
-                            <a href="#">
-                                <img src="/enterprise_bank-logo.png" alt="Enterprise Bank" className="size-5!" />
-                            </a>
+                                <img src="/enterprise_bank-logo.png" alt="Enterprise Bank" className="h-8 object-contain" />
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={data.navMain} />
-                <NavDocuments items={data.documents} />
-                <NavSecondary items={data.navSecondary} className="mt-auto" />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser user={data.user} />

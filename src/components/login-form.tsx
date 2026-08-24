@@ -9,9 +9,8 @@ import {Button} from "@/components/ui/button";
 import {z} from "zod";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {useLogin} from "@/hooks/auth";
 import {CircleNotch} from "@phosphor-icons/react";
-import {getErrorMessage} from "@/lib/apiClient";
+import {useNavigate} from "react-router-dom";
 
 const loginSchema = z.object({
     username: z.string()
@@ -26,12 +25,15 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export  function LoginForm({className, ...props}: React.ComponentProps<"form">) {
+    const navigate = useNavigate();
     const {register, handleSubmit, formState: {errors, isSubmitting}} = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
         mode: "onBlur"
     });
-    const {mutate: login, isPending, error} = useLogin();
-    const onSubmit = (data: LoginFormData) => {login(data);};
+    const onSubmit = (data: LoginFormData) => {
+        // Bypass login - redirect to dashboard
+        navigate("/dashboard");
+    };
     return (
         <form onSubmit={handleSubmit(onSubmit)} className={cn("flex flex-col gap-6", className)} {...props}>
             <FieldGroup>
@@ -41,7 +43,6 @@ export  function LoginForm({className, ...props}: React.ComponentProps<"form">) 
                         Enter your credentials below.
                     </p>
                 </div>
-                {error && (<div className="p-3 text-sm text-red-500 bg-red-50 rounded-md text-center">{getErrorMessage(error)}</div>)}
                 <Field>
                     <FieldLabel htmlFor="username">Username</FieldLabel>
                     <Input
@@ -70,8 +71,8 @@ export  function LoginForm({className, ...props}: React.ComponentProps<"form">) 
                     )}
                 </Field>
                 <Field>
-                    <Button type="submit" disabled={isPending || isSubmitting} className="w-full">
-                        {isPending ? (<CircleNotch size={20} weight="bold" className="animate-spin"/>) : ("Login")}
+                    <Button type="submit" disabled={isSubmitting} className="w-full">
+                        {isSubmitting ? (<CircleNotch size={20} weight="bold" className="animate-spin"/>) : ("Login")}
                     </Button>
                 </Field>
             </FieldGroup>

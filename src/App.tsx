@@ -1,9 +1,9 @@
-
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
 const Login = lazy(() => import("./pages/auth/login"));
+const Dashboard = lazy(() => import("./pages/dashboard").then(m => ({ default: m.Dashboard })));
 
 function App() {
   return (
@@ -15,6 +15,7 @@ function App() {
       }>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>

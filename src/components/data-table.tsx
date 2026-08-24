@@ -302,15 +302,17 @@ const columns = columnHelper.columns([
         id: "actions",
         cell: () => (
             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                        size="icon"
-                    >
+                <DropdownMenuTrigger
+                    render={
+                        <Button
+                            variant="ghost"
+                            className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+                            size="icon"
+                        />
+                    }
+                >
                         <DotsThreeVertical />
                         <span className="sr-only">Open menu</span>
-                    </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-32">
                     <DropdownMenuItem>Edit</DropdownMenuItem>
@@ -449,13 +451,15 @@ export function DataTable({
                 </TabsList>
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
+                        <DropdownMenuTrigger
+                            render={
+                                <Button variant="outline" size="sm" />
+                            }
+                        >
                                 <Columns />
                                 <span className="hidden lg:inline">Customize Columns</span>
                                 <span className="lg:hidden">Columns</span>
                                 <CaretDown />
-                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
                             {table
@@ -659,10 +663,12 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
 
     return (
         <Drawer direction={isMobile ? "bottom" : "right"}>
-            <DrawerTrigger asChild>
-                <Button variant="link" className="w-fit px-0 text-left text-foreground">
+            <DrawerTrigger
+                render={
+                    <Button variant="link" className="w-fit px-0 text-left text-foreground" />
+                }
+            >
                     {item.header}
-                </Button>
             </DrawerTrigger>
             <DrawerContent>
                 <DrawerHeader className="gap-1">
@@ -804,8 +810,8 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                 </div>
                 <DrawerFooter>
                     <Button>Submit</Button>
-                    <DrawerClose asChild>
-                        <Button variant="outline">Done</Button>
+                    <DrawerClose render={<Button variant="outline" />}>
+                        Done
                     </DrawerClose>
                 </DrawerFooter>
             </DrawerContent>

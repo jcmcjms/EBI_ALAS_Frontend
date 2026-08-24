@@ -1,4 +1,5 @@
-import { PlusCircle, Envelope, type Icon } from "@phosphor-icons/react"
+import { PlusCircle, Envelope, CaretDown, type Icon } from "@phosphor-icons/react"
+import { Collapsible } from "@base-ui/react/collapsible"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -7,6 +8,9 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 
 export function NavMain({
@@ -16,6 +20,10 @@ export function NavMain({
         title: string
         url: string
         icon?: Icon
+        items?: {
+            title: string
+            url: string
+        }[]
     }[]
 }) {
     return (
@@ -41,14 +49,41 @@ export function NavMain({
                     </SidebarMenuItem>
                 </SidebarMenu>
                 <SidebarMenu>
-                    {items.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton tooltip={item.title}>
-                                {item.icon && <item.icon />}
-                                <span>{item.title}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    ))}
+                    {items.map((item) =>
+                        item.items && item.items.length > 0 ? (
+                            <Collapsible.Root key={item.title} defaultOpen className="group">
+                                <SidebarMenuItem>
+                                    <Collapsible.Trigger
+                                        render={
+                                            <SidebarMenuButton tooltip={item.title} />
+                                        }
+                                    >
+                                        {item.icon && <item.icon />}
+                                        <span>{item.title}</span>
+                                        <CaretDown className="ml-auto transition-transform group-data-[open]:rotate-180" />
+                                    </Collapsible.Trigger>
+                                    <Collapsible.Panel>
+                                        <SidebarMenuSub>
+                                            {item.items.map((subItem) => (
+                                                <SidebarMenuSubItem key={subItem.title}>
+                                                    <SidebarMenuSubButton href={subItem.url}>
+                                                        <span>{subItem.title}</span>
+                                                    </SidebarMenuSubButton>
+                                                </SidebarMenuSubItem>
+                                            ))}
+                                        </SidebarMenuSub>
+                                    </Collapsible.Panel>
+                                </SidebarMenuItem>
+                            </Collapsible.Root>
+                        ) : (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton tooltip={item.title}>
+                                    {item.icon && <item.icon />}
+                                    <span>{item.title}</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )
+                    )}
                 </SidebarMenu>
             </SidebarGroupContent>
         </SidebarGroup>
