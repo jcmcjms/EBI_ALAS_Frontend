@@ -9,7 +9,6 @@ import {
     FileDoc,
     Folder,
     Question,
-    HouseSimple,
     ListChecks,
     File,
     MagnifyingGlass,
@@ -159,8 +158,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             className="data-[slot=sidebar-menu-button]:p-1.5!"
                         >
                             <a href="#">
-                                <HouseSimple className="size-5!" />
-                                <span className="text-base font-semibold">Acme Inc.</span>
+                                <img src="/enterprise_bank-logo.png" alt="Enterprise Bank" className="size-5!" />
+                                <span className="text-base font-semibold">Enterprise Bank</span>
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
