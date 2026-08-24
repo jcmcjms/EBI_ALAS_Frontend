@@ -11,6 +11,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {CircleNotch} from "@phosphor-icons/react";
 import {useNavigate} from "react-router-dom";
+import {useAuthStore} from "@/store/authStore";
 
 const loginSchema = z.object({
     username: z.string()
@@ -26,13 +27,20 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export  function LoginForm({className, ...props}: React.ComponentProps<"form">) {
     const navigate = useNavigate();
+    const setSession = useAuthStore((state) => state.setSession);
     const {register, handleSubmit, formState: {errors, isSubmitting}} = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
         mode: "onBlur"
     });
     const onSubmit = (data: LoginFormData) => {
-        // Bypass login - redirect to dashboard
-        navigate("/dashboard");
+        // Mock login - set admin session with full permissions
+        setSession("mock-access-token", {
+            userId: "USR-005",
+            fullName: "Maya Mercado",
+            branchId: "Matina",
+            permissions: ["*"], // Super admin bypass
+        });
+        navigate("/dashboard", { replace: true });
     };
     return (
         <form onSubmit={handleSubmit(onSubmit)} className={cn("flex flex-col gap-6", className)} {...props}>

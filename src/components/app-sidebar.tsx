@@ -28,7 +28,7 @@ const data = {
     navMain: [
         {
             title: "Dashboard",
-            url: "#",
+            url: "/dashboard",
             icon: House
         },
         {
@@ -80,11 +80,11 @@ const data = {
                 },
                 {
                     title: "Users",
-                    url: "#"
+                    url: "/admin/users"
                 },
                 {
                     title: "Roles & Permissions",
-                    url: "#"
+                    url: "/admin/roles"
                 }
             ]
         },

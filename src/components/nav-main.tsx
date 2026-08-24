@@ -1,5 +1,6 @@
 import { PlusCircle, Envelope, CaretDown, type Icon } from "@phosphor-icons/react"
 import { Collapsible } from "@base-ui/react/collapsible"
+import { Link, useLocation } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -9,8 +10,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarMenuSub,
-    SidebarMenuSubButton,
     SidebarMenuSubItem,
+    SidebarMenuSubButton
 } from "@/components/ui/sidebar"
 
 export function NavMain({
@@ -26,6 +27,8 @@ export function NavMain({
         }[]
     }[]
 }) {
+    const location = useLocation()
+
     return (
         <SidebarGroup>
             <SidebarGroupContent className="flex flex-col gap-2">
@@ -66,7 +69,10 @@ export function NavMain({
                                         <SidebarMenuSub>
                                             {item.items.map((subItem) => (
                                                 <SidebarMenuSubItem key={subItem.title}>
-                                                    <SidebarMenuSubButton href={subItem.url}>
+                                                    <SidebarMenuSubButton
+                                                        render={<Link to={subItem.url} />}
+                                                        isActive={location.pathname === subItem.url}
+                                                    >
                                                         <span>{subItem.title}</span>
                                                     </SidebarMenuSubButton>
                                                 </SidebarMenuSubItem>
@@ -77,7 +83,11 @@ export function NavMain({
                             </Collapsible.Root>
                         ) : (
                             <SidebarMenuItem key={item.title}>
-                                <SidebarMenuButton tooltip={item.title}>
+                                <SidebarMenuButton
+                                    tooltip={item.title}
+                                    render={<Link to={item.url} />}
+                                    isActive={location.pathname === item.url}
+                                >
                                     {item.icon && <item.icon />}
                                     <span>{item.title}</span>
                                 </SidebarMenuButton>
