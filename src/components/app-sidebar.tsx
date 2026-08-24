@@ -33,7 +33,7 @@ const data = {
         },
         {
             title: "Loan Monitoring",
-            url: "#",
+            url: "/loans/monitoring",
             icon: ListChecks,
         },
         {
