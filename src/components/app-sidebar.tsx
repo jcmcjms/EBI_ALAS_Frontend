@@ -159,7 +159,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         >
                             <a href="#">
                                 <img src="/enterprise_bank-logo.png" alt="Enterprise Bank" className="size-5!" />
-                                <span className="text-base font-semibold">Enterprise Bank</span>
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
