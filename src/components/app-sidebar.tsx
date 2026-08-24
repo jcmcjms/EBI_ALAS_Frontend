@@ -79,19 +79,11 @@ const data = {
                     url: "#"
                 },
                 {
-                    title: "Checker",
-                    url: "#"
-                },
-                {
                     title: "Users",
                     url: "#"
                 },
                 {
-                    title: "Roles",
-                    url: "#"
-                },
-                {
-                    title: "Permissions",
+                    title: "Roles & Permissions",
                     url: "#"
                 }
             ]

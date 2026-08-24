@@ -1,10 +1,11 @@
-import {SidebarInset, SidebarProvider} from "@/components/ui/sidebar";
-import {AppSidebar} from "@/components/app-sidebar";
-import {SiteHeader} from "@/components/site-header";
-import {SectionCards} from "@/components/section-cards";
-import {ChartAreaInteractive} from "@/components/chart-area-interactive";
-import {DataTable} from "@/components/data-table";
-import data from "@/lib/data.json";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { DashboardSummary } from "@/pages/dashboard/components/dashboard-summary";
+import { PendingQueue } from "@/pages/dashboard/components/pending-queue";
+import { NowServing } from "@/pages/dashboard/components/now-serving";
+import { PushBack } from "@/pages/dashboard/components/push-back";
+import { ApprovedLoans } from "@/pages/dashboard/components/approved-loans";
 
 export function Dashboard() {
     return (
@@ -19,18 +20,19 @@ export function Dashboard() {
             <AppSidebar variant="inset" />
             <SidebarInset>
                 <SiteHeader />
-                <div className="flex flex-1 flex-col">
-                    <div className="@container/main flex flex-1 flex-col gap-2">
-                        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                            <SectionCards />
-                            <div className="px-4 lg:px-6">
-                                <ChartAreaInteractive />
-                            </div>
-                            <DataTable data={data} />
-                        </div>
+                <main className="flex flex-1 flex-col gap-6 p-6">
+                    {/* Summary Stats */}
+                    <DashboardSummary />
+
+                    {/* Operational Tables Grid */}
+                    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2">
+                        <PendingQueue />
+                        <NowServing />
+                        <PushBack />
+                        <ApprovedLoans />
                     </div>
-                </div>
+                </main>
             </SidebarInset>
         </SidebarProvider>
-    )
+    );
 }
