@@ -7,6 +7,7 @@ const Login = lazy(() => import("./pages/auth/login"));
 const Dashboard = lazy(() => import("./pages/dashboard").then(m => ({ default: m.Dashboard })));
 const UsersPage = lazy(() => import("./pages/admin/users/index").then(m => ({ default: m.UsersPage })));
 const RolesPage = lazy(() => import("./pages/admin/roles/index").then(m => ({ default: m.RolesPage })));
+const LoanCreation = lazy(() => import("./pages/loans/create/index"));
 
 function App() {
     return (
@@ -23,6 +24,13 @@ function App() {
                     <Route path="/dashboard" element={
                         <ProtectedRoute>
                             <Dashboard />
+                        </ProtectedRoute>
+                    } />
+
+                    {/* Loan Routes */}
+                    <Route path="/loans/create" element={
+                        <ProtectedRoute>
+                            <LoanCreation />
                         </ProtectedRoute>
                     } />
 

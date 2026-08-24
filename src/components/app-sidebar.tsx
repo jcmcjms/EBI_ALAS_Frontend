@@ -38,7 +38,7 @@ const data = {
         },
         {
             title: "Loan Creation",
-            url: "#",
+            url: "/loans/create",
             icon: ChartBar,
         },
         {
