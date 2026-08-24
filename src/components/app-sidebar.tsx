@@ -81,6 +81,18 @@ const data = {
                 {
                     title: "Checker",
                     url: "#"
+                },
+                {
+                    title: "Users",
+                    url: "#"
+                },
+                {
+                    title: "Roles",
+                    url: "#"
+                },
+                {
+                    title: "Permissions",
+                    url: "#"
                 }
             ]
         },
