@@ -1,4 +1,4 @@
-import { PlusCircle, Envelope, CaretDown, type Icon } from "@phosphor-icons/react"
+import { PlusCircle, Envelope, CaretDown } from "@phosphor-icons/react"
 import { Collapsible } from "@base-ui/react/collapsible"
 import { Link, useLocation } from "react-router-dom"
 
@@ -13,19 +13,12 @@ import {
     SidebarMenuSubItem,
     SidebarMenuSubButton
 } from "@/src/components/ui/sidebar"
+import type { NavItem } from "@/src/lib/navigation"
 
 export function NavMain({
                             items,
                         }: {
-    items: {
-        title: string
-        url: string
-        icon?: Icon
-        items?: {
-            title: string
-            url: string
-        }[]
-    }[]
+    items: NavItem[]
 }) {
     const location = useLocation()
 
