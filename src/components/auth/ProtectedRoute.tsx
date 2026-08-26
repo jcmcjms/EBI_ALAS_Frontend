@@ -15,9 +15,17 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
         return <Navigate to="/login" replace />;
     }
 
-    // Check specific permission if required
+    // Logged in but lacks the required permission — send to /forbidden
+    // instead of silently redirecting to /dashboard (which causes UX
+    // confusion and hides unauthorized access attempts from auditing).
     if (requiredPermission && !hasPermission(requiredPermission)) {
-        return <Navigate to="/dashboard" replace />;
+        // TODO: Log this unauthorized access attempt to your SIEM system
+        // Example: siem.log({ event: "unauthorized_access", userId, path, requiredPermission });
+        console.warn(
+            "[Security] Unauthorized access attempt:",
+            { requiredPermission, path: window.location.pathname }
+        );
+        return <Navigate to="/forbidden" replace />;
     }
 
     return <>{children}</>;

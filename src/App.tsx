@@ -10,6 +10,7 @@ const UsersPage = lazy(() => import("./pages/admin/users/index").then(m => ({ de
 const RolesPage = lazy(() => import("./pages/admin/roles/index").then(m => ({ default: m.RolesPage })));
 const LoanCreation = lazy(() => import("./pages/loans/create/index"));
 const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
+const Forbidden = lazy(() => import("./pages/errors/Forbidden"));
 
 function App() {
     return (
@@ -21,6 +22,10 @@ function App() {
             }>
                 <Routes>
                     <Route path="/login" element={<Login />} />
+
+                    {/* 403 Forbidden — accessible without auth so the page
+                        itself can render for any user who hits it */}
+                    <Route path="/forbidden" element={<Forbidden />} />
 
                     {/* Protected Routes */}
                     <Route path="/dashboard" element={
