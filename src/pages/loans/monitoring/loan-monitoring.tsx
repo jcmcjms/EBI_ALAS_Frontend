@@ -2,7 +2,7 @@ import { useState } from "react";
 import { MonitoringToolbar } from "./components/monitoring-toolbar";
 import { MonitoringTable } from "./components/monitoring-table";
 import { LoanDetailsDrawer } from "./components/loan-details-drawer";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/src/components/ui/card";
 import type { LoanMonitoringRecord, MonitoringFilters } from "./types";
 
 export function LoanMonitoringPage() {

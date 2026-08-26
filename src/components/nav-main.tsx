@@ -2,7 +2,7 @@ import { PlusCircle, Envelope, CaretDown, type Icon } from "@phosphor-icons/reac
 import { Collapsible } from "@base-ui/react/collapsible"
 import { Link, useLocation } from "react-router-dom"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/src/components/ui/button"
 import {
     SidebarGroup,
     SidebarGroupContent,
@@ -12,7 +12,7 @@ import {
     SidebarMenuSub,
     SidebarMenuSubItem,
     SidebarMenuSubButton
-} from "@/components/ui/sidebar"
+} from "@/src/components/ui/sidebar"
 
 export function NavMain({
                             items,

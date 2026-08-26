@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.tsx";
-import { Calendar } from "@/components/ui/calendar.tsx";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/src/components/ui/popover.tsx";
+import { Calendar } from "@/src/components/ui/calendar.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { MagnifyingGlass, CalendarBlank, Funnel, Export } from "@phosphor-icons/react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from "@/src/lib/utils";
 import type { MonitoringFilters } from "../types";
 
 interface ToolbarProps {
@@ -40,21 +40,19 @@ export function MonitoringToolbar({ filters, onFiltersChange }: ToolbarProps) {
 
             {/* Date Range Picker */}
             <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9 w-[240px] justify-start text-left font-normal bg-background">
-                        <CalendarBlank size={16} className="mr-2 text-muted-foreground" weight="bold" />
-                        {filters.dateRange.from ? (
-                            filters.dateRange.to ? (
-                                <>
-                                    {format(filters.dateRange.from, "LLL dd, y")} - {format(filters.dateRange.to, "LLL dd, y")}
-                                </>
-                            ) : (
-                                format(filters.dateRange.from, "LLL dd, y")
-                            )
+                <PopoverTrigger className="inline-flex items-center gap-2 h-9 w-[240px] justify-start text-left font-normal bg-background border border-input rounded-md px-3 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                    <CalendarBlank size={16} className="text-muted-foreground" weight="bold" />
+                    {filters.dateRange.from ? (
+                        filters.dateRange.to ? (
+                            <>
+                                {format(filters.dateRange.from, "LLL dd, y")} - {format(filters.dateRange.to, "LLL dd, y")}
+                            </>
                         ) : (
-                            <span className="text-muted-foreground">Application Date Range</span>
-                        )}
-                    </Button>
+                            format(filters.dateRange.from, "LLL dd, y")
+                        )
+                    ) : (
+                        <span className="text-muted-foreground">Application Date Range</span>
+                    )}
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                     <Calendar

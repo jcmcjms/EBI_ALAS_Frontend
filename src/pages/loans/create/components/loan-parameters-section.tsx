@@ -1,15 +1,15 @@
 import { useFormContext, useWatch } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Input } from "@/src/components/ui/input";
+import { Label } from "@/src/components/ui/label";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+} from "@/src/components/ui/select";
+import { Badge } from "@/src/components/ui/badge";
 import { Calculator, CurrencyDollar, CalendarBlank } from "@phosphor-icons/react";
 
 const loanProducts = [
@@ -158,6 +158,15 @@ export function LoanParametersSection() {
                     <Label className="text-xs text-muted-foreground">Date of First Release</Label>
                     <Input
                         {...register("loan.dateOfFirstRelease")}
+                        type="date"
+                        className="h-9"
+                    />
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">NTHP Date</Label>
+                    <Input
+                        {...register("loan.nthpDate")}
                         type="date"
                         className="h-9"
                     />

@@ -1,7 +1,7 @@
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { RoleMatrix } from "@/pages/admin/roles/role-matrix";
+import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
+import { AppSidebar } from "@/src/components/app-sidebar";
+import { SiteHeader } from "@/src/components/site-header";
+import { RoleMatrix } from "@/src/pages/admin/roles/role-matrix";
 
 export function RolesPage() {
     return (

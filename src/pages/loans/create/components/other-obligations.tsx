@@ -1,9 +1,9 @@
 import { useFormContext, useFieldArray } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
+import { Input } from "@/src/components/ui/input";
+import { Button } from "@/src/components/ui/button";
+import { Checkbox } from "@/src/components/ui/checkbox";
 import { Plus, Bank, CreditCard, ArrowLineDown } from "@phosphor-icons/react";
 
 export function OtherObligationsSection() {
@@ -16,7 +16,7 @@ export function OtherObligationsSection() {
     return (
         <Card>
             <CardHeader className="pb-3 border-b bg-muted/30">
-                <CardTitle className="text-lg">Additional Obligations & Consolidations</CardTitle>
+                <CardTitle className="text-lg">5. EBI, Buy-Outs & Incoming Loans</CardTitle>
             </CardHeader>
             <CardContent className="p-0 divide-y">
 
@@ -32,7 +32,7 @@ export function OtherObligationsSection() {
                     </div>
                     <Table>
                         <TableHeader><TableRow>
-                            <TableHead className="w-[50px]">Close?</TableHead>
+                            <TableHead className="w-[50px]">Pay to Close?</TableHead>
                             <TableHead>PN / Account No.</TableHead>
                             <TableHead>Product Name</TableHead>
                             <TableHead className="text-right">Existing Deduction</TableHead>

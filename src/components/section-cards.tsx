@@ -1,6 +1,6 @@
 import { TrendDown, TrendUp } from "@phosphor-icons/react"
 
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/src/components/ui/badge"
 import {
     Card,
     CardAction,
@@ -8,7 +8,7 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card"
+} from "@/src/components/ui/card"
 
 export function SectionCards() {
     return (

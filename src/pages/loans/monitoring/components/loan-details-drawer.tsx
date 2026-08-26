@@ -1,7 +1,7 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/src/components/ui/sheet";
+import { Badge } from "@/src/components/ui/badge";
+import { Label } from "@/src/components/ui/label";
+import { Separator } from "@/src/components/ui/separator";
 import { Clock, CurrencyDollar, User, Building, CalendarBlank, Warning } from "@phosphor-icons/react";
 import type { LoanMonitoringRecord } from "../types";
 
@@ -85,7 +85,7 @@ export function LoanDetailsDrawer({ loan, onClose }: LoanDetailsDrawerProps) {
                                 <div className="grid gap-4">
                                     <InfoRow icon={User} label="Customer Name" value={loan.customerName} />
                                     <InfoRow icon={Building} label="Branch" value={loan.branchCode} />
-                                    <InfoRow label="Client Type" value={<Badge variant="outline" className="font-normal text-xs">{loan.clientType}</Badge>} />
+                                    <InfoRow label="Loan Type" value={<Badge variant="outline" className="font-normal text-xs">{loan.loanType}</Badge>} />
                                 </div>
                             </div>
 

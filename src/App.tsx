@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import { Spinner } from "@/components/ui/spinner";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { Spinner } from "@/src/components/ui/spinner";
+import { ProtectedRoute } from "@/src/components/auth/ProtectedRoute";
 
 const Login = lazy(() => import("./pages/auth/login"));
 const Dashboard = lazy(() => import("./pages/dashboard").then(m => ({ default: m.Dashboard })));

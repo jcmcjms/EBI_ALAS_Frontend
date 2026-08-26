@@ -12,13 +12,16 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {CircleNotch, Eye, EyeSlash} from "@phosphor-icons/react";
 import {useNavigate} from "react-router-dom";
 import {useAuthStore} from "@/src/store/authStore";
+import {apiClient, getErrorMessage} from "@/src/lib/apiClient";
+import {extractUserFromToken} from "@/src/lib/jwt";
+import {toast} from "sonner";
 
 const loginSchema = z.object({
-    employeeId: z.string()
-        .min(3, "Employee ID is required")
+    username: z.string()
+        .min(3, "Username is required")
         .max(50),
     password: z.string()
-        .min(8, "Invalid credentials")
+        .min(8, "Password must be at least 8 characters")
         .max(100)
 });
 
@@ -32,17 +35,28 @@ export  function LoginForm({className, ...props}: React.ComponentProps<"form">) 
         resolver: zodResolver(loginSchema),
         mode: "onBlur"
     });
-    const onSubmit = (data: LoginFormData) => {
-        // Mock login - set admin session with full permissions
-        setSession("mock-access-token", {
-            userId: "USR-005",
-            firstName: "Maya",
-            middleName: "",
-            lastName: "Mercado",
-            branchId: "Matina",
-            permissions: ["*"], // Super admin bypass
-        });
-        navigate("/dashboard", { replace: true });
+    const onSubmit = async (data: LoginFormData) => {
+        try {
+            const response = await apiClient.post("/api/auth/login", data);
+            const apiResponse = response.data;
+
+            if (apiResponse.success && apiResponse.data?.token) {
+                const token = apiResponse.data.token;
+                const user = extractUserFromToken(token);
+
+                if (user) {
+                    setSession(token, user);
+                    toast.success("Login successful");
+                    navigate("/dashboard", { replace: true });
+                } else {
+                    toast.error("Failed to process login token");
+                }
+            } else {
+                toast.error(apiResponse.message || "Login failed");
+            }
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+        }
     };
     return (
         <form onSubmit={handleSubmit(onSubmit)} className={cn("flex flex-col gap-6", className)} {...props}>
@@ -54,14 +68,14 @@ export  function LoginForm({className, ...props}: React.ComponentProps<"form">) 
                     </p>
                 </div>
                 <Field>
-                    <FieldLabel htmlFor="employeeId">Employee ID</FieldLabel>
+                    <FieldLabel htmlFor="username">Username</FieldLabel>
                     <Input
-                    id="employeeId"
-                    placeholder="Employee ID"
-                    autoComplete="employeeId"
-                        {...register("employeeId")}/>
-                    {errors.employeeId && (
-                        <p className="text-xs text-red-500 mt-1">{errors.employeeId.message}</p>
+                    id="username"
+                    placeholder="Username"
+                    autoComplete="username"
+                        {...register("username")}/>
+                    {errors.username && (
+                        <p className="text-xs text-red-500 mt-1">{errors.username.message}</p>
                     )}
                 </Field>
                 <Field>
@@ -83,6 +97,7 @@ export  function LoginForm({className, ...props}: React.ComponentProps<"form">) 
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                             tabIndex={-1}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
                         >
                             {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                         </button>

@@ -10,7 +10,7 @@ import {
     Avatar,
     AvatarFallback,
     AvatarImage,
-} from "@/components/ui/avatar"
+} from "@/src/components/ui/avatar"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,13 +19,16 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/src/components/ui/dropdown-menu"
 import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/src/components/ui/sidebar"
+import { useNavigate } from "react-router-dom"
+import { useAuthStore } from "@/src/store/authStore"
+import { apiClient } from "@/src/lib/apiClient"
 
 export function NavUser({
                             user,
@@ -37,6 +40,24 @@ export function NavUser({
     }
 }) {
     const { isMobile } = useSidebar()
+    const navigate = useNavigate()
+    const clearSession = useAuthStore((state) => state.clearSession)
+    const accessToken = useAuthStore((state) => state.accessToken)
+
+    const handleLogout = async () => {
+        try {
+            // Notify backend so it can blacklist the token
+            if (accessToken) {
+                await apiClient.post("/api/auth/logout").catch(() => {
+                    // If backend call fails, still log out locally
+                });
+            }
+        } finally {
+            // Always clear local session regardless of backend response
+            clearSession()
+            navigate("/login", { replace: true })
+        }
+    }
 
     return (
         <SidebarMenu>
@@ -100,7 +121,7 @@ export function NavUser({
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400 cursor-pointer">
                             <SignOut />
                             Log out
                         </DropdownMenuItem>

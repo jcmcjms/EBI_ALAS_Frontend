@@ -1,74 +1,68 @@
-import { useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import type { LoanMonitoringRecord, MonitoringFilters } from "@/pages/loans/monitoring/types";
+import { apiClient } from "@/src/lib/apiClient";
+import type { LoanMonitoringRecord, MonitoringFilters } from "@/src/pages/loans/monitoring/types";
 
 interface PaginationState { pageIndex: number; pageSize: number; }
 interface SortingState { id: string; desc: boolean; }
 
-// ── Philippine names & branches for realistic dummy data ───────
-const branches = [
-    "Davao Main", "Tagum", "Panabo", "Digos", "Mati",
-    "General Santos", "Koronadal", "Tacurong", "Cotabato", "Bukidnon",
-];
-
-const firstNames = ["Maria", "Juan", "Rose", "Jose", "Ana", "Pedro", "Liza", "Miguel", "Carmen", "Ricardo", "Grace", "Fernando", "Elena", "Roberto", "Teresa"];
-const lastNames = ["Santos", "Reyes", "Cruz", "Garcia", "Mendoza", "Torres", "Ramos", "Rivera", "Gonzales", "Aquino", "Delgado", "Castillo", "Fernandez", "Lopez", "Pascual"];
-
-const products = ["Executive Salary Loan", "Regular Salary Loan", "Multi-Purpose Loan", "Calamity Loan", "Educational Loan"];
-const clientTypes = ["Government", "Private", "OFW", "Senior Citizen"];
-const approvers = ["E. Rodriguez", "M. Tan", "R. Bautista", "J. Villanueva", "S. Lim", "A. Soriano"];
-
-function randomItem<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
+/** Backend loan shape from GET /api/loans */
+interface BackendLoan {
+    id: number;
+    formNumber: string;
+    branchCode: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    product: string;
+    purpose?: string;
+    proposedAmount: number;
+    status: string;
+    applicationDate: string;
+    lastActionDate: string;
+    createdByName: string;
 }
 
-function seededRandom(seed: number): () => number {
-    let s = seed;
-    return () => {
-        s = (s * 16807 + 0) % 2147483647;
-        return (s - 1) / 2147483646;
+/** Map backend status to frontend status */
+function mapStatus(status: string): LoanMonitoringRecord["status"] {
+    const map: Record<string, LoanMonitoringRecord["status"]> = {
+        "Draft": "Draft",
+        "ForRecommendation": "Pending",
+        "ForChecking": "Under Review",
+        "ForApproval": "Under Review",
+        "Approved": "Approved",
+        "Rejected": "Rejected",
+        "ForRevision": "Under Review",
+        "ForDisbursement": "Approved",
+        "Disbursed": "Disbursed",
+        "OnGoing": "Pending",
+    };
+    return map[status] ?? "Pending";
+}
+
+/** Map backend loan to frontend monitoring record */
+function mapLoan(loan: BackendLoan): LoanMonitoringRecord {
+    const customerName = loan.middleName
+        ? `${loan.firstName} ${loan.middleName} ${loan.lastName}`
+        : `${loan.firstName} ${loan.lastName}`;
+
+    const appDate = new Date(loan.applicationDate);
+    const lastAction = new Date(loan.lastActionDate);
+    const timeLapsedHours = Math.round((Date.now() - lastAction.getTime()) / 3_600_000);
+
+    return {
+        formNumber: loan.formNumber,
+        branchCode: loan.branchCode,
+        customerName,
+        loanType: "New Loan",
+        product: loan.product,
+        loanAmount: loan.proposedAmount,
+        applicationDate: appDate.toISOString(),
+        status: mapStatus(loan.status),
+        lastActionDate: lastAction.toISOString(),
+        timeLapsedHours: Math.max(0, timeLapsedHours),
+        lastApprover: loan.createdByName,
     };
 }
-
-function generateDummyLoans(): LoanMonitoringRecord[] {
-    const rand = seededRandom(42);
-    const statuses: Array<LoanMonitoringRecord["status"]> = [
-        "Draft", "Pending", "Under Review", "Approved", "Rejected", "Disbursed",
-    ];
-
-    return Array.from({ length: 1245 }, (_, i) => {
-        const daysBack = Math.floor(rand() * 90);
-        const appDate = new Date();
-        appDate.setDate(appDate.getDate() - daysBack);
-        appDate.setHours(Math.floor(rand() * 14) + 7, Math.floor(rand() * 60));
-
-        const lastActionDaysBack = Math.floor(rand() * 30);
-        const lastAction = new Date();
-        lastAction.setDate(lastAction.getDate() - lastActionDaysBack);
-        lastAction.setHours(Math.floor(rand() * 14) + 7, Math.floor(rand() * 60));
-
-        const hours = Math.round((Date.now() - lastAction.getTime()) / 3_600_000);
-
-        const pick = <T,>(arr: T[]): T => arr[Math.floor(rand() * arr.length)];
-
-        return {
-            formNumber: `LF-${appDate.getFullYear()}-${String(i + 1).padStart(4, "0")}`,
-            branchCode: pick(branches),
-            customerName: `${pick(firstNames)} ${pick(lastNames)}`,
-            clientType: pick(clientTypes),
-            product: pick(products),
-            loanAmount: Math.round((rand() * 450_000 + 50_000) / 1_000) * 1_000,
-            applicationDate: appDate.toISOString(),
-            status: pick(statuses),
-            lastActionDate: lastAction.toISOString(),
-            timeLapsedHours: hours,
-            lastApprover: pick(approvers),
-        };
-    });
-}
-
-// Generate once at module level (stable reference)
-const ALL_LOANS = generateDummyLoans();
 
 export function useLoanMonitoring(
     filters: MonitoringFilters,
@@ -78,51 +72,37 @@ export function useLoanMonitoring(
     return useQuery({
         queryKey: ["loan-monitoring", filters, pagination, sorting],
         queryFn: async () => {
-            // Simulate network latency
-            await new Promise((r) => setTimeout(r, 300));
+            const params = new URLSearchParams();
+            params.set("page", String(pagination.pageIndex + 1));
+            params.set("pageSize", String(pagination.pageSize));
 
-            let filtered = [...ALL_LOANS];
-
-            // Search
             if (filters.search) {
-                const q = filters.search.toLowerCase();
-                filtered = filtered.filter(
-                    (r) =>
-                        r.formNumber.toLowerCase().includes(q) ||
-                        r.customerName.toLowerCase().includes(q) ||
-                        r.product.toLowerCase().includes(q)
-                );
+                params.set("search", filters.search);
             }
-
-            // Status
             if (filters.status.length > 0) {
-                filtered = filtered.filter((r) => filters.status.includes(r.status as any));
+                params.set("status", filters.status.join(","));
             }
-
-            // Branch
             if (filters.branchCode && filters.branchCode !== "all") {
-                filtered = filtered.filter((r) => r.branchCode === filters.branchCode);
+                params.set("branchCode", filters.branchCode);
             }
-
-            // Sorting
             if (sorting.length > 0) {
-                const { id, desc } = sorting[0];
-                filtered.sort((a: any, b: any) => {
-                    const av = a[id];
-                    const bv = b[id];
-                    if (av < bv) return desc ? 1 : -1;
-                    if (av > bv) return desc ? -1 : 1;
-                    return 0;
-                });
+                params.set("sortBy", sorting[0].id);
+                params.set("sortDesc", String(sorting[0].desc));
             }
 
-            // Pagination
-            const start = pagination.pageIndex * pagination.pageSize;
-            const paged = filtered.slice(start, start + pagination.pageSize);
+            const res = await apiClient.get(`/api/loans?${params.toString()}`);
+            const body = res.data;
 
-            return { data: paged, rowCount: filtered.length };
+            // Backend wraps in { success, data: { items, totalCount, ... } }
+            const paged = body.data ?? body;
+            const items: BackendLoan[] = paged.items ?? [];
+
+            return {
+                data: items.map(mapLoan),
+                rowCount: paged.totalCount ?? items.length,
+            };
         },
         placeholderData: keepPreviousData,
-        staleTime: 1000 * 60 * 5,
+        staleTime: 1000 * 60 * 2, // 2 minutes
     });
 }

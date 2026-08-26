@@ -1,11 +1,11 @@
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { DashboardSummary } from "@/pages/dashboard/components/dashboard-summary";
-import { PendingQueue } from "@/pages/dashboard/components/pending-queue";
-import { NowServing } from "@/pages/dashboard/components/now-serving";
-import { PushBack } from "@/pages/dashboard/components/push-back";
-import { ApprovedLoans } from "@/pages/dashboard/components/approved-loans";
+import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
+import { AppSidebar } from "@/src/components/app-sidebar";
+import { SiteHeader } from "@/src/components/site-header";
+import { DashboardSummary } from "@/src/pages/dashboard/components/dashboard-summary";
+import { PendingQueue } from "@/src/pages/dashboard/components/pending-queue";
+import { NowServing } from "@/src/pages/dashboard/components/now-serving";
+import { PushBack } from "@/src/pages/dashboard/components/push-back";
+import { ApprovedLoans } from "@/src/pages/dashboard/components/approved-loans";
 
 export function Dashboard() {
     return (

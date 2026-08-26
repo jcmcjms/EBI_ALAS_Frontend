@@ -1,8 +1,12 @@
 import * as axios from "axios";
 import {useAuthStore} from "../store/authStore.ts";
 
+// In development, Vite proxy forwards /api/* to the backend.
+// In production, use the explicit base URL.
+const baseURL = import.meta.env.DEV ? '' : import.meta.env.VITE_API_BASE_URL;
+
 export const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL,
     withCredentials: true,
     headers: { "Content-Type": "application/json" },
 });

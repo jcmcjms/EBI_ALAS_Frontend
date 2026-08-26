@@ -256,7 +256,7 @@ Page Component (src/pages/)
 - **Base color**: neutral
 - **CSS variables**: enabled
 - **Icons**: Phosphor Icons
-- **Path aliases**: `@/components`, `@/lib/utils`
+- **Path aliases**: `@/components`, `@/src/lib/utils`
 
 ---
 
@@ -420,7 +420,7 @@ Toggle dark mode by adding/removing the `dark` class on the `<html>` element.
 The `cn()` utility in `src/lib/utils.ts` combines `clsx` and `tailwind-merge` for safe class merging:
 
 ```tsx
-import { cn } from "@/lib/utils";
+import { cn } from "@/src/lib/utils";
 
 <div className={cn("base-classes", conditional && "conditional-classes", "override-classes")} />
 ```

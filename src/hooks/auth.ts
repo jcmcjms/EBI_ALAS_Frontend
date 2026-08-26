@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import {useAuthStore} from "@/store/authStore.ts";
+import {useAuthStore} from "@/src/store/authStore.ts";
 import {useMutation} from "@tanstack/react-query";
-import {apiClient} from "@/lib/apiClient.ts";
+import {apiClient} from "@/src/lib/apiClient.ts";
 
 interface LoginCredentials {
     username: string;

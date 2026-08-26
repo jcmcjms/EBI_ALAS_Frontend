@@ -65,7 +65,7 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
         }),
         columnHelper.accessor("branchCode", { header: "Branch", cell: (info) => <span className="text-xs">{info.getValue()}</span> }),
         columnHelper.accessor("customerName", { header: "Customer Name", cell: (info) => <span className="font-medium text-sm">{info.getValue()}</span> }),
-        columnHelper.accessor("clientType", { header: "Type", cell: (info) => <Badge variant="outline" className="text-xs font-normal">{info.getValue()}</Badge> }),
+        columnHelper.accessor("loanType", { header: "Loan Type", cell: (info) => <Badge variant="outline" className="text-xs font-normal">{info.getValue()}</Badge> }),
         columnHelper.accessor("product", { header: "Product", cell: (info) => <span className="text-xs text-muted-foreground">{info.getValue()}</span> }),
         columnHelper.accessor("loanAmount", {
             header: () => <div className="text-right">Amount</div>,

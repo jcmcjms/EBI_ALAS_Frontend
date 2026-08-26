@@ -4,7 +4,7 @@ export interface LoanMonitoringRecord {
     formNumber: string;
     branchCode: string;
     customerName: string;
-    clientType: string;
+    loanType: string;
     product: string;
     loanAmount: number;
     applicationDate: string; // ISO Date

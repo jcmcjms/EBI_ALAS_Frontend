@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useState, Fragment } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
+import { Checkbox } from "@/src/components/ui/checkbox";
 import { roles, permissionModules } from "../data/dummy-admin";
 import { ShieldCheck, FloppyDisk } from "@phosphor-icons/react";
 
@@ -65,14 +65,20 @@ export function RoleMatrix() {
             </CardHeader>
             <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-sm border-separate" style={{ tableLayout: 'fixed' }}>
+                        <colgroup>
+                            <col className="w-[280px]" />
+                            {roles.map(role => (
+                                <col key={role.id} className="w-[140px]" />
+                            ))}
+                        </colgroup>
                         <thead className="bg-muted/50 border-b">
                         <tr>
-                            <th className="h-10 px-4 text-left font-semibold text-muted-foreground w-[280px] sticky left-0 bg-muted/50 z-10 border-r">
+                            <th className="h-10 px-4 text-left font-semibold text-muted-foreground sticky left-0 bg-muted/50 z-10 border-r">
                                 Module / Permission
                             </th>
                             {roles.map(role => (
-                                <th key={role.id} className="h-10 px-4 text-center font-semibold text-muted-foreground w-[140px]">
+                                <th key={role.id} className="h-10 px-4 text-center font-semibold text-muted-foreground">
                                     {role.name}
                                 </th>
                             ))}
@@ -82,7 +88,7 @@ export function RoleMatrix() {
                         {permissionModules.map((module) => {
                             const modulePermIds = module.permissions.map(p => p.id);
                             return (
-                                <tbody key={module.module}>
+                                <Fragment key={module.module}>
                                 {/* Module Header Row */}
                                 <tr className="border-b bg-muted/20">
                                     <td className="px-4 py-2 font-semibold text-foreground sticky left-0 bg-muted/20 z-10 border-r">
@@ -121,7 +127,7 @@ export function RoleMatrix() {
                                         ))}
                                     </tr>
                                 ))}
-                                </tbody>
+                                </Fragment>
                             );
                         })}
                         </tbody>

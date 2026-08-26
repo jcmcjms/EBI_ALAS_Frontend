@@ -1,7 +1,7 @@
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { UsersDataTable } from "@/pages/admin/users/uses-data-table";
+import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
+import { AppSidebar } from "@/src/components/app-sidebar";
+import { SiteHeader } from "@/src/components/site-header";
+import { UsersDataTable } from "@/src/pages/admin/users/uses-data-table";
 
 export function UsersPage() {
     return (

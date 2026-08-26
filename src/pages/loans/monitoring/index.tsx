@@ -1,7 +1,7 @@
 import React from "react";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
+import { AppSidebar } from "@/src/components/app-sidebar";
+import { SiteHeader } from "@/src/components/site-header";
 import { LoanMonitoringPage } from "./loan-monitoring";
 
 export default function LoanMonitoringIndex() {

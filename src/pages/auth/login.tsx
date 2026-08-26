@@ -1,4 +1,4 @@
-import { LoginForm } from "@/components/login-form";
+import { LoginForm } from "@/src/components/login-form";
 
 const ENTERPRISE_BANK_URL = "https://www.enterprisebank.ph/";
 
@@ -16,7 +16,13 @@ export default function Login() {
                     </a>
                 </div>
                 <div className="flex flex-1 items-center justify-center">
-                    <div className="w-full max-w-xs">
+                    <div className="w-full max-w-xs space-y-8">
+                        {/* System Branding */}
+                        <div className="text-center">
+                            <h1 className="text-3xl font-bold tracking-tight">ALAS</h1>
+                            <p className="text-sm text-muted-foreground mt-1">Enterprise Bank Inc.</p>
+                        </div>
+
                         <LoginForm/>
                     </div>
                 </div>
