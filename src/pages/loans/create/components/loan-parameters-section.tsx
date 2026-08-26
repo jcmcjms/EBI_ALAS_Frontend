@@ -10,7 +10,7 @@ import {
     SelectValue,
 } from "@/src/components/ui/select";
 import { Badge } from "@/src/components/ui/badge";
-import { Calculator, CurrencyDollar, CalendarBlank } from "@phosphor-icons/react";
+import { Calculator, CurrencyDollar, CalendarBlank, LockSimple } from "@phosphor-icons/react";
 
 const loanProducts = [
     "Personal Loan",
@@ -49,6 +49,9 @@ export function LoanParametersSection() {
                     <CardTitle className="text-lg flex items-center gap-2">
                         <CurrencyDollar size={20} weight="bold" className="text-primary" />
                         3. Loan Parameters
+                        <Badge variant="outline" className="text-xs font-normal flex items-center gap-1">
+                            <LockSimple size={12} weight="bold" /> System Verified
+                        </Badge>
                     </CardTitle>
                     {monthlyPayment > 0 && (
                         <Badge variant="secondary" className="font-normal text-xs flex items-center gap-1.5 py-1 px-3">
@@ -70,6 +73,7 @@ export function LoanParametersSection() {
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Loan Product</Label>
                     <Select
+                        disabled
                         value={useWatch({ control, name: "loan.product" }) ?? ""}
                         onValueChange={(v) => setValue("loan.product", v, { shouldValidate: true })}
                     >
@@ -91,7 +95,8 @@ export function LoanParametersSection() {
                     <Input
                         {...register("loan.purpose")}
                         placeholder="e.g. Home renovation, tuition fees, debt consolidation"
-                        className="h-9"
+                        readOnly
+                        className="h-9 bg-muted/50"
                     />
                 </div>
 
@@ -103,7 +108,8 @@ export function LoanParametersSection() {
                         type="number"
                         placeholder="0.00"
                         min={0}
-                        className="h-9 font-semibold"
+                        readOnly
+                        className="h-9 font-semibold bg-muted/50"
                     />
                 </div>
 
@@ -117,7 +123,8 @@ export function LoanParametersSection() {
                         placeholder="e.g. 24"
                         min={1}
                         max={360}
-                        className="h-9"
+                        readOnly
+                        className="h-9 bg-muted/50"
                     />
                 </div>
 
@@ -130,7 +137,8 @@ export function LoanParametersSection() {
                         placeholder="1.5"
                         min={0}
                         max={100}
-                        className="h-9"
+                        readOnly
+                        className="h-9 bg-muted/50"
                     />
                 </div>
 
@@ -138,6 +146,7 @@ export function LoanParametersSection() {
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Mode of Payment</Label>
                     <Select
+                        disabled
                         value={useWatch({ control, name: "loan.modeOfPayment" }) ?? ""}
                         onValueChange={(v) => setValue("loan.modeOfPayment", v, { shouldValidate: true })}
                     >
@@ -159,7 +168,8 @@ export function LoanParametersSection() {
                     <Input
                         {...register("loan.dateOfFirstRelease")}
                         type="date"
-                        className="h-9"
+                        readOnly
+                        className="h-9 bg-muted/50"
                     />
                 </div>
 
@@ -168,7 +178,8 @@ export function LoanParametersSection() {
                     <Input
                         {...register("loan.nthpDate")}
                         type="date"
-                        className="h-9"
+                        readOnly
+                        className="h-9 bg-muted/50"
                     />
                 </div>
 
@@ -177,7 +188,8 @@ export function LoanParametersSection() {
                     <Input
                         {...register("loan.coMaker")}
                         placeholder="Co-maker name"
-                        className="h-9"
+                        readOnly
+                        className="h-9 bg-muted/50"
                     />
                 </div>
 

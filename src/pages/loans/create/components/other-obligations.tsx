@@ -26,7 +26,7 @@ export function OtherObligationsSection() {
                         <h3 className="text-sm font-semibold flex items-center gap-2">
                             <Bank size={16} weight="bold" className="text-primary" /> EBI Accounts for Reloans
                         </h3>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => appendReloan({ pn: "", name: "", existingDeduction: 0, payToClose: false })} className="h-7 text-xs gap-1">
+                        <Button type="button" variant="ghost" size="sm" disabled onClick={() => appendReloan({ pn: "", name: "", existingDeduction: 0, payToClose: false })} className="h-7 text-xs gap-1">
                             <Plus size={14} /> Add EBI Loan
                         </Button>
                     </div>
@@ -41,9 +41,9 @@ export function OtherObligationsSection() {
                             {reloans.map((field, i) => (
                                 <TableRow key={field.id}>
                                     <TableCell><Checkbox {...register(`ebiReloans.${i}.payToClose` as const)} /></TableCell>
-                                    <TableCell><Input {...register(`ebiReloans.${i}.pn`)} className="h-8 font-mono text-xs" /></TableCell>
-                                    <TableCell><Input {...register(`ebiReloans.${i}.name`)} className="h-8 text-xs" /></TableCell>
-                                    <TableCell><Input type="number" {...register(`ebiReloans.${i}.existingDeduction`, { valueAsNumber: true })} className="h-8 text-right text-xs" /></TableCell>
+                                    <TableCell><Input {...register(`ebiReloans.${i}.pn`)} readOnly className="h-8 font-mono text-xs bg-muted/50" /></TableCell>
+                                    <TableCell><Input {...register(`ebiReloans.${i}.name`)} readOnly className="h-8 text-xs bg-muted/50" /></TableCell>
+                                    <TableCell><Input type="number" {...register(`ebiReloans.${i}.existingDeduction`, { valueAsNumber: true })} readOnly className="h-8 text-right text-xs bg-muted/50" /></TableCell>
                                 </TableRow>
                             ))}
                             {reloans.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-xs text-muted-foreground py-4">No EBI reloans added.</TableCell></TableRow>}
@@ -57,7 +57,7 @@ export function OtherObligationsSection() {
                         <h3 className="text-sm font-semibold flex items-center gap-2">
                             <CreditCard size={16} weight="bold" className="text-primary" /> Buy-Out Accounts (Other FIs)
                         </h3>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => appendBuyout({ pn: "", name: "", amortization: 0, outstandingBalance: 0 })} className="h-7 text-xs gap-1">
+                        <Button type="button" variant="ghost" size="sm" disabled onClick={() => appendBuyout({ pn: "", name: "", amortization: 0, outstandingBalance: 0 })} className="h-7 text-xs gap-1">
                             <Plus size={14} /> Add Buy-Out
                         </Button>
                     </div>
@@ -71,10 +71,10 @@ export function OtherObligationsSection() {
                         <TableBody>
                             {buyouts.map((field, i) => (
                                 <TableRow key={field.id}>
-                                    <TableCell><Input {...register(`buyOuts.${i}.pn`)} className="h-8 font-mono text-xs" /></TableCell>
-                                    <TableCell><Input {...register(`buyOuts.${i}.name`)} className="h-8 text-xs" /></TableCell>
-                                    <TableCell><Input type="number" {...register(`buyOuts.${i}.amortization`, { valueAsNumber: true })} className="h-8 text-right text-xs" /></TableCell>
-                                    <TableCell><Input type="number" {...register(`buyOuts.${i}.outstandingBalance`, { valueAsNumber: true })} className="h-8 text-right text-xs" /></TableCell>
+                                    <TableCell><Input {...register(`buyOuts.${i}.pn`)} readOnly className="h-8 font-mono text-xs bg-muted/50" /></TableCell>
+                                    <TableCell><Input {...register(`buyOuts.${i}.name`)} readOnly className="h-8 text-xs bg-muted/50" /></TableCell>
+                                    <TableCell><Input type="number" {...register(`buyOuts.${i}.amortization`, { valueAsNumber: true })} readOnly className="h-8 text-right text-xs bg-muted/50" /></TableCell>
+                                    <TableCell><Input type="number" {...register(`buyOuts.${i}.outstandingBalance`, { valueAsNumber: true })} readOnly className="h-8 text-right text-xs bg-muted/50" /></TableCell>
                                 </TableRow>
                             ))}
                             {buyouts.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-xs text-muted-foreground py-4">No external buy-outs added.</TableCell></TableRow>}
@@ -88,7 +88,7 @@ export function OtherObligationsSection() {
                         <h3 className="text-sm font-semibold flex items-center gap-2">
                             <ArrowLineDown size={16} weight="bold" className="text-primary" /> Incoming / Undeducted Loans
                         </h3>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => appendIncoming({ name: "", deductions: 0, remarks: "" })} className="h-7 text-xs gap-1">
+                        <Button type="button" variant="ghost" size="sm" disabled onClick={() => appendIncoming({ name: "", deductions: 0, remarks: "" })} className="h-7 text-xs gap-1">
                             <Plus size={14} /> Add Incoming
                         </Button>
                     </div>
@@ -101,8 +101,8 @@ export function OtherObligationsSection() {
                         <TableBody>
                             {incoming.map((field, i) => (
                                 <TableRow key={field.id}>
-                                    <TableCell><Input {...register(`incomingLoans.${i}.name`)} className="h-8 text-xs" /></TableCell>
-                                    <TableCell><Input type="number" {...register(`incomingLoans.${i}.deductions`, { valueAsNumber: true })} className="h-8 text-right text-xs" /></TableCell>
+                                    <TableCell><Input {...register(`incomingLoans.${i}.name`)} readOnly className="h-8 text-xs bg-muted/50" /></TableCell>
+                                    <TableCell><Input type="number" {...register(`incomingLoans.${i}.deductions`, { valueAsNumber: true })} readOnly className="h-8 text-right text-xs bg-muted/50" /></TableCell>
                                     <TableCell><Input {...register(`incomingLoans.${i}.remarks`)} className="h-8 text-xs" /></TableCell>
                                 </TableRow>
                             ))}
