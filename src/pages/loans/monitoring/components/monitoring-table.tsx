@@ -1,19 +1,33 @@
 import { useState } from "react";
 import {
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
-    type ColumnDef,
+    FlexRender,
+    createCoreRowModel,
+    createColumnHelper,
+    coreFeatures,
+    tableFeatures,
+    rowSortingFeature,
+    rowPaginationFeature,
+    useTable,
     type PaginationState,
     type SortingState,
 } from "@tanstack/react-table";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
+import { Badge } from "@/src/components/ui/badge";
+import { Button } from "@/src/components/ui/button";
 import { CaretUp, CaretDown, CaretUpDown } from "@phosphor-icons/react";
-import { useLoanMonitoring } from "@/hooks/use-loan-monitoring";
+import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/src/lib/utils";
+
+// Declare features for this table (v9 API)
+const features = tableFeatures({
+    ...coreFeatures,
+    rowSortingFeature,
+    rowPaginationFeature,
+    coreRowModel: createCoreRowModel(),
+});
+
+const columnHelper = createColumnHelper<typeof features, LoanMonitoringRecord>();
 
 interface MonitoringTableProps {
     filters: MonitoringFilters;
@@ -43,46 +57,41 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
 
     const query = useLoanMonitoring(filters, pagination, sorting);
 
-    const columns: ColumnDef<LoanMonitoringRecord>[] = [
-        {
-            accessorKey: "formNumber",
+    const columns = columnHelper.columns([
+        columnHelper.accessor("formNumber", {
             header: "Form #",
-            cell: (info) => <span className="font-mono text-xs font-semibold">{info.getValue<string>()}</span>,
-            // Sticky first column for horizontal scrolling context
+            cell: (info) => <span className="font-mono text-xs font-semibold">{info.getValue()}</span>,
             meta: { className: "sticky left-0 bg-background z-10 border-r" }
-        },
-        { accessorKey: "branchCode", header: "Branch", cell: (info) => <span className="text-xs">{info.getValue<string>()}</span> },
-        { accessorKey: "customerName", header: "Customer Name", cell: (info) => <span className="font-medium text-sm">{info.getValue<string>()}</span> },
-        { accessorKey: "clientType", header: "Type", cell: (info) => <Badge variant="outline" className="text-xs font-normal">{info.getValue<string>()}</Badge> },
-        { accessorKey: "product", header: "Product", cell: (info) => <span className="text-xs text-muted-foreground">{info.getValue<string>()}</span> },
-        {
-            accessorKey: "loanAmount",
+        }),
+        columnHelper.accessor("branchCode", { header: "Branch", cell: (info) => <span className="text-xs">{info.getValue()}</span> }),
+        columnHelper.accessor("customerName", { header: "Customer Name", cell: (info) => <span className="font-medium text-sm">{info.getValue()}</span> }),
+        columnHelper.accessor("clientType", { header: "Type", cell: (info) => <Badge variant="outline" className="text-xs font-normal">{info.getValue()}</Badge> }),
+        columnHelper.accessor("product", { header: "Product", cell: (info) => <span className="text-xs text-muted-foreground">{info.getValue()}</span> }),
+        columnHelper.accessor("loanAmount", {
             header: () => <div className="text-right">Amount</div>,
-            cell: (info) => <div className="text-right font-semibold">₱{info.getValue<number>().toLocaleString()}</div>
-        },
-        {
-            accessorKey: "applicationDate",
+            cell: (info) => <div className="text-right font-semibold">₱{info.getValue().toLocaleString()}</div>
+        }),
+        columnHelper.accessor("applicationDate", {
             header: "App. Date",
-            cell: (info) => <span className="text-xs text-muted-foreground">{new Date(info.getValue<string>()).toLocaleDateString()}</span>
-        },
-        {
-            accessorKey: "status",
+            cell: (info) => <span className="text-xs text-muted-foreground">{new Date(info.getValue()).toLocaleDateString()}</span>
+        }),
+        columnHelper.accessor("status", {
             header: "Status",
             cell: (info) => {
-                const status = info.getValue<string>();
+                const status = info.getValue();
                 const variant = status === "Approved" ? "success" : status === "Rejected" ? "destructive" : "secondary";
                 return <Badge variant={variant as any} className="text-xs">{status}</Badge>;
             }
-        },
-        {
-            accessorKey: "timeLapsedHours",
+        }),
+        columnHelper.accessor("timeLapsedHours", {
             header: "Time Lapsed",
-            cell: (info) => <TimeLapsedIndicator hours={info.getValue<number>()} />
-        },
-        { accessorKey: "lastApprover", header: "Last Approver", cell: (info) => <span className="text-xs">{info.getValue<string>()}</span> },
-    ];
+            cell: (info) => <TimeLapsedIndicator hours={info.getValue()} />
+        }),
+        columnHelper.accessor("lastApprover", { header: "Last Approver", cell: (info) => <span className="text-xs">{info.getValue()}</span> }),
+    ]);
 
-    const table = useReactTable({
+    const table = useTable({
+        features,
         data: query.data?.data ?? [],
         columns,
         state: { pagination, sorting },
@@ -92,7 +101,6 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
         manualSorting: true,
         manualFiltering: true,
         pageCount: Math.ceil((query.data?.rowCount ?? 0) / pagination.pageSize),
-        getCoreRowModel: getCoreRowModel(),
     });
 
     return (
@@ -112,7 +120,7 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
                                                 className={cn("flex items-center gap-1", header.column.getCanSort() && "cursor-pointer select-none")}
                                                 onClick={header.column.getToggleSortingHandler()}
                                             >
-                                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                                {FlexRender({header})}
                                                 {{ asc: <CaretUp size={14} />, desc: <CaretDown size={14} /> }[header.column.getIsSorted() as string] ?? <CaretUpDown size={14} className="opacity-30" />}
                                             </div>
                                         )}
@@ -131,9 +139,9 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
                                     className="hover:bg-muted/30 transition-colors cursor-pointer"
                                     onClick={() => onRowClick(row.original)}
                                 >
-                                    {row.getVisibleCells().map((cell) => (
+                                    {row.getAllCells().map((cell) => (
                                         <TableCell key={cell.id} className={cn("py-2 px-4 h-12 text-sm", cell.column.columnDef.meta?.className)}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            {FlexRender({cell})}
                                         </TableCell>
                                     ))}
                                 </TableRow>

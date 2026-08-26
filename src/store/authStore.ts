@@ -2,7 +2,9 @@ import {create} from "zustand/react";
 
 interface UserSession{
     userId: string;
-    fullName: string;
+    firstName: string;
+    middleName: string;
+    lastName: string;
     branchId: string;
     permissions: string[];
 }

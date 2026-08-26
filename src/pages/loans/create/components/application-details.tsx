@@ -1,11 +1,11 @@
 import { useFormContext } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Input } from "@/src/components/ui/input";
+import { Label } from "@/src/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
+import { Badge } from "@/src/components/ui/badge";
 import { LockSimple, Bank, UserCircle } from "@phosphor-icons/react";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore } from "@/src/store/authStore";
 
 export function ApplicationDetailsSection() {
     const { register, setValue } = useFormContext();
@@ -13,7 +13,7 @@ export function ApplicationDetailsSection() {
 
     // Auto-populate officer and branch on mount
     // In a real app, use useEffect to set these values if they are empty
-    const officerName = user?.fullName || "Maria Santos";
+    const officerName = user ? `${user.firstName} ${user.middleName ? user.middleName + " " : ""}${user.lastName}` : "Maria Santos";
     const branchName = user?.branchId || "Makati Main";
 
     return (
