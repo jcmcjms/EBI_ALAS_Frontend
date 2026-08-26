@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Spinner } from "@/src/components/ui/spinner";
 import { ProtectedRoute } from "@/src/components/auth/ProtectedRoute";
+import { PERMISSIONS } from "@/src/lib/api/types";
 
 const Login = lazy(() => import("./pages/auth/login"));
 const Dashboard = lazy(() => import("./pages/dashboard").then(m => ({ default: m.Dashboard })));
@@ -40,14 +41,16 @@ function App() {
                         </ProtectedRoute>
                     } />
 
-                    {/* Admin Routes */}
+                    {/* Admin Routes — guards mirror backend policies:
+                        user list requires `user.view` (CanViewUsers),
+                        role matrix requires `role.view` (CanViewRoles). */}
                     <Route path="/admin/users" element={
-                        <ProtectedRoute requiredPermission="user.create">
+                        <ProtectedRoute requiredPermission={PERMISSIONS.userView}>
                             <UsersPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/admin/roles" element={
-                        <ProtectedRoute requiredPermission="role.manage">
+                        <ProtectedRoute requiredPermission={PERMISSIONS.roleView}>
                             <RolesPage />
                         </ProtectedRoute>
                     } />

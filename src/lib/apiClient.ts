@@ -23,7 +23,8 @@ apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            useAuthStore.getState().setAccessToken(null);
+            // 401 means the token is expired or revoked — drop the whole session.
+            useAuthStore.getState().clearSession();
             window.location.href = "/login";
         }
         return Promise.reject(error);

@@ -1,138 +1,143 @@
-import { useState, Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Button } from "@/src/components/ui/button";
 import { Checkbox } from "@/src/components/ui/checkbox";
-import { roles, permissionModules } from "../data/dummy-admin";
-import { ShieldCheck, FloppyDisk } from "@phosphor-icons/react";
+import { Badge } from "@/src/components/ui/badge";
+import { ShieldCheck, Info } from "@phosphor-icons/react";
+import { getErrorMessage } from "@/src/lib/apiClient";
+import { useRoleMatrix } from "@/src/hooks/use-roles";
 
+/** Display metadata for each permission (ids mirror backend Permissions.cs). */
+const PERMISSION_LABELS: Record<string, string> = {
+    "loans.create": "Create / Encode Loan",
+    "loans.view": "View Loans",
+    "loans.recommend": "Recommend Loan",
+    "loans.evaluate": "Evaluate / Credit Check",
+    "loans.approve": "Approve Loan",
+    "loans.reject": "Reject Loan",
+    "user.create": "Create User",
+    "user.view": "View Users",
+    "user.edit": "Edit User Details",
+    "user.suspend": "Suspend / Activate User",
+    "role.manage": "Manage Roles & Permissions",
+    "role.view": "View Roles & Matrix",
+};
+
+/** Groups permissions into display modules by prefix. */
+const MODULES: { module: string; ids: string[] }[] = [
+    {
+        module: "Loan Origination",
+        ids: ["loans.view", "loans.create", "loans.recommend", "loans.evaluate", "loans.approve", "loans.reject"],
+    },
+    {
+        module: "User Management",
+        ids: ["user.view", "user.create", "user.edit", "user.suspend"],
+    },
+    {
+        module: "Role & Permission Management",
+        ids: ["role.view", "role.manage"],
+    },
+];
+
+/**
+ * Read-only view over GET /api/roles/matrix.
+ * The role→permission mapping lives in backend code
+ * (Common/Constants/RolePermissions.cs) — there is intentionally no save
+ * endpoint, so the matrix is displayed rather than edited.
+ */
 export function RoleMatrix() {
+    const { data: matrix, isLoading, error } = useRoleMatrix();
 
-    const [matrixState, setMatrixState] = useState<Record<string, Set<string>>>(() => {
-        const initial: Record<string, Set<string>> = {};
-        roles.forEach(r => {
-            initial[r.id] = new Set();
-
-            if (r.id === "role_admin") {
-                permissionModules.forEach(m => m.permissions.forEach(p => initial[r.id].add(p.id)));
-            }
-
-            if (r.id === "role_ao") {
-                initial[r.id].add("loan.create");
-            }
-        });
-        return initial;
-    });
-
-    const togglePermission = (roleId: string, permId: string) => {
-        setMatrixState(prev => {
-            const newSet = new Set(prev[roleId]);
-            if (newSet.has(permId)) newSet.delete(permId);
-            else newSet.add(permId);
-            return { ...prev, [roleId]: newSet };
-        });
-    };
-
-    const toggleModule = (roleId: string, modulePerms: string[], checked: boolean) => {
-        setMatrixState(prev => {
-            const newSet = new Set(prev[roleId]);
-            modulePerms.forEach(p => {
-                if (checked) newSet.add(p);
-                else newSet.delete(p);
-            });
-            return { ...prev, [roleId]: newSet };
-        });
-    };
-
-    const isModuleChecked = (roleId: string, modulePerms: string[]) =>
-        modulePerms.every(p => matrixState[roleId]?.has(p));
-
-    const isModuleIndeterminate = (roleId: string, modulePerms: string[]) => {
-        const checkedCount = modulePerms.filter(p => matrixState[roleId]?.has(p)).length;
-        return checkedCount > 0 && checkedCount < modulePerms.length;
-    };
+    const permissionSetByRole = useMemo(() => {
+        const map = new Map<string, Set<string>>();
+        matrix.forEach(entry => map.set(entry.role, new Set(entry.permissions)));
+        return map;
+    }, [matrix]);
 
     return (
         <Card className="border shadow-sm overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b bg-muted/30">
                 <div className="flex items-center gap-2">
                     <ShieldCheck className="size-5 text-primary" weight="bold" />
-                    <CardTitle className="text-lg">Role & Permission Matrix</CardTitle>
+                    <CardTitle className="text-lg">Role &amp; Permission Matrix</CardTitle>
+                    <Badge variant="outline" className="font-normal">{matrix.length} roles</Badge>
                 </div>
-                <Button size="sm" className="h-8 gap-1.5 text-xs">
-                    <FloppyDisk size={14} weight="bold" />
-                    Save Changes
-                </Button>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Info size={14} weight="bold" />
+                    Managed by backend configuration — changes require a deployment.
+                </div>
             </CardHeader>
             <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm border-separate" style={{ tableLayout: 'fixed' }}>
-                        <colgroup>
-                            <col className="w-[280px]" />
-                            {roles.map(role => (
-                                <col key={role.id} className="w-[140px]" />
-                            ))}
-                        </colgroup>
-                        <thead className="bg-muted/50 border-b">
-                        <tr>
-                            <th className="h-10 px-4 text-left font-semibold text-muted-foreground sticky left-0 bg-muted/50 z-10 border-r">
-                                Module / Permission
-                            </th>
-                            {roles.map(role => (
-                                <th key={role.id} className="h-10 px-4 text-center font-semibold text-muted-foreground">
-                                    {role.name}
-                                </th>
-                            ))}
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {permissionModules.map((module) => {
-                            const modulePermIds = module.permissions.map(p => p.id);
-                            return (
-                                <Fragment key={module.module}>
-                                {/* Module Header Row */}
-                                <tr className="border-b bg-muted/20">
-                                    <td className="px-4 py-2 font-semibold text-foreground sticky left-0 bg-muted/20 z-10 border-r">
-                                        {module.module}
-                                    </td>
-                                    {roles.map(role => (
-                                        <td key={role.id} className="px-4 py-2 text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <Checkbox
-                                                    checked={isModuleChecked(role.id, modulePermIds)}
-                                                    onCheckedChange={(checked) => toggleModule(role.id, modulePermIds, !!checked)}
-                                                    ref={el => {
-                                                        if (el) (el as any).indeterminate = isModuleIndeterminate(role.id, modulePermIds);
-                                                    }}
-                                                />
-                                                <span className="text-xs text-muted-foreground">All</span>
+                {isLoading ? (
+                    <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                        Loading role matrix...
+                    </div>
+                ) : error ? (
+                    <div className="flex h-40 items-center justify-center text-sm text-red-600">
+                        Failed to load role matrix: {getErrorMessage(error)}
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm border-separate" style={{ tableLayout: 'fixed' }}>
+                            <colgroup>
+                                <col className="w-[280px]" />
+                                {matrix.map(entry => (
+                                    <col key={entry.role} className="w-[140px]" />
+                                ))}
+                            </colgroup>
+                            <thead className="bg-muted/50 border-b">
+                                <tr>
+                                    <th className="h-10 px-4 text-left font-semibold text-muted-foreground sticky left-0 bg-muted/50 z-10 border-r">
+                                        Module / Permission
+                                    </th>
+                                    {matrix.map(entry => (
+                                        <th key={entry.role} className="h-10 px-4 text-center font-semibold text-muted-foreground">
+                                            <div className="flex flex-col">
+                                                <span>{entry.role}</span>
+                                                <span className="text-[10px] font-normal text-muted-foreground/80 leading-tight">
+                                                    {entry.displayName}
+                                                </span>
                                             </div>
-                                        </td>
+                                        </th>
                                     ))}
                                 </tr>
-                                {/* Permission Rows */}
-                                {module.permissions.map((perm) => (
-                                    <tr key={perm.id} className="border-b hover:bg-muted/10 transition-colors">
-                                        <td className="px-4 py-2 pl-8 text-muted-foreground sticky left-0 bg-background z-10 border-r">
-                                            {perm.name}
-                                        </td>
-                                        {roles.map(role => (
-                                            <td key={role.id} className="px-4 py-2 text-center">
-                                                <div className="flex items-center justify-center">
-                                                    <Checkbox
-                                                        checked={matrixState[role.id]?.has(perm.id)}
-                                                        onCheckedChange={() => togglePermission(role.id, perm.id)}
-                                                    />
-                                                </div>
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
-                                </Fragment>
-                            );
-                        })}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {MODULES.map(({ module, ids }) => {
+                                    const applicableIds = ids.filter(id => id in PERMISSION_LABELS);
+                                    return (
+                                        <Fragment key={module}>
+                                            {/* Module Header Row */}
+                                            <tr className="border-b bg-muted/20">
+                                                <td colSpan={matrix.length + 1} className="px-4 py-2 font-semibold text-foreground sticky left-0 bg-muted/20 z-10 border-r">
+                                                    {module}
+                                                </td>
+                                            </tr>
+                                            {/* Permission Rows */}
+                                            {applicableIds.map((permId) => (
+                                                <tr key={permId} className="border-b hover:bg-muted/10 transition-colors">
+                                                    <td className="px-4 py-2 pl-8 text-muted-foreground sticky left-0 bg-background z-10 border-r">
+                                                        {PERMISSION_LABELS[permId] ?? permId}
+                                                        <span className="ml-2 font-mono text-[10px] text-muted-foreground/60">{permId}</span>
+                                                    </td>
+                                                    {matrix.map(entry => {
+                                                        const granted = permissionSetByRole.get(entry.role)?.has(permId) ?? false;
+                                                        return (
+                                                            <td key={entry.role} className="px-4 py-2 text-center">
+                                                                <div className="flex items-center justify-center">
+                                                                    <Checkbox checked={granted} disabled aria-label={`${entry.role}: ${permId}`} />
+                                                                </div>
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            ))}
+                                        </Fragment>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

@@ -6,6 +6,7 @@ interface UserSession{
     middleName: string;
     lastName: string;
     branchId: string;
+    role: string;
     permissions: string[];
 }
 
