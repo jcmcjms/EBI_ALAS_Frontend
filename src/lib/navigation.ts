@@ -74,7 +74,7 @@ export const navMain: NavItem[] = [
         items: [
             {
                 title: "Loan Products",
-                url: "#",
+                url: "/admin/loan-products",
             },
             {
                 title: "Users",
