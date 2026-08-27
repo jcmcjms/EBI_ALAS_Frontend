@@ -37,6 +37,12 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/src/lib/utils";
 import { BRANCHES, PERMISSIONS, type CreateUserPayload, type UpdateUserPayload, type UserResponse } from "@/src/lib/api/types";
+
+/** Lookup branch display name by branch code. */
+function getBranchName(code: string): string {
+    const branch = BRANCHES.find(b => b.code === code);
+    return branch?.name ?? code;
+}
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { useAuthStore } from "@/src/store/authStore";
 import { useRoles } from "@/src/hooks/use-roles";
@@ -116,7 +122,7 @@ const columns = columnHelper.columns([
     }),
     columnHelper.accessor("branchId", {
         header: "Branch",
-        cell: (info) => <span className="text-sm">{info.getValue()}</span>,
+        cell: (info) => <span className="text-sm">{getBranchName(info.getValue())}</span>,
     }),
     columnHelper.accessor("role", {
         header: "Role",
@@ -423,7 +429,7 @@ export function UsersDataTable() {
                 u.firstName,
                 u.middleName ?? "",
                 u.lastName,
-                u.branchId,
+                getBranchName(u.branchId),
                 u.role,
                 u.isActive ? "Active" : "Suspended",
                 u.createdAt,
@@ -496,7 +502,7 @@ export function UsersDataTable() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">All Branches</SelectItem>
-                                            {BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                                            {BRANCHES.map(b => <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
 

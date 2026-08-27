@@ -273,7 +273,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                                         <SelectValue placeholder="Select branch" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                                        {BRANCHES.map(b => <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
