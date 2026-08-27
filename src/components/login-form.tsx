@@ -40,8 +40,8 @@ export  function LoginForm({className, ...props}: React.ComponentProps<"form">) 
             const response = await apiClient.post("/api/auth/login", data);
             const apiResponse = response.data;
 
-            if (apiResponse.success && apiResponse.data?.token) {
-                const token = apiResponse.data.token;
+            if (apiResponse.success && apiResponse.data?.accessToken) {
+                const token = apiResponse.data.accessToken;
                 const user = extractUserFromToken(token);
 
                 if (user) {

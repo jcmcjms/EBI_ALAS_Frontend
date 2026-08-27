@@ -1,4 +1,4 @@
-import * as axios from "axios";
+import axios from "axios";
 import {useAuthStore} from "../store/authStore.ts";
 
 // In development, Vite proxy forwards /api/* to the backend.
@@ -20,6 +20,26 @@ export const apiClient = axios.create({
     headers: { "Content-Type": "application/json" },
 });
 
+// ── Refresh token mutex ──────────────────────────────────────────────────────
+// Prevents multiple concurrent 401s from firing duplicate refresh requests.
+// All pending requests share the same refresh promise, then retry with the new token.
+let isRefreshing = false;
+let failedQueue: Array<{
+    resolve: (token: string) => void;
+    reject: (error: unknown) => void;
+}> = [];
+
+function processQueue(error: unknown, token: string | null) {
+    failedQueue.forEach(({ resolve, reject }) => {
+        if (error || !token) {
+            reject(error);
+        } else {
+            resolve(token);
+        }
+    });
+    failedQueue = [];
+}
+
 // ── Request interceptor ──────────────────────────────────────────────────────
 // 1. Attach the in-memory Bearer token (access token stays in Zustand — never
 //    in a cookie or localStorage — to prevent XSS theft).
@@ -34,8 +54,6 @@ apiClient.interceptors.request.use((config) => {
     }
 
     // CSRF protection: read XSRF-TOKEN cookie and send as header.
-    // The backend must set this cookie (SameSite=Lax, NOT HttpOnly) and
-    // validate the X-XSRF-TOKEN header on state-changing requests.
     const method = config.method?.toUpperCase();
     if (method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE") {
         const xsrfToken = getCookie("XSRF-TOKEN");
@@ -48,18 +66,72 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // ── Response interceptor ─────────────────────────────────────────────────────
-// 401 handling: If the backend returns 401, the access token is expired or
-// revoked. Clear the entire session and redirect to login. This also covers
-// the case where the refresh token cookie has expired.
+// 401 handling: Instead of immediately logging out, attempt a silent refresh.
+// The browser automatically sends the HttpOnly refreshToken cookie with the
+// POST /api/auth/refresh request. If it succeeds, update Zustand and retry
+// the original request. If it fails, THEN clear the session.
 apiClient.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // 401 means the token is expired or revoked — drop the whole session.
+    async (error) => {
+        const originalRequest = error.config;
+
+        // If not a 401, or if this is the refresh call itself, or already retried — reject immediately
+        if (
+            error.response?.status !== 401 ||
+            originalRequest._retry ||
+            originalRequest.url === "/api/auth/refresh"
+        ) {
+            return Promise.reject(error);
+        }
+
+        // If a refresh is already in progress, queue this request
+        if (isRefreshing) {
+            return new Promise<string>((resolve, reject) => {
+                failedQueue.push({ resolve, reject });
+            }).then((newToken) => {
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return apiClient(originalRequest);
+            });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+            // POST /api/auth/refresh — browser sends the HttpOnly cookie automatically
+            const { data: apiResponse } = await axios.post(
+                `${originalRequest.baseURL || ""}/api/auth/refresh`,
+                null,
+                { withCredentials: true, headers: { "Content-Type": "application/json" } }
+            );
+
+            if (apiResponse?.success && apiResponse.data?.accessToken) {
+                const newToken = apiResponse.data.accessToken;
+                useAuthStore.getState().setAccessToken(newToken);
+
+                // Update the original request with the new token and retry
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+                // Process any queued requests that were waiting for the refresh
+                processQueue(null, newToken);
+
+                return apiClient(originalRequest);
+            }
+
+            // Refresh returned no token — session is dead
+            processQueue(new Error("Refresh failed"), null);
             useAuthStore.getState().clearSession();
             window.location.href = "/login";
+            return Promise.reject(error);
+        } catch (refreshError) {
+            // Refresh cookie expired or backend unreachable — force logout
+            processQueue(refreshError, null);
+            useAuthStore.getState().clearSession();
+            window.location.href = "/login";
+            return Promise.reject(error);
+        } finally {
+            isRefreshing = false;
         }
-        return Promise.reject(error);
     }
 );
 

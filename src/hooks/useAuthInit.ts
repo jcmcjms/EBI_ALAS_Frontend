@@ -11,8 +11,8 @@ import { extractUserFromToken } from "@/src/lib/jwt";
  * Wrap the <App /> root with this hook and show a global spinner while
  * `isInitializing` is true to prevent a flash of the login page.
  *
- * Requires the backend to expose: GET /api/auth/refresh
- *   Response: { success: boolean, data: { token: string } }
+ * Requires the backend to expose: POST /api/auth/refresh
+ *   Response: { success: boolean, data: { accessToken: string } }
  */
 export function useAuthInit() {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -25,10 +25,10 @@ export function useAuthInit() {
       try {
         // The browser automatically sends the HttpOnly refresh cookie
         // because withCredentials: true is set on apiClient.
-        const { data: apiResponse } = await apiClient.get("/api/auth/refresh");
+        const { data: apiResponse } = await apiClient.post("/api/auth/refresh");
 
-        if (!cancelled && apiResponse?.success && apiResponse.data?.token) {
-          const token = apiResponse.data.token;
+        if (!cancelled && apiResponse?.success && apiResponse.data?.accessToken) {
+          const token = apiResponse.data.accessToken;
           const user = extractUserFromToken(token);
 
           if (user) {
