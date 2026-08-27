@@ -44,7 +44,6 @@ export const ebiReloanSchema = z.object({
     pn: z.string().default(""),
     name: z.string().default(""),
     existingDeduction: z.number().default(0),
-    payToClose: z.boolean().default(false),
 });
 
 // ── Buy-Out (from another FI) ──────────────────────────────────

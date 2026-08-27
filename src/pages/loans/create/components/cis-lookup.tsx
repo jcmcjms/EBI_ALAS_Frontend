@@ -141,14 +141,13 @@ export function CISLookup() {
             }))
         );
 
-        // EBI accounts for reloans ("pay to close" is an officer decision — default false).
+        // EBI accounts for reloans
         setValue(
             "ebiReloans",
             (borrower.ebiReloanAccounts ?? []).map((r) => ({
                 pn: r.pn,
                 name: r.name ?? "",
                 existingDeduction: toNumber(r.existingDeductions),
-                payToClose: false,
             }))
         );
 

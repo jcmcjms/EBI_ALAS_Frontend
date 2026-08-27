@@ -28,7 +28,6 @@ export function OtherObligationsSection() {
                     </div>
                     <Table>
                         <TableHeader><TableRow>
-                            <TableHead className="w-[50px]">Pay to Close?</TableHead>
                             <TableHead>PN / Account No.</TableHead>
                             <TableHead>Product Name</TableHead>
                             <TableHead className="text-right">Existing Deduction</TableHead>
@@ -36,13 +35,12 @@ export function OtherObligationsSection() {
                         <TableBody>
                             {reloans.map((field, i) => (
                                 <TableRow key={field.id}>
-                                    <TableCell><Checkbox {...register(`ebiReloans.${i}.payToClose` as const)} /></TableCell>
                                     <TableCell><Input {...register(`ebiReloans.${i}.pn`)} readOnly className="h-8 font-mono text-xs bg-muted/50" /></TableCell>
                                     <TableCell><Input {...register(`ebiReloans.${i}.name`)} readOnly className="h-8 text-xs bg-muted/50" /></TableCell>
                                     <TableCell><Input type="number" {...register(`ebiReloans.${i}.existingDeduction`, { valueAsNumber: true })} readOnly className="h-8 text-right text-xs bg-muted/50" /></TableCell>
                                 </TableRow>
                             ))}
-                            {reloans.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-xs text-muted-foreground py-4">No EBI reloans added.</TableCell></TableRow>}
+                            {reloans.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-xs text-muted-foreground py-4">No EBI reloans added.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>
