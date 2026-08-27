@@ -8,6 +8,7 @@ interface UserSession{
     branchId: string;
     role: string;
     permissions: string[];
+    mustChangePassword: boolean;
 }
 
 interface AuthState{

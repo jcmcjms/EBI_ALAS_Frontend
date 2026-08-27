@@ -128,10 +128,11 @@ export function useLoanProducts() {
 	return useQuery({
 		queryKey: [LOAN_PRODUCTS_KEY],
 		queryFn: async () => {
-			await new Promise((r) => setTimeout(r, 600)); // Simulate network
+			// Simulate network delay - remove or reduce in production
+			await new Promise((r) => setTimeout(r, 300));
 			return MOCK_PRODUCTS;
 		},
-		placeholderData: (prev) => prev,
+		initialData: MOCK_PRODUCTS,
 		staleTime: 1000 * 60 * 5,
 	});
 }

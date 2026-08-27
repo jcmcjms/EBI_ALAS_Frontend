@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/src/components/auth/ProtectedRoute";
 import { PERMISSIONS } from "@/src/lib/api/types";
 
 const Login = lazy(() => import("./pages/auth/login"));
+const ChangePassword = lazy(() => import("./pages/auth/change-password"));
 const Dashboard = lazy(() => import("./pages/dashboard").then(m => ({ default: m.Dashboard })));
 const UsersPage = lazy(() => import("./pages/admin/users/index").then(m => ({ default: m.UsersPage })));
 const RolesPage = lazy(() => import("./pages/admin/roles/index").then(m => ({ default: m.RolesPage })));
@@ -23,6 +24,13 @@ function App() {
             }>
                 <Routes>
                     <Route path="/login" element={<Login />} />
+
+                    {/* Change Password — requires auth but accessible even when mustChangePassword is true */}
+                    <Route path="/change-password" element={
+                        <ProtectedRoute>
+                            <ChangePassword />
+                        </ProtectedRoute>
+                    } />
 
                     {/* 403 Forbidden — accessible without auth so the page
                         itself can render for any user who hits it */}

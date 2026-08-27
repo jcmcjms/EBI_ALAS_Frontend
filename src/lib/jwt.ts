@@ -29,6 +29,7 @@ export interface JwtUserSession {
     branchId: string;
     role: string;
     permissions: string[];
+    mustChangePassword: boolean;
 }
 
 export function extractUserFromToken(token: string): JwtUserSession | null {
@@ -48,6 +49,9 @@ export function extractUserFromToken(token: string): JwtUserSession | null {
         }
     }
 
+    // Handle boolean claim properly - avoid JS "false" === true trap
+    const mustChangePassword = payload.mustChangePassword === true || String(payload.mustChangePassword) === "true";
+
     return {
         userId: String(payload.userId ?? ''),
         firstName: String(payload.firstName ?? ''),
@@ -56,5 +60,6 @@ export function extractUserFromToken(token: string): JwtUserSession | null {
         branchId: String(payload.branchId ?? ''),
         role: String(payload.role ?? ''),
         permissions,
+        mustChangePassword,
     };
 }

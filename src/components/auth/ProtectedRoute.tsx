@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/src/store/authStore";
 
 interface ProtectedRouteProps {
@@ -7,12 +7,19 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteProps) {
+    const location = useLocation();
     const accessToken = useAuthStore((state) => state.accessToken);
+    const user = useAuthStore((state) => state.user);
     const hasPermission = useAuthStore((state) => state.hasPermission);
 
     // Not logged in — redirect to login
     if (!accessToken) {
         return <Navigate to="/login" replace />;
+    }
+
+    // Intercept: If user must change password, block access to all other routes
+    if (user?.mustChangePassword && location.pathname !== "/change-password") {
+        return <Navigate to="/change-password" replace />;
     }
 
     // Logged in but lacks the required permission — send to /forbidden
