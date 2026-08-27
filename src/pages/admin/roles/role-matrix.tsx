@@ -14,6 +14,8 @@ const PERMISSION_LABELS: Record<string, string> = {
     "loans.evaluate": "Evaluate / Credit Check",
     "loans.approve": "Approve Loan",
     "loans.reject": "Reject Loan",
+    "loan_product.manage": "Manage Loan Products",
+    "loan_product.view": "View Loan Products",
     "user.create": "Create User",
     "user.view": "View Users",
     "user.edit": "Edit User Details",
@@ -27,6 +29,10 @@ const MODULES: { module: string; ids: string[] }[] = [
     {
         module: "Loan Origination",
         ids: ["loans.view", "loans.create", "loans.recommend", "loans.evaluate", "loans.approve", "loans.reject"],
+    },
+    {
+        module: "Loan Product Management",
+        ids: ["loan_product.view", "loan_product.manage"],
     },
     {
         module: "User Management",

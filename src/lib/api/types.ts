@@ -112,6 +112,8 @@ export const PERMISSIONS = {
     loansEvaluate: "loans.evaluate",
     loansApprove: "loans.approve",
     loansReject: "loans.reject",
+    loanProductManage: "loan_product.manage",
+    loanProductView: "loan_product.view",
     userCreate: "user.create",
     userView: "user.view",
     userEdit: "user.edit",
@@ -121,18 +123,80 @@ export const PERMISSIONS = {
 } as const;
 
 /**
- * Static branch list — the backend has no branches endpoint yet.
- * BranchId is stored as a plain string on users.
+ * Static branch list — mirrors the backend Branch entity (Features/Branches).
+ * BranchId is stored as a plain string on users (matches Branch.Code).
+ * Kept in sync with WEBLOAN_BRANCHES for the WebLoan database.
  */
-export const BRANCHES = [
-    "Buhangin",
-    "Bacolod",
-    "Cagayan De Oro",
-    "Bayugan",
-    "Tandag",
-    "Valencia",
-    "Matina",
+export const BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
+    { code: "000", name: "Lianga Branch" },
+    { code: "002", name: "Barobo Branch" },
+    { code: "003", name: "San Francisco Branch" },
+    { code: "004", name: "Arasasan Branch" },
+    { code: "005", name: "Hinatuan Branch" },
+    { code: "006", name: "Tagum Branch" },
+    { code: "007", name: "Tandag Branch" },
+    { code: "008", name: "Butuan Branch" },
+    { code: "009", name: "Bislig Branch" },
+    { code: "011", name: "Head Office Branch" },
+    { code: "012", name: "Cagayan Branch" },
+    { code: "013", name: "Talisay Branch" },
+    { code: "014", name: "General Santos Branch" },
+    { code: "015", name: "Panabo Branch" },
+    { code: "016", name: "Valencia Branch" },
+    { code: "017", name: "Cateel Branch" },
+    { code: "018", name: "Davao-Buhangin Branch" },
+    { code: "019", name: "Tacloban Branch" },
+    { code: "020", name: "Bacolod Branch" },
+    { code: "021", name: "Iloilo Branch" },
+    { code: "022", name: "Davao-Matina Branch" },
+    { code: "023", name: "Trento Branch" },
+    { code: "024", name: "Mati Branch" },
+    { code: "025", name: "Bayugan Branch" },
+    { code: "026", name: "Nabunturan Branch" },
+    { code: "027", name: "Madrid Branch" },
+    { code: "028", name: "Surigao Branch" },
+    { code: "029", name: "Gingoog Branch" },
+    { code: "030", name: "CTS (Mandaue) Branch" },
+    { code: "031", name: "Ronda Branch" },
+    { code: "991", name: "Corporate Center" },
 ] as const;
+
+// ─── Branches API ──────────────────────────────────────────────────────────────
+
+/** Branch record returned by GET /api/branches (BranchListResponse). */
+export interface BranchListResponse {
+    id: number;
+    code: string;
+    name: string;
+    isActive: boolean;
+}
+
+/** Branch record returned by GET /api/branches/{id} (BranchResponse). */
+export interface BranchResponse {
+    id: number;
+    code: string;
+    name: string;
+    isActive: boolean;
+    createdAt: string;
+}
+
+/** GET /api/branches query parameters. */
+export interface BranchQueryParams {
+    pageNumber?: number;
+    pageSize?: number;
+    isActive?: boolean;
+}
+
+/** Paged result for branches (ApiResponse<PagedResult<BranchListResponse>>). */
+export interface BranchesPagedResult {
+    items: BranchListResponse[];
+    currentPage: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+}
 
 /**
  * Static webloan branch list — mirrors dbo.branch_set (bk='088') in the WebLoan
