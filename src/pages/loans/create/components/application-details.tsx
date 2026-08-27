@@ -2,7 +2,6 @@ import { useFormContext } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { Badge } from "@/src/components/ui/badge";
 import { LockSimple, Bank, UserCircle } from "@phosphor-icons/react";
 import { useAuthStore } from "@/src/store/authStore";
@@ -34,16 +33,12 @@ export function ApplicationDetailsSection() {
 
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Loan Type / Category</Label>
-                    <Select defaultValue="salary_loan" onValueChange={(val) => setValue("loan.type", val)}>
-                        <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="salary_loan">Salary Loan</SelectItem>
-                            <SelectItem value="multi_purpose">Multi-Purpose Loan</SelectItem>
-                            <SelectItem value="emergency">Emergency Loan</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <Input
+                        {...register("loan.type")}
+                        defaultValue="salary_loan"
+                        placeholder="e.g. Salary Loan, Multi-Purpose Loan"
+                        className="h-9"
+                    />
                 </div>
 
                 <div className="space-y-1.5">

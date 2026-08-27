@@ -2,16 +2,15 @@ import { useFormContext, useFieldArray } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Input } from "@/src/components/ui/input";
-import { Button } from "@/src/components/ui/button";
 import { Checkbox } from "@/src/components/ui/checkbox";
-import { Plus, Bank, CreditCard, ArrowLineDown } from "@phosphor-icons/react";
+import { Bank, CreditCard, ArrowLineDown } from "@phosphor-icons/react";
 
 export function OtherObligationsSection() {
     const { control, register } = useFormContext();
 
-    const { fields: reloans, append: appendReloan } = useFieldArray({ control, name: "ebiReloans" });
-    const { fields: buyouts, append: appendBuyout } = useFieldArray({ control, name: "buyOuts" });
-    const { fields: incoming, append: appendIncoming } = useFieldArray({ control, name: "incomingLoans" });
+    const { fields: reloans } = useFieldArray({ control, name: "ebiReloans" });
+    const { fields: buyouts } = useFieldArray({ control, name: "buyOuts" });
+    const { fields: incoming } = useFieldArray({ control, name: "incomingLoans" });
 
     return (
         <Card>
@@ -22,13 +21,10 @@ export function OtherObligationsSection() {
 
                 {/* EBI Reloans */}
                 <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="mb-3">
                         <h3 className="text-sm font-semibold flex items-center gap-2">
                             <Bank size={16} weight="bold" className="text-primary" /> EBI Accounts for Reloans
                         </h3>
-                        <Button type="button" variant="ghost" size="sm" disabled onClick={() => appendReloan({ pn: "", name: "", existingDeduction: 0, payToClose: false })} className="h-7 text-xs gap-1">
-                            <Plus size={14} /> Add EBI Loan
-                        </Button>
                     </div>
                     <Table>
                         <TableHeader><TableRow>
@@ -53,13 +49,10 @@ export function OtherObligationsSection() {
 
                 {/* Buy-Outs from Other FIs */}
                 <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="mb-3">
                         <h3 className="text-sm font-semibold flex items-center gap-2">
                             <CreditCard size={16} weight="bold" className="text-primary" /> Buy-Out Accounts (Other FIs)
                         </h3>
-                        <Button type="button" variant="ghost" size="sm" disabled onClick={() => appendBuyout({ pn: "", name: "", amortization: 0, outstandingBalance: 0 })} className="h-7 text-xs gap-1">
-                            <Plus size={14} /> Add Buy-Out
-                        </Button>
                     </div>
                     <Table>
                         <TableHeader><TableRow>
@@ -84,13 +77,10 @@ export function OtherObligationsSection() {
 
                 {/* Incoming / Undeducted */}
                 <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="mb-3">
                         <h3 className="text-sm font-semibold flex items-center gap-2">
                             <ArrowLineDown size={16} weight="bold" className="text-primary" /> Incoming / Undeducted Loans
                         </h3>
-                        <Button type="button" variant="ghost" size="sm" disabled onClick={() => appendIncoming({ name: "", deductions: 0, remarks: "" })} className="h-7 text-xs gap-1">
-                            <Plus size={14} /> Add Incoming
-                        </Button>
                     </div>
                     <Table>
                         <TableHeader><TableRow>

@@ -2,33 +2,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/src/components/ui/select";
 import { Badge } from "@/src/components/ui/badge";
 import { Calculator, CurrencyDollar, CalendarBlank, LockSimple } from "@phosphor-icons/react";
-
-const loanProducts = [
-    "Personal Loan",
-    "Salary Loan",
-    "Multi-Purpose Loan",
-    "Emergency Loan",
-    "Calamity Loan",
-    "Educational Loan",
-    "Housing Loan",
-    "Vehicle Loan",
-];
-
-const paymentModes = [
-    "Salary Deduction",
-    "Post-Dated Checks",
-    "Auto Debit",
-    "Manual Payment",
-];
 
 export function LoanParametersSection() {
     const { control, register, setValue } = useFormContext();
@@ -37,10 +12,28 @@ export function LoanParametersSection() {
     const term = useWatch({ control, name: "loan.term" }) || 0;
     const interestRate = useWatch({ control, name: "loan.interestRate" }) || 1.5;
 
+    // ── Real data from form fields ────────────────────────────────────────
+    const netTakeHomePay = useWatch({ control, name: "client.netTakeHomePay" }) || 0;
+    const outstandingLoans = useWatch({ control, name: "outstandingLoans" }) || [];
+    const ebiReloans = useWatch({ control, name: "ebiReloans" }) || [];
+    const buyOuts = useWatch({ control, name: "buyOuts" }) || [];
+    const incomingLoans = useWatch({ control, name: "incomingLoans" }) || [];
+
+    // Sum all existing obligations (monthly deductions)
+    const totalExistingObligations =
+        outstandingLoans.reduce((sum, loan) => sum + (loan.amortization || 0), 0) +
+        ebiReloans.reduce((sum, loan) => sum + (loan.existingDeduction || 0), 0) +
+        buyOuts.reduce((sum, loan) => sum + (loan.amortization || 0), 0) +
+        incomingLoans.reduce((sum, loan) => sum + (loan.deductions || 0), 0);
+
     const monthlyPayment =
         term > 0 && proposedAmount > 0
             ? (proposedAmount + proposedAmount * (interestRate / 100) * (term / 12)) / term
             : 0;
+
+    const dtiRatio = netTakeHomePay > 0 && monthlyPayment > 0
+        ? ((monthlyPayment / netTakeHomePay) * 100)
+        : 0;
 
     return (
         <Card>
@@ -72,22 +65,12 @@ export function LoanParametersSection() {
                 {/* Row 1 — Product & Purpose */}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Loan Product</Label>
-                    <Select
-                        disabled
-                        value={useWatch({ control, name: "loan.product" }) ?? ""}
-                        onValueChange={(v) => setValue("loan.product", v, { shouldValidate: true })}
-                    >
-                        <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select product" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {loanProducts.map((p) => (
-                                <SelectItem key={p} value={p}>
-                                    {p}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <Input
+                        {...register("loan.product")}
+                        placeholder="e.g. Salary Loan, Multi-Purpose Loan"
+                        readOnly
+                        className="h-9 bg-muted/50"
+                    />
                 </div>
 
                 <div className="space-y-1.5 md:col-span-2">
@@ -145,22 +128,12 @@ export function LoanParametersSection() {
                 {/* Row 3 — Payment mode & release date */}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Mode of Payment</Label>
-                    <Select
-                        disabled
-                        value={useWatch({ control, name: "loan.modeOfPayment" }) ?? ""}
-                        onValueChange={(v) => setValue("loan.modeOfPayment", v, { shouldValidate: true })}
-                    >
-                        <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select mode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {paymentModes.map((m) => (
-                                <SelectItem key={m} value={m}>
-                                    {m}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <Input
+                        {...register("loan.modeOfPayment")}
+                        placeholder="e.g. Salary Deduction, Auto Debit"
+                        readOnly
+                        className="h-9 bg-muted/50"
+                    />
                 </div>
 
                 <div className="space-y-1.5">
@@ -201,35 +174,40 @@ export function LoanParametersSection() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                             <span className="text-muted-foreground text-xs block">Net Take-Home Pay</span>
-                            <span className="font-semibold">₱45,000</span>
+                            <span className={`font-semibold ${netTakeHomePay > 0 ? "" : "text-muted-foreground"}`}>
+                                {netTakeHomePay > 0
+                                    ? `₱${netTakeHomePay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                    : "—"}
+                            </span>
                         </div>
                         <div>
                             <span className="text-muted-foreground text-xs block">Total Existing Obligations</span>
-                            <span className="font-semibold">₱3,700</span>
+                            <span className={`font-semibold ${totalExistingObligations > 0 ? "" : "text-muted-foreground"}`}>
+                                {totalExistingObligations > 0
+                                    ? `₱${totalExistingObligations.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                    : "—"}
+                            </span>
                         </div>
                         <div>
                             <span className="text-muted-foreground text-xs block">Proposed Monthly Amort.</span>
                             <span className="font-bold text-primary">
-                                ₱{monthlyPayment.toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}
+                                {monthlyPayment > 0
+                                    ? `₱${monthlyPayment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                    : "₱0.00"}
                             </span>
                         </div>
                         <div>
                             <span className="text-muted-foreground text-xs block">Debt-to-Income Ratio</span>
                             <span
                                 className={
-                                    proposedAmount > 0 && monthlyPayment > 0
-                                        ? (monthlyPayment / 45000) * 100 > 40
+                                    dtiRatio > 0
+                                        ? dtiRatio > 40
                                             ? "font-bold text-red-600"
                                             : "font-bold text-emerald-600"
                                         : "text-muted-foreground"
                                 }
                             >
-                                {proposedAmount > 0 && monthlyPayment > 0
-                                    ? `${((monthlyPayment / 45000) * 100).toFixed(1)}%`
-                                    : "—"}
+                                {dtiRatio > 0 ? `${dtiRatio.toFixed(1)}%` : "—"}
                             </span>
                         </div>
                     </div>

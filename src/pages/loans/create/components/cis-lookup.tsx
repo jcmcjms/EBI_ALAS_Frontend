@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Button } from "@/src/components/ui/button";
-import { MagnifyingGlass, IdentificationCard, CheckCircle, WarningCircle, LockSimple } from "@phosphor-icons/react";
+import { MagnifyingGlass, IdentificationCard, LockSimple } from "@phosphor-icons/react";
 import { Badge } from "@/src/components/ui/badge";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { getWebLoanByCis } from "@/src/lib/api/webloans";
@@ -21,25 +21,51 @@ function toNumber(value?: number | null): number {
     return typeof value === "number" ? value : 0;
 }
 
-/** Reads the HTTP status off an unknown error (axios errors carry .response.status). */
-function errorStatus(error: unknown): number | undefined {
-    return (error as { response?: { status?: number } } | null)?.response?.status;
-}
-
-type Feedback = { tone: "success" | "warning" | "error"; message: string };
-
 export function CISLookup() {
-    const { setValue, register } = useFormContext();
+    const { setValue, register, reset } = useFormContext();
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [clientName, setClientName] = useState("");
+
+    /** Resets all form fields that were populated by the CIS lookup. */
+    const clearForm = useCallback(() => {
+        // Branch & Type
+        setValue("branchType.loanType", "");
+        setValue("branchType.branch", "");
+        setValue("branchType.lai", "");
+        // Client
+        setValue("client.cisId", "");
+        setValue("client.firstName", "");
+        setValue("client.middleName", "");
+        setValue("client.lastName", "");
+        setValue("client.suffix", "");
+        setValue("client.birthdate", "");
+        setValue("client.address", "");
+        setValue("client.agency", "");
+        setValue("client.position", "");
+        setValue("client.employeeId", "");
+        setValue("client.region", "");
+        setValue("client.divisionCode", "");
+        setValue("client.stationCode", "");
+        setValue("client.misAgency", "");
+        // Loan
+        setValue("loan.purpose", "");
+        setValue("loan.proposedAmount", 0);
+        setValue("loan.term", 0);
+        setValue("loan.interestRate", 0);
+        // Obligations
+        setValue("outstandingLoans", []);
+        setValue("ebiReloans", []);
+        setValue("buyOuts", []);
+        setValue("incomingLoans", []);
+        setClientName("");
+    }, [setValue]);
 
     const handleLookup = async () => {
         const query = searchQuery.trim();
         if (!query || isLoading) return;
 
         setIsLoading(true);
-        setFeedback(null);
 
         try {
             const borrower = await getWebLoanByCis(query);
@@ -50,17 +76,11 @@ export function CISLookup() {
                 borrower.personalInformation.lastName,
             ].filter(Boolean).join(" ");
 
-            setFeedback({
-                tone: "success",
-                message: `Client profile loaded${fullName ? ` — ${fullName}` : ""}.`,
-            });
+            setClientName(fullName);
             toast.success("Client profile loaded successfully.");
         } catch (error) {
             const message = getErrorMessage(error);
-            setFeedback({
-                tone: errorStatus(error) === 404 ? "warning" : "error",
-                message,
-            });
+            setClientName("");
             toast.error(message);
         } finally {
             setIsLoading(false);
@@ -154,12 +174,6 @@ export function CISLookup() {
         );
     };
 
-    const feedbackStyles = feedback?.tone === "success"
-        ? "text-emerald-600 bg-emerald-500/10 border-emerald-500/20"
-        : feedback?.tone === "warning"
-            ? "text-amber-600 bg-amber-500/10 border-amber-500/20"
-            : "text-red-600 bg-red-500/10 border-red-500/20";
-
     return (
         <Card>
             <CardHeader className="pb-3 border-b bg-muted/30">
@@ -170,30 +184,30 @@ export function CISLookup() {
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
                 {/* CIS Search */}
-                <div className="flex gap-3 max-w-md">
-                    <div className="relative flex-1">
+                <div className="flex gap-3 items-center">
+                    <div className="flex-1 min-w-0 relative">
                         <MagnifyingGlass size={16} className="absolute left-3 top-3 text-muted-foreground" weight="bold" />
                         <Input
                             placeholder="Enter CIS Number..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setSearchQuery(val);
+                                if (!val.trim() && clientName) clearForm();
+                            }}
                             className="pl-9 h-10 font-mono"
                             onKeyDown={(e) => e.key === "Enter" && handleLookup()}
                         />
                     </div>
-                    <Button onClick={handleLookup} disabled={isLoading || !searchQuery.trim()} className="h-10 px-6">
+                    <Button onClick={handleLookup} disabled={isLoading || !searchQuery.trim()} className="h-10 px-6 shrink-0">
                         {isLoading ? "Fetching..." : "Fetch Profile"}
                     </Button>
+                    {clientName && (
+                        <span className="text-sm font-medium text-foreground whitespace-nowrap shrink-0">
+                            Client Profile: <span className="font-bold">{clientName}</span>
+                        </span>
+                    )}
                 </div>
-
-                {feedback && (
-                    <div className={`flex items-center gap-2 text-sm p-3 rounded-md border ${feedbackStyles}`}>
-                        {feedback.tone === "success"
-                            ? <CheckCircle size={16} weight="fill" />
-                            : <WarningCircle size={16} weight="fill" />}
-                        <span className="font-medium">{feedback.message}</span>
-                    </div>
-                )}
 
                 {/* Branch & Type Section */}
                 <div className="rounded-md border bg-muted/20 p-4 space-y-4">
