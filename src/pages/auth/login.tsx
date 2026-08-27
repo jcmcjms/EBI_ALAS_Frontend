@@ -27,11 +27,20 @@ export default function Login() {
                     </div>
                 </div>
             </div>
-            <div className="relative hidden bg-muted lg:block">
+            <div className="relative hidden overflow-hidden lg:block">
+                {/* Blurred, zoomed copy fills the letterbox so the panel reads full-bleed */}
                 <img
-                src="/EBI_bg_login.png"
-                alt="Image"
-                className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"/>
+                    src="/EBI_bg_login.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 h-full w-full scale-125 object-cover blur-xl dark:brightness-[0.2] dark:grayscale"
+                />
+                {/* Crisp, uncropped artwork on top */}
+                <img
+                    src="/EBI_bg_login.png"
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-contain dark:brightness-[0.2] dark:grayscale"
+                />
             </div>
         </div>
     )
