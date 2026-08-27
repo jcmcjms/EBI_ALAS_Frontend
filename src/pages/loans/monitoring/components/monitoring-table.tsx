@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
     FlexRender,
     createCoreRowModel,
@@ -15,8 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { CaretUp, CaretDown, CaretUpDown } from "@phosphor-icons/react";
-import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
+import { loanMonitoringData } from "../data/dummy-data";
 import { cn } from "@/src/lib/utils";
 
 // Declare features for this table (v9 API)
@@ -55,7 +55,55 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState<SortingState>([{ id: "applicationDate", desc: true }]);
 
-    const query = useLoanMonitoring(filters, pagination, sorting);
+    // Filter dummy data based on filters
+    const filteredData = useMemo(() => {
+        return loanMonitoringData.filter((item) => {
+            // Search filter
+            if (filters.search) {
+                const searchLower = filters.search.toLowerCase();
+                const matchesSearch =
+                    item.formNumber.toLowerCase().includes(searchLower) ||
+                    item.customerName.toLowerCase().includes(searchLower) ||
+                    item.branchCode.toLowerCase().includes(searchLower) ||
+                    item.product.toLowerCase().includes(searchLower);
+                if (!matchesSearch) return false;
+            }
+
+            // Status filter
+            if (filters.status.length > 0) {
+                if (!filters.status.includes(item.status)) return false;
+            }
+
+            // Branch filter
+            if (filters.branchCode && filters.branchCode !== "all") {
+                if (item.branchCode !== filters.branchCode) return false;
+            }
+
+            // Date range filter (simplified - would need proper date parsing in production)
+            // Skipping for dummy data
+
+            return true;
+        });
+    }, [filters]);
+
+    // Apply sorting
+    const sortedData = useMemo(() => {
+        if (sorting.length === 0) return filteredData;
+        const { id, desc } = sorting[0];
+        return [...filteredData].sort((a, b) => {
+            const aVal = a[id as keyof LoanMonitoringRecord];
+            const bVal = b[id as keyof LoanMonitoringRecord];
+            if (aVal < bVal) return desc ? 1 : -1;
+            if (aVal > bVal) return desc ? -1 : 1;
+            return 0;
+        });
+    }, [filteredData, sorting]);
+
+    // Apply pagination
+    const paginatedData = useMemo(() => {
+        const start = pagination.pageIndex * pagination.pageSize;
+        return sortedData.slice(start, start + pagination.pageSize);
+    }, [sortedData, pagination]);
 
     const columns = columnHelper.columns([
         columnHelper.accessor("formNumber", {
@@ -92,15 +140,14 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
 
     const table = useTable({
         features,
-        data: query.data?.data ?? [],
+        data: paginatedData,
         columns,
         state: { pagination, sorting },
         onPaginationChange: setPagination,
         onSortingChange: setSorting,
         manualPagination: true,
         manualSorting: true,
-        manualFiltering: true,
-        pageCount: Math.ceil((query.data?.rowCount ?? 0) / pagination.pageSize),
+        pageCount: Math.ceil(sortedData.length / pagination.pageSize),
     });
 
     return (
@@ -130,9 +177,7 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {query.isLoading ? (
-                            <TableRow><TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">Loading records...</TableCell></TableRow>
-                        ) : table.getRowModel().rows?.length ? (
+                        {paginatedData.length > 0 ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
@@ -157,12 +202,12 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
             <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/10 text-xs text-muted-foreground">
                 <div>
                     Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
-                    {Math.min((pagination.pageIndex + 1) * pagination.pageSize, query.data?.rowCount ?? 0)} of{" "}
-                    {query.data?.rowCount ?? 0} entries
+                    {Math.min((pagination.pageIndex + 1) * pagination.pageSize, sortedData.length)} of{" "}
+                    {sortedData.length} entries
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage() || query.isFetching}>Previous</Button>
-                    <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => table.nextPage()} disabled={!table.getCanNextPage() || query.isFetching}>Next</Button>
+                    <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Previous</Button>
+                    <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Next</Button>
                 </div>
             </div>
         </div>
