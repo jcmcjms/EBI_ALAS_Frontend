@@ -1,4 +1,4 @@
-import { LoginForm } from "@/src/components/login-form";
+import { LoginForm } from "@/src/pages/auth/login-form";
 
 const ENTERPRISE_BANK_URL = "https://www.enterprisebank.ph/";
 

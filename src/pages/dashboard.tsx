@@ -1,6 +1,4 @@
-import { AppSidebar } from "@/src/components/app-sidebar";
-import { SiteHeader } from "@/src/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
+import { AppShell } from "@/src/components/layout/AppShell";
 import { useAuthStore } from "@/src/store/authStore";
 
 import { ApprovedLoans } from "@/src/pages/dashboard/components/approved-loans";
@@ -25,18 +23,8 @@ export function Dashboard() {
     const asOf = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date();
 
     return (
-        <SidebarProvider
-            style={
-                {
-                    "--sidebar-width": "calc(var(--spacing) * 72)",
-                    "--header-height": "calc(var(--spacing) * 12)",
-                } as React.CSSProperties
-            }
-        >
-            <AppSidebar variant="inset" />
-            <SidebarInset>
-                <SiteHeader />
-                <main className="flex flex-1 flex-col gap-6 p-6">
+        <AppShell>
+            <div className="flex flex-1 flex-col gap-6 p-6">
                     {/* Context header */}
                     <div className="flex flex-wrap items-end justify-between gap-3">
                         <div>
@@ -92,8 +80,7 @@ export function Dashboard() {
                             <p className="text-sm text-muted-foreground">Failed to load dashboard data.</p>
                         </div>
                     )}
-                </main>
-            </SidebarInset>
-        </SidebarProvider>
+                </div>
+        </AppShell>
     );
 }
