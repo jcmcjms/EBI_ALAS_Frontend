@@ -25,7 +25,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/src/components/ui/sidebar"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useAuthStore } from "@/src/store/authStore"
 import { apiClient } from "@/src/lib/apiClient"
 
@@ -110,7 +110,10 @@ export function NavUser({
                                 <UserCircle />
                                 Account
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                                render={<Link to="/notifications" />}
+                                onSelect={(e) => e.preventDefault()}
+                            >
                                 <Bell />
                                 Notifications
                             </DropdownMenuItem>

@@ -1,4 +1,5 @@
 import {
+    Bell,
     ChartBar,
     Folder,
     House,
@@ -39,6 +40,11 @@ export const navMain: NavItem[] = [
         title: "Loan Creation",
         url: "/loans/create",
         icon: ChartBar,
+    },
+    {
+        title: "Notifications",
+        url: "/notifications",
+        icon: Bell,
     },
     {
         title: "Reports",

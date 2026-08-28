@@ -12,6 +12,7 @@ const RolesPage = lazy(() => import("./pages/admin/roles/index").then(m => ({ de
 const LoanProductsPage = lazy(() => import("./pages/admin/loan-products/index").then(m => ({ default: m.LoanProductsIndex })));
 const LoanCreation = lazy(() => import("./pages/loans/create/index"));
 const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
+const Notifications = lazy(() => import("./pages/notifications/index"));
 const Forbidden = lazy(() => import("./pages/errors/Forbidden"));
 
 function App() {
@@ -52,6 +53,11 @@ function App() {
                     <Route path="/loans/create" element={
                         <ProtectedRoute>
                             <LoanCreation />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/notifications" element={
+                        <ProtectedRoute>
+                            <Notifications />
                         </ProtectedRoute>
                     } />
 
