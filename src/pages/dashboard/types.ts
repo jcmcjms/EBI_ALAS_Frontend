@@ -19,6 +19,7 @@ export interface PushBackItem {
     lamId: string;
     branch: string;
     date: string;
+    reason: string;
 }
 
 export interface ApprovedLoanItem {
@@ -33,4 +34,10 @@ export interface DashboardSummary {
     nowServing: number;
     pushBacksToday: number;
     approvedToday: number;
+}
+
+export interface WeeklyTrendPoint {
+    day: string;
+    approved: number;
+    pushBacks: number;
 }

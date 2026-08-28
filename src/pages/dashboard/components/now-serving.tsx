@@ -1,36 +1,47 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
+import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { Badge } from "@/src/components/ui/badge";
-import { nowServingData } from "../data/dummy-data";
+import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { initialsOf } from "@/src/lib/notifications";
+import type { NowServingItem } from "../types";
 
-export function NowServing() {
+interface NowServingProps {
+    data: NowServingItem[];
+}
+
+export function NowServing({ data }: NowServingProps) {
     return (
-        <Card>
+        <Card id="now-serving" className="scroll-mt-24">
             <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-xl">
                     Now Serving
-                    <Badge variant="success">{nowServingData.length}</Badge>
+                    <Badge variant="secondary" className="tabular-nums">{data.length}</Badge>
                 </CardTitle>
             </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[80px]">#</TableHead>
-                            <TableHead>Checker</TableHead>
-                            <TableHead className="text-right">LAM ID</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {nowServingData.map((item) => (
-                            <TableRow key={item.lamId}>
-                                <TableCell className="font-medium">#{item.number}</TableCell>
-                                <TableCell>{item.checker}</TableCell>
-                                <TableCell className="text-right font-mono">{item.lamId}</TableCell>
-                            </TableRow>
+            <CardContent className="p-0">
+                {data.length === 0 ? (
+                    <p className="px-4 py-10 text-center text-sm text-muted-foreground">No checkers are serving right now.</p>
+                ) : (
+                    <ul className="divide-y">
+                        {data.map((item) => (
+                            <li key={item.lamId} className="flex items-center gap-3 px-4 py-3">
+                                <span className="w-7 shrink-0 text-sm font-medium tabular-nums text-muted-foreground">#{item.number}</span>
+                                <Avatar size="sm">
+                                    <AvatarFallback>{initialsOf(item.checker)}</AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium">{item.checker}</p>
+                                    <p className="truncate font-mono text-xs text-muted-foreground">{item.lamId}</p>
+                                </div>
+                                {item.number === 1 && (
+                                    <Badge variant="outline" className="gap-1.5 border-emerald-300 bg-emerald-50 font-normal text-emerald-700">
+                                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" aria-hidden />
+                                        Serving
+                                    </Badge>
+                                )}
+                            </li>
                         ))}
-                    </TableBody>
-                </Table>
+                    </ul>
+                )}
             </CardContent>
         </Card>
     );
