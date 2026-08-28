@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils";
+import { generatePdfFromElement } from "@/src/lib/pdf";
 
 import { loanApplicationSchema, type LoanApplicationFormData } from "./schema";
 import { CISLookup } from "./components/cis-lookup";
@@ -27,6 +28,7 @@ import { ObligationsSection } from "./components/obligations-section";
 import { OtherObligationsSection } from "./components/other-obligations";
 import { VerificationSection } from "./components/verification-section";
 import { DeviationsSection } from "./components/deviations-section";
+import { ApprovalFormPreview } from "./components/approval-form-preview";
 
 // ── Section definitions ─────────────────────────────────────────
 // Mirrors the rendered <section> elements. "Branch & Type" lives
@@ -38,7 +40,8 @@ type SectionId =
   | "obligations"
   | "other-obligations"
   | "verification"
-  | "deviations";
+  | "deviations"
+  | "approval-form";
 
 interface SectionDef {
   id: SectionId;
@@ -54,6 +57,7 @@ const SECTIONS: SectionDef[] = [
   { id: "other-obligations", label: "EBI, Buy-Outs & Incoming" },
   { id: "verification", label: "Verification Conducted", optional: true },
   { id: "deviations", label: "Remarks & Deviations", optional: true },
+  { id: "approval-form", label: "Approval Form" },
 ];
 
 const REQUIRED_SECTION_COUNT = SECTIONS.filter((s) => !s.optional).length;
@@ -89,6 +93,8 @@ function sectionErrorCount(errors: FieldErrors<LoanApplicationFormData>, id: Sec
       return countFieldErrors(errors.verification);
     case "deviations":
       return countFieldErrors(errors.deviations);
+    case "approval-form":
+      return 0; // preview only, no validation
     default:
       return 0; // personal-info is read-only, CIS-sourced
   }
@@ -137,6 +143,8 @@ function useSectionProgress(
           deviations?.aoRecommendation ||
           deviations?.remarks
         );
+      case "approval-form":
+        return isClientLoaded; // preview available once client is loaded
     }
   };
 
@@ -443,6 +451,7 @@ export function LoanCreationPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const approvalFormRef = useRef<HTMLDivElement | null>(null);
 
   // Intersection Observer tracks the active section while scrolling.
   useEffect(() => {
@@ -513,6 +522,19 @@ export function LoanCreationPage() {
     toast.success("Draft saved.");
   };
 
+  const handleGeneratePdf = async () => {
+    if (!approvalFormRef.current) return;
+    const lai = watch("branchType.lai") || "draft";
+    try {
+      toast.info("Generating PDF...");
+      await generatePdfFromElement(approvalFormRef.current, `approval-form-${lai}-${Date.now()}.pdf`);
+      toast.success("PDF generated.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to generate PDF.");
+    }
+  };
+
   const totalErrors = submitAttempted
     ? SECTIONS.reduce((n, s) => n + sectionErrorCount(errors, s.id), 0)
     : 0;
@@ -559,9 +581,10 @@ export function LoanCreationPage() {
               size="sm"
               disabled={!isClientLoaded}
               className="gap-2"
+              onClick={handleGeneratePdf}
               title={
                 isClientLoaded
-                  ? undefined
+                  ? "Generate approval form PDF"
                   : "Load a client to enable PDF export"
               }
             >
@@ -638,6 +661,16 @@ export function LoanCreationPage() {
                   }}
                 >
                   <DeviationsSection />
+                </section>
+
+                {/* 8. Approval Form */}
+                <section
+                  id="approval-form"
+                  ref={(el) => {
+                    sectionRefs.current["approval-form"] = el;
+                  }}
+                >
+                  <ApprovalFormPreview ref={approvalFormRef} onGeneratePdf={handleGeneratePdf} />
                 </section>
               </>
             ) : (
