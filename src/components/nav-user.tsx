@@ -1,5 +1,4 @@
 import {
-    CreditCard,
     DotsThreeVertical,
     SignOut,
     Bell,
@@ -110,10 +109,6 @@ export function NavUser({
                             <DropdownMenuItem>
                                 <UserCircle />
                                 Account
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <CreditCard />
-                                Billing
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                                 <Bell />
