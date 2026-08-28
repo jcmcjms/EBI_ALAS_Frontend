@@ -13,6 +13,7 @@ const LoanProductsPage = lazy(() => import("./pages/admin/loan-products/index").
 const LoanCreation = lazy(() => import("./pages/loans/create/index"));
 const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
 const Notifications = lazy(() => import("./pages/notifications/index"));
+const Account = lazy(() => import("./pages/account/index"));
 const Forbidden = lazy(() => import("./pages/errors/Forbidden"));
 
 function App() {
@@ -58,6 +59,11 @@ function App() {
                     <Route path="/notifications" element={
                         <ProtectedRoute>
                             <Notifications />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/account" element={
+                        <ProtectedRoute>
+                            <Account />
                         </ProtectedRoute>
                     } />
 

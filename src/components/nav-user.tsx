@@ -106,7 +106,10 @@ export function NavUser({
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                                render={<Link to="/account" />}
+                                onSelect={(e) => e.preventDefault()}
+                            >
                                 <UserCircle />
                                 Account
                             </DropdownMenuItem>
