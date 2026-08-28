@@ -119,9 +119,9 @@ function fixOklchColors(clonedDoc: Document, originalElement: HTMLElement): void
 function getAllElements(root: Element | HTMLElement): Element[] {
     const elements: Element[] = [];
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
-    let node: Element | null;
+    let node: Node | null;
     while ((node = walker.nextNode())) {
-        elements.push(node);
+        if (node instanceof Element) elements.push(node);
     }
     return elements;
 }

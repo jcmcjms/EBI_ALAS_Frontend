@@ -208,6 +208,8 @@ export function CISLookup() {
         pn: r.pn,
         name: r.name ?? "",
         existingDeduction: toNumber(r.existingDeductions),
+        // Template column "OB to be paid/closed" maps to payToClose
+        outstandingBalance: toNumber(r.payToClose),
       }))
     );
 
