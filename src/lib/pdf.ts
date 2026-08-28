@@ -1,9 +1,12 @@
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 
 /**
  * Captures an element as PNG and embeds it into a multi-page PDF.
  * Keeps the layout WYSIWYG (matches the approval form exactly).
+ *
+ * Uses html2canvas-pro which natively supports modern CSS color functions
+ * (oklch, lab, lch) used by Tailwind CSS v4.
  *
  * TODO(api): for the production version, consider generating the PDF
  * server-side from the authoritative loan record so the document
@@ -16,15 +19,11 @@ export async function generatePdfFromElement(
 ): Promise<void> {
     // Render at 2x scale for print quality; drop shadows / blur on the source
     // are flattened so the PNG is a faithful snapshot.
-    // Use onclone to fix oklch() color functions that html2canvas can't parse (Tailwind v4).
     const canvas = await html2canvas(element, {
         scale: 2,
         backgroundColor: "#ffffff",
         useCORS: true,
         logging: false,
-        onclone: (clonedDoc) => {
-            fixOklchColors(clonedDoc, element);
-        },
     });
 
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
@@ -62,66 +61,4 @@ export async function generatePdfFromElement(
     }
 
     pdf.save(filename);
-}
-
-/**
- * Walks the cloned document and replaces oklch() color functions with their
- * computed RGB equivalents so html2canvas can render them.
- * Tailwind CSS v4 uses oklch() for all color utilities.
- */
-function fixOklchColors(clonedDoc: Document, originalElement: HTMLElement): void {
-    const colorProperties = [
-        "color",
-        "backgroundColor",
-        "borderColor",
-        "borderTopColor",
-        "borderRightColor",
-        "borderBottomColor",
-        "borderLeftColor",
-        "outlineColor",
-        "textDecorationColor",
-        "textEmphasisColor",
-        "caretColor",
-        "columnRuleColor",
-        "accentColor",
-        "fill",
-        "stroke",
-        "stopColor",
-        "floodColor",
-        "lightingColor",
-    ];
-
-    // Collect all elements from original and clone in tree order
-    const originalElements = getAllElements(originalElement);
-    const clonedElements = getAllElements(clonedDoc.body);
-
-    // Map by index - they should be in the same order since html2canvas clones the tree
-    for (let i = 0; i < originalElements.length && i < clonedElements.length; i++) {
-        const originalEl = originalElements[i];
-        const clonedEl = clonedElements[i] as HTMLElement;
-
-        const computedStyle = getComputedStyle(originalEl);
-
-        for (const prop of colorProperties) {
-            const value = computedStyle.getPropertyValue(prop);
-            if (value && value.includes("oklch")) {
-                // The computed style from getComputedStyle returns rgb()/rgba() for oklch colors
-                // So we can directly apply this resolved value to the clone
-                clonedEl.style.setProperty(prop, value);
-            }
-        }
-    }
-}
-
-/**
- * Returns all descendant elements in tree order (depth-first).
- */
-function getAllElements(root: Element | HTMLElement): Element[] {
-    const elements: Element[] = [];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
-    let node: Node | null;
-    while ((node = walker.nextNode())) {
-        if (node instanceof Element) elements.push(node);
-    }
-    return elements;
 }
