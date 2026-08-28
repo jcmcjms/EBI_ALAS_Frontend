@@ -252,7 +252,12 @@ export interface WebLoanBranchAndType {
     type: string | null;
     typeCode: number | null;
     branchCode: string | null;
-    /** Always null from backend — populated client-side by the requesting user. */
+    /**
+     * Requesting officer's full name. Resolved from
+     * `loan_acct_info.solicitor` → `mis_group.path` (group_no=2) →
+     * `description`. Falls back to null when the borrower's account has no
+     * solicitor or the path cannot be resolved.
+     */
     requestingOfficer: string | null;
     cisNo: string | null;
     /** Loan Account Info numbers (acct_no) owned by this client. */
@@ -269,6 +274,13 @@ export interface WebLoanPersonalInformation {
     address: string | null;
     agencyName: string | null;
     agencyTypeCode: number | null;
+    /**
+     * Agency type description resolved from `cis_info_misc_data` (id_code=14)
+     * → `mis_group.id_code` in the agency-type group. e.g. "RPSU".
+     * Falls back to null when the borrower has no misc row or the id_code
+     * is unknown.
+     */
+    agencyType: string | null;
     positionTitle: string | null;
     /** Not stored in webloan — always null. Populated in ALAS. */
     lengthOfService: string | null;
@@ -276,7 +288,16 @@ export interface WebLoanPersonalInformation {
     divisionCode: string | null;
     stationCode: string | null;
     employeeNo: string | null;
+    /**
+     * Primary MIS path from `loan_acct_info.cat_mis_group` (e.g. "INDIV/SAL").
+     * The resolved agency name (e.g. "DEPED LIANGA") is `misAgencyName`.
+     */
     misAgency: string | null;
+    /**
+     * Resolved secondary MIS agency name from
+     * `loan_acct_info.cat_mis_group2` → `mis_group.path` (e.g. "DEPED LIANGA").
+     */
+    misAgencyName: string | null;
 }
 
 /** Optional Information section (OptionalInformationSection) — not stored in webloan yet. */

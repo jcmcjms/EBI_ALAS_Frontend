@@ -26,7 +26,6 @@ import {
   WEBLOAN_BRANCHES,
   type WebLoanBorrower,
 } from "@/src/lib/api/types";
-import { useAuthStore } from "@/src/store/authStore";
 import { cn } from "@/src/lib/utils";
 
 import type { LoanApplicationFormData } from "../schema";
@@ -42,9 +41,8 @@ function toNumber(value?: number | null): number {
 }
 
 export function CISLookup() {
-  const { control, setValue, getValues, register } =
+  const { control, setValue, register } =
     useFormContext<LoanApplicationFormData>();
-  const user = useAuthStore((state) => state.user);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -71,18 +69,10 @@ export function CISLookup() {
       .join("")
       .toUpperCase() || "?";
 
-  // The requesting officer is the authenticated identity — display-only here.
-  // The backend must authoritatively derive it from the JWT on submit.
-  useEffect(() => {
-    if (user && !getValues("branchType.requestingOfficer")) {
-      setValue(
-        "branchType.requestingOfficer",
-        [user.firstName, user.middleName, user.lastName]
-          .filter(Boolean)
-          .join(" ")
-      );
-    }
-  }, [user, getValues, setValue]);
+  // The requesting officer is sourced from webloan data (branchAndType.requestingOfficer).
+  // Backend resolves loan_acct_info.solicitor → dbo.mis_group (group_no=2) → description
+  // (e.g. "ALDREX JOEY L. CEZAR"). On submit, the API must still re-authoritatively
+  // derive the acting officer from the JWT — never trust the client-provided value.
 
   // Auto-reset the two-click confirm after 3s.
   useEffect(() => {
@@ -91,10 +81,11 @@ export function CISLookup() {
     return () => clearTimeout(timer);
   }, [confirmClear]);
 
-  /** Resets all CIS-populated fields. Officer identity is intentionally kept. */
+  /** Resets all CIS-populated fields so a new client can be loaded. */
   const clearForm = useCallback(() => {
     setValue("branchType.loanType", "");
     setValue("branchType.branch", "");
+    setValue("branchType.requestingOfficer", "");
     setValue("branchType.lai", "");
     setValue("client.cisId", "");
     setValue("client.firstName", "");
@@ -168,6 +159,10 @@ export function CISLookup() {
     setValue("branchType.loanType", b.type ?? "");
     setValue("branchType.branch", branchName);
     setValue("branchType.lai", (b.lai ?? []).join(", "));
+    // Requesting officer resolved by the backend from loan_acct_info.solicitor
+    // → dbo.mis_group (group_no=2) → description. Display-only; the API
+    // re-derives the acting officer from the JWT on submit.
+    setValue("branchType.requestingOfficer", b.requestingOfficer ?? "");
 
     setValue("client.cisId", b.cisNo || query);
     setValue("client.firstName", p.firstName ?? "");
@@ -182,7 +177,11 @@ export function CISLookup() {
     setValue("client.region", p.regionCode ?? "");
     setValue("client.divisionCode", p.divisionCode ?? "");
     setValue("client.stationCode", p.stationCode ?? "");
-    setValue("client.misAgency", p.misAgency ?? "");
+    // Prefer the resolved secondary MIS agency name (e.g. "DEPED LIANGA")
+    // from cat_mis_group2 → mis_group.path, falling back to the raw primary
+    // path (e.g. "INDIV/SAL") from cat_mis_group if the resolved name
+    // is unavailable.
+    setValue("client.misAgency", p.misAgencyName ?? p.misAgency ?? "");
 
     setValue("loan.purpose", li.purpose ?? "");
     setValue("loan.proposedAmount", toNumber(li.proposedAmount));
