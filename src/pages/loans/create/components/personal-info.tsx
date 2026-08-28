@@ -53,9 +53,9 @@ export function PersonalInfoSection() {
                     <Input {...register("client.address")} readOnly className="bg-muted/50 h-9" />
                 </div>
 
-                {/* Row 4 — Agency, Position, NTHP */}
+                {/* Row 4 — Agency Type, Position, NTHP */}
                 <div className="space-y-1.5 md:col-span-2">
-                    <Label className="text-xs text-muted-foreground">Agency / Department</Label>
+                    <Label className="text-xs text-muted-foreground">Agency Type</Label>
                     <Input {...register("client.agency")} readOnly className="bg-muted/50 h-9 font-medium" />
                 </div>
                 <div className="space-y-1.5">

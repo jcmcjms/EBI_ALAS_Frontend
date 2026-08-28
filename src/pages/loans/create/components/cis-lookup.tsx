@@ -170,9 +170,14 @@ export function CISLookup() {
     setValue("client.lastName", p.lastName ?? "");
     setValue("client.suffix", p.suffix ?? "");
     setValue("client.birthdate", toDateInput(p.birthdate));
-    setValue("client.address", p.address ?? "");
-    setValue("client.agency", p.agencyName ?? "");
-    setValue("client.position", p.positionTitle ?? "");
+        setValue("client.address", p.address ?? "");
+        // Agency / Department field displays the resolved agency TYPE
+        // (e.g. "RPSU", "GOVERNMENT") — the human-readable classification
+        // decoded from cis_info_misc_data (id_code=14) → mis_group (group_no=14).
+        // The raw company name (cis_info.b_comp) is exposed separately as
+        // `agencyName` and shown in the MIS Agency row via cat_mis_group2.
+        setValue("client.agency", p.agencyType ?? p.agencyName ?? "");
+        setValue("client.position", p.positionTitle ?? "");
     setValue("client.employeeId", p.employeeNo ?? "");
     setValue("client.region", p.regionCode ?? "");
     setValue("client.divisionCode", p.divisionCode ?? "");
