@@ -22,7 +22,7 @@ import { Card } from "@/src/components/ui/card";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
-    DropdownMenuContent,
+    DropdownMenuContent, DropdownMenuGroup,
     DropdownMenuLabel,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
@@ -154,9 +154,10 @@ export function NotificationsPage() {
                                 <GearSix size={16} weight="bold" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Preferences</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuCheckboxItem
+                                <DropdownMenuGroup>
+                                    <DropdownMenuLabel>Preferences</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuCheckboxItem
                                     checked={prefs.emailDigest}
                                     onCheckedChange={(c) => setPrefs((p) => ({ ...p, emailDigest: !!c }))}
                                 >
@@ -174,6 +175,7 @@ export function NotificationsPage() {
                                 >
                                     Mark read when opened
                                 </DropdownMenuCheckboxItem>
+                                </DropdownMenuGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
