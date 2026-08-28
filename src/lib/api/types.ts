@@ -375,3 +375,42 @@ export interface WebLoanBorrower {
     buyOutAccounts: WebLoanBuyOutAccount[];
     incomingLoans: WebLoanIncomingLoan[];
 }
+
+// ─── Active Loans (CIS + Account) ────────────────────────────────────────────
+
+/**
+ * One row from GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/active-loans.
+ * Mirrors ActiveLoanItem on the backend. Backed by the reference SQL:
+ *   SELECT TOP 10 ... FROM dbo.loan_data
+ *    WHERE acct_no + bch='000' + is_loan=1 + loan_status != 10
+ *    ORDER BY date_granted DESC.
+ */
+export interface ActiveLoan {
+    /** Promissory Note number (loan_data.loan_no). */
+    loanNo: string;
+    /** Original principal amount (loan_data.principal). */
+    principal: number | null;
+    /** Current principal balance (loan_data.principal_bal). */
+    principalBalance: number | null;
+    /** Date the loan was granted (ISO 8601, date portion). */
+    dateGranted: string | null;
+    /** Maturity date (ISO 8601, date portion). */
+    dateMaturity: string | null;
+    /** Loan product code (loan_data.loan_product, e.g. "PL", "MPL"). */
+    loanProduct: string | null;
+    /** Loan product description resolved from dbo.loan_product. */
+    loanProductDescription: string | null;
+    /** Raw loan status code (loan_data.loan_status). */
+    statusCode: number | null;
+    /** Human-readable status label (e.g. "Current", "Pastdue Performing"). */
+    statusDescription: string | null;
+    /** Pre-joined "<product> - <status>" display string from the backend. */
+    productStatus: string | null;
+}
+
+/** Response from GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/active-loans. */
+export interface ActiveLoansResponse {
+    accountNo: string;
+    cisNo: string;
+    loans: ActiveLoan[];
+}

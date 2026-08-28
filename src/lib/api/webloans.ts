@@ -1,5 +1,5 @@
 import { apiClient } from "@/src/lib/apiClient";
-import { unwrapApiData, type ApiResponse, type WebLoanBorrower } from "./types";
+import { unwrapApiData, type ActiveLoansResponse, type ApiResponse, type WebLoanBorrower } from "./types";
 
 /**
  * WebLoan integration API — mirrors Features/WebLoans/WebLoanEndpoints.cs.
@@ -15,6 +15,24 @@ import { unwrapApiData, type ApiResponse, type WebLoanBorrower } from "./types";
 export async function getWebLoanByCis(cisNo: string): Promise<WebLoanBorrower> {
     const res = await apiClient.get<ApiResponse<WebLoanBorrower>>(
         `/api/webloans/cis/${encodeURIComponent(cisNo)}`
+    );
+    return unwrapApiData(res.data);
+}
+
+/**
+ * GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/active-loans
+ *
+ * Returns up to 10 active PN rows for the given (CIS, account) pair, mirroring
+ * the reference "Active Loans by existing borrower" SQL exactly. Throws an
+ * axios error with response.status 404 if the account does not belong to the
+ * given CIS (caller should treat that as an empty result / not-found).
+ */
+export async function getActiveLoansByAccount(
+    cisNo: string,
+    accountNo: string
+): Promise<ActiveLoansResponse> {
+    const res = await apiClient.get<ApiResponse<ActiveLoansResponse>>(
+        `/api/webloans/cis/${encodeURIComponent(cisNo)}/accounts/${encodeURIComponent(accountNo)}/active-loans`
     );
     return unwrapApiData(res.data);
 }

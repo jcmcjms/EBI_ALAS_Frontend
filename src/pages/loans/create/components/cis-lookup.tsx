@@ -28,6 +28,7 @@ import {
 } from "@/src/lib/api/types";
 import { cn } from "@/src/lib/utils";
 
+import { ActiveLoansTable } from "./active-loans-table";
 import type { LoanApplicationFormData } from "../schema";
 
 /** Formats an ISO datetime as yyyy-MM-dd for <input type="date"> fields. */
@@ -48,6 +49,14 @@ export function CISLookup() {
   const [isLoading, setIsLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  // Raw LAI list (account numbers) from the loaded borrower. Kept in
+  // component-local state because the form only stores the joined display
+  // string ("01-..., 02-..."). Used to populate the ActiveLoansTable's
+  // account picker.
+  const [laiAccounts, setLaiAccounts] = useState<string[]>([]);
+  // Count of outstanding (active) loans already known from the loaded
+  // profile. Surfaced as a hint badge on the ActiveLoansTable card.
+  const [outstandingCount, setOutstandingCount] = useState(0);
 
   // Single source of truth: the loaded client is derived from form state,
   // so draft restore / future hydration works without duplicated state.
@@ -109,6 +118,8 @@ export function CISLookup() {
     setValue("ebiReloans", []);
     setValue("buyOuts", []);
     setValue("incomingLoans", []);
+    setLaiAccounts([]);
+    setOutstandingCount(0);
   }, [setValue]);
 
   const handleChangeClient = () => {
@@ -149,6 +160,12 @@ export function CISLookup() {
     const b = borrower.branchAndType;
     const p = borrower.personalInformation;
     const li = borrower.loanInformation;
+
+    // Capture the raw LAI list (and outstanding-loan count) so the
+    // ActiveLoansTable card below can populate its account picker
+    // without re-fetching the borrower.
+    setLaiAccounts(b.lai ?? []);
+    setOutstandingCount(borrower.outstandingLoans?.length ?? 0);
 
     // Branch is stored/displayed by name (resolved from the WEBLOAN_BRANCHES
     // snapshot); an unknown code falls back to the raw code so nothing renders blank.
@@ -441,6 +458,16 @@ export function CISLookup() {
                 </div>
               </div>
             </div>
+
+            {/* Active Loans by Account — mirrors the reference "Active
+                Loans by existing borrower" SQL for the selected (CIS,
+                account) pair. Renders a picker for the borrower's LAI
+                accounts and a table of up to 10 active PN rows. */}
+            <ActiveLoansTable
+              cisNo={client.cisId}
+              accounts={laiAccounts}
+              totalActiveLoansCount={outstandingCount}
+            />
           </div>
         )}
 
