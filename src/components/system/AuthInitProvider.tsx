@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { useAuthInit } from "@/src/hooks/useAuthInit";
 import { Spinner } from "@/src/components/ui/spinner";
+import { useAuthStore } from "@/src/store/authStore";
 
 interface AuthInitProviderProps {
   children: ReactNode;
@@ -15,9 +16,15 @@ interface AuthInitProviderProps {
  * The spinner is shown exactly once per page load — after the refresh
  * endpoint responds (success or failure), `isInitializing` becomes
  * false and the real app renders.
+ *
+ * `isInitializing` is read from the auth store (not from the hook) so
+ * it stays consistent with what `ProtectedRoute` sees.
  */
 export function AuthInitProvider({ children }: AuthInitProviderProps) {
-  const isInitializing = useAuthInit();
+  // Kick off the bootstrap. The hook publishes its progress into the store.
+  useAuthInit();
+
+  const isInitializing = useAuthStore((state) => state.isInitializing);
 
   if (isInitializing) {
     return (
