@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/src/lib/queryKeys";
 import type {
     DashboardSummary,
     PendingQueueItem,
@@ -68,11 +69,13 @@ async function fetchDashboardData(): Promise<DashboardData> {
 
 export function useDashboardData() {
     return useQuery({
-        queryKey: ["dashboard"],
+        queryKey: queryKeys.dashboard.full,
         queryFn: fetchDashboardData,
-        refetchInterval: 30_000, // Auto-refetch every 30 seconds
+        refetchInterval: 30_000, // Auto-refetch every 30 seconds (dashboard is monitoring UI)
         refetchIntervalInBackground: false, // Don't refetch when tab is hidden
-        refetchOnWindowFocus: true, // Refetch when user returns to tab
-        staleTime: 10_000, // Consider data fresh for 10 seconds
+        // refetchOnWindowFocus inherits the global default (false). The dashboard
+        // is a polling page; user-driven refresh happens via the explicit
+        // interval above. Banking app — no heuristic focus refetches.
+        staleTime: 10_000, // Consider data fresh for 10 seconds (longer than the 30s poll would suggest, but harmless: staleTime gates deduping, not the interval)
     });
 }

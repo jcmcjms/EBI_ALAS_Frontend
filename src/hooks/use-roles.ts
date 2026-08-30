@@ -1,13 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRoleMatrix, listRoles } from "@/src/lib/api/roles";
+import { queryKeys } from "@/src/lib/queryKeys";
 import type { RoleInfo, RoleMatrixEntry } from "@/src/lib/api/types";
+
+/**
+ * Roles & permissions matrix are static backend constants — they change
+ * with a server deploy, not at runtime. 1-hour `staleTime` is appropriate.
+ */
+const REFERENCE_STALE_TIME = 60 * 60 * 1000; // 1 hour
 
 /** All system roles — used for role dropdowns/filters. Requires `role.view`. */
 export function useRoles(): { data: RoleInfo[]; isLoading: boolean; error: unknown } {
     const query = useQuery({
-        queryKey: ["roles"],
+        queryKey: queryKeys.roles.all,
         queryFn: listRoles,
-        staleTime: 1000 * 60 * 5, // roles are static backend constants
+        staleTime: REFERENCE_STALE_TIME,
     });
     return { data: query.data ?? [], isLoading: query.isLoading, error: query.error };
 }
@@ -15,9 +22,9 @@ export function useRoles(): { data: RoleInfo[]; isLoading: boolean; error: unkno
 /** Read-only role → permissions matrix. Requires `role.view`. */
 export function useRoleMatrix(): { data: RoleMatrixEntry[]; isLoading: boolean; error: unknown } {
     const query = useQuery({
-        queryKey: ["role-matrix"],
+        queryKey: queryKeys.roles.matrix,
         queryFn: getRoleMatrix,
-        staleTime: 1000 * 60 * 5,
+        staleTime: REFERENCE_STALE_TIME,
     });
     return { data: query.data ?? [], isLoading: query.isLoading, error: query.error };
 }

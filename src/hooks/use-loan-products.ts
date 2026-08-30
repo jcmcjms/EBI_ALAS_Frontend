@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/src/lib/queryKeys";
 import type { LoanProduct } from "../pages/admin/loan-products/types";
 
-const LOAN_PRODUCTS_KEY = "loan-products";
+const LOAN_PRODUCTS_KEY = queryKeys.loanProducts.all;
+const LOAN_PRODUCTS_STALE_TIME = 60 * 60 * 1000; // 1 hour — reference data
 
 // Mock data for demonstration. Replace with actual API calls.
 const MOCK_PRODUCTS: LoanProduct[] = [
@@ -121,19 +123,19 @@ const MOCK_PRODUCTS: LoanProduct[] = [
 
 function useInvalidateLoanProducts() {
 	const queryClient = useQueryClient();
-	return () => queryClient.invalidateQueries({ queryKey: [LOAN_PRODUCTS_KEY] });
+	return () => queryClient.invalidateQueries({ queryKey: LOAN_PRODUCTS_KEY });
 }
 
 export function useLoanProducts() {
 	return useQuery({
-		queryKey: [LOAN_PRODUCTS_KEY],
+		queryKey: LOAN_PRODUCTS_KEY,
 		queryFn: async () => {
 			// Simulate network delay - remove or reduce in production
 			await new Promise((r) => setTimeout(r, 300));
 			return MOCK_PRODUCTS;
 		},
 		initialData: MOCK_PRODUCTS,
-		staleTime: 1000 * 60 * 5,
+		staleTime: LOAN_PRODUCTS_STALE_TIME,
 	});
 }
 

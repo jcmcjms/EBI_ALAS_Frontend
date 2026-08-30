@@ -6,14 +6,13 @@ import {
     updateUser,
     updateUserStatus,
 } from "@/src/lib/api/users";
+import { queryKeys } from "@/src/lib/queryKeys";
 import type { CreateUserPayload, UpdateUserPayload, UserQueryParams, UserResponse } from "@/src/lib/api/types";
-
-const USERS_KEY = "users";
 
 /** Paged + filtered user directory (server-side search/role/status/pagination). */
 export function useUsers(params: UserQueryParams) {
     return useQuery({
-        queryKey: [USERS_KEY, params],
+        queryKey: queryKeys.users.list(params),
         queryFn: () => listUsers(params),
         placeholderData: (prev) => prev, // keep previous page visible while fetching next
     });
@@ -21,7 +20,7 @@ export function useUsers(params: UserQueryParams) {
 
 export function useUser(id: number | null) {
     return useQuery({
-        queryKey: [USERS_KEY, id],
+        queryKey: id !== null ? queryKeys.users.detail(id) : ["users", "detail", "disabled"],
         queryFn: () => getUser(id!),
         enabled: id !== null,
     });
@@ -33,11 +32,11 @@ export function useUser(id: number | null) {
  */
 export function useUserStats() {
     const total = useQuery({
-        queryKey: [USERS_KEY, "stats", "total"],
+        queryKey: [...queryKeys.users.stats(), "total"],
         queryFn: () => listUsers({ pageNumber: 1, pageSize: 1 }),
     });
     const active = useQuery({
-        queryKey: [USERS_KEY, "stats", "active"],
+        queryKey: [...queryKeys.users.stats(), "active"],
         queryFn: () => listUsers({ pageNumber: 1, pageSize: 1, isActive: true }),
     });
 
@@ -54,8 +53,8 @@ export function useUserStats() {
 
 function useInvalidateUsers() {
     const queryClient = useQueryClient();
-    // Stats keys start with the same root, so partial matching covers them too.
-    return () => queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
+    // `users.all` is the broadest prefix; partial matching covers stats too.
+    return () => queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
 }
 
 /** POST /api/users — requires `user.create`. */

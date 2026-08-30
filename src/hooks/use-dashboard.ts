@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/src/lib/apiClient";
+import { queryKeys } from "@/src/lib/queryKeys";
 
 /** Backend response shape from GET /api/dashboard/summary */
 export interface DashboardSummaryResponse {
@@ -40,7 +41,7 @@ function mapSummaryData(raw: DashboardSummaryResponse): DashboardSummaryData {
 
 export function useDashboardSummary() {
     return useQuery({
-        queryKey: ["dashboard-summary"],
+        queryKey: queryKeys.dashboard.summary,
         queryFn: async () => {
             const res = await apiClient.get("/api/dashboard/summary");
             const body = res.data;
@@ -48,6 +49,6 @@ export function useDashboardSummary() {
             const raw: DashboardSummaryResponse = body.data ?? body;
             return mapSummaryData(raw);
         },
-        staleTime: 1000 * 60, // 1 minute
+        staleTime: 1000 * 60, // 1 minute — matches global default; explicit for clarity
     });
 }

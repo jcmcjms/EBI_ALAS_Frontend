@@ -1,5 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiClient } from "@/src/lib/apiClient";
+import { queryKeys } from "@/src/lib/queryKeys";
 import type { LoanMonitoringRecord, MonitoringFilters } from "@/src/pages/loans/monitoring/types";
 
 interface PaginationState { pageIndex: number; pageSize: number; }
@@ -70,7 +71,7 @@ export function useLoanMonitoring(
     sorting: SortingState[]
 ) {
     return useQuery({
-        queryKey: ["loan-monitoring", filters, pagination, sorting],
+        queryKey: queryKeys.loans.monitoring(filters, pagination, sorting),
         queryFn: async () => {
             const params = new URLSearchParams();
             params.set("page", String(pagination.pageIndex + 1));

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/src/lib/queryKeys";
 import {
     getAccountProfile,
     getAccountSessions,
@@ -13,15 +14,15 @@ import {
 
 export function useAccountProfile() {
     return useQuery({
-        queryKey: ["account-profile"],
+        queryKey: queryKeys.account.profile,
         queryFn: getAccountProfile,
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 5 * 60 * 1000, // 5 minutes — own profile rarely changes
     });
 }
 
 export function useAccountSessions(pageNumber = 1, pageSize = 10) {
     return useQuery<PagedSessionsResponse>({
-        queryKey: ["account-sessions", pageNumber, pageSize],
+        queryKey: queryKeys.account.sessions(pageNumber, pageSize),
         queryFn: () => getAccountSessions(pageNumber, pageSize),
         staleTime: 2 * 60 * 1000, // 2 minutes
     });
@@ -29,7 +30,7 @@ export function useAccountSessions(pageNumber = 1, pageSize = 10) {
 
 export function useAccountActivity(limit = 10) {
     return useQuery({
-        queryKey: ["account-activity", limit],
+        queryKey: queryKeys.account.activity(limit),
         queryFn: () => getAccountActivity(limit),
         staleTime: 2 * 60 * 1000,
     });
@@ -37,7 +38,7 @@ export function useAccountActivity(limit = 10) {
 
 export function useAccountLoans(limit = 10) {
     return useQuery({
-        queryKey: ["account-loans", limit],
+        queryKey: queryKeys.account.loans(limit),
         queryFn: () => getAccountLoans(limit),
         staleTime: 2 * 60 * 1000,
     });
@@ -45,7 +46,7 @@ export function useAccountLoans(limit = 10) {
 
 export function useAccountClients(limit = 5) {
     return useQuery({
-        queryKey: ["account-clients", limit],
+        queryKey: queryKeys.account.clients(limit),
         queryFn: () => getAccountClients(limit),
         staleTime: 5 * 60 * 1000,
     });
@@ -57,7 +58,7 @@ export function useUpdateProfile() {
     return useMutation({
         mutationFn: updateAccountProfile,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["account-profile"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.account.profile });
             toast.success("Profile updated successfully");
         },
         onError: (error: any) => {
