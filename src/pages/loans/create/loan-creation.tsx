@@ -626,10 +626,14 @@ export function LoanCreationPage() {
         <MobileSectionNav {...stepperProps} />
 
         <div className="container mx-auto flex flex-1 gap-8 px-6 py-8">
-          {/* ── Desktop sidebar stepper ──────────────────────── */}
-          <DesktopStepper {...stepperProps} />
+          {/* ── Desktop sidebar stepper (sticky) ──────────────── */}
+          <div className="hidden xl:block w-56 shrink-0">
+            <div className="sticky top-[calc(var(--header-height)+1rem)]">
+              <DesktopStepper {...stepperProps} />
+            </div>
+          </div>
 
-          {/* ── Main form content ────────────────────────────── */}
+          {/* ── Main form content ─────────────────────────────── */}
           <main className="mx-auto w-full max-w-4xl flex-1 space-y-8">
             <section
               id="cis-lookup"
