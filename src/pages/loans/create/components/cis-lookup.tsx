@@ -472,22 +472,12 @@ export function CISLookup({
                     className="h-9 bg-muted/50"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">
-                    LAI (Loan Application Index)
-                  </Label>
-                  <Input
-                    {...register("branchType.lai")}
-                    readOnly
-                    className="h-9 bg-muted/50 font-mono"
-                  />
-                </div>
               </div>
             </div>
 
             {/* Active Loans by Account — mirrors the reference "Active
                 Loans by existing borrower" SQL for the selected (CIS,
-                account) pair. Renders a picker for the borrower's LAI
+                account) pair. Renders a picker for the borrower's
                 accounts and a table of up to 10 active PN rows. */}
             <ActiveLoansTable
               cisNo={client.cisId}

@@ -734,7 +734,7 @@ export function LoanCreationPage() {
                   icon={<Receipt size={16} weight="bold" />}
                   step="Step 2"
                   title="Pick the account"
-                  body="Choose which of the borrower's LAI accounts this application is for. Active loans refresh."
+                  body="Choose which of the borrower's accounts this application is for. Active loans refresh."
                 />
                 <WorkflowHint
                   icon={<Stack size={16} weight="bold" />}
