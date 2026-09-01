@@ -1,5 +1,12 @@
 import { apiClient } from "@/src/lib/apiClient";
-import { unwrapApiData, type ActiveLoansResponse, type ApiResponse, type WebLoanBorrower } from "./types";
+import {
+    unwrapApiData,
+    type ActiveLoansResponse,
+    type ApiResponse,
+    type PreLoansQuery,
+    type PreLoansResponse,
+    type WebLoanBorrower,
+} from "./types";
 
 /**
  * WebLoan integration API — mirrors Features/WebLoans/WebLoanEndpoints.cs.
@@ -33,6 +40,31 @@ export async function getActiveLoansByAccount(
 ): Promise<ActiveLoansResponse> {
     const res = await apiClient.get<ApiResponse<ActiveLoansResponse>>(
         `/api/webloans/cis/${encodeURIComponent(cisNo)}/accounts/${encodeURIComponent(accountNo)}/active-loans`
+    );
+    return unwrapApiData(res.data);
+}
+
+/**
+ * GET /api/preloans?cisNo=...&accountNo=...
+ *
+ * Returns the list of in-progress (preloan) applications for the acting
+ * officer. The server enforces a **bch = JWT-user.branchId** filter — i.e.
+ * an officer in branch `000` only ever sees preloans from branch `000`,
+ * even if the borrower's CIS spans multiple branches.
+ *
+ * The frontend passes through the `cisNo` / `accountNo` it already has from
+ * the lookup; no bch is ever sent from the client (the server reads it from
+ * the JWT).
+ *
+ * 404 ⇒ no preloans for the (cis, account) pair (the caller treats this as
+ * "no rows" — it is NOT an error).
+ */
+export async function getPreLoans(
+    query: PreLoansQuery
+): Promise<PreLoansResponse> {
+    const res = await apiClient.get<ApiResponse<PreLoansResponse>>(
+        "/api/preloans",
+        { params: query }
     );
     return unwrapApiData(res.data);
 }

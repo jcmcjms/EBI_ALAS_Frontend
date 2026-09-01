@@ -39,6 +39,18 @@ export const outstandingLoanSchema = z.object({
     status: z.string().default("Active"),
 });
 
+// ── Preloan (CIS + Account + bch) ───────────────────────────────
+// Selected by the AO at step 3 of the wizard. The `bch` of the
+// returned row is server-asserted to equal the acting officer's
+// branchId — the frontend never sets or trusts it directly.
+export const preLoanRefSchema = z.object({
+    id: z.number(),
+    accountNo: z.string().min(1, "Account number is required"),
+    bch: z.string().min(1, "Branch code is required"),
+    formNumber: z.string().optional(),
+    productDescription: z.string().optional(),
+});
+
 // ── EBI Reloan ─────────────────────────────────────────────────
 export const ebiReloanSchema = z.object({
     pn: z.string().default(""),
@@ -103,6 +115,7 @@ export const loanApplicationSchema = z.object({
     ebiReloans: z.array(ebiReloanSchema).default([]),
     buyOuts: z.array(buyOutSchema).default([]),
     incomingLoans: z.array(incomingLoanSchema).default([]),
+    preLoan: preLoanRefSchema.optional(),
     verification: verificationSchema.optional(),
     deviations: deviationsSchema.optional(),
 });
@@ -114,6 +127,7 @@ export type OutstandingLoan = z.infer<typeof outstandingLoanSchema>;
 export type EbiReloan = z.infer<typeof ebiReloanSchema>;
 export type BuyOut = z.infer<typeof buyOutSchema>;
 export type IncomingLoan = z.infer<typeof incomingLoanSchema>;
+export type PreLoanRef = z.infer<typeof preLoanRefSchema>;
 export type LoanParameters = z.infer<typeof loanParametersSchema>;
 export type VerificationData = z.infer<typeof verificationSchema>;
 export type DeviationsData = z.infer<typeof deviationsSchema>;

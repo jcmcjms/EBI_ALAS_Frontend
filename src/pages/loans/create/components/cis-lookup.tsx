@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -24,6 +24,7 @@ import { getErrorMessage } from "@/src/lib/apiClient";
 import { getWebLoanByCis } from "@/src/lib/api/webloans";
 import {
   WEBLOAN_BRANCHES,
+  type PreLoanItem,
   type WebLoanBorrower,
 } from "@/src/lib/api/types";
 import { cn } from "@/src/lib/utils";
@@ -41,7 +42,20 @@ function toNumber(value?: number | null): number {
   return typeof value === "number" ? value : 0;
 }
 
-export function CISLookup() {
+interface CISLookupProps {
+  /** Acting user's branchId — passed down to the preloan picker as a UI label. */
+  userBranchId: string;
+  /** Currently selected preloan id (controlled). */
+  selectedPreLoanId: string;
+  /** Callback fired when the AO picks / clears a preloan. */
+  onPreLoanChange: (id: string, preloan: PreLoanItem | null) => void;
+}
+
+export function CISLookup({
+  userBranchId,
+  selectedPreLoanId,
+  onPreLoanChange,
+}: CISLookupProps) {
   const { control, setValue, register } =
     useFormContext<LoanApplicationFormData>();
 
@@ -57,6 +71,15 @@ export function CISLookup() {
   // Count of outstanding (active) loans already known from the loaded
   // profile. Surfaced as a hint badge on the ActiveLoansTable card.
   const [outstandingCount, setOutstandingCount] = useState(0);
+
+  // Keep the parent's `onPreLoanChange` in a ref so `clearForm` can stay
+  // stable across re-renders — otherwise the parent re-creating the
+  // callback every render would invalidate `clearForm`'s identity and
+  // re-run downstream effects.
+  const onPreLoanChangeRef = useRef(onPreLoanChange);
+  useEffect(() => {
+    onPreLoanChangeRef.current = onPreLoanChange;
+  }, [onPreLoanChange]);
 
   // Single source of truth: the loaded client is derived from form state,
   // so draft restore / future hydration works without duplicated state.
@@ -118,8 +141,11 @@ export function CISLookup() {
     setValue("ebiReloans", []);
     setValue("buyOuts", []);
     setValue("incomingLoans", []);
+    setValue("preLoan", undefined);
     setLaiAccounts([]);
     setOutstandingCount(0);
+    // Drop any preloan that was attached to the previous client.
+    onPreLoanChangeRef.current("", null);
   }, [setValue]);
 
   const handleChangeClient = () => {
@@ -467,6 +493,9 @@ export function CISLookup() {
               cisNo={client.cisId}
               accounts={laiAccounts}
               totalActiveLoansCount={outstandingCount}
+              userBranchId={userBranchId}
+              selectedPreLoanId={selectedPreLoanId}
+              onPreLoanChange={onPreLoanChange}
             />
           </div>
         )}

@@ -414,3 +414,63 @@ export interface ActiveLoansResponse {
     cisNo: string;
     loans: ActiveLoan[];
 }
+
+// ─── PreLoans (CIS + Account + bch) ──────────────────────────────────────────
+
+/**
+ * One row from GET /api/preloans.
+ *
+ * A "preloan" is a draft / in-progress loan application that was previously
+ * saved against a (CIS, account, bch) triple. When creating a new application
+ * the AO picks the existing preloan they want to resume; the backend then
+ * hydrates the rest of the form from it.
+ *
+ * The list is **always pre-filtered** by the backend for the acting officer's
+ * `bch` (branch code) — i.e. a user only ever sees preloans whose `bch`
+ * matches `user.branchId`. The frontend never filters by branch itself.
+ */
+export interface PreLoanItem {
+    /** Stable preloan id (PK on the preloan table). */
+    id: number;
+    /** CIS number this preloan belongs to. */
+    cisNo: string;
+    /** Account number (loan_acct_info.acct_no) this preloan is tied to. */
+    accountNo: string;
+    /** Branch code (loan_acct_info.bch) — server-asserted to match the JWT user. */
+    bch: string;
+    /** Human-readable branch name (resolved from dbo.branch_set). */
+    branchName: string;
+    /** Optional reference form number, if the preloan was already routed through a draft. */
+    formNumber?: string | null;
+    /** Loan product code / description copied from webloan at preloan time. */
+    productCode?: string | null;
+    productDescription?: string | null;
+    /** Last proposed terms captured in the draft. */
+    proposedAmount?: number | null;
+    termMonths?: number | null;
+    interestRate?: number | null;
+    purpose?: string | null;
+    /** When the preloan was last edited (ISO 8601). */
+    lastModifiedAt: string;
+    /** Officer that last edited the preloan (display-only — server re-asserts). */
+    lastModifiedBy?: string | null;
+}
+
+/** Response wrapper for GET /api/preloans. */
+export interface PreLoansResponse {
+    /** Echo of the cis filter that produced this list (null when omitted). */
+    cisNo: string | null;
+    /** Echo of the accountNo filter (null when omitted). */
+    accountNo: string | null;
+    /** Echo of the bch filter that the server enforced (== acting user's branchId). */
+    bch: string;
+    preLoans: PreLoanItem[];
+}
+
+/** Query parameters for GET /api/preloans. */
+export interface PreLoansQuery {
+    /** Filter by CIS number. */
+    cisNo?: string;
+    /** Filter by account number (typically the LAI account selected in the UI). */
+    accountNo?: string;
+}

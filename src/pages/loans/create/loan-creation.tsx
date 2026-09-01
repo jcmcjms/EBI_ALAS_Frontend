@@ -8,9 +8,12 @@ import {
   ClipboardText,
   FilePdf,
   FloppyDisk,
+  IdentificationBadge,
   LockSimple,
   MagnifyingGlass,
   PaperPlaneTilt,
+  Receipt,
+  Stack,
   WarningCircle,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -19,6 +22,9 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils";
 import { generatePdfFromElement } from "@/src/lib/pdf";
+import { useAuthStore } from "@/src/store/authStore";
+import { WEBLOAN_BRANCHES } from "@/src/lib/api/types";
+import type { PreLoanItem } from "@/src/lib/api/types";
 
 import { loanApplicationSchema, type LoanApplicationFormData } from "./schema";
 import { CISLookup } from "./components/cis-lookup";
@@ -50,7 +56,7 @@ interface SectionDef {
 }
 
 const SECTIONS: SectionDef[] = [
-  { id: "cis-lookup", label: "Client Lookup" },
+  { id: "cis-lookup", label: "Client, Account & Preloan" },
   { id: "personal-info", label: "Personal & Agency" },
   { id: "loan-params", label: "Loan Parameters" },
   { id: "obligations", label: "Outstanding Loans" },
@@ -109,6 +115,7 @@ function sectionErrorCount(errors: FieldErrors<LoanApplicationFormData>, id: Sec
  */
 function useSectionProgress(
   isClientLoaded: boolean,
+  preLoanSelected: boolean,
   submitAttempted: boolean,
   activeSection: SectionId
 ) {
@@ -121,7 +128,12 @@ function useSectionProgress(
   const isComplete = (id: SectionId): boolean => {
     switch (id) {
       case "cis-lookup":
-        return isClientLoaded && !!branchType.requestingOfficer;
+        // The lookup is "complete" when a client is loaded, an account has
+        // been picked (handled by the parent lifting `isClientLoaded` to
+        // mean "profile sourced") and a preloan — bch-scoped to the acting
+        // user — has been attached. The preloan is optional at the schema
+        // level but tracked here as part of the step's overall completeness.
+        return isClientLoaded && !!branchType.requestingOfficer && preLoanSelected;
       case "personal-info":
       case "obligations":
       case "other-obligations":
@@ -202,6 +214,7 @@ function StatusIcon({ status }: { status: SectionStatus }) {
 interface StepperProps {
   activeSection: SectionId;
   isClientLoaded: boolean;
+  preLoanSelected: boolean;
   submitAttempted: boolean;
   onNavigate: (id: SectionId) => void;
 }
@@ -209,11 +222,13 @@ interface StepperProps {
 function DesktopStepper({
   activeSection,
   isClientLoaded,
+  preLoanSelected,
   submitAttempted,
   onNavigate,
 }: StepperProps) {
   const { getStatus, errorCount, completedRequired } = useSectionProgress(
     isClientLoaded,
+    preLoanSelected,
     submitAttempted,
     activeSection
   );
@@ -304,11 +319,13 @@ function DesktopStepper({
 function MobileSectionNav({
   activeSection,
   isClientLoaded,
+  preLoanSelected,
   submitAttempted,
   onNavigate,
 }: StepperProps) {
   const { getStatus, errorCount } = useSectionProgress(
     isClientLoaded,
+    preLoanSelected,
     submitAttempted,
     activeSection
   );
@@ -387,6 +404,24 @@ function WorkflowHint({
 // ── Main page component ─────────────────────────────────────────
 
 export function LoanCreationPage() {
+  // Acting officer's branchId is the **server-side** filter for the preloan
+  // list (bch = JWT-user.branchId). The frontend never sends it — we just
+  // read it from the auth store to render the scope chip and to label the
+  // user's branch in the page header.
+  const userBranchId = useAuthStore((s) => s.user?.branchId ?? "");
+  const userBranchName =
+    WEBLOAN_BRANCHES.find((b) => b.code === userBranchId)?.name ??
+    userBranchId;
+
+  // The selected preloan id is mirrored into form state (loanApplicationSchema.preLoan)
+  // AND kept as a local payload so the rest of the form (loan params, etc.)
+  // can be hydrated from it without re-fetching. Reset together with the rest
+  // of the form on "Change client" / "Change account".
+  const [selectedPreLoan, setSelectedPreLoan] = useState<{
+    id: string;
+    payload: PreLoanItem | null;
+  }>({ id: "", payload: null });
+
   const methods = useForm<LoanApplicationFormData>({
     resolver: zodResolver(loanApplicationSchema),
     mode: "onBlur",
@@ -430,6 +465,7 @@ export function LoanCreationPage() {
       ebiReloans: [],
       buyOuts: [],
       incomingLoans: [],
+      preLoan: undefined,
       verification: { conductedBy: "", verificationDate: "", findings: "" },
       deviations: {
         hasDeviations: false,
@@ -542,6 +578,7 @@ export function LoanCreationPage() {
   const stepperProps: StepperProps = {
     activeSection,
     isClientLoaded,
+    preLoanSelected: !!selectedPreLoan.id,
     submitAttempted,
     onNavigate: scrollToSection,
   };
@@ -555,7 +592,7 @@ export function LoanCreationPage() {
         {/* ── Sticky top header ──────────────────────────────── */}
         <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container mx-auto flex h-16 items-center justify-between px-6">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <h1 className="text-xl font-semibold tracking-tight">
                 New Loan Application
               </h1>
@@ -569,6 +606,33 @@ export function LoanCreationPage() {
                 />
                 Draft
               </Badge>
+              {userBranchId && (
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 border-primary/30 bg-primary/5 py-1 text-primary"
+                  title="Preloans are filtered to this branch"
+                >
+                  <IdentificationBadge size={12} weight="bold" />
+                  <span className="font-mono">bch {userBranchId}</span>
+                  <span className="text-muted-foreground">·</span>
+                  <span>{userBranchName}</span>
+                </Badge>
+              )}
+              {selectedPreLoan.payload && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1.5 py-1"
+                  title="Attached preloan"
+                >
+                  <LockSimple size={12} weight="bold" />
+                  Preloan #{selectedPreLoan.payload.id}
+                  {selectedPreLoan.payload.formNumber && (
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      · {selectedPreLoan.payload.formNumber}
+                    </span>
+                  )}
+                </Badge>
+              )}
               {isDirty && (
                 <span className="animate-in fade-in text-xs text-muted-foreground">
                   Unsaved changes
@@ -609,7 +673,25 @@ export function LoanCreationPage() {
                 sectionRefs.current["cis-lookup"] = el;
               }}
             >
-              <CISLookup />
+              <CISLookup
+                userBranchId={userBranchId}
+                selectedPreLoanId={selectedPreLoan.id}
+                onPreLoanChange={(id, payload) => {
+                  setSelectedPreLoan({ id, payload });
+                  if (payload) {
+                    methods.setValue("preLoan", {
+                      id: payload.id,
+                      accountNo: payload.accountNo,
+                      bch: payload.bch,
+                      formNumber: payload.formNumber ?? undefined,
+                      productDescription:
+                        payload.productDescription ?? undefined,
+                    });
+                  } else {
+                    methods.setValue("preLoan", undefined);
+                  }
+                }}
+              />
             </section>
 
             {isClientLoaded ? (
@@ -676,25 +758,31 @@ export function LoanCreationPage() {
             ) : (
               <section
                 aria-label="How the application works"
-                className="grid gap-4 sm:grid-cols-3"
+                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
               >
                 <WorkflowHint
                   icon={<MagnifyingGlass size={16} weight="bold" />}
                   step="Step 1"
                   title="Look up the client"
-                  body="The borrower's profile, agency details and existing accounts are pulled straight from the CIS."
+                  body="Enter the CIS number to pull the borrower's profile, agency details and existing accounts."
                 />
                 <WorkflowHint
-                  icon={<ClipboardText size={16} weight="bold" />}
+                  icon={<Receipt size={16} weight="bold" />}
                   step="Step 2"
-                  title="Review & complete"
-                  body="Confirm the system-verified data, then encode the proposed terms and affordability."
+                  title="Pick the account"
+                  body="Choose which of the borrower's LAI accounts this application is for. Active loans refresh."
+                />
+                <WorkflowHint
+                  icon={<Stack size={16} weight="bold" />}
+                  step="Step 3"
+                  title="Attach a preloan"
+                  body={`Preloans under your branch (${userBranchId || "—"}) only — pick one to resume.`}
                 />
                 <WorkflowHint
                   icon={<PaperPlaneTilt size={16} weight="bold" />}
-                  step="Step 3"
+                  step="Step 4"
                   title="Submit for recommendation"
-                  body="The completed application routes to the Account Officer for recommendation."
+                  body="Encode the proposed terms, then route to the Account Officer."
                 />
               </section>
             )}
@@ -718,9 +806,11 @@ export function LoanCreationPage() {
               </div>
             ) : (
               <div className="hidden text-sm text-muted-foreground md:block">
-                {isClientLoaded
-                  ? "Client verified. Ready for processing."
-                  : "Search for a CIS ID to begin."}
+                {!isClientLoaded
+                  ? "Search for a CIS ID to begin."
+                  : !selectedPreLoan.id
+                    ? `Pick an account and a preloan under your branch (${userBranchId || "—"}) to continue.`
+                    : "Client verified, preloan attached. Ready for processing."}
               </div>
             )}
             <div className="flex items-center gap-3">
@@ -737,7 +827,14 @@ export function LoanCreationPage() {
                 type="submit"
                 size="lg"
                 className="gap-2 px-6"
-                disabled={!isClientLoaded}
+                disabled={!isClientLoaded || !selectedPreLoan.id}
+                title={
+                  !isClientLoaded
+                    ? "Load a client to enable submission"
+                    : !selectedPreLoan.id
+                      ? "Pick a preloan to enable submission"
+                      : undefined
+                }
               >
                 <PaperPlaneTilt size={16} weight="bold" />
                 Submit for Recommendation

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ListChecks, MagnifyingGlass, Receipt, WarningCircle } from "@phosphor-icons/react";
 
@@ -23,7 +23,9 @@ import {
 } from "@/src/components/ui/table";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { getActiveLoansByAccount } from "@/src/lib/api/webloans";
-import type { ActiveLoan } from "@/src/lib/api/types";
+import type { ActiveLoan, PreLoanItem } from "@/src/lib/api/types";
+
+import { PreLoanPicker } from "./preloan-picker";
 
 interface ActiveLoansTableProps {
     /** CIS number whose active loans to display. */
@@ -34,11 +36,20 @@ interface ActiveLoansTableProps {
      */
     accounts: string[];
     /**
-     * Active loan count of the currently loaded profile — used as a hint to
-     * the user (e.g. "Top 10 active loans") and to make the table section
-     * appear meaningful even before any account is selected.
+     * Active loan count of the currently loaded profile — used as a hint
+     * to the user (e.g. "Top 10 active loans") and to make the table
+     * section appear meaningful even before any account is selected.
      */
     totalActiveLoansCount?: number;
+    /** Acting user's branch id — used by the PreLoanPicker scope chip. */
+    userBranchId: string;
+    /**
+     * Currently selected preloan id. Controlled by the parent so the form
+     * state stays in sync across the whole wizard.
+     */
+    selectedPreLoanId: string;
+    /** Callback fired when the AO picks / clears a preloan. */
+    onPreLoanChange: (id: string, preloan: PreLoanItem | null) => void;
 }
 
 /**
@@ -53,6 +64,11 @@ interface ActiveLoansTableProps {
  *      AND loan_status != 10
  *    ORDER BY date_granted DESC
  *
+ * Once an account is chosen, the PreLoanPicker sub-step renders **inside this
+ * card** so the relationship "account → preloan" is obvious at a glance. The
+ * picker fetches GET /api/preloans?cisNo=&accountNo= which is server-side
+ * filtered by JWT user.branchId (== userBranchId).
+ *
  * The component is a pure presentational island: parent owns the (cis, accounts)
  * inputs, the component owns the (selected account, loading, error, data) state.
  */
@@ -60,6 +76,9 @@ export function ActiveLoansTable({
     cisNo,
     accounts,
     totalActiveLoansCount,
+    userBranchId,
+    selectedPreLoanId,
+    onPreLoanChange,
 }: ActiveLoansTableProps) {
     const [selectedAccount, setSelectedAccount] = useState<string>("");
     const [loans, setLoans] = useState<ActiveLoan[]>([]);
@@ -67,20 +86,14 @@ export function ActiveLoansTable({
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
 
-    // When the loaded borrower changes (new CIS lookup, "Change client"),
-    // reset everything so a stale (cis, account) never leaks into the new
-    // profile's results. Mirrors the explicit reset pattern in cis-lookup.
-    useEffect(() => {
-        setSelectedAccount("");
-        setLoans([]);
-        setIsLoading(false);
-        setLoadError(null);
-        setHasFetched(false);
-    }, [cisNo]);
-
     const handleFetch = async (accountNo: string) => {
         if (!accountNo || !cisNo) return;
         setSelectedAccount(accountNo);
+        // Clear any preloan that was tied to a *previous* account so the
+        // picker's list refreshes alongside the active-loan list. Calling
+        // the parent setter is fine here because it does not cascade back
+        // into our local state — the parent owns `selectedPreLoanId`.
+        onPreLoanChange("", null);
         setIsLoading(true);
         setLoadError(null);
 
@@ -102,34 +115,16 @@ export function ActiveLoansTable({
         }
     };
 
-    // If the borrower has no accounts at all, there is nothing to render
-    // beyond a single hint. The LAI list is empty for a brand-new borrower
-    // or for one whose webloan account rows have not yet been linked.
-    if (accounts.length === 0) {
-        return (
-            <Card>
-                <CardHeader className="border-b bg-muted/30 pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <Receipt size={20} weight="bold" className="text-primary" />
-                        2. Active Loans
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                    <p className="text-xs text-muted-foreground">
-                        No loan accounts on file for this CIS — cannot
-                        retrieve active loans.
-                    </p>
-                </CardContent>
-            </Card>
-        );
-    }
-
+    // Keying the island by the loaded borrower's CIS id guarantees the entire
+    // sub-tree (selected account, fetched loans, attached preloan) is unmounted
+    // and remounted fresh whenever the AO switches clients — no explicit
+    // effect-driven reset required.
     return (
-        <Card>
+        <Card key={cisNo}>
             <CardHeader className="border-b bg-muted/30 pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                     <Receipt size={20} weight="bold" className="text-primary" />
-                    2. Active Loans
+                    2. Account & Preloan
                     {typeof totalActiveLoansCount === "number" &&
                         totalActiveLoansCount > 0 && (
                             <Badge variant="secondary" className="ml-1">
@@ -156,7 +151,7 @@ export function ActiveLoansTable({
                                 id="active-loans-account"
                                 className="h-10 w-full font-mono"
                             >
-                                <SelectValue placeholder="Select an account to view active loans..." />
+                                <SelectValue placeholder="Select an account..." />
                             </SelectTrigger>
                             <SelectContent>
                                 {accounts.map((acct) => (
@@ -308,6 +303,23 @@ export function ActiveLoansTable({
                         and <code>loan_status != 10</code>, ordered by
                         date granted, descending).
                     </p>
+                )}
+
+                {/* ── Preloan picker (step 3) ───────────────────────────── */}
+                {/* Renders only after an account has been picked; the picker
+                    itself owns its own (loading / error / data) state. */}
+                {selectedAccount && hasFetched && (
+                    <>
+                        <div className="my-2 border-t border-dashed" />
+                        <PreLoanPicker
+                            key={`${cisNo}:${selectedAccount}`}
+                            cisNo={cisNo}
+                            accountNo={selectedAccount}
+                            userBranchId={userBranchId}
+                            value={selectedPreLoanId}
+                            onChange={onPreLoanChange}
+                        />
+                    </>
                 )}
             </CardContent>
         </Card>
