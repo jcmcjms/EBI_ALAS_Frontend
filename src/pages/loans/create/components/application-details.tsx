@@ -2,11 +2,12 @@ import { useFormContext } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
-import { Bank, UserCircle } from "@phosphor-icons/react";
+import { Badge } from "@/src/components/ui/badge";
+import { LockSimple, Bank, UserCircle } from "@phosphor-icons/react";
 import { useAuthStore } from "@/src/store/authStore";
 
 export function ApplicationDetailsSection() {
-    const { register } = useFormContext();
+    const { register, setValue } = useFormContext();
     const user = useAuthStore((state) => state.user);
 
     // Auto-populate officer and branch on mount
@@ -23,6 +24,13 @@ export function ApplicationDetailsSection() {
                 </CardTitle>
             </CardHeader>
             <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                        <LockSimple size={12} /> Loan Application ID (LAI)
+                    </Label>
+                    <Input value="LA-2026-08-9942" readOnly className="bg-muted/50 h-9 font-mono text-xs font-bold" />
+                </div>
+
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Loan Type / Category</Label>
                     <Input
