@@ -14,6 +14,10 @@ import {
  * (SiteHeader) so titles stay consistent everywhere.
  *
  * Placeholder entries ("#") have no page yet and never match a route.
+ *
+ * Each item can have a `requiredPermission` string (or `items` with individual
+ * `requiredPermission` values). Items the current user lacks are hidden from
+ * the sidebar entirely — no "forbidden" fallback is shown.
  */
 export type NavItem = {
     title: string
@@ -22,7 +26,11 @@ export type NavItem = {
     items?: {
         title: string
         url: string
+        /** Permission required to see this sub-item. Omit to make it public. */
+        requiredPermission?: string
     }[]
+    /** Permission required to see this item. Omit to make it public. */
+    requiredPermission?: string
 }
 
 export const navMain: NavItem[] = [
@@ -30,16 +38,19 @@ export const navMain: NavItem[] = [
         title: "Dashboard",
         url: "/dashboard",
         icon: House,
+        requiredPermission: "loans.view",
     },
     {
         title: "Loan Monitoring",
         url: "/loans/monitoring",
         icon: ListChecks,
+        requiredPermission: "loans.view",
     },
     {
         title: "Loan Creation",
         url: "/loans/create",
         icon: ChartBar,
+        requiredPermission: "loans.create",
     },
     {
         title: "Notifications",
@@ -81,14 +92,22 @@ export const navMain: NavItem[] = [
             {
                 title: "Loan Products",
                 url: "/admin/loan-products",
+                requiredPermission: "loan_product.view",
             },
             {
                 title: "Users",
                 url: "/admin/users",
+                requiredPermission: "user.view",
             },
             {
                 title: "Roles & Permissions",
                 url: "/admin/roles",
+                requiredPermission: "role.view",
+            },
+            {
+                title: "Audit Logs",
+                url: "/admin/audit-logs",
+                requiredPermission: "auditLogs.view",
             },
         ],
     },

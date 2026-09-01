@@ -120,6 +120,7 @@ export const PERMISSIONS = {
     userSuspend: "user.suspend",
     roleManage: "role.manage",
     roleView: "role.view",
+    auditLogsView: "auditLogs.view",
 } as const;
 
 /**
@@ -473,4 +474,33 @@ export interface PreLoansQuery {
     cisNo?: string;
     /** Filter by account number (typically the LAI account selected in the UI). */
     accountNo?: string;
+}
+
+// ─── Audit Logs ─────────────────────────────────────────────────────────────────
+
+/** Audit log record returned by GET /api/audit-logs (AuditLogResponse). */
+export interface AuditLogRecord {
+    id: number;
+    timestamp: string;
+    userId: number | null;
+    userName: string;
+    action: "Create" | "Update" | "StatusChange" | "Login" | "Logout" | "Delete";
+    entityType: string;
+    entityId: string;
+    entityLabel: string;
+    summary: string;
+    rawChanges: string | null;
+    ipAddress: string | null;
+    userAgent: string | null;
+}
+
+/** Query parameters for GET /api/audit-logs. */
+export interface AuditLogQueryParams {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    action?: string;
+    entityType?: string;
+    startDate?: string;
+    endDate?: string;
 }

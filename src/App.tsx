@@ -12,6 +12,8 @@ const RolesPage = lazy(() => import("./pages/admin/roles/index").then(m => ({ de
 const LoanProductsPage = lazy(() => import("./pages/admin/loan-products/index").then(m => ({ default: m.LoanProductsIndex })));
 const LoanCreation = lazy(() => import("./pages/loans/create/index"));
 const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
+const LoanApproval = lazy(() => import("./pages/loans/approval/index"));
+const AuditLogs = lazy(() => import("./pages/audit-logs/index").then(m => ({ default: m.default })));
 const Notifications = lazy(() => import("./pages/notifications/index"));
 const Account = lazy(() => import("./pages/account/index"));
 const Forbidden = lazy(() => import("./pages/errors/Forbidden"));
@@ -56,6 +58,11 @@ function App() {
                             <LoanCreation />
                         </ProtectedRoute>
                     } />
+                    <Route path="/loans/approval" element={
+                        <ProtectedRoute requiredPermission={PERMISSIONS.loansApprove}>
+                            <LoanApproval />
+                        </ProtectedRoute>
+                    } />
                     <Route path="/notifications" element={
                         <ProtectedRoute>
                             <Notifications />
@@ -84,6 +91,11 @@ function App() {
                     <Route path="/admin/loan-products" element={
                         <ProtectedRoute requiredPermission={PERMISSIONS.loanProductManage}>
                             <LoanProductsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/audit-logs" element={
+                        <ProtectedRoute requiredPermission={PERMISSIONS.auditLogsView}>
+                            <AuditLogs />
                         </ProtectedRoute>
                     } />
 

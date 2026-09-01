@@ -63,6 +63,14 @@ export const queryKeys = {
         full: ["dashboard"] as const,
     },
 
+    // ── Audit Logs ─────────────────────────────────────────────────────────
+    auditLogs: {
+        all: ["auditLogs"] as const,
+        list: <T extends object>(params: T) =>
+            ["auditLogs", "list", params] as const,
+        detail: (id: number) => ["auditLogs", "detail", id] as const,
+    },
+
     // ── Account ─────────────────────────────────────────────────────────────
     account: {
         profile: ["account-profile"] as const,
