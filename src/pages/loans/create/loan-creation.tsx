@@ -569,8 +569,8 @@ export function LoanCreationPage() {
         onSubmit={handleSubmit(onSubmit, onInvalid)}
         className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40"
       >
-        {/* ── Sticky top header ──────────────────────────────── */}
-        <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        {/* ── Top header ──────────────────────────────── */}
+        <header className="border-b bg-background">
           <div className="container mx-auto flex h-16 items-center justify-between px-6">
             <div className="flex flex-wrap items-center gap-4">
               <h1 className="text-xl font-semibold tracking-tight">
