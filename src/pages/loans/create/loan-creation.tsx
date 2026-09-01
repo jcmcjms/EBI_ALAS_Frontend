@@ -615,7 +615,7 @@ export function LoanCreationPage() {
                   title="Preloans are filtered to this branch"
                 >
                   <IdentificationBadge size={12} weight="bold" />
-                  <span className="font-mono">bch {userBranchId}</span>
+                  <span className="font-mono">Branch</span>
                   <span className="text-muted-foreground">·</span>
                   <span>{userBranchName}</span>
                 </Badge>

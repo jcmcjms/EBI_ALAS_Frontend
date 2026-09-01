@@ -154,7 +154,7 @@ export function PreLoanPicker({
                         className="gap-1 border-primary/30 bg-primary/5 py-0.5 font-mono text-[10px] text-primary"
                     >
                         <IdentificationBadge size={12} weight="bold" />
-                        bch {userBranchId} · {branchName}
+                        Branch · {branchName}
                     </Badge>
                 </div>
                 {typeof totalForCis === "number" && totalForCis > 0 && (
