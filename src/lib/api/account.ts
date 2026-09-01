@@ -24,7 +24,12 @@ export interface AccountProfile {
 
 export interface Session {
     id: number;
-    deviceInfo: string;
+    /**
+     * User-Agent string captured at login/refresh. May be `null` for refresh
+     * tokens issued before device capture was wired in — callers should
+     * render an "Unknown Device" fallback rather than assume a string.
+     */
+    deviceInfo: string | null;
     createdAt: string;
     expiresAt: string;
     isCurrent: boolean;

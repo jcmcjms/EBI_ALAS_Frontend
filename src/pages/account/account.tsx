@@ -190,7 +190,7 @@ function SessionRow({
     onRevoke: (id: number) => void;
     isRevoking: boolean;
 }) {
-    const isMobile = /android|ios|mobile/i.test(session.deviceInfo);
+    const isMobile = /android|ios|mobile/i.test(session.deviceInfo ?? "");
     const Icon = isMobile ? DeviceMobile : Desktop;
     return (
         <div className="flex items-center gap-3 px-4 py-3">
@@ -198,7 +198,9 @@ function SessionRow({
                 <Icon size={16} weight="bold" />
             </div>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{session.deviceInfo}</p>
+                <p className="truncate text-sm font-medium">
+                    {session.deviceInfo?.trim() ? session.deviceInfo : "Unknown Device"}
+                </p>
                 <p className="text-xs text-muted-foreground">
                     Signed in {formatRelativeTime(session.createdAt)}
                     {" • "}
