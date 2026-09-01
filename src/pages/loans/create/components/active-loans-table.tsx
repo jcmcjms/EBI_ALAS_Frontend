@@ -134,14 +134,14 @@ export function ActiveLoansTable({
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
-                {/* Account picker — only after the borrower profile is loaded */}
+                {/* LAI picker — only after the borrower profile is loaded */}
                 <div className="flex flex-wrap items-end gap-3">
                     <div className="min-w-0 flex-1 space-y-1.5">
                         <label
                             htmlFor="active-loans-account"
                             className="text-xs font-medium text-muted-foreground"
                         >
-                            Account Number
+                            LAI (Loan Application Index)
                         </label>
                         <Select
                             value={selectedAccount || undefined}
@@ -151,7 +151,7 @@ export function ActiveLoansTable({
                                 id="active-loans-account"
                                 className="h-10 w-full font-mono"
                             >
-                                <SelectValue placeholder="Select an account..." />
+                                <SelectValue placeholder="Select an LAI..." />
                             </SelectTrigger>
                             <SelectContent>
                                 {accounts.map((acct) => (
