@@ -6,7 +6,6 @@ import {
   ArrowUp,
   CheckCircle,
   ClipboardText,
-  FilePdf,
   IdentificationBadge,
   LockSimple,
   MagnifyingGlass,
@@ -20,7 +19,6 @@ import { toast } from "sonner";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils";
-import { generatePdfFromElement } from "@/src/lib/pdf";
 import { useAuthStore } from "@/src/store/authStore";
 import { WEBLOAN_BRANCHES } from "@/src/lib/api/types";
 import type { PreLoanItem } from "@/src/lib/api/types";
@@ -553,19 +551,6 @@ export function LoanCreationPage() {
     if (first) scrollToSection(first.id);
   };
 
-  const handleGeneratePdf = async () => {
-    if (!approvalFormRef.current) return;
-    const lai = watch("branchType.lai") || "draft";
-    try {
-      toast.info("Generating PDF...");
-      await generatePdfFromElement(approvalFormRef.current, `approval-form-${lai}-${Date.now()}.pdf`);
-      toast.success("PDF generated.");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to generate PDF.");
-    }
-  };
-
   const totalErrors = submitAttempted
     ? SECTIONS.reduce((n, s) => n + sectionErrorCount(errors, s.id), 0)
     : 0;
@@ -634,22 +619,6 @@ export function LoanCreationPage() {
                 </span>
               )}
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={!isClientLoaded}
-              className="gap-2"
-              onClick={handleGeneratePdf}
-              title={
-                isClientLoaded
-                  ? "Generate approval form PDF"
-                  : "Load a client to enable PDF export"
-              }
-            >
-              <FilePdf size={16} weight="bold" />
-              <span className="hidden sm:inline">Export PDF</span>
-            </Button>
           </div>
         </header>
 
@@ -747,7 +716,7 @@ export function LoanCreationPage() {
                     sectionRefs.current["approval-form"] = el;
                   }}
                 >
-                  <ApprovalFormPreview ref={approvalFormRef} onGeneratePdf={handleGeneratePdf} />
+                  <ApprovalFormPreview ref={approvalFormRef} />
                 </section>
               </>
             ) : (

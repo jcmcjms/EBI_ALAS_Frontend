@@ -172,7 +172,7 @@ function DashRows({ count, cols }: { count: number; cols: number }) {
 
 /* ── main component ── */
 
-export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf: () => void }>(
+export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: () => void }>(
     ({ onGeneratePdf }, ref) => {
         const { control } = useFormContext<LoanApplicationFormData>();
         const form = useWatch({ control }) as LoanApplicationFormData;
@@ -209,10 +209,12 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf: (
                             <Printer size={14} weight="bold" />
                             Print
                         </Button>
-                        <Button type="button" size="sm" className="gap-1.5" onClick={onGeneratePdf}>
-                            <FilePdf size={14} weight="bold" />
-                            Generate PDF
-                        </Button>
+                        {onGeneratePdf && (
+                            <Button type="button" size="sm" className="gap-1.5" onClick={onGeneratePdf}>
+                                <FilePdf size={14} weight="bold" />
+                                Generate PDF
+                            </Button>
+                        )}
                     </div>
                 </CardHeader>
 
