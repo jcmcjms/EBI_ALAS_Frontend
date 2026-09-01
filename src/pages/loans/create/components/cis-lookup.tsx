@@ -281,8 +281,8 @@ export function CISLookup({
   };
 
   return (
-    <Card>
-      <CardHeader className="border-b bg-muted/30 pb-3">
+    <Card className="flex max-h-[max(28rem,calc(100dvh_-_var(--header-height)_-_12rem))] flex-col overflow-hidden">
+      <CardHeader className="shrink-0 border-b bg-muted/30 pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <IdentificationCard
             size={20}
@@ -292,7 +292,12 @@ export function CISLookup({
           1. Client Lookup (CIS Number)
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 pt-6">
+      <CardContent
+        className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain pt-6"
+        role="region"
+        aria-label="Client lookup, account and preloan selection"
+        tabIndex={0}
+      >
         {/* ── CIS search ─────────────────────────────────────── */}
         <div className="flex gap-3 items-center">
           <div className="relative min-w-0 flex-1">
@@ -490,14 +495,15 @@ export function CISLookup({
           </div>
         )}
 
+
         {/* ── Pristine helper text ───────────────────────────── */}
         {!isLoaded && !isLoading && !lookupError && (
           <p className="text-xs text-muted-foreground">
             Profile, branch routing and existing obligations are pulled
-            automatically from the CIS — you only encode the proposed
-            terms.
+            automatically from the CIS.
           </p>
         )}
+
       </CardContent>
     </Card>
   );
