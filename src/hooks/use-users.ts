@@ -1,8 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     createUser,
+    forcePasswordReset,
     getUser,
+    getUserAuditLog,
     listUsers,
+    resetUserPassword,
+    revokeUserSessions,
     updateUser,
     updateUserStatus,
 } from "@/src/lib/api/users";
@@ -86,5 +90,42 @@ export function useUpdateUserStatus() {
         mutationFn: ({ id, isActive }: { id: number; isActive: boolean }) =>
             updateUserStatus(id, isActive),
         onSuccess: () => invalidate(),
+    });
+}
+
+/** POST /api/users/{id}/reset-password — requires `user.edit`. Returns new temp password. */
+export function useResetUserPassword() {
+    const invalidate = useInvalidateUsers();
+    return useMutation({
+        mutationFn: ({ id, newPassword }: { id: number; newPassword: string }) =>
+            resetUserPassword(id, newPassword),
+        onSuccess: () => invalidate(),
+    });
+}
+
+/** POST /api/users/{id}/force-password-reset — requires `user.edit`. */
+export function useForcePasswordReset() {
+    const invalidate = useInvalidateUsers();
+    return useMutation({
+        mutationFn: (id: number) => forcePasswordReset(id),
+        onSuccess: () => invalidate(),
+    });
+}
+
+/** POST /api/users/{id}/revoke-sessions — requires `user.suspend`. Returns count of revoked sessions. */
+export function useRevokeUserSessions() {
+    const invalidate = useInvalidateUsers();
+    return useMutation({
+        mutationFn: (id: number) => revokeUserSessions(id),
+        onSuccess: () => invalidate(),
+    });
+}
+
+/** GET /api/users/{id}/audit-log — requires `user.view`. */
+export function useUserAuditLog(id: number | null) {
+    return useQuery({
+        queryKey: id !== null ? ["users", id, "audit-log"] : ["users", "audit-log", "disabled"],
+        queryFn: () => getUserAuditLog(id!),
+        enabled: id !== null,
     });
 }

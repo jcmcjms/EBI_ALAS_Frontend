@@ -5,6 +5,7 @@ import {
     type CreateUserPayload,
     type PagedResult,
     type UpdateUserPayload,
+    type UserAuditLogResponse,
     type UserQueryParams,
     type UserResponse,
 } from "./types";
@@ -54,4 +55,30 @@ export async function updateUserStatus(id: number, isActive: boolean): Promise<v
     const res = await apiClient.patch<ApiResponse<null>>(`/api/users/${id}/status`, { isActive });
     // Success responses carry no data; failure surfaces via HTTP status or success=false.
     if (!res.data.success) throw new Error(res.data.message || "Failed to update status");
+}
+
+/** POST /api/users/{id}/reset-password. Requires `user.edit`. Returns the new temp password. */
+export async function resetUserPassword(id: number, newPassword: string): Promise<string> {
+    const res = await apiClient.post<ApiResponse<string>>(`/api/users/${id}/reset-password`, { newPassword });
+    return unwrapApiData(res.data);
+}
+
+/** POST /api/users/{id}/force-password-reset. Requires `user.edit`. */
+export async function forcePasswordReset(id: number): Promise<void> {
+    const res = await apiClient.post<ApiResponse<null>>(`/api/users/${id}/force-password-reset`);
+    if (!res.data.success) throw new Error(res.data.message || "Failed to force password reset");
+}
+
+/** POST /api/users/{id}/revoke-sessions. Requires `user.suspend`. Returns count of revoked sessions. */
+export async function revokeUserSessions(id: number): Promise<number> {
+    const res = await apiClient.post<ApiResponse<number>>(`/api/users/${id}/revoke-sessions`);
+    return unwrapApiData(res.data);
+}
+
+/** GET /api/users/{id}/audit-log. Requires `user.view`. */
+export async function getUserAuditLog(id: number, pageNumber = 1, pageSize = 20): Promise<UserAuditLogResponse[]> {
+    const res = await apiClient.get<ApiResponse<UserAuditLogResponse[]>>(`/api/users/${id}/audit-log`, {
+        params: { pageNumber, pageSize },
+    });
+    return unwrapApiData(res.data);
 }

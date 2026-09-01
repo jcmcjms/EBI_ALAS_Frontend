@@ -46,10 +46,11 @@ function getBranchName(code: string): string {
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { useAuthStore } from "@/src/store/authStore";
 import { useRoles } from "@/src/hooks/use-roles";
-import { useCreateUser, useUpdateUser, useUpdateUserStatus, useUserStats, useUsers } from "@/src/hooks/use-users";
+import { useCreateUser, useForcePasswordReset, useResetUserPassword, useRevokeUserSessions, useUpdateUser, useUpdateUserStatus, useUserStats, useUsers } from "@/src/hooks/use-users";
 import { UserEditDrawer, type UserProfileChanges } from "./components/user-edit-drawer";
 import { UserCreateDrawer, type UserCreatePayload } from "./components/user-create-drawer";
 import { ConfirmActionSheet } from "./components/confirm-action-sheet";
+import { AuditLogModal } from "./components/audit-log-modal";
 
 /** Returns `value` only after it has stayed unchanged for `delayMs`. */
 function useDebouncedValue<T>(value: T, delayMs = 300): T {
@@ -63,6 +64,37 @@ function useDebouncedValue<T>(value: T, delayMs = 300): T {
 
 function formatFullName(user: Pick<UserResponse, "firstName" | "middleName" | "lastName">): string {
     return [user.firstName, user.middleName, user.lastName].filter(Boolean).join(" ");
+}
+
+/**
+ * Generates a random temporary password using crypto.getRandomValues.
+ * Excludes confusing characters (O/0, I/l/1) so the password survives
+ * being read aloud or transcribed by hand.
+ */
+function generateTempPassword(length = 12): string {
+    const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lower = "abcdefghijkmnopqrstuvwxyz";
+    const digits = "23456789";
+    const specials = "!?*.";
+    const all = upper + lower + digits + specials;
+
+    const pick = (set: string) => {
+        const buf = new Uint32Array(1);
+        crypto.getRandomValues(buf);
+        return set[buf[0] % set.length];
+    };
+
+    // Guarantee at least one character from each required class.
+    const chars = [pick(upper), pick(lower), pick(digits), pick(specials)];
+    while (chars.length < length) chars.push(pick(all));
+
+    // Fisher-Yates shuffle
+    for (let i = chars.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+
+    return chars.join("");
 }
 
 /**
@@ -256,9 +288,13 @@ export function UsersDataTable() {
     const createUserMutation = useCreateUser();
     const updateUserMutation = useUpdateUser();
     const updateUserStatusMutation = useUpdateUserStatus();
+    const resetUserPasswordMutation = useResetUserPassword();
+    const forcePasswordResetMutation = useForcePasswordReset();
+    const revokeSessionsMutation = useRevokeUserSessions();
 
     // ---- Drawers / dialogs ----
     const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
+    const [selectedUserForAuditLog, setSelectedUserForAuditLog] = useState<UserResponse | null>(null);
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(null);
 
@@ -346,27 +382,80 @@ export function UsersDataTable() {
     // Security workflows below have no backing endpoint yet — surface that
     // honestly instead of faking success.
     function handleResetPasswordRequest(user: UserResponse) {
-        toast.info(`Password reset for @${user.username}`, {
-            description: "Password management endpoints are not available in the backend yet.",
+        if (!hasPermission(PERMISSIONS.userEdit)) {
+            toast.error("You don't have permission to reset passwords");
+            return;
+        }
+        setConfirmAction({
+            title: "Reset Password",
+            description: `Generate a new temporary password for @${user.username}? The user will be required to change it on next login.`,
+            actionLabel: "Reset Password",
+            onConfirm: () => {
+                const tempPassword = generateTempPassword();
+                resetUserPasswordMutation.mutate(
+                    { id: user.id, newPassword: tempPassword },
+                    {
+                        onSuccess: () => {
+                            toast.success(`Password reset for @${user.username}`, {
+                                description: `New temporary password: ${tempPassword}`,
+                                duration: 10000,
+                            });
+                        },
+                        onError: (e) => toast.error(getErrorMessage(e)),
+                    }
+                );
+                closeConfirm();
+            },
         });
     }
 
     function handleForcePasswordResetRequest(user: UserResponse) {
-        toast.info(`Force password reset for @${user.username}`, {
-            description: "Password management endpoints are not available in the backend yet.",
+        if (!hasPermission(PERMISSIONS.userEdit)) {
+            toast.error("You don't have permission to force password resets");
+            return;
+        }
+        setConfirmAction({
+            title: "Force Password Reset",
+            description: `Require @${user.username} to change their password on next login?`,
+            actionLabel: "Force Reset",
+            onConfirm: () => {
+                forcePasswordResetMutation.mutate(user.id, {
+                    onSuccess: () =>
+                        toast.success(`${formatFullName(user)} will be required to change password on next login`),
+                    onError: (e) => toast.error(getErrorMessage(e)),
+                });
+                closeConfirm();
+            },
         });
     }
 
     function handleRevokeSessionsRequest(user: UserResponse) {
-        toast.info(`Revoke sessions for @${user.username}`, {
-            description: "Session revocation endpoints are not available in the backend yet.",
+        if (!hasPermission(PERMISSIONS.userSuspend)) {
+            toast.error("You don't have permission to revoke sessions");
+            return;
+        }
+        setConfirmAction({
+            title: "Revoke All Sessions",
+            description: `Sign out @${user.username} from all active devices? This will invalidate all refresh tokens.`,
+            actionLabel: "Revoke Sessions",
+            destructive: true,
+            onConfirm: () => {
+                revokeSessionsMutation.mutate(user.id, {
+                    onSuccess: (count) =>
+                        toast.success(`Revoked ${count} active session(s) for ${formatFullName(user)}`),
+                    onError: (e) => toast.error(getErrorMessage(e)),
+                });
+                closeConfirm();
+            },
         });
     }
 
     function handleViewAuditLog(user: UserResponse) {
-        toast.info(`Audit log for ${formatFullName(user)}`, {
-            description: "Audit trail viewer coming soon — recent activity will appear here.",
-        });
+        if (!hasPermission(PERMISSIONS.userView)) {
+            toast.error("You don't have permission to view audit logs");
+            return;
+        }
+        setSelectedUserForAuditLog(user);
     }
 
     // ---- Create ----
@@ -636,6 +725,10 @@ export function UsersDataTable() {
                 actionLabel={confirmAction?.actionLabel ?? ""}
                 destructive={confirmAction?.destructive}
                 onConfirm={confirmAction?.onConfirm ?? (() => {})}
+            />
+            <AuditLogModal
+                user={selectedUserForAuditLog}
+                onClose={() => setSelectedUserForAuditLog(null)}
             />
         </>
     );

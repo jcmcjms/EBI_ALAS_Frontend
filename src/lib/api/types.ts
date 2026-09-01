@@ -88,6 +88,17 @@ export interface UserResponse {
     createdAt: string;
 }
 
+/** Audit log record for a specific user (UserAuditLogResponse). */
+export interface UserAuditLogResponse {
+    id: number;
+    action: string;
+    entityType: string;
+    entityLabel: string;
+    summary: string;
+    timestamp: string;
+    ipAddress: string | null;
+}
+
 // ─── Roles & permissions ─────────────────────────────────────────────────────
 
 /** Entry from GET /api/roles ({ name, displayName }). */
