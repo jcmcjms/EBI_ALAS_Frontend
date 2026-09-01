@@ -7,7 +7,6 @@ import {
   CheckCircle,
   ClipboardText,
   FilePdf,
-  FloppyDisk,
   IdentificationBadge,
   LockSimple,
   MagnifyingGlass,
@@ -554,12 +553,6 @@ export function LoanCreationPage() {
     if (first) scrollToSection(first.id);
   };
 
-  const handleSaveDraft = () => {
-    // TODO: persist server-side (POST /api/loan-applications/draft) with an
-    // ownership check. Do NOT use localStorage — PII on shared terminals.
-    toast.success("Draft saved.");
-  };
-
   const handleGeneratePdf = async () => {
     if (!approvalFormRef.current) return;
     const lai = watch("branchType.lai") || "draft";
@@ -816,15 +809,6 @@ export function LoanCreationPage() {
               </div>
             )}
             <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-2"
-                onClick={handleSaveDraft}
-              >
-                <FloppyDisk size={16} weight="bold" />
-                Save Draft
-              </Button>
               <Button
                 type="submit"
                 size="lg"
