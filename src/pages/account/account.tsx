@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import {
     CalendarBlank,
     CaretRight,
-    Check,
     CheckCircle,
     ClipboardText,
     Clock,
@@ -69,15 +68,6 @@ function isApplicationStatus(s: string): s is ApplicationStatus {
 
 function formatPhp(amount: number): string {
     return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount);
-}
-
-/** "loan_product.manage" → "Loan Product Manage" */
-function permissionLabel(permission: string): string {
-    return permission
-        .split(/[._]/)
-        .filter(Boolean)
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ");
 }
 
 // ─── Activity mapping ────────────────────────────────────────────────────────
@@ -291,20 +281,6 @@ export function AccountPage() {
         [profile],
     );
 
-    const permissionGroups = useMemo(() => {
-        const permissions = user?.permissions ?? [];
-        const groups = new Map<string, string[]>();
-        for (const p of permissions) {
-            if (p === "*") continue;
-            const [module, ...rest] = p.split(".");
-            const key = permissionLabel(module ?? p);
-            const list = groups.get(key) ?? [];
-            list.push(permissionLabel(rest.join(".") || "view"));
-            groups.set(key, list);
-        }
-        return [...groups.entries()];
-    }, [user]);
-
     const contactRows = useMemo(() => {
         if (!profile && !user) return [];
         return [
@@ -379,7 +355,6 @@ export function AccountPage() {
                         <TabsTrigger value="overview">Overview</TabsTrigger>
                         <TabsTrigger value="security">Security</TabsTrigger>
                         <TabsTrigger value="activity">Activity</TabsTrigger>
-                        <TabsTrigger value="permissions">Permissions</TabsTrigger>
                     </TabsList>
 
                     {/* ── Overview ─────────────────────────────────────── */}
@@ -476,29 +451,6 @@ export function AccountPage() {
                                                 ? `Add your ${completeness.missing.join(", ")} to reach 100%.`
                                                 : "Your profile is complete."}
                                         </p>
-                                    </CardContent>
-                                </Card>
-
-                                <Card>
-                                    <CardHeader className="border-b bg-muted/30 py-3">
-                                        <CardTitle className="text-sm">Module Access</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="flex flex-wrap gap-2 pt-4">
-                                        {(user?.permissions ?? []).includes("*") ? (
-                                            <Badge variant="outline" className="gap-1.5 font-normal">
-                                                <ShieldCheck size={12} weight="bold" /> Super Admin — full access
-                                            </Badge>
-                                        ) : (user?.permissions ?? []).length === 0 ? (
-                                            <p className="text-xs text-muted-foreground">
-                                                No module permissions assigned.
-                                            </p>
-                                        ) : (
-                                            (user?.permissions ?? []).slice(0, 8).map((p) => (
-                                                <Badge key={p} variant="outline" className="font-normal">
-                                                    {permissionLabel(p)}
-                                                </Badge>
-                                            ))
-                                        )}
                                     </CardContent>
                                 </Card>
                             </div>
@@ -742,52 +694,6 @@ export function AccountPage() {
                                 ) : (
                                     <ActivityTimeline items={timelineItems} />
                                 )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    {/* ── Permissions ──────────────────────────────────── */}
-                    <TabsContent value="permissions">
-                        <Card>
-                            <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
-                                <CardTitle className="text-sm">Role & Permissions</CardTitle>
-                                <Badge variant="outline" className="border-primary/40 text-primary">
-                                    {user?.role ?? profile?.role ?? "—"}
-                                </Badge>
-                            </CardHeader>
-                            <CardContent className="space-y-6 pt-4">
-                                {(user?.permissions ?? []).includes("*") ? (
-                                    <p className="text-sm text-muted-foreground">
-                                        Super Admin — unrestricted access to all modules.
-                                    </p>
-                                ) : permissionGroups.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground">
-                                        No granular permissions assigned to this role.
-                                    </p>
-                                ) : (
-                                    permissionGroups.map(([module, actions]) => (
-                                        <div key={module}>
-                                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                {module}
-                                            </h3>
-                                            <div className="mt-2 flex flex-wrap gap-2">
-                                                {actions.map((action) => (
-                                                    <Badge
-                                                        key={action}
-                                                        variant="outline"
-                                                        className="gap-1.5 font-normal"
-                                                    >
-                                                        <Check size={12} weight="bold" /> {action}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                                <p className="text-xs text-muted-foreground">
-                                    Permissions are managed by the System Administrator under
-                                    Administration → Roles & Permissions.
-                                </p>
                             </CardContent>
                         </Card>
                     </TabsContent>
