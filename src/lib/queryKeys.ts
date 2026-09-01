@@ -21,11 +21,6 @@ export const queryKeys = {
             ["branches", "list", params] as const,
         detail: (id: number) => ["branches", "detail", id] as const,
     },
-    loanProducts: {
-        all: ["loan-products"] as const,
-        list: () => ["loan-products", "list"] as const,
-        detail: (id: string) => ["loan-products", "detail", id] as const,
-    },
     loanStatuses: {
         all: ["loan-statuses"] as const,
         list: () => ["loan-statuses", "list"] as const,
@@ -34,10 +29,9 @@ export const queryKeys = {
     // ── Auth ────────────────────────────────────────────────────────────────
     me: ["auth", "me"] as const,
 
-    // ── Roles & permissions ─────────────────────────────────────────────────
+    // ── Roles ───────────────────────────────────────────────────────────────
     roles: {
         all: ["roles"] as const,
-        matrix: ["roles", "matrix"] as const,
     },
 
     // ── Users (transactional) ───────────────────────────────────────────────

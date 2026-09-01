@@ -298,10 +298,7 @@ export function ActiveLoansTable({
                 {/* Pristine helper text — no account chosen yet */}
                 {!isLoading && !hasFetched && (
                     <p className="text-xs text-muted-foreground">
-                        Select an account above to load up to 10 active
-                        loans (filtered by webloan <code>is_loan()</code>{" "}
-                        and <code>loan_status != 10</code>, ordered by
-                        date granted, descending).
+                        Select an account above to load active loans.
                     </p>
                 )}
 

@@ -1,9 +1,9 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { cn } from "@/src/lib/utils";
 import type { PendingQueueItem, LoanStatus } from "../types";
 
@@ -30,73 +30,63 @@ function formatWaiting(mins: number): string {
     return h > 0 ? `${h}h ${mins % 60}m` : `${mins}m`;
 }
 
-interface PendingQueueProps {
-    data: PendingQueueItem[];
-}
+interface PendingQueueProps { data: PendingQueueItem[]; }
 
 export function PendingQueue({ data }: PendingQueueProps) {
     const navigate = useNavigate();
+    const displayData = useMemo(() => data.slice(0, 5), [data]);
 
     return (
-        <Card id="pending-queue" className="scroll-mt-24">
+        <Card id="pending-queue" className="scroll-mt-24 flex flex-col">
             <CardHeader className="flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-xl">
                     Pending Queue
-                    <Badge variant="secondary" className="tabular-nums">{data.length}</Badge>
+                    {data.length > 0 && <Badge variant="secondary" className="tabular-nums">{data.length}</Badge>}
                 </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/loans/monitoring")}>
-                    View all
-                </Button>
             </CardHeader>
-            <CardContent className="p-0">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[70px]">Position</TableHead>
-                            <TableHead>LAM ID</TableHead>
-                            <TableHead>Branch</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Waiting</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {data.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
-                                    Queue is clear — no pending applications.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                        {data.map((item) => {
+            <CardContent className="p-0 flex-1">
+                {data.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                        <p className="text-sm text-muted-foreground mb-4">Queue is clear — no pending applications.</p>
+                        <Button variant="outline" size="sm" onClick={() => navigate("/loans/create")}>Create New Loan</Button>
+                    </div>
+                ) : (
+                    <ul className="divide-y">
+                        {displayData.map((item) => {
                             const mins = waitingMinutes(item.date);
                             return (
-                                <TableRow
+                                <li
                                     key={item.lamId}
                                     onClick={() => navigate("/loans/monitoring")}
-                                    className={cn("cursor-pointer", item.position === 1 && "bg-primary/[0.04]")}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate("/loans/monitoring"); } }}
+                                    tabIndex={0}
+                                    role="link"
+                                    className={cn("flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", item.position === 1 && "bg-primary/[0.04]")}
                                 >
-                                    <TableCell className="font-medium tabular-nums">#{item.position}</TableCell>
-                                    <TableCell className="font-mono text-xs">{item.lamId}</TableCell>
-                                    <TableCell>{item.branch}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={cn("font-normal", statusStyles[item.status])}>
-                                            {item.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <span className="text-xs tabular-nums text-muted-foreground">{formatWaiting(mins)}</span>
-                                        {mins >= 120 && (
-                                            <Badge variant="outline" className="ml-2 border-red-300 bg-red-50 text-red-700">
-                                                Aging
-                                            </Badge>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
+                                    <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">#{item.position}</span>
+                                    <Avatar size="sm" className="border"><AvatarFallback>{item.lamId.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <p className="font-mono text-sm font-medium truncate">{item.lamId}</p>
+                                            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-4 font-normal", statusStyles[item.status])}>{item.status}</Badge>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground truncate">{item.branch}</p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <span className="text-sm font-medium tabular-nums">{formatWaiting(mins)}</span>
+                                        {mins >= 120 && <Badge variant="outline" className="ml-2 border-red-300 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30 text-[10px] h-4 px-1.5">Aging</Badge>}
+                                    </div>
+                                </li>
                             );
                         })}
-                    </TableBody>
-                </Table>
+                    </ul>
+                )}
             </CardContent>
+            {data.length > 5 && (
+                <CardFooter className="border-t p-3 justify-center">
+                    <Button variant="ghost" size="sm" onClick={() => navigate("/loans/monitoring")} className="w-full text-sm">View all {data.length} pending loans</Button>
+                </CardFooter>
+            )}
         </Card>
     );
 }

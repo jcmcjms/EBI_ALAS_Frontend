@@ -8,8 +8,6 @@ const Login = lazy(() => import("./pages/auth/login"));
 const ChangePassword = lazy(() => import("./pages/auth/change-password"));
 const Dashboard = lazy(() => import("./pages/dashboard").then(m => ({ default: m.Dashboard })));
 const UsersPage = lazy(() => import("./pages/admin/users/index").then(m => ({ default: m.UsersPage })));
-const RolesPage = lazy(() => import("./pages/admin/roles/index").then(m => ({ default: m.RolesPage })));
-const LoanProductsPage = lazy(() => import("./pages/admin/loan-products/index").then(m => ({ default: m.LoanProductsIndex })));
 const LoanCreation = lazy(() => import("./pages/loans/create/index"));
 const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
 const LoanApproval = lazy(() => import("./pages/loans/approval/index"));
@@ -75,22 +73,10 @@ function App() {
                     } />
 
                     {/* Admin Routes — guards mirror backend policies:
-                        user list requires `user.view` (CanViewUsers),
-                        role matrix requires `role.view` (CanViewRoles),
-                        loan products requires `loan_product.manage` (CanManageLoanProducts). */}
+                        user list requires `user.view` (CanViewUsers). */}
                     <Route path="/admin/users" element={
                         <ProtectedRoute requiredPermission={PERMISSIONS.userView}>
                             <UsersPage />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/admin/roles" element={
-                        <ProtectedRoute requiredPermission={PERMISSIONS.roleView}>
-                            <RolesPage />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/admin/loan-products" element={
-                        <ProtectedRoute requiredPermission={PERMISSIONS.loanProductManage}>
-                            <LoanProductsPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/admin/audit-logs" element={

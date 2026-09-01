@@ -1,7 +1,6 @@
 import {
     Bell,
     ChartBar,
-    Folder,
     House,
     ListChecks,
     Users,
@@ -58,51 +57,14 @@ export const navMain: NavItem[] = [
         icon: Bell,
     },
     {
-        title: "Reports",
-        url: "#",
-        icon: Folder,
-        items: [
-            {
-                title: "Dashboard Summary",
-                url: "#",
-            },
-            {
-                title: "Transaction Summary",
-                url: "#",
-            },
-            {
-                title: "Summary of Transaction Graphical",
-                url: "#",
-            },
-            {
-                title: "AO Performance",
-                url: "#",
-            },
-            {
-                title: "Realtime Transaction History Graphical",
-                url: "#",
-            },
-        ],
-    },
-    {
         title: "Administration",
         url: "#",
         icon: Users,
         items: [
             {
-                title: "Loan Products",
-                url: "/admin/loan-products",
-                requiredPermission: "loan_product.view",
-            },
-            {
                 title: "Users",
                 url: "/admin/users",
                 requiredPermission: "user.view",
-            },
-            {
-                title: "Roles & Permissions",
-                url: "/admin/roles",
-                requiredPermission: "role.view",
             },
             {
                 title: "Audit Logs",
