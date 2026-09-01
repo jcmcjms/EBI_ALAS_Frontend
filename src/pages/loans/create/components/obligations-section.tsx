@@ -31,7 +31,7 @@ export function ObligationsSection() {
                 <Table>
                     <TableHeader className="bg-muted/40">
                         <TableRow>
-                            <TableHead>Promissory Note (PN)</TableHead>
+                            <TableHead>PN</TableHead>
                             <TableHead>Principal Balance</TableHead>
                             <TableHead>Amortization</TableHead>
                             <TableHead>Outstanding Balance</TableHead>

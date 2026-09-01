@@ -449,6 +449,8 @@ export function LoanCreationPage() {
         divisionCode: "",
         stationCode: "",
         misAgency: "",
+        school: "",
+        referrer: "",
       },
       loan: {
         product: "",

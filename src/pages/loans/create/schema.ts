@@ -26,6 +26,10 @@ export const clientSchema = z.object({
     divisionCode: z.string().optional(),
     stationCode: z.string().optional(),
     misAgency: z.string().optional(),
+
+    // --- NEW FIELDS (Manual Entry) ---
+    school: z.string().max(200, "School name must not exceed 200 characters").optional(),
+    referrer: z.string().max(100, "Referrer name must not exceed 100 characters").optional(),
 });
 
 // ── Outstanding Loan (existing obligation) ─────────────────────
