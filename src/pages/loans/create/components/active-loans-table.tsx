@@ -28,7 +28,6 @@ import { getOutstandingLoans, getPendingLoan } from "@/src/lib/api/webloans";
 import type { OutstandingLoan, PendingLoan, WebLoanAccount } from "@/src/lib/api/types";
 
 import type { LoanApplicationFormData } from "../schema";
-import { PreLoanPicker } from "./preloan-picker";
 import type { PreLoanItem } from "@/src/lib/api/types";
 
 interface ActiveLoansTableProps {
@@ -334,7 +333,7 @@ export function ActiveLoansTable({
                             LAI (Loan Application Index)
                         </label>
                         <Select
-                            value={selectedAccountId || undefined}
+                            value={selectedAccountId}
                             onValueChange={(val) => handleFetch(val as string)}
                         >
                             <SelectTrigger
@@ -602,14 +601,7 @@ export function ActiveLoansTable({
                     selectedLoanNo && (
                         <>
                             <div className="my-2 border-t border-dashed" />
-                            <PreLoanPicker
-                                key={`${cisNo}:${selectedAccountId}`}
-                                cisNo={cisNo}
-                                accountNo={selectedAccountNo}
-                                userBranchId={userBranchId}
-                                value={selectedPreLoanId}
-                                onChange={onPreLoanChange}
-                            />
+
                         </>
                     )}
                 {!selectedLoanNo && selectedAccountId && hasFetched && loans.length > 0 && (
