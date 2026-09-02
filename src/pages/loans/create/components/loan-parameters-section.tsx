@@ -6,34 +6,21 @@ import { Badge } from "@/src/components/ui/badge";
 import { Calculator, CurrencyDollar, CalendarBlank, LockSimple } from "@phosphor-icons/react";
 
 export function LoanParametersSection() {
-    const { control, register, setValue } = useFormContext();
+    const { control, register } = useFormContext();
 
     const proposedAmount = useWatch({ control, name: "loan.proposedAmount" }) || 0;
     const term = useWatch({ control, name: "loan.term" }) || 0;
     const interestRate = useWatch({ control, name: "loan.interestRate" }) || 1.5;
 
-    // ── Real data from form fields ────────────────────────────────────────
-    const netTakeHomePay = useWatch({ control, name: "client.netTakeHomePay" }) || 0;
-    const outstandingLoans = useWatch({ control, name: "outstandingLoans" }) || [];
-    const ebiReloans = useWatch({ control, name: "ebiReloans" }) || [];
-    const buyOuts = useWatch({ control, name: "buyOuts" }) || [];
-    const incomingLoans = useWatch({ control, name: "incomingLoans" }) || [];
-
-    // Sum all existing obligations (monthly deductions)
-    const totalExistingObligations =
-        outstandingLoans.reduce((sum, loan) => sum + (loan.amortization || 0), 0) +
-        ebiReloans.reduce((sum, loan) => sum + (loan.existingDeduction || 0), 0) +
-        buyOuts.reduce((sum, loan) => sum + (loan.amortization || 0), 0) +
-        incomingLoans.reduce((sum, loan) => sum + (loan.deductions || 0), 0);
-
+    // ── Estimated monthly amortization ────────────────────────────────────
+    // Used by the "Est. Monthly" badge in the card header. The
+    // Capacity-to-Pay Indicators panel that previously summarized NTHP,
+    // total existing obligations, and DTI has been removed; only the
+    // monthly payment estimate is retained as an at-a-glance signal.
     const monthlyPayment =
         term > 0 && proposedAmount > 0
             ? (proposedAmount + proposedAmount * (interestRate / 100) * (term / 12)) / term
             : 0;
-
-    const dtiRatio = netTakeHomePay > 0 && monthlyPayment > 0
-        ? ((monthlyPayment / netTakeHomePay) * 100)
-        : 0;
 
     return (
         <Card>
@@ -134,53 +121,6 @@ export function LoanParametersSection() {
                         readOnly
                         className="h-9 bg-muted/50"
                     />
-                </div>
-
-                {/* Capacity-to-Pay Summary */}
-                <div className="md:col-span-3 rounded-md border bg-muted/20 p-4 space-y-2">
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Capacity-to-Pay Indicators
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                            <span className="text-muted-foreground text-xs block">Net Take-Home Pay</span>
-                            <span className={`font-semibold ${netTakeHomePay > 0 ? "" : "text-muted-foreground"}`}>
-                                {netTakeHomePay > 0
-                                    ? `₱${netTakeHomePay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    : "—"}
-                            </span>
-                        </div>
-                        <div>
-                            <span className="text-muted-foreground text-xs block">Total Existing Obligations</span>
-                            <span className={`font-semibold ${totalExistingObligations > 0 ? "" : "text-muted-foreground"}`}>
-                                {totalExistingObligations > 0
-                                    ? `₱${totalExistingObligations.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    : "—"}
-                            </span>
-                        </div>
-                        <div>
-                            <span className="text-muted-foreground text-xs block">Proposed Monthly Amort.</span>
-                            <span className="font-bold text-primary">
-                                {monthlyPayment > 0
-                                    ? `₱${monthlyPayment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    : "₱0.00"}
-                            </span>
-                        </div>
-                        <div>
-                            <span className="text-muted-foreground text-xs block">Debt-to-Income Ratio</span>
-                            <span
-                                className={
-                                    dtiRatio > 0
-                                        ? dtiRatio > 40
-                                            ? "font-bold text-red-600"
-                                            : "font-bold text-emerald-600"
-                                        : "text-muted-foreground"
-                                }
-                            >
-                                {dtiRatio > 0 ? `${dtiRatio.toFixed(1)}%` : "—"}
-                            </span>
-                        </div>
-                    </div>
                 </div>
             </CardContent>
         </Card>

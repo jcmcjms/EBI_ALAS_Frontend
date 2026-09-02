@@ -58,8 +58,8 @@ const SECTIONS: SectionDef[] = [
   { id: "loan-params", label: "Loan Parameters" },
   { id: "obligations", label: "Outstanding Loans" },
   { id: "other-obligations", label: "EBI, Buy-Outs & Incoming" },
-  { id: "verification", label: "Verification Conducted", optional: true },
-  { id: "deviations", label: "Remarks & Deviations", optional: true },
+  { id: "verification", label: "Verification Conducted" },
+  { id: "deviations", label: "Remarks & Deviations" },
   { id: "approval-form", label: "Approval Form" },
 ];
 
@@ -144,13 +144,19 @@ function useSectionProgress(
           loan.term > 0
         );
       case "verification":
-        return !!verification?.findings;
+        // `findings` is a required, non-empty string in the schema.
+        return !!verification?.findings?.trim();
       case "deviations":
-        return !!(
-          deviations?.deviationDetails ||
-          deviations?.aoRecommendation ||
-          deviations?.remarks
-        );
+        // `otherRemarks` is always required. `deviationDetails` is also
+        // required when `hasDeviations` is true — the schema's
+        // superRefine enforces that at submit time.
+        if (!deviations?.otherRemarks?.trim()) return false;
+        if (
+          deviations.hasDeviations &&
+          !deviations.deviationDetails?.trim()
+        )
+          return false;
+        return true;
       case "approval-form":
         return isClientLoaded; // preview available once client is loaded
     }
@@ -773,7 +779,7 @@ export function LoanCreationPage() {
                 {!isClientLoaded
                   ? "Search for a CIS ID to begin."
                   : !selectedPreLoan.id
-                    ? `Pick an account and a preloan under your branch (${userBranchId || "—"}) to continue.`
+                    ? `Pick an account and a preloan to continue.`
                     : "Client verified, preloan attached. Ready for processing."}
               </div>
             )}

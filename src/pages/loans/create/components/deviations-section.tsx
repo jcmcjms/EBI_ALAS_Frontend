@@ -4,10 +4,25 @@ import { Label } from "@/src/components/ui/label";
 import { Checkbox } from "@/src/components/ui/checkbox";
 import { Warning } from "@phosphor-icons/react";
 
+// Typed view of the deviations error subtree returned by RHF's errors object.
+type DeviationsErrors = {
+    otherRemarks?: { message?: string };
+    deviationDetails?: { message?: string };
+};
+
 export function DeviationsSection() {
-    const { control, register, setValue } = useFormContext();
+    const {
+        control,
+        register,
+        setValue,
+        formState: { errors },
+    } = useFormContext();
 
     const hasDeviations = useWatch({ control, name: "deviations.hasDeviations" }) ?? false;
+
+    const devErrors = (errors.deviations as DeviationsErrors | undefined);
+    const otherRemarksError = devErrors?.otherRemarks?.message;
+    const deviationDetailsError = devErrors?.deviationDetails?.message;
 
     return (
         <Card>
@@ -48,14 +63,29 @@ export function DeviationsSection() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground">
-                                Deviation Details / Justification
-                            </Label>
+                            <div className="flex items-center justify-between">
+                                <Label className="text-xs text-muted-foreground">
+                                    Deviation Details / Justification
+                                </Label>
+                                {deviationDetailsError && (
+                                    <span className="text-xs text-destructive font-medium">
+                                        {deviationDetailsError}
+                                    </span>
+                                )}
+                            </div>
                             <textarea
                                 {...register("deviations.deviationDetails")}
                                 placeholder="Describe the deviation and provide justification (e.g. exceeds standard NTHP ratio, borrower has existing delinquency, etc.)"
                                 rows={4}
-                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y"
+                                aria-invalid={!!deviationDetailsError}
+                                className={
+                                    "w-full rounded-md border bg-transparent px-3 py-2 text-sm " +
+                                    "placeholder:text-muted-foreground focus-visible:border-ring " +
+                                    "focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y " +
+                                    (deviationDetailsError
+                                        ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50"
+                                        : "border-input")
+                                }
                             />
                         </div>
                     </div>
@@ -63,12 +93,27 @@ export function DeviationsSection() {
 
                 {/* Other Remarks */}
                 <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Other Remarks</Label>
+                    <div className="flex items-center justify-between">
+                        <Label className="text-xs text-muted-foreground">Other Remarks</Label>
+                        {otherRemarksError && (
+                            <span className="text-xs text-destructive font-medium">
+                                {otherRemarksError}
+                            </span>
+                        )}
+                    </div>
                     <textarea
                         {...register("deviations.otherRemarks")}
                         placeholder="Any other notes or special instructions for this application..."
                         rows={3}
-                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y"
+                        aria-invalid={!!otherRemarksError}
+                        className={
+                            "w-full rounded-md border bg-transparent px-3 py-2 text-sm " +
+                            "placeholder:text-muted-foreground focus-visible:border-ring " +
+                            "focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y " +
+                            (otherRemarksError
+                                ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50"
+                                : "border-input")
+                        }
                     />
                 </div>
             </CardContent>

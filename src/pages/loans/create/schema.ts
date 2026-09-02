@@ -92,18 +92,49 @@ export const loanParametersSchema = z.object({
 });
 
 // ── Verification Conducted ─────────────────────────────────────
+// `findings` is required: the AO must record what was verified
+// (employment, payslip, collateral, etc.) before the application can
+// be submitted. Empty/whitespace-only input is rejected.
 export const verificationSchema = z.object({
-    findings: z.string().optional(),
+    findings: z
+        .string()
+        .trim()
+        .min(1, "Findings are required. Document what was verified."),
 });
 
 // ── Deviations / Remarks ───────────────────────────────────────
-export const deviationsSchema = z.object({
-    hasDeviations: z.boolean().default(false),
-    deviationDetails: z.string().optional(),
-    remarks: z.string().optional(),
-    aoRecommendation: z.string().optional(),
-    otherRemarks: z.string().optional(),
-});
+// `hasDeviations` is the user-controlled toggle. When it is `true`,
+// `deviationDetails` must also be supplied — we enforce that with a
+// `superRefine` rather than with a plain `.min(1)` so that a user who
+// legitimately ticks the flag and then unticks it does not see a
+// stale required-error on an empty textarea.
+//
+// `otherRemarks` is always required, even when there are no
+// deviations, so the AO leaves a trace for downstream reviewers.
+export const deviationsSchema = z
+    .object({
+        hasDeviations: z.boolean().default(false),
+        deviationDetails: z.string().default(""),
+        remarks: z.string().optional(),
+        aoRecommendation: z.string().optional(),
+        otherRemarks: z
+            .string()
+            .trim()
+            .min(1, "Other remarks are required."),
+    })
+    .superRefine((data, ctx) => {
+        if (
+            data.hasDeviations &&
+            data.deviationDetails.trim().length === 0
+        ) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["deviationDetails"],
+                message:
+                    "Deviation details are required when the deviations flag is enabled.",
+            });
+        }
+    });
 
 // ── Full Loan Application ──────────────────────────────────────
 export const loanApplicationSchema = z.object({
@@ -115,8 +146,13 @@ export const loanApplicationSchema = z.object({
     buyOuts: z.array(buyOutSchema).default([]),
     incomingLoans: z.array(incomingLoanSchema).default([]),
     preLoan: preLoanRefSchema.optional(),
-    verification: verificationSchema.optional(),
-    deviations: deviationsSchema.optional(),
+    // Both sections are required: the wizard seeds them with empty
+    // strings in `loan-creation.tsx` so they always exist on mount.
+    // Marking them required at the parent level ensures the
+    // `.min(1)` constraints on `findings`, `otherRemarks`, and
+    // (conditionally) `deviationDetails` are actually evaluated.
+    verification: verificationSchema,
+    deviations: deviationsSchema,
 });
 
 // ── Inferred types ─────────────────────────────────────────────

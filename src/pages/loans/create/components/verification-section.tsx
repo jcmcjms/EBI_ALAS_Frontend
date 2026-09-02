@@ -4,7 +4,11 @@ import { Label } from "@/src/components/ui/label";
 import { CheckCircle } from "@phosphor-icons/react";
 
 export function VerificationSection() {
-    const { register } = useFormContext();
+    const { register, formState: { errors } } = useFormContext();
+
+    const findingsError = (
+        errors.verification as { findings?: { message?: string } } | undefined
+    )?.findings?.message;
 
     return (
         <Card>
@@ -16,12 +20,27 @@ export function VerificationSection() {
             </CardHeader>
             <CardContent className="pt-6">
                 <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Findings / Notes</Label>
+                    <div className="flex items-center justify-between">
+                        <Label className="text-xs text-muted-foreground">Findings / Notes</Label>
+                        {findingsError && (
+                            <span className="text-xs text-destructive font-medium">
+                                {findingsError}
+                            </span>
+                        )}
+                    </div>
                     <textarea
                         {...register("verification.findings")}
                         placeholder="Document any findings from verification (e.g., employment confirmed, payslip validated, collateral inspected)..."
                         rows={3}
-                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y"
+                        aria-invalid={!!findingsError}
+                        className={
+                            "w-full rounded-md border bg-transparent px-3 py-2 text-sm " +
+                            "placeholder:text-muted-foreground focus-visible:border-ring " +
+                            "focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y " +
+                            (findingsError
+                                ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50"
+                                : "border-input")
+                        }
                     />
                 </div>
             </CardContent>

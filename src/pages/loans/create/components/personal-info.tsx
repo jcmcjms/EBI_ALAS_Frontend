@@ -16,11 +16,19 @@ import {
 } from "@phosphor-icons/react";
 import { Badge } from "@/src/components/ui/badge";
 import { cn } from "@/src/lib/utils";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/src/components/ui/select";
 import type { LoanApplicationFormData } from "../schema";
 
 export function PersonalInfoSection() {
     const {
         register,
+        setValue,
         formState: { errors },
     } = useFormContext<LoanApplicationFormData>();
     const clientErrors = errors.client;
@@ -52,7 +60,7 @@ export function PersonalInfoSection() {
                     </Badge>
                 </CardTitle>
                 <CardDescription className="pt-1 text-xs text-muted-foreground">
-                    Core borrower details sourced directly from the legacy CIS database. These fields are read-only.
+                    Core borrower details sourced directly from the legacy CIS database. Fields other than Suffix are read-only.
                 </CardDescription>
             </CardHeader>
 
@@ -88,12 +96,23 @@ export function PersonalInfoSection() {
                     {/* Row 2 — Suffix, Birthdate, Employee ID */}
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">Suffix</Label>
-                        <Input
+                        <Select
                             {...register("client.suffix")}
-                            readOnly
-                            placeholder="e.g. Jr., Sr., III"
-                            className="h-9 cursor-default bg-muted/50"
-                        />
+                            onValueChange={(value) =>
+                                setValue("client.suffix", value as string, { shouldValidate: true })
+                            }
+                        >
+                            <SelectTrigger className="h-9 w-full">
+                                <SelectValue placeholder="Select suffix" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Jr.">Jr.</SelectItem>
+                                <SelectItem value="Sr.">Sr.</SelectItem>
+                                <SelectItem value="II">II</SelectItem>
+                                <SelectItem value="III">III</SelectItem>
+                                <SelectItem value="IV">IV</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">Birthdate</Label>
@@ -201,7 +220,7 @@ export function PersonalInfoSection() {
                     <div className="mb-4 flex items-center gap-2">
                         <GraduationCap size={20} weight="bold" className="text-primary" />
                         <h3 className="text-md font-semibold">
-                            Additional Information
+                            Referrer Information
                         </h3>
                     </div>
                     <p className="mb-6 text-xs text-muted-foreground">
@@ -246,7 +265,7 @@ export function PersonalInfoSection() {
                                 className="flex items-center gap-1.5 text-xs"
                             >
                                 <UserCirclePlus size={14} weight="bold" />
-                                Referrer / Marketing Source
+                                Referrer
                             </Label>
                             <Input
                                 id="client.referrer"

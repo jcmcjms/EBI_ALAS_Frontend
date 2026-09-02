@@ -9,23 +9,22 @@
  * that atomically moves a row from one section to another while
  * re-mapping its columns through `loan-transfer-utils`.
  *
- * ── One-way reclassification contract ──────────────────────────────────
- * The wizard treats `outstanding` as the canonical, backend-sourced
- * list of the borrower's existing obligations. The three section-5
- * arrays (`ebiReloans`, `buyOuts`, `incomingLoans`) are the AO's
- * reclassification of those obligations into per-purpose buckets.
+ * ── Bidirectional transfer contract ───────────────────────────────────
+ * Reclassification is strictly bidirectional and only between
+ * `outstanding` and `ebi`:
  *
- * Reclassification is therefore *one-way*:
- *   • Source must be `outstanding`.
- *   • Target must be one of `ebi`, `buyout`, or `incoming`.
- *   • Transfers into `outstanding` and transfers *out of* a section-5
- *     array are rejected by the hook (defense in depth) and are not
- *     offered in the UI either (see `TransferActionMenu`).
+ *   • `outstanding`  ↔  `ebi`     ← allowed
+ *   • `outstanding`  →  `buyout`  ← rejected
+ *   • `outstanding`  →  `incoming`← rejected
+ *   • any path involving `buyout` / `incoming` ← rejected
  *
- * This keeps the data flow unambiguous: Outstanding always reflects
- * what the backend says the borrower owes, and the section-5 tables
- * only ever add to that picture — they never reach back in to modify
- * it.
+ * `buyout` and `incoming` rows are now managed directly by the AO via
+ * Add/Delete buttons in the section-5 table; they are no longer
+ * destinations for outstanding rows.
+ *
+ * The hook enforces this contract as a defense-in-depth check, so any
+ * caller that bypasses the UI is still rejected with a clear toast
+ * rather than silently corrupting form state.
  *
  * ── Why we identify rows by `id`, not array index ──────────────────────
  * In react-hook-form, the array index returned by `useFieldArray`'s
@@ -58,9 +57,8 @@ import { toast } from "sonner";
 
 import {
     LOAN_SECTION_LABELS,
-    mapToBuyOut,
     mapToEbi,
-    mapToIncoming,
+    mapToOutstanding,
     type LoanSection,
 } from "../utils/loan-transfer-utils";
 import type { LoanApplicationFormData } from "../schema";
@@ -126,19 +124,22 @@ export function useLoanTransfers() {
         (source: LoanSection, rowId: string, target: LoanSection): void => {
             if (source === target) return;
 
-            // ── Enforce the one-way contract ──────────────────────────
-            // Source must be Outstanding; target must be one of the
-            // three section-5 sections. This is the second line of
-            // defence — the `TransferActionMenu` already only offers
-            // these targets — so any caller that bypasses the UI is
-            // still rejected with a clear error rather than silently
-            // corrupting the form state.
-            if (source !== "outstanding") {
-                toast.error("Loans can only be reclassified from Outstanding.");
-                return;
-            }
-            if (target === "outstanding") {
-                toast.error("Outstanding is the source of truth and cannot receive transfers.");
+            // ── Enforce the bidirectional contract ───────────────────
+            // Transfers are allowed only between `outstanding` and `ebi`.
+            // Anything else (including transfers into `buyout` /
+            // `incoming`, or transfers *out of* `buyout` / `incoming`)
+            // is rejected. This is the second line of defence — the
+            // `TransferActionMenu` already only offers these targets —
+            // so any caller that bypasses the UI is still rejected with
+            // a clear error rather than silently corrupting form state.
+            const isValidTransfer =
+                (source === "outstanding" && target === "ebi") ||
+                (source === "ebi" && target === "outstanding");
+
+            if (!isValidTransfer) {
+                toast.error(
+                    "Transfers are only allowed between Outstanding Loans and EBI Accounts.",
+                );
                 return;
             }
 
@@ -180,24 +181,24 @@ export function useLoanTransfers() {
             }
 
             // ── Step 3: map the row's data into the target schema.
-            // After the one-way contract check above, `target` is
-            // narrowed to one of the three section-5 sections, so a
-            // `switch` with exhaustiveness checking is the right
-            // shape. The `never` branch makes the compiler complain if
-            // a future section is ever added without being handled.
+            // After the bidirectional contract check above, `target` is
+            // narrowed to one of {"ebi", "outstanding"}, so a `switch`
+            // with exhaustiveness checking is the right shape. The
+            // `never` branch makes the compiler complain if a future
+            // section is ever added without being handled.
             let mappedRow: unknown;
-            switch (target) {
+            // Narrow target to only the valid options to satisfy TypeScript
+            // exhaustiveness in the presence of `buyout` / `incoming`.
+            const restrictedTarget = target as "ebi" | "outstanding";
+            switch (restrictedTarget) {
                 case "ebi":
                     mappedRow = mapToEbi(rowData, source);
                     break;
-                case "buyout":
-                    mappedRow = mapToBuyOut(rowData, source);
-                    break;
-                case "incoming":
-                    mappedRow = mapToIncoming(rowData, source);
+                case "outstanding":
+                    mappedRow = mapToOutstanding(rowData, source);
                     break;
                 default: {
-                    const _exhaustive: never = target;
+                    const _exhaustive: never = restrictedTarget;
                     toast.error(`Unknown target section: ${String(_exhaustive)}`);
                     return;
                 }
@@ -214,7 +215,7 @@ export function useLoanTransfers() {
             targetArray.append(mappedRow as any, { shouldFocus: false });
             sourceArray.remove(fieldIndex);
 
-            toast.success(`Reclassified loan as ${LOAN_SECTION_LABELS[target]}`);
+            toast.success(`Transferred loan to ${LOAN_SECTION_LABELS[restrictedTarget]}`);
         },
         // The four `useFieldArray` returns are stable references per
         // render, but we list them anyway to keep the linter honest.

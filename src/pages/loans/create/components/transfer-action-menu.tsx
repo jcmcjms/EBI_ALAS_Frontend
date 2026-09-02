@@ -1,39 +1,35 @@
 /**
  * TransferActionMenu
  * ------------------
- * A small dropdown trigger attached to every row in the Outstanding
- * Loans section. It lets the AO reclassify a loan from the
- * backend-sourced "Outstanding" list into one of the three
- * user-managed reclassification tables in section 5
- * (EBI Reloans / Buy-Outs / Incoming).
+ * A small dropdown trigger attached to every row in either the
+ * Outstanding Loans section or the EBI Reloans section. It lets the
+ * AO move a loan between those two tables.
  *
- * ── Why only on Outstanding, and only targeting section 5 ───────────
- * Outstanding Loans is the single source of truth — it is populated
- * from the backend and is treated as read-only by the wizard. The
- * three section-5 tables are the AO's reclassification of those
- * obligations: each row in those tables corresponds to an Outstanding
- * row that the AO has decided should be tracked a different way.
+ * ── Why bidirectional between Outstanding and EBI only ────────────────
+ * Under the updated data-flow contract, a loan can be transferred
+ * *only* between Outstanding and EBI Accounts:
  *
- * Because of that relationship, the reclassification is intentionally
- * one-way:
- *   • Only Outstanding rows expose the transfer menu.
- *   • The only valid targets are the three section-5 sections
- *     (EBI / Buy-Outs / Incoming). A reclassification is never
- *     "back" into Outstanding — Outstanding is always the canonical
- *     source, and re-merging would just duplicate data.
+ *   • Outstanding  ↔  EBI   ← allowed
+ *   • Outstanding  →  Buy-Outs / Incoming ← rejected (those tables
+ *     are now managed directly via Add/Delete buttons)
+ *   • Buy-Outs / Incoming  →  anywhere ← rejected
  *
- * If the component is ever mounted on a non-Outstanding row (a
- * programming error), it renders nothing rather than offering an
- * invalid action, and the hook also rejects the call as a second
- * line of defense.
+ * Because `TransferActionMenu` is the only UI surface that initiates
+ * a transfer, it must enforce it too: it only mounts on rows whose
+ * `currentSection` is `"outstanding"` or `"ebi"`, and its single
+ * dropdown item points at the *opposite* section.
+ *
+ * If the component is ever mounted on a non-Outstanding/non-EBI row
+ * (a programming error), it renders nothing rather than offering an
+ * invalid action, and the hook also rejects the call as a second line
+ * of defence.
  *
  * ── Implementation note ──────────────────────────────────────────────
  * This project uses `@base-ui/react`'s `Menu` primitives (see
- * `src/components/ui/dropdown-menu.tsx`), so the trigger composes
- * the underlying `Button` via the `render` prop instead of the
- * Radix-style `asChild`. The label and items live inside a
- * `DropdownMenuGroup` to satisfy base-ui's `MenuGroupContext`
- * contract.
+ * `src/components/ui/dropdown-menu.tsx`), so the trigger composes the
+ * underlying `Button` via the `render` prop instead of the Radix-style
+ * `asChild`. The label and item live inside a `DropdownMenuGroup` to
+ * satisfy base-ui's `MenuGroupContext` contract.
  */
 
 import { DotsThreeVertical } from "@phosphor-icons/react";
@@ -53,9 +49,9 @@ import { LOAN_SECTION_LABELS, type LoanSection } from "../utils/loan-transfer-ut
 interface TransferActionMenuProps {
     /**
      * The section this row currently lives in. The transfer action is
-     * only meaningful when this is `"outstanding"`. The component
-     * renders `null` for any other value so a stray mount cannot
-     * offer an invalid transfer target.
+     * only meaningful when this is `"outstanding"` or `"ebi"`. The
+     * component renders `null` for any other value so a stray mount
+     * cannot offer an invalid transfer target.
      */
     currentSection: LoanSection;
     /** Invoked with the chosen target section when the user picks one. */
@@ -63,21 +59,25 @@ interface TransferActionMenuProps {
 }
 
 /**
- * The set of valid transfer destinations. Section-5 only.
- * Ordered to match the order in which they appear on the wizard page.
+ * Sections eligible for the bidirectional transfer menu. Any other
+ * value of `currentSection` causes the component to render `null`.
  */
-const SECTION5_TARGETS: { id: LoanSection; label: string }[] = [
-    { id: "ebi", label: LOAN_SECTION_LABELS.ebi },
-    { id: "buyout", label: LOAN_SECTION_LABELS.buyout },
-    { id: "incoming", label: LOAN_SECTION_LABELS.incoming },
-];
+const TRANSFER_ELIGIBLE_SECTIONS = ["outstanding", "ebi"] as const;
 
 export function TransferActionMenu({ currentSection, onTransfer }: TransferActionMenuProps) {
-    // Reclassifications are one-way: only Outstanding rows can be
-    // reclassified, and only into the three section-5 tables.
-    if (currentSection !== "outstanding") {
+    // Transfers are strictly bidirectional between Outstanding and EBI.
+    // Any other section is ineligible — render nothing rather than
+    // exposing an invalid target.
+    if (
+        !(
+            (TRANSFER_ELIGIBLE_SECTIONS as readonly string[]).includes(currentSection)
+        )
+    ) {
         return null;
     }
+
+    const targetSection: LoanSection =
+        currentSection === "outstanding" ? "ebi" : "outstanding";
 
     return (
         <DropdownMenu>
@@ -86,25 +86,22 @@ export function TransferActionMenu({ currentSection, onTransfer }: TransferActio
                     <Button
                         variant="ghost"
                         size="icon-sm"
-                        aria-label="Reclassify loan into another section"
+                        aria-label={`Transfer to ${LOAN_SECTION_LABELS[targetSection]}`}
                     />
                 }
             >
                 <DotsThreeVertical size={16} weight="bold" className="text-muted-foreground" />
-                <span className="sr-only">Open reclassify menu</span>
+                <span className="sr-only">Open transfer menu</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuGroup>
                     <DropdownMenuLabel>Move to</DropdownMenuLabel>
-                    {SECTION5_TARGETS.map((target) => (
-                        <DropdownMenuItem
-                            key={target.id}
-                            onClick={() => onTransfer(target.id)}
-                            className="cursor-pointer"
-                        >
-                            {target.label}
-                        </DropdownMenuItem>
-                    ))}
+                    <DropdownMenuItem
+                        onClick={() => onTransfer(targetSection)}
+                        className="cursor-pointer"
+                    >
+                        {LOAN_SECTION_LABELS[targetSection]}
+                    </DropdownMenuItem>
                 </DropdownMenuGroup>
             </DropdownMenuContent>
         </DropdownMenu>
