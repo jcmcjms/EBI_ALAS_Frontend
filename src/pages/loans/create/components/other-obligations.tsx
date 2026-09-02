@@ -5,7 +5,6 @@ import { Input } from "@/src/components/ui/input";
 import { Bank, CreditCard, ArrowLineDown } from "@phosphor-icons/react";
 
 import { useLoanTransfers } from "../hooks/useLoanTransfers";
-import { TransferActionMenu } from "./transfer-action-menu";
 
 type EbiRow = { pn?: string; name?: string; existingDeduction?: number; outstandingBalance?: number };
 type BuyOutRow = { pn?: string; name?: string; amortization?: number; outstandingBalance?: number };
@@ -13,7 +12,11 @@ type IncomingRow = { name?: string; deductions?: number; remarks?: string };
 
 export function OtherObligationsSection() {
     const { control, register } = useFormContext();
-    const { arrays, handleTransfer } = useLoanTransfers();
+    // `arrays` is only consumed for RHF row ids (used as React keys
+    // here). The transfer menu is mounted exclusively on the
+    // Outstanding Loans table, so this section has no transfer
+    // triggers of its own.
+    const { arrays } = useLoanTransfers();
 
     const watchedReloans = (useWatch({ control, name: "ebiReloans" }) as EbiRow[]) || [];
     const watchedBuyouts = (useWatch({ control, name: "buyOuts" }) as BuyOutRow[]) || [];
@@ -38,9 +41,6 @@ export function OtherObligationsSection() {
                                 <TableHead className="w-[120px]">PN / Account No.</TableHead>
                                 <TableHead>Product Name</TableHead>
                                 <TableHead className="text-right">Existing Deduction</TableHead>
-                                <TableHead className="w-[50px]">
-                                    <span className="sr-only">Row actions</span>
-                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -73,24 +73,12 @@ export function OtherObligationsSection() {
                                             className="h-8 text-right text-xs bg-muted/50"
                                         />
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        <TransferActionMenu
-                                            currentSection="ebi"
-                                            onTransfer={(target) =>
-                                                handleTransfer(
-                                                    "ebi",
-                                                    arrays.ebi.fields[i]?.id ?? "",
-                                                    target,
-                                                )
-                                            }
-                                        />
-                                    </TableCell>
                                 </TableRow>
                             ))}
                             {watchedReloans.length === 0 && (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={4}
+                                        colSpan={3}
                                         className="text-center text-xs text-muted-foreground py-4"
                                     >
                                         No EBI reloans added.
@@ -114,9 +102,6 @@ export function OtherObligationsSection() {
                                 <TableHead>Financial Institution / Name</TableHead>
                                 <TableHead className="text-right">Monthly Amort</TableHead>
                                 <TableHead className="text-right">Outstanding Balance</TableHead>
-                                <TableHead className="w-[50px]">
-                                    <span className="sr-only">Row actions</span>
-                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -160,24 +145,12 @@ export function OtherObligationsSection() {
                                             className="h-8 text-right text-xs bg-muted/50"
                                         />
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        <TransferActionMenu
-                                            currentSection="buyout"
-                                            onTransfer={(target) =>
-                                                handleTransfer(
-                                                    "buyout",
-                                                    arrays.buyOut.fields[i]?.id ?? "",
-                                                    target,
-                                                )
-                                            }
-                                        />
-                                    </TableCell>
                                 </TableRow>
                             ))}
                             {watchedBuyouts.length === 0 && (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={5}
+                                        colSpan={4}
                                         className="text-center text-xs text-muted-foreground py-4"
                                     >
                                         No external buy-outs added.
@@ -200,9 +173,6 @@ export function OtherObligationsSection() {
                                 <TableHead>Creditor / Name</TableHead>
                                 <TableHead className="text-right">Expected Deduction</TableHead>
                                 <TableHead>Remarks / Notes</TableHead>
-                                <TableHead className="w-[50px]">
-                                    <span className="sr-only">Row actions</span>
-                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -234,24 +204,12 @@ export function OtherObligationsSection() {
                                             className="h-8 text-xs"
                                         />
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        <TransferActionMenu
-                                            currentSection="incoming"
-                                            onTransfer={(target) =>
-                                                handleTransfer(
-                                                    "incoming",
-                                                    arrays.incoming.fields[i]?.id ?? "",
-                                                    target,
-                                                )
-                                            }
-                                        />
-                                    </TableCell>
                                 </TableRow>
                             ))}
                             {watchedIncoming.length === 0 && (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={4}
+                                        colSpan={3}
                                         className="text-center text-xs text-muted-foreground py-4"
                                     >
                                         No incoming loans declared.
