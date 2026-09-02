@@ -48,22 +48,31 @@ export function WeeklyTrend({ data }: WeeklyTrendProps) {
                     </span>
                 </div>
             </CardHeader>
-            <CardContent className="mt-2 flex-1">
+            <CardContent className="mt-2">
                 {data.length === 0 ? (
                     <div className="h-40 flex items-center justify-center">
                         <p className="text-sm text-muted-foreground">No trend data available.</p>
                     </div>
                 ) : (
-                    <ResponsiveContainer width="100%" height="100%" minHeight={160}>
-                        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                            <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
-                            <XAxis dataKey="day" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                            <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--muted)" }} />
-                            <Bar dataKey="approved" fill="#10b981" radius={[4, 4, 0, 0]} fillOpacity={0.8} />
-                            <Bar dataKey="pushBacks" fill="#f87171" radius={[4, 4, 0, 0]} fillOpacity={0.8} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                    /*
+                     * ResponsiveContainer requires a parent with a *defined* height.
+                     * The chart lives inside a flex column on the dashboard grid, so
+                     * we give it a fixed h-[200px] instead of flex-1 — that avoids
+                     * the "width(-1) and height(-1)" warning when the flex parent
+                     * has no intrinsic height yet.
+                     */
+                    <div className="h-[200px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                                <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
+                                <XAxis dataKey="day" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--muted)" }} />
+                                <Bar dataKey="approved" fill="#10b981" radius={[4, 4, 0, 0]} fillOpacity={0.8} />
+                                <Bar dataKey="pushBacks" fill="#f87171" radius={[4, 4, 0, 0]} fillOpacity={0.8} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 )}
             </CardContent>
         </Card>

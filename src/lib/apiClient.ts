@@ -85,6 +85,50 @@ function processQueue(error: unknown, token: string | null) {
     failedQueue = [];
 }
 
+/**
+ * Silently mint a fresh access JWT using the HttpOnly refresh cookie.
+ * Reused by both the 401-retry path and the CSRF-retry path so they share
+ * the same mutex and the same failure semantics.
+ *
+ * Throws on:
+ *  - network / refresh-cookie-expired failures,
+ *  - refresh response that does not contain an accessToken.
+ *
+ * On success, publishes the new token to the auth store and resolves.
+ */
+async function refreshAccessToken(): Promise<string> {
+    if (isRefreshing) {
+        // Another caller is already refreshing — wait for it and reuse its result.
+        return new Promise<string>((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+        });
+    }
+    isRefreshing = true;
+    try {
+        // POST /api/auth/refresh — browser sends the HttpOnly cookie automatically.
+        // Skip the CSRF header for refresh itself (server exempts /auth/*).
+        const { data: apiResponse } = await axios.post(
+            "/api/auth/refresh",
+            null,
+            { withCredentials: true, headers: { "Content-Type": "application/json" } }
+        );
+        if (apiResponse?.success && apiResponse.data?.accessToken) {
+            const newToken: string = apiResponse.data.accessToken;
+            useAuthStore.getState().setAccessToken(newToken);
+            processQueue(null, newToken);
+            return newToken;
+        }
+        const err = new Error("Refresh returned no access token");
+        processQueue(err, null);
+        throw err;
+    } catch (e) {
+        processQueue(e, null);
+        throw e;
+    } finally {
+        isRefreshing = false;
+    }
+}
+
 // ── Request interceptor ──────────────────────────────────────────────────────
 // 1. Attach the in-memory Bearer token (access token stays in Zustand — never
 //    in a cookie or localStorage — to prevent XSS theft).
@@ -119,35 +163,78 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 });
 
 // ── Response interceptor ─────────────────────────────────────────────────────
-// Two distinct failure paths:
+// Three distinct failure paths:
 //
 //   (a) 401: silent refresh-then-retry (existing flow, preserved).
 //
-//   (b) 403 with `code === "CSRF_VALIDATION_FAILED"`: this is a configuration
-//       bug, not a transient failure — the access JWT we sent does not match
-//       the XSRF token the backend expected. Possible causes:
-//         - access token refreshed but the in-flight mutation still holds
-//           the old xsrfToken claim (rare race),
-//         - user signed in on another device and the JWT signature/claim
+//   (b) 403 with `code === "CSRF_VALIDATION_FAILED"`: the access JWT we sent
+//       does not carry an `xsrfToken` claim the backend accepts. Possible
+//       causes:
+//         - the user logged in before the backend started issuing tokens with
+//           an xsrfToken claim (legacy token) and the refresh cookie is still
+//           valid,
+//         - the access token was refreshed but the in-flight mutation still
+//           holds the old xsrfToken claim (rare race),
+//         - the user signed in on another device and the JWT signature/claim
 //           changed silently,
-//         - backend was redeployed with a rotated signing key.
-//       We do NOT retry; we log and surface a toast so the user knows to
-//       re-authenticate.
+//         - the backend was redeployed with a rotated signing key.
+//       We DO retry once via the same silent-refresh path as 401 — the
+//       `/auth/refresh` endpoint is CSRF-exempt and will mint a fresh
+//       access JWT whose xsrfToken claim the backend accepts. If refresh
+//       fails (cookie expired, backend unreachable, or the new token
+//       still lacks xsrfToken), we surface a toast and force re-auth.
+//
+//   (c) anything else: reject as-is.
 apiClient.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-        const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+        const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean; _csrfRetry?: boolean }) | undefined;
 
-        // ── CSRF failure: log + toast, do not retry ─────────────────────────
-        if (isCsrfFailure(error)) {
-            const url = originalRequest?.url ?? "(unknown)";
-            const method = (originalRequest?.method ?? "?").toUpperCase();
-            console.error(
+        // ── CSRF failure: try one silent refresh-and-retry before giving up ──
+        if (isCsrfFailure(error) && originalRequest && !originalRequest._csrfRetry) {
+            const url = originalRequest.url ?? "(unknown)";
+            const method = (originalRequest.method ?? "?").toUpperCase();
+            console.warn(
                 `[CSRF] Backend rejected ${method} ${url} as CSRF_VALIDATION_FAILED. ` +
-                "User must sign in again to refresh the xsrfToken claim."
+                "Attempting silent refresh to mint a fresh xsrfToken claim."
             );
-            toast.error("Session security token expired — please log in again.");
-            return Promise.reject(error);
+
+            // Don't loop forever on the refresh endpoint itself.
+            if (url === "/api/auth/refresh") {
+                toast.error("Session security token expired — please log in again.");
+                return Promise.reject(error);
+            }
+
+            try {
+                const newToken = await refreshAccessToken();
+                // Axios guarantees `headers` is a plain object on outgoing configs,
+                // but defensively create one if a malformed originalRequest slipped
+                // through (e.g. synthetic test errors).
+                const headers = (originalRequest.headers ?? {}) as InternalAxiosRequestConfig["headers"];
+                originalRequest.headers = headers;
+                // Re-extract the XSRF claim from the new token and stamp both
+                // the Bearer header and the X-XSRF-TOKEN header before retrying.
+                headers.Authorization = `Bearer ${newToken}`;
+                const newXsrf = extractXsrfToken(newToken);
+                if (!newXsrf) {
+                    // Refresh succeeded but the new token still lacks the claim.
+                    // Backend config issue — surface a toast and bail.
+                    console.error(
+                        "[CSRF] Refreshed access token still has no xsrfToken claim. " +
+                        "Backend must include the claim in issued access JWTs."
+                    );
+                    toast.error("Session security token expired — please log in again.");
+                    return Promise.reject(error);
+                }
+                headers[CSRF_HEADER] = newXsrf;
+                originalRequest._csrfRetry = true;
+                return apiClient(originalRequest);
+            } catch {
+                // Refresh failed (cookie expired, backend unreachable, etc.).
+                // Fall through to the forced re-auth path below.
+                toast.error("Session security token expired — please log in again.");
+                return Promise.reject(error);
+            }
         }
 
         // ── Non-401 (and not CSRF): reject as-is ────────────────────────────
@@ -160,64 +247,23 @@ apiClient.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        // ── 401 path: silent refresh + queue + retry ────────────────────────
-        if (isRefreshing) {
-            return new Promise<string>((resolve, reject) => {
-                failedQueue.push({ resolve, reject });
-            }).then((newToken) => {
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                // Re-extract XSRF from the *new* token so the retry carries a
-                // matching claim pair (Bearer + X-XSRF-TOKEN).
-                const newXsrf = extractXsrfToken(newToken);
-                if (newXsrf) {
-                    originalRequest.headers[CSRF_HEADER] = newXsrf;
-                }
-                return apiClient(originalRequest);
-            });
-        }
-
+        // ── 401 path: silent refresh + retry (mutex shared with CSRF path) ─
         originalRequest._retry = true;
-        isRefreshing = true;
-
         try {
-            // POST /api/auth/refresh — browser sends the HttpOnly cookie automatically.
-            // Skip the CSRF header for refresh itself (server exempts /auth/*).
-            const { data: apiResponse } = await axios.post(
-                `${originalRequest.baseURL || ""}/api/auth/refresh`,
-                null,
-                { withCredentials: true, headers: { "Content-Type": "application/json" } }
-            );
-
-            if (apiResponse?.success && apiResponse.data?.accessToken) {
-                const newToken: string = apiResponse.data.accessToken;
-                useAuthStore.getState().setAccessToken(newToken);
-
-                // Update the original request with the new token AND its
-                // fresh xsrfToken claim, then retry.
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                const newXsrf = extractXsrfToken(newToken);
-                if (newXsrf) {
-                    originalRequest.headers[CSRF_HEADER] = newXsrf;
-                }
-
-                processQueue(null, newToken);
-
-                return apiClient(originalRequest);
+            const newToken = await refreshAccessToken();
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            // Re-extract XSRF from the *new* token so the retry carries a
+            // matching claim pair (Bearer + X-XSRF-TOKEN).
+            const newXsrf = extractXsrfToken(newToken);
+            if (newXsrf) {
+                originalRequest.headers[CSRF_HEADER] = newXsrf;
             }
-
-            // Refresh returned no token — session is dead
-            processQueue(new Error("Refresh failed"), null);
+            return apiClient(originalRequest);
+        } catch {
+            // Refresh cookie expired or backend unreachable — force logout.
             useAuthStore.getState().clearSession();
             window.location.href = "/login";
             return Promise.reject(error);
-        } catch (refreshError) {
-            // Refresh cookie expired or backend unreachable — force logout
-            processQueue(refreshError, null);
-            useAuthStore.getState().clearSession();
-            window.location.href = "/login";
-            return Promise.reject(error);
-        } finally {
-            isRefreshing = false;
         }
     }
 );
@@ -241,5 +287,19 @@ export function getErrorMessage(error: unknown): string {
             return "Network error. Please check your connection and try again.";
         }
     }
+
+    // Non-Axios error: this is usually `unwrapApiData` re-throwing the
+    // `ApiResponse.message` as a plain `Error` when the backend returned
+    // HTTP 200 with `success: false` / `data: null` (a soft failure such
+    // as "CIS number not found"). Without this branch the real server
+    // message is silently replaced by the generic fallback, leaving the
+    // caller unable to distinguish "no such CIS" from "service down".
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+    if (typeof error === "string" && error) {
+        return error;
+    }
+
     return "An unexpected error occurred. Please try again.";
 }
