@@ -4,9 +4,6 @@ import {
     ArrowCounterClockwise,
     CheckCircle,
     CircleNotch,
-    IdentificationBadge,
-    Info,
-    Stack,
     WarningCircle,
 } from "@phosphor-icons/react";
 
@@ -16,7 +13,7 @@ import { Skeleton } from "@/src/components/ui/skeleton";
 import { cn } from "@/src/lib/utils";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { getPreLoans } from "@/src/lib/api/webloans";
-import { WEBLOAN_BRANCHES, type PreLoanItem } from "@/src/lib/api/types";
+import { type PreLoanItem } from "@/src/lib/api/types";
 
 interface PreLoanPickerProps {
     /** CIS number from the loaded borrower. */
@@ -54,8 +51,6 @@ interface PreLoanPickerProps {
  * - The backend filters `preloan.bch == JWT.user.branchId` on every request.
  * - The frontend never filters by branch itself; it only passes through the
  *   (cisNo, accountNo) pair it already has from the lookup.
- * - The chip on the picker header makes that scope visible so the AO never
- *   wonders "why am I not seeing X?".
  *
  * The component owns the (loading / error / data) state; the parent owns the
  * selected id so it can be reset together with the rest of the form.
@@ -68,20 +63,13 @@ interface PreLoanPickerProps {
 export function PreLoanPicker({
     cisNo,
     accountNo,
-    userBranchId,
     value,
     onChange,
-    totalForCis,
 }: PreLoanPickerProps) {
     const [preLoans, setPreLoans] = useState<PreLoanItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
-
-    // Resolve "000" → "Lianga Branch" for the scope chip.
-    const branchName =
-        WEBLOAN_BRANCHES.find((b) => b.code === userBranchId)?.name ??
-        userBranchId;
 
     // Auto-fetch the first time we have a valid (cis, account) pair — mirrors
     // the pattern in ActiveLoansTable so the AO lands directly on a populated list.
@@ -143,38 +131,6 @@ export function PreLoanPicker({
             aria-label="Preloan selection"
             className="space-y-3"
         >
-            {/* ── Header strip with scope chip ─────────────────────────── */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Preloan
-                    </h4>
-                    <Badge
-                        variant="outline"
-                        className="gap-1 border-primary/30 bg-primary/5 py-0.5 font-mono text-[10px] text-primary"
-                    >
-                        <IdentificationBadge size={12} weight="bold" />
-                        Branch · {branchName}
-                    </Badge>
-                </div>
-                {typeof totalForCis === "number" && totalForCis > 0 && (
-                    <span className="text-[11px] text-muted-foreground">
-                        {totalForCis} preloan{totalForCis === 1 ? "" : "s"} across all accounts
-                    </span>
-                )}
-            </div>
-
-            {/* ── Helper explainer ──────────────────────────────────────── */}
-            <div className="flex items-start gap-2 rounded-md border border-dashed bg-muted/20 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
-                <Info size={14} weight="bold" className="mt-0.5 shrink-0" />
-                <span>
-                    Only preloans whose <span className="font-mono">bch</span> matches
-                    your branch (<span className="font-mono">{userBranchId}</span>) are
-                    shown. Pick one to attach this new application to its existing
-                    account.
-                </span>
-            </div>
-
             {/* ── Loading skeleton ──────────────────────────────────────── */}
             {isLoading && (
                 <div
@@ -222,15 +178,6 @@ export function PreLoanPicker({
                         <ArrowCounterClockwise size={14} weight="bold" />
                         Retry
                     </Button>
-                </div>
-            )}
-
-            {/* ── Empty success state ───────────────────────────────────── */}
-            {!isLoading && hasFetched && preLoans.length === 0 && !error && (
-                <div className="flex items-center gap-2 rounded-md border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
-                    <Stack size={14} weight="bold" />
-                    No preloans for account <span className="font-mono">{accountNo}</span>{" "}
-                    under your branch ({userBranchId}).
                 </div>
             )}
 

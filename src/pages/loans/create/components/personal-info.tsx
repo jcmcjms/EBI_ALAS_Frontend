@@ -160,7 +160,7 @@ export function PersonalInfoSection() {
                     </div>
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">
-                            Net Take Home Pay (NTHP)
+                            NTHP
                         </Label>
                         <Input
                             {...register("client.netTakeHomePay")}
@@ -201,7 +201,7 @@ export function PersonalInfoSection() {
                     <div className="mb-4 flex items-center gap-2">
                         <GraduationCap size={20} weight="bold" className="text-primary" />
                         <h3 className="text-md font-semibold">
-                            Additional Information (Manual Entry)
+                            Additional Information
                         </h3>
                     </div>
                     <p className="mb-6 text-xs text-muted-foreground">
