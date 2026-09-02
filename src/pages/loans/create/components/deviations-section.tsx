@@ -1,7 +1,6 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Label } from "@/src/components/ui/label";
-import { Input } from "@/src/components/ui/input";
 import { Checkbox } from "@/src/components/ui/checkbox";
 import { Warning } from "@phosphor-icons/react";
 
@@ -62,19 +61,6 @@ export function DeviationsSection() {
                     </div>
                 )}
 
-                {/* AO Recommendation */}
-                <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">
-                        Account Officer Recommendation
-                    </Label>
-                    <textarea
-                        {...register("deviations.aoRecommendation")}
-                        placeholder="Your professional recommendation regarding this loan application..."
-                        rows={3}
-                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y"
-                    />
-                </div>
-
                 {/* Other Remarks */}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Other Remarks</Label>
@@ -83,16 +69,6 @@ export function DeviationsSection() {
                         placeholder="Any other notes or special instructions for this application..."
                         rows={3}
                         className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y"
-                    />
-                </div>
-
-                {/* General Remarks */}
-                <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Additional Remarks</Label>
-                    <Input
-                        {...register("deviations.remarks")}
-                        placeholder="Any other notes for this application..."
-                        className="h-9"
                     />
                 </div>
             </CardContent>
