@@ -268,14 +268,24 @@ export const WEBLOAN_BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
 /**
  * One account (Loan Account Info / LAI) attached to a CIS.
  *
- * `accountNo` is the value the frontend feeds into the LAI picker; the
- * other fields are surfaced for context in the table card. Mirrors
- * `AccountDto` on the backend (Features/WebLoans/WebLoanDtos.cs).
+ * `accountNo` is the bare webloan account number; `accountId` is the
+ * combined "<branchCode>-<accountNo>" form (e.g. "011-05-13081-1") that
+ * the two drill-down endpoints (outstanding-loans, pending-loan) expect
+ * on their route. Use `accountId` when calling those endpoints; use
+ * `accountNo` everywhere else (form fields, preloan lookups, etc.).
+ *
+ * Mirrors `AccountDto` on the backend (Features/WebLoans/WebLoanDtos.cs).
  */
 export interface WebLoanAccount {
     bankCode: string;
     branchCode: string;
     accountNo: string;
+    /**
+     * Combined "<branchCode>-<accountNo>" identifier. Pass this to the
+     * `/outstanding-loans` and `/pending-loan` endpoints. The backend
+     * splits on the first dash to recover the (bch, acctNo) pair.
+     */
+    accountId: string;
     name: string | null;
     creditLimit: number | null;
     usedCredit: number | null;
@@ -430,6 +440,14 @@ export interface OutstandingLoan {
     principal: number | null;
     /** Current principal balance — i.e. OUTSTANDING BALANCE (loan_data.principal_bal). */
     principalBalance: number | null;
+    /**
+     * Monthly amortization amount (CASE-computed on the backend). For
+     * C35/C23 products this mirrors `principal`; for everything else
+     * it mirrors `amort_data.total_amort` for the first scheduled
+     * installment (amort_no = 1). Null when no amort_data row exists
+     * for a non-C35/C23 loan — the form should render this as "—".
+     */
+    amortAmount: number | null;
     /** Date the loan was granted (ISO 8601, full datetime — slice to yyyy-MM-dd for <input type="date">). */
     dateGranted: string | null;
     /** Maturity date (ISO 8601, full datetime). */
@@ -442,28 +460,33 @@ export interface OutstandingLoan {
 
 /**
  * Response from GET
- * `/api/webloans/cis/{cisNo}/accounts/{accountNo}/outstanding-loans`.
+ * `/api/webloans/cis/{cisNo}/accounts/{accountId}/outstanding-loans`.
  *
  * The backend returns:
- *   - 200 with `{ loans: [] }` when the (cisNo, accountNo) pair is valid
+ *   - 200 with `{ loans: [] }` when the (cisNo, accountId) pair is valid
  *     but has no outstanding balances; the frontend treats this as a
  *     successful empty list.
  *   - 404 when the account↔CIS pair is unknown (anti-enumeration guard
- *     runs before any loan row is read, even for Admin). The caller
- *     surfaces that as an error.
+ *     runs before any loan row is read). The caller surfaces that as
+ *     an error.
  */
 export interface OutstandingLoansResponse {
     /** Echo of the cis filter. */
     cisNo: string;
     /**
-     * Branch code that produced this list — equals the JWT user's branch
-     * (`branchId` claim) for non-Admin, or `"ALL"` when the Admin role
-     * bypassed the branch filter.
+     * Combined "<branchCode>-<accountNo>" identifier echoed from the
+     * URL. Pass this back unchanged for any follow-up call.
+     */
+    accountId: string;
+    /**
+     * Branch code parsed from `accountId` (== webloan `bch`). The
+     * backend no longer consults the JWT `branchId` claim for this
+     * endpoint — the URL branch is the only filter.
      */
     branchCode: string;
-    /** Echo of the account filter. */
+    /** Account number parsed from `accountId` (== webloan `acct_no`). */
     accountNo: string;
-    /** Active `loan_data` rows for the (cisNo, accountNo) pair. */
+    /** Active `loan_data` rows for the (cisNo, accountId) pair. */
     loans: OutstandingLoan[];
 }
 
@@ -531,11 +554,11 @@ export interface PreLoansQuery {
 
 /**
  * One row from GET
- * `/api/webloans/cis/{cisNo}/accounts/{accountNo}/pending-loan`.
+ * `/api/webloans/cis/{cisNo}/accounts/{accountId}/pending-loan`.
  *
  * Mirrors `PendingLoanDto` on the backend. Each row represents one
  * in-flight pre_loan_data row enriched with loan_data fields
- * (principal, granted rate, product, purpose).
+ * (principal, granted rate, product, purpose, creation type).
  *
  * **Important — `principalBalance` is the OUTSTANDING BALANCE.**
  * On the backend, `Principal` (loan_data.principal) is the **current
@@ -564,28 +587,43 @@ export interface PendingLoan {
     productWithDescription: string;
     /** Loan purpose description (loan_data.cat_loan_purpose → mis_group). */
     loanPurpose: string | null;
+    /**
+     * Raw creation type code (loan_data.creation_type). One of:
+     * 0 = New Loan, 1 = Reloan, 2 = Restructured, 6 = Additional Loan.
+     * Null when no loan_data row joined onto the pre_loan_data row.
+     */
+    creationType: number | null;
+    /**
+     * Human-readable creation type label, e.g. "New Loan", "Reloan",
+     * "Restructured", "Additional Loan", or "Unknown" when the code is
+     * unrecognized / null. Mirrors the CASE block in the backend
+     * service.
+     */
+    creationTypeLabel: string;
 }
 
 /**
  * Response wrapper for
- * GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/pending-loan.
+ * GET /api/webloans/cis/{cisNo}/accounts/{accountId}/pending-loan.
  *
- * The endpoint returns a 200 with `loans: []` (and `loan: null`) when
- * the (cisNo, accountNo) pair is valid but has no in-flight loans; the
- * frontend treats this as a successful empty list. A 404 means the
- * account↔CIS pair is unknown — that is a real error and surfaces in
- * the same way as the other webloan endpoints.
+ * The endpoint returns a 200 with `loans: []` when the (cisNo, accountId)
+ * pair is valid but has no in-flight loans; the frontend treats this as
+ * a successful empty list. A 404 means the account↔CIS pair is unknown —
+ * that is a real error and surfaces in the same way as the other webloan
+ * endpoints.
  */
 export interface PendingLoanResponse {
     /** Echo of the cis filter. */
     cisNo: string;
+    /** Combined "<branchCode>-<accountNo>" identifier echoed from the URL. */
+    accountId: string;
     /**
-     * Branch code that produced this list — equals the JWT user's branch
-     * (`branchId` claim) for non-Admin, or "ALL" when the Admin role
-     * bypassed the branch filter.
+     * Branch code parsed from `accountId` (== webloan `bch`). The
+     * backend no longer consults the JWT `branchId` claim for this
+     * endpoint — the URL branch is the only filter.
      */
     branchCode: string;
-    /** Echo of the account filter. */
+    /** Account number parsed from `accountId` (== webloan `acct_no`). */
     accountNo: string;
     /** In-flight pre_loan_data rows enriched with loan_data fields. */
     loans: PendingLoan[];

@@ -88,16 +88,11 @@ export const loanParametersSchema = z.object({
         .max(5_000_000, "Amount exceeds maximum allowed"),
     term: z.number().min(1, "Term must be at least 1 month").max(360),
     interestRate: z.number().min(0).max(100).optional(),
-    modeOfPayment: z.string().min(1, "Mode of payment is required"),
-    dateOfFirstRelease: z.string().optional(),
     nthpDate: z.string().optional(),
-    coMaker: z.string().optional(),
 });
 
 // ── Verification Conducted ─────────────────────────────────────
 export const verificationSchema = z.object({
-    conductedBy: z.string().optional(),
-    verificationDate: z.string().optional(),
     findings: z.string().optional(),
 });
 

@@ -25,7 +25,7 @@ import { Skeleton } from "@/src/components/ui/skeleton";
 import { cn } from "@/src/lib/utils";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { getOutstandingLoans, getPendingLoan } from "@/src/lib/api/webloans";
-import type { OutstandingLoan, PendingLoan } from "@/src/lib/api/types";
+import type { OutstandingLoan, PendingLoan, WebLoanAccount } from "@/src/lib/api/types";
 
 import type { LoanApplicationFormData } from "../schema";
 import { PreLoanPicker } from "./preloan-picker";
@@ -35,10 +35,13 @@ interface ActiveLoansTableProps {
     /** CIS number whose pending loans to display. */
     cisNo: string;
     /**
-     * Account numbers owned by the borrower (from `b.lai`). Rendered as the
-     * options in the account-number picker. Empty list = component is idle.
+     * Accounts (LAI rows) attached to the borrower — sourced from
+     * `WebLoanCisSearchResponse.accounts`. Each entry carries both the
+     * bare `accountNo` and the combined `accountId` ("<branchCode>-<accountNo>")
+     * the two drill-down endpoints expect on their route. Empty list =
+     * component is idle.
      */
-    accounts: string[];
+    accounts: WebLoanAccount[];
     /**
      * Pending-loan count of the currently loaded profile — used as a hint
      * to the user (e.g. "Top 10 active loans") and to make the table
@@ -65,12 +68,14 @@ interface ActiveLoansTableProps {
  * **Endpoint fan-out (parallel via `Promise.allSettled`):**
  *  - `GET .../outstanding-loans` — every active `loan_data` row for the
  *    (CIS, account) pair. Pre-fills the "Outstanding Loans" table on the
- *     new-loan form (the obligations section in step 4). Backend filters
- *     by branch (bch) server-side from the JWT.
+ *     new-loan form (the obligations section in step 4). The route
+ *     parameter is the combined `accountId` ("<branchCode>-<accountNo>");
+ *     the branch is part of the account identity.
  *  - `GET .../pending-loan` — in-flight `pre_loan_data` rows for the same
- *    pair, joined with `loan_data` so the AO sees product/purpose/rate.
- *    Drives the loan-number picker; also carries the CIS-level NTHP +
- *    NTHP-date (CCR07 row) which we hydrate into the form.
+ *    pair, joined with `loan_data` so the AO sees product / purpose /
+ *    rate / creation-type. Drives the loan-number picker; also carries
+ *    the CIS-level NTHP + NTHP-date (CCR07 row) which we hydrate into
+ *    the form.
  *
  * The two endpoints are independent (different tables, different key
  * columns) so we fire them in parallel and tolerate one failing while
@@ -80,7 +85,7 @@ interface ActiveLoansTableProps {
  * Once a loan number is picked the picker sub-step renders inside this
  * card so the relationship "account → loan number → preloan" is obvious
  * at a glance. The PreLoanPicker fetches `GET /api/preloans?cisNo=&accountNo=`
- * which is server-side filtered by JWT user.branchId (== userBranchId).
+ * which is a separate controller (still takes bare `accountNo`).
  *
  * The component is a pure presentational island: parent owns the
  * (cis, accounts) inputs, the component owns the (selected account,
@@ -96,16 +101,32 @@ export function ActiveLoansTable({
 }: ActiveLoansTableProps) {
     const { setValue } = useFormContext<LoanApplicationFormData>();
 
-    const [selectedAccount, setSelectedAccount] = useState<string>("");
+    // Local state holds the combined `accountId` (the URL parameter the
+    // backend expects). The PreLoanPicker still takes the bare
+    // `accountNo` — it's a different controller (`/api/preloans`).
+    const [selectedAccountId, setSelectedAccountId] = useState<string>("");
     const [loans, setLoans] = useState<PendingLoan[]>([]);
     const [selectedLoanNo, setSelectedLoanNo] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
 
-    const handleFetch = async (accountNo: string) => {
-        if (!accountNo || !cisNo) return;
-        setSelectedAccount(accountNo);
+    // Resolve the bare accountNo + display label for the currently
+    // selected accountId, so downstream code (PreLoanPicker, error /
+    // empty messages) can speak in the term the user is used to seeing.
+    const selectedAccount = accounts.find(
+        (a) => a.accountId === selectedAccountId
+    );
+    const selectedAccountNo = selectedAccount?.accountNo ?? "";
+
+    const handleFetch = async (accountId: string) => {
+        if (!accountId || !cisNo) return;
+        // Resolve the bare accountNo before any state mutation so the
+        // form-clear block below can identify the account the user is
+        // switching FROM (used in toast / error messages downstream).
+        const accountRow = accounts.find((a) => a.accountId === accountId);
+        if (!accountRow) return;
+        setSelectedAccountId(accountId);
         // Clear any loan/pn that was tied to a *previous* account so the
         // picker's list refreshes alongside the pending-loan list. Calling
         // the parent setter is fine here because it does not cascade back
@@ -126,16 +147,22 @@ export function ActiveLoansTable({
         setValue("loan.term", 0);
         setValue("loan.product", "");
         setValue("loan.purpose", "");
+        // Loan Type in the Branch & Type section is sourced from the
+        // picked pending-loan's `creationTypeLabel` ("New Loan" /
+        // "Reloan" / ...). Clearing it on account switch prevents the
+        // previously-picked loan's type from leaking across accounts.
+        setValue("branchType.loanType", "");
         setIsLoading(true);
         setLoadError(null);
 
         // Fire both reads in parallel. The endpoints are independent
         // (different tables, different key columns) and each carries its
-        // own (cisNo, accountNo) anti-enumeration guard, so we tolerate
+        // own (cisNo, accountId) anti-enumeration guard, so we tolerate
         // either failing alone without losing the data from the other.
+        // Both endpoints take the combined `accountId` ("<bch>-<acctNo>").
         const [outstandingResult, pendingResult] = await Promise.allSettled([
-            getOutstandingLoans(cisNo, accountNo),
-            getPendingLoan(cisNo, accountNo),
+            getOutstandingLoans(cisNo, accountId),
+            getPendingLoan(cisNo, accountId),
         ]);
 
         // Surface the first error we see — both endpoints share the same
@@ -162,9 +189,13 @@ export function ActiveLoansTable({
         // (mirrors `loan_data.principal_bal`); we map it straight onto
         // the form's `outstandingBalance` column. The original principal
         // (`loan_data.principal`) feeds the `principalBalance` column so
-        // the AO can see both side by side. The backend's `OutstandingLoanDto`
-        // doesn't expose amortization, so that column stays 0 until the
-        // AO enters it manually.
+        // the AO can see both side by side. The backend's
+        // `OutstandingLoanDto.amortAmount` (CASE-computed: principal
+        // for C35/C23 products, otherwise amort_data.total_amort for
+        // the first installment) feeds the `amortization` column so
+        // the AO no longer has to enter it by hand. A null backend
+        // value falls through to 0 — the obligations table renders
+        // missing amortization as "₱0".
         if (outstandingResult.status === "fulfilled") {
             const obRows = outstandingResult.value.loans ?? [];
             setValue(
@@ -172,7 +203,7 @@ export function ActiveLoansTable({
                 obRows.map((row: OutstandingLoan) => ({
                     pn: row.loanNo ?? "",
                     principalBalance: row.principal ?? 0,
-                    amortization: 0,
+                    amortization: row.amortAmount ?? 0,
                     outstandingBalance: row.principalBalance ?? 0,
                     dateGranted: row.dateGranted
                         ? row.dateGranted.slice(0, 10)
@@ -243,6 +274,18 @@ export function ActiveLoansTable({
         setValue("loan.purpose", picked.loanPurpose ?? "", {
             shouldDirty: false,
         });
+        // Loan Type in the Branch & Type section ("New Loan" / "Reloan" /
+        // "Restructured" / "Additional Loan" / "Unknown") comes from the
+        // picked pending-loan row's `creationTypeLabel` — sourced from
+        // loan_data.creation_type via the backend's
+        // WebLoanRegions.CreationTypeLabel CASE. The field is read-only
+        // in the UI (CIS-verified), so it stays in sync with whatever
+        // loan the AO picks. Falling back to "" when the label is null
+        // is intentional — a missing label renders as a blank input
+        // rather than a misleading "Unknown" string.
+        setValue("branchType.loanType", picked.creationTypeLabel ?? "", {
+            shouldDirty: false,
+        });
         if (picked.principal != null && Number.isFinite(picked.principal)) {
             setValue("loan.proposedAmount", picked.principal, {
                 shouldDirty: false,
@@ -291,7 +334,7 @@ export function ActiveLoansTable({
                             LAI (Loan Application Index)
                         </label>
                         <Select
-                            value={selectedAccount || undefined}
+                            value={selectedAccountId || undefined}
                             onValueChange={(val) => handleFetch(val as string)}
                         >
                             <SelectTrigger
@@ -303,11 +346,23 @@ export function ActiveLoansTable({
                             <SelectContent>
                                 {accounts.map((acct) => (
                                     <SelectItem
-                                        key={acct}
-                                        value={acct}
+                                        key={acct.accountId}
+                                        value={acct.accountId}
                                         className="font-mono"
                                     >
-                                        {acct}
+                                        {/* Render the combined "<bch>-<acctNo>"
+                                            form so the AO sees the branch
+                                            alongside the account number —
+                                            matches the route parameter the
+                                            backend will use. The borrower
+                                            name (when present) appears as a
+                                            muted suffix for context. */}
+                                        {acct.accountId}
+                                        {acct.name ? (
+                                            <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                                · {acct.name}
+                                            </span>
+                                        ) : null}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -317,9 +372,9 @@ export function ActiveLoansTable({
                         type="button"
                         variant="outline"
                         onClick={() =>
-                            selectedAccount && handleFetch(selectedAccount)
+                            selectedAccountId && handleFetch(selectedAccountId)
                         }
-                        disabled={!selectedAccount || isLoading}
+                        disabled={!selectedAccountId || isLoading}
                         className="h-10 shrink-0 gap-1.5"
                     >
                         <MagnifyingGlass size={14} weight="bold" />
@@ -353,7 +408,7 @@ export function ActiveLoansTable({
                             variant="ghost"
                             size="sm"
                             className="h-7 shrink-0 gap-1.5 text-destructive"
-                            onClick={() => handleFetch(selectedAccount)}
+                            onClick={() => handleFetch(selectedAccountId)}
                         >
                             Retry
                         </Button>
@@ -401,7 +456,7 @@ export function ActiveLoansTable({
                                 {loans.length === 1 ? "" : "s"} in flight for
                                 account{" "}
                                 <span className="font-mono">
-                                    {selectedAccount}
+                                    {selectedAccountId}
                                 </span>
                             </span>
                         </div>
@@ -461,6 +516,24 @@ export function ActiveLoansTable({
                                                 >
                                                     {l.productWithDescription}
                                                 </Badge>
+                                                {/* Creation type ("New Loan" /
+                                                    "Reloan" / "Restructured" /
+                                                    "Additional Loan" /
+                                                    "Unknown") — surfaced
+                                                    so the AO can tell at a
+                                                    glance whether the
+                                                    application is a brand-new
+                                                    loan or a re-loan /
+                                                    restructure. Sourced from
+                                                    loan_data.creation_type. */}
+                                                {l.creationTypeLabel && (
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="text-[10px]"
+                                                    >
+                                                        {l.creationTypeLabel}
+                                                    </Badge>
+                                                )}
                                                 {l.loanPurpose && (
                                                     <Badge
                                                         variant="secondary"
@@ -504,7 +577,7 @@ export function ActiveLoansTable({
                 {!isLoading && hasFetched && loans.length === 0 && !loadError && (
                     <div className="flex items-center gap-2 rounded-md border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
                         <ListChecks size={14} weight="bold" />
-                        Account {selectedAccount} has no in-flight loans.
+                        Account {selectedAccountId} has no in-flight loans.
                     </div>
                 )}
 
@@ -518,23 +591,28 @@ export function ActiveLoansTable({
                 {/* ── Preloan picker (step 3) ───────────────────────────── */}
                 {/* Renders only after an account has been picked AND a loan
                     number has been chosen — keeps the wizard's sequencing
-                    explicit (account → loan → preloan). */}
-                {selectedAccount &&
+                    explicit (account → loan → preloan).
+
+                    PreLoanPicker calls `/api/preloans` (a different
+                    controller that still takes the bare `accountNo`), so
+                    we hand it the accountNo parsed out of the combined
+                    accountId — NOT the accountId itself. */}
+                {selectedAccountId &&
                     hasFetched &&
                     selectedLoanNo && (
                         <>
                             <div className="my-2 border-t border-dashed" />
                             <PreLoanPicker
-                                key={`${cisNo}:${selectedAccount}`}
+                                key={`${cisNo}:${selectedAccountId}`}
                                 cisNo={cisNo}
-                                accountNo={selectedAccount}
+                                accountNo={selectedAccountNo}
                                 userBranchId={userBranchId}
                                 value={selectedPreLoanId}
                                 onChange={onPreLoanChange}
                             />
                         </>
                     )}
-                {!selectedLoanNo && selectedAccount && hasFetched && loans.length > 0 && (
+                {!selectedLoanNo && selectedAccountId && hasFetched && loans.length > 0 && (
                     <div className="flex items-center gap-2 rounded-md border border-dashed bg-muted/20 p-3 text-[11px] text-muted-foreground">
                         <Stack size={14} weight="bold" />
                         Pick a loan number above to enable preloan selection.

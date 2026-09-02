@@ -125,42 +125,12 @@ export function LoanParametersSection() {
                     />
                 </div>
 
-                {/* Row 3 — Payment mode & release date */}
-                <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Mode of Payment</Label>
-                    <Input
-                        {...register("loan.modeOfPayment")}
-                        placeholder="e.g. Salary Deduction, Auto Debit"
-                        readOnly
-                        className="h-9 bg-muted/50"
-                    />
-                </div>
-
-                <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Date of First Release</Label>
-                    <Input
-                        {...register("loan.dateOfFirstRelease")}
-                        type="date"
-                        readOnly
-                        className="h-9 bg-muted/50"
-                    />
-                </div>
-
+                {/* Row 3 — NTHP date */}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">NTHP Date</Label>
                     <Input
                         {...register("loan.nthpDate")}
                         type="date"
-                        readOnly
-                        className="h-9 bg-muted/50"
-                    />
-                </div>
-
-                <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Co-Maker (optional)</Label>
-                    <Input
-                        {...register("loan.coMaker")}
-                        placeholder="Co-maker name"
                         readOnly
                         className="h-9 bg-muted/50"
                     />

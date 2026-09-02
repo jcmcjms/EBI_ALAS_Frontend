@@ -140,12 +140,11 @@ function useSectionProgress(
           isClientLoaded &&
           !!loan.product &&
           !!loan.purpose &&
-          !!loan.modeOfPayment &&
           loan.proposedAmount > 0 &&
           loan.term > 0
         );
       case "verification":
-        return !!(verification?.conductedBy || verification?.findings);
+        return !!verification?.findings;
       case "deviations":
         return !!(
           deviations?.deviationDetails ||
@@ -455,17 +454,14 @@ export function LoanCreationPage() {
         proposedAmount: 0,
         term: 0,
         interestRate: 0,
-        modeOfPayment: "",
-        dateOfFirstRelease: "",
         nthpDate: "",
-        coMaker: "",
       },
       outstandingLoans: [],
       ebiReloans: [],
       buyOuts: [],
       incomingLoans: [],
       preLoan: undefined,
-      verification: { conductedBy: "", verificationDate: "", findings: "" },
+      verification: { findings: "" },
       deviations: {
         hasDeviations: false,
         deviationDetails: "",

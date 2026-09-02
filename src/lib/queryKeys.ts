@@ -54,12 +54,16 @@ export const queryKeys = {
     // ── WebLoans (CIS lookup / outstanding / pending) ──────────────────────
     webLoans: {
         cis: (cisNo: string) => ["webloans", "cis", cisNo] as const,
-        activeLoans: (cisNo: string, accountNo: string) =>
-            ["webloans", "active-loans", cisNo, accountNo] as const,
-        outstandingLoans: (cisNo: string, accountNo: string) =>
-            ["webloans", "outstanding-loans", cisNo, accountNo] as const,
-        pendingLoan: (cisNo: string, accountNo: string) =>
-            ["webloans", "pending-loan", cisNo, accountNo] as const,
+        activeLoans: (cisNo: string, accountId: string) =>
+            ["webloans", "active-loans", cisNo, accountId] as const,
+        // `accountId` is the combined "<branchCode>-<accountNo>" form
+        // (e.g. "011-05-13081-1") — same value passed to the
+        // outstanding-loans / pending-loan route params. Mirrors
+        // `WebLoanAccount.accountId` in `lib/api/types.ts`.
+        outstandingLoans: (cisNo: string, accountId: string) =>
+            ["webloans", "outstanding-loans", cisNo, accountId] as const,
+        pendingLoan: (cisNo: string, accountId: string) =>
+            ["webloans", "pending-loan", cisNo, accountId] as const,
     },
 
     // ── Dashboard ───────────────────────────────────────────────────────────

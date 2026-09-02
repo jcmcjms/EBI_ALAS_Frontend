@@ -474,11 +474,8 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
                     <div className={cn(B, "min-h-56 p-1.5")}>
                         <div className="font-bold">Verifications Conducted:</div>
                         <ol className="mt-1 space-y-0.5">
-                            {verification?.conductedBy && (
-                                <li>1) Verified by {verification.conductedBy} {longDate(verification.verificationDate)}</li>
-                            )}
-                            {verification?.findings && <li>2) {verification.findings}</li>}
-                            {!verification?.conductedBy && !verification?.findings && <li>-</li>}
+                            {verification?.findings && <li>1) {verification.findings}</li>}
+                            {!verification?.findings && <li>-</li>}
                         </ol>
                         <div className="mt-6 font-bold">Other Remarks</div>
                         <div className="mt-1">REMARKS:</div>

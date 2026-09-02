@@ -33,10 +33,7 @@ export const dummyLoanData: LoanApplicationFormData = {
     proposedAmount: 150000,
     term: 36,
     interestRate: 1.5,
-    modeOfPayment: "Salary Deduction",
-    dateOfFirstRelease: "2026-09-15",
     nthpDate: "2026-08-30",
-    coMaker: "Maria Clara",
   },
   outstandingLoans: [
     {
@@ -53,8 +50,6 @@ export const dummyLoanData: LoanApplicationFormData = {
   buyOuts: [],
   incomingLoans: [],
   verification: {
-    conductedBy: "Juan Dela Cruz",
-    verificationDate: "2026-08-28",
     findings: "Verified employment and residence. No derogatory records found.",
   },
   deviations: {

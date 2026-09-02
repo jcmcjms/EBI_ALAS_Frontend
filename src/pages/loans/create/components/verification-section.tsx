@@ -1,6 +1,5 @@
 import { useFormContext } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { CheckCircle } from "@phosphor-icons/react";
 
@@ -15,24 +14,8 @@ export function VerificationSection() {
                     6. Verification Conducted
                 </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CardContent className="pt-6">
                 <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Verified By</Label>
-                    <Input
-                        {...register("verification.conductedBy")}
-                        placeholder="Name of verifying officer"
-                        className="h-9"
-                    />
-                </div>
-                <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Verification Date</Label>
-                    <Input
-                        {...register("verification.verificationDate")}
-                        type="date"
-                        className="h-9"
-                    />
-                </div>
-                <div className="space-y-1.5 md:col-span-3">
                     <Label className="text-xs text-muted-foreground">Findings / Notes</Label>
                     <textarea
                         {...register("verification.findings")}

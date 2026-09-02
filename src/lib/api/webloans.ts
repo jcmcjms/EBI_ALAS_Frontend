@@ -63,14 +63,20 @@ export async function getActiveLoansByAccount(
 }
 
 /**
- * GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/outstanding-loans
+ * GET /api/webloans/cis/{cisNo}/accounts/{accountId}/outstanding-loans
+ *
+ * `accountId` is the combined "<branchCode>-<accountNo>" form, e.g.
+ * "011-05-13081-1" — see the `accountId` field on `WebLoanAccount` in
+ * `types.ts`. The branch is part of the account identity: the backend
+ * filters by (bch, acct_no) exactly, derived by splitting `accountId`
+ * on the first dash. The frontend no longer sends the branch separately
+ * and the JWT `branchId` is not consulted for branch scoping on this
+ * endpoint (Admin and non-Admin behave identically).
  *
  * Returns ALL active `loan_data` rows for the (bch, accountNo) pair where
- * `is_loan(loan_no) = 1 AND loan_status != 10`. The bch filter is enforced
- * server-side from the JWT `branchId` claim — the frontend never sends it.
- * Admin role bypasses the branch filter and `branchCode` echoes `"ALL"`.
+ * `is_loan(loan_no) = 1 AND loan_status != 10`.
  *
- * The (cisNo, accountNo) pair is validated by an anti-enumeration guard
+ * The (cisNo, accountId) pair is validated by an anti-enumeration guard
  * that runs BEFORE any loan row is read (mirrors `/active-loans` and
  * `/pending-loan`): a 404 means the pair doesn't belong together, not
  * "no rows". A 200 with `loans: []` is a valid empty list.
@@ -84,10 +90,10 @@ export async function getActiveLoansByAccount(
  */
 export async function getOutstandingLoans(
     cisNo: string,
-    accountNo: string
+    accountId: string
 ): Promise<OutstandingLoansResponse> {
     const res = await apiClient.get<ApiResponse<OutstandingLoansResponse>>(
-        `/api/webloans/cis/${encodeURIComponent(cisNo)}/accounts/${encodeURIComponent(accountNo)}/outstanding-loans`
+        `/api/webloans/cis/${encodeURIComponent(cisNo)}/accounts/${encodeURIComponent(accountId)}/outstanding-loans`
     );
     return unwrapApiData(res.data);
 }
@@ -118,17 +124,23 @@ export async function getPreLoans(
 }
 
 /**
- * GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/pending-loan
+ * GET /api/webloans/cis/{cisNo}/accounts/{accountId}/pending-loan
+ *
+ * `accountId` is the combined "<branchCode>-<accountNo>" form, e.g.
+ * "011-05-13081-1". The branch is part of the account identity: the
+ * backend splits `accountId` on the first dash and filters by both
+ * (bch, acct_no). The frontend no longer sends the branch separately
+ * and the JWT `branchId` is not consulted for branch scoping on this
+ * endpoint (Admin and non-Admin behave identically).
  *
  * Returns ALL in-flight pre_loan_data rows for the given (bch, accountNo)
  * pair, enriched with the corresponding loan_data fields (principal,
- * granted rate, product, purpose). The bch filter is **server-side** —
- * derived from the JWT `branchId` claim — the frontend never sends it.
+ * granted rate, product, purpose, creation type).
  *
  * Multiple in-flight loans are possible for the same (bch, accountNo);
  * the caller picks the loan number (loan_no) the AO wants to use.
  *
- * Returns a 200 with `loans: []` when the (cis, account) pair is valid
+ * Returns a 200 with `loans: []` when the (cis, accountId) pair is valid
  * but has no in-flight rows. The 404 case (account↔CIS pair unknown) is
  * treated here as a real error — the caller decides how to surface it.
  *
@@ -140,10 +152,10 @@ export async function getPreLoans(
  */
 export async function getPendingLoan(
     cisNo: string,
-    accountNo: string
+    accountId: string
 ): Promise<PendingLoanResponse> {
     const res = await apiClient.get<ApiResponse<PendingLoanResponse>>(
-        `/api/webloans/cis/${encodeURIComponent(cisNo)}/accounts/${encodeURIComponent(accountNo)}/pending-loan`
+        `/api/webloans/cis/${encodeURIComponent(cisNo)}/accounts/${encodeURIComponent(accountId)}/pending-loan`
     );
     return unwrapApiData(res.data);
 }

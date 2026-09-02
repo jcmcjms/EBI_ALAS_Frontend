@@ -25,6 +25,7 @@ import { getWebLoanByCis } from "@/src/lib/api/webloans";
 import {
   WEBLOAN_BRANCHES,
   type PreLoanItem,
+  type WebLoanAccount,
   type WebLoanCisSearchResponse,
 } from "@/src/lib/api/types";
 import { cn } from "@/src/lib/utils";
@@ -63,11 +64,12 @@ export function CISLookup({
   const [isLoading, setIsLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
-  // Raw LAI list (account numbers) from the loaded borrower. Kept in
+  // Raw LAI list (full account rows) from the loaded borrower. Kept in
   // component-local state because the form only stores the joined display
-  // string ("01-..., 02-..."). Used to populate the ActiveLoansTable's
-  // account picker.
-  const [laiAccounts, setLaiAccounts] = useState<string[]>([]);
+  // string ("011-05-13081-1, 011-..."). Each row carries the combined
+  // `accountId` ("<branchCode>-<accountNo>") the ActiveLoansTable's
+  // outstanding-loans / pending-loan endpoints require on their route.
+  const [laiAccounts, setLaiAccounts] = useState<WebLoanAccount[]>([]);
   // Count of outstanding (active) loans already known from the loaded
   // profile. Surfaced as a hint badge on the ActiveLoansTable card.
   const [outstandingCount, setOutstandingCount] = useState(0);
@@ -206,8 +208,10 @@ export function CISLookup({
 
     // Capture the raw account list so the ActiveLoansTable card below
     // can populate its account picker without re-fetching the borrower.
-    const lai = accounts.map((a) => a.accountNo);
-    setLaiAccounts(lai);
+    // Pass the full rows (not just accountNo) so the picker can display
+    // and submit the combined "<bch>-<acctNo>" identifier the
+    // outstanding-loans / pending-loan endpoints expect.
+    setLaiAccounts(accounts);
 
     // The backend doesn't expose an outstanding-loan count from this
     // endpoint (that's served by /pending-loan once an account is picked).
@@ -226,7 +230,13 @@ export function CISLookup({
       : "";
     setValue("branchType.loanType", "");
     setValue("branchType.branch", branchName);
-    setValue("branchType.lai", lai.join(", "));
+    // Join the combined "<bch>-<acctNo>" identifiers into the form's
+    // display string. Mirrors the route parameter so the AO sees the
+    // same value the backend will use downstream.
+    setValue(
+      "branchType.lai",
+      accounts.map((a) => a.accountId).join(", ")
+    );
     // Requesting officer resolved by the backend from loan_acct_info.solicitor
     // → dbo.mis_group (group_no=2) → description. Display-only; the API
     // re-derives the acting officer from the JWT on submit.

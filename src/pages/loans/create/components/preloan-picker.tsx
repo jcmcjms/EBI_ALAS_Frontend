@@ -18,7 +18,14 @@ import { type PreLoanItem } from "@/src/lib/api/types";
 interface PreLoanPickerProps {
     /** CIS number from the loaded borrower. */
     cisNo: string;
-    /** Account number currently selected in the parent (ActiveLoansTable) picker. */
+    /**
+     * Bare account number currently selected in the parent
+     * (ActiveLoansTable) picker. NOTE: this is the *bare* `accountNo`,
+     * NOT the combined "<branchCode>-<accountNo>" form — `/api/preloans`
+     * is a separate controller that still takes `accountNo` on its
+     * query string. The parent must strip the `bch-` prefix from
+     * `accountId` before handing it here.
+     */
     accountNo: string;
     /**
      * The acting user's branch code (auth.user.branchId). The backend re-asserts
