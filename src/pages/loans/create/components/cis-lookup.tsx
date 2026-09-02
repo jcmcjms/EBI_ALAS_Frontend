@@ -25,7 +25,7 @@ import { getWebLoanByCis } from "@/src/lib/api/webloans";
 import {
   WEBLOAN_BRANCHES,
   type PreLoanItem,
-  type WebLoanBorrower,
+  type WebLoanCisSearchResponse,
 } from "@/src/lib/api/types";
 import { cn } from "@/src/lib/utils";
 
@@ -38,9 +38,9 @@ function toDateInput(iso?: string | null): string {
 }
 
 /** Null-safe numeric coercion for decimal fields coming from the API. */
-function toNumber(value?: number | null): number {
-  return typeof value === "number" ? value : 0;
-}
+// (Removed legacy helper — CIS search no longer carries decimal fields
+// that the form pre-fills; loan parameters and obligations come from the
+// dedicated pending-loan endpoint or are entered manually later.)
 
 interface CISLookupProps {
   /** Acting user's branchId — passed down to the preloan picker as a UI label. */
@@ -84,7 +84,6 @@ export function CISLookup({
   // Single source of truth: the loaded client is derived from form state,
   // so draft restore / future hydration works without duplicated state.
   const client = useWatch({ control, name: "client" });
-  const branchType = useWatch({ control, name: "branchType" });
   const isLoaded = !!client.cisId;
 
   const fullName = [
@@ -168,8 +167,8 @@ export function CISLookup({
     setLookupError(null);
 
     try {
-      const borrower = await getWebLoanByCis(query);
-      applyBorrower(borrower, query);
+      const result = await getWebLoanByCis(query);
+      applySearchResult(result, query);
       toast.success("Client profile loaded successfully.");
     } catch (error) {
       const message = getErrorMessage(error);
@@ -181,103 +180,99 @@ export function CISLookup({
     }
   };
 
-  /** Maps the GET /api/webloans/cis/{cisNo} payload onto the loan application form. */
-  const applyBorrower = (borrower: WebLoanBorrower, query: string) => {
-    const b = borrower.branchAndType;
-    const p = borrower.personalInformation;
-    const li = borrower.loanInformation;
+  /**
+   * Maps the GET /api/webloans/cis/{cisNo}/search payload onto the loan
+   * application form.
+   *
+   * Backend contract is `WebLoanCisSearchResponse` (see
+   * `src/lib/api/types.ts`): a flat `{ borrower, accounts[] }` envelope.
+   *  - `borrower.*`  → `client.*` (and `branchType.requestingOfficer`).
+   *  - `accounts[]`  → LAI picker (`laiAccounts` + `branchType.branch`
+   *                    + `branchType.loanType` + `branchType.lai`).
+   *
+   * Fields the backend does NOT supply (purpose / proposedAmount /
+   * term / interestRate / outstandingLoans / ebiReloans / buyOuts /
+   * incomingLoans) are intentionally left to their existing form
+   * defaults — they are either entered manually later in the wizard
+   * or sourced from the dedicated pending-loan endpoint after the AO
+   * picks an account.
+   */
+  const applySearchResult = (
+    result: WebLoanCisSearchResponse,
+    query: string
+  ) => {
+    const b = result.borrower;
+    const accounts = result.accounts ?? [];
 
-    // Capture the raw LAI list (and outstanding-loan count) so the
-    // ActiveLoansTable card below can populate its account picker
-    // without re-fetching the borrower.
-    setLaiAccounts(b.lai ?? []);
-    setOutstandingCount(borrower.outstandingLoans?.length ?? 0);
+    // Capture the raw account list so the ActiveLoansTable card below
+    // can populate its account picker without re-fetching the borrower.
+    const lai = accounts.map((a) => a.accountNo);
+    setLaiAccounts(lai);
+
+    // The backend doesn't expose an outstanding-loan count from this
+    // endpoint (that's served by /pending-loan once an account is picked).
+    // Keep the badge count at 0 so we don't show a misleading "N on file"
+    // hint until the real source-of-truth endpoint populates it.
+    setOutstandingCount(0);
 
     // Branch is stored/displayed by name (resolved from the WEBLOAN_BRANCHES
-    // snapshot); an unknown code falls back to the raw code so nothing renders blank.
-    const branchName = b.branchCode
-      ? WEBLOAN_BRANCHES.find((x) => x.code === b.branchCode)?.name ??
-        b.branchCode
+    // snapshot). All accounts under a CIS typically share the same branch
+    // code (loan_acct_info.bch); we use the first account's branchCode for
+    // the displayed label.
+    const firstBranchCode = accounts[0]?.branchCode ?? "";
+    const branchName = firstBranchCode
+      ? WEBLOAN_BRANCHES.find((x) => x.code === firstBranchCode)?.name ??
+        firstBranchCode
       : "";
-    setValue("branchType.loanType", b.type ?? "");
+    setValue("branchType.loanType", "");
     setValue("branchType.branch", branchName);
-    setValue("branchType.lai", (b.lai ?? []).join(", "));
+    setValue("branchType.lai", lai.join(", "));
     // Requesting officer resolved by the backend from loan_acct_info.solicitor
     // → dbo.mis_group (group_no=2) → description. Display-only; the API
     // re-derives the acting officer from the JWT on submit.
     setValue("branchType.requestingOfficer", b.requestingOfficer ?? "");
 
     setValue("client.cisId", b.cisNo || query);
-    setValue("client.firstName", p.firstName ?? "");
-    setValue("client.middleName", p.middleName ?? "");
-    setValue("client.lastName", p.lastName ?? "");
-    setValue("client.suffix", p.suffix ?? "");
-    setValue("client.birthdate", toDateInput(p.birthdate));
-        setValue("client.address", p.address ?? "");
-        // Agency / Department field displays the resolved agency TYPE
-        // (e.g. "RPSU", "GOVERNMENT") — the human-readable classification
-        // decoded from cis_info_misc_data (id_code=14) → mis_group (group_no=14).
-        // The raw company name (cis_info.b_comp) is exposed separately as
-        // `agencyName` and shown in the MIS Agency row via cat_mis_group2.
-        setValue("client.agency", p.agencyType ?? p.agencyName ?? "");
-        setValue("client.position", p.positionTitle ?? "");
-    setValue("client.employeeId", p.employeeNo ?? "");
-    setValue("client.region", p.regionCode ?? "");
-    setValue("client.divisionCode", p.divisionCode ?? "");
-    setValue("client.stationCode", p.stationCode ?? "");
-    // Prefer the resolved secondary MIS agency name (e.g. "DEPED LIANGA")
-    // from cat_mis_group2 → mis_group.path, falling back to the raw primary
-    // path (e.g. "INDIV/SAL") from cat_mis_group if the resolved name
-    // is unavailable.
-    setValue("client.misAgency", p.misAgencyName ?? p.misAgency ?? "");
+    setValue("client.firstName", b.firstName ?? "");
+    setValue("client.middleName", b.middleName ?? "");
+    setValue("client.lastName", b.lastName ?? "");
+    // The backend exposes `appelation` (suffix) and `title` — the form
+    // schema only has `suffix`, so we surface `appelation` there. Title
+    // is intentionally not mapped (no field on the form schema).
+    setValue("client.suffix", b.appelation ?? "");
+    setValue("client.birthdate", toDateInput(b.birthDate));
+    setValue("client.address", b.address ?? "");
+    // Agency: backend exposes only `agencyType` (the resolved description
+    // e.g. "RPSU"); the form has a single `agency` field that the existing
+    // legacy UI used for either type or company. Map the agency type here.
+    setValue("client.agency", b.agencyType ?? "");
+    setValue("client.position", b.positionTitle ?? "");
+    setValue("client.employeeId", b.employeeNumber ?? "");
+    setValue("client.region", b.regionCode ?? "");
+    setValue("client.divisionCode", b.divisionCode ?? "");
+    setValue("client.stationCode", b.stationCode ?? "");
+    // `lengthOfService` is sourced from check_list_data CCR10 on the
+    // backend — surface it directly so the AO doesn't have to re-enter it.
+    setValue("client.lengthOfService", b.lengthOfService ?? "");
+    // The backend exposes only the resolved `misAgency` (cat_mis_group2 →
+    // mis_group.path). The raw primary path (cat_mis_group) is no longer
+    // sent over the wire, so there's nothing to fall back to.
+    setValue("client.misAgency", b.misAgency ?? "");
 
-    setValue("loan.purpose", li.purpose ?? "");
-    setValue("loan.proposedAmount", toNumber(li.proposedAmount));
-    setValue("loan.term", toNumber(li.termMonths));
-    setValue("loan.interestRate", toNumber(li.interestRate));
+    // Loan parameters and obligations are NOT pre-filled from CIS search:
+    //  - `loan.purpose / proposedAmount / term / interestRate` are
+    //    captured manually per application (no "borrower's most recent
+    //    loan" carry-over by design).
+    //  - `outstandingLoans` is sourced from the in-flight pending-loan
+    //    endpoint (GET .../pending-loan) once the AO picks an account.
+    //  - `ebiReloans / buyOuts / incomingLoans` are entered manually in
+    //    later wizard steps — no backend endpoint exposes them.
+    // clearForm() already reset these to their schema defaults before
+    // this function runs (via the parent component's reset cycle), so
+    // there's nothing left to write here.
 
-    setValue(
-      "outstandingLoans",
-      (borrower.outstandingLoans ?? []).map((o) => ({
-        pn: o.pn,
-        principalBalance: toNumber(o.principalBalance),
-        amortization: toNumber(o.amortization),
-        outstandingBalance: toNumber(o.outstandingBalance),
-        dateGranted: toDateInput(o.dateGranted),
-        dateMaturity: toDateInput(o.dateMaturity),
-        status: o.status ?? "Active",
-      }))
-    );
-
-    setValue(
-      "ebiReloans",
-      (borrower.ebiReloanAccounts ?? []).map((r) => ({
-        pn: r.pn,
-        name: r.name ?? "",
-        existingDeduction: toNumber(r.existingDeductions),
-        // Template column "OB to be paid/closed" maps to payToClose
-        outstandingBalance: toNumber(r.payToClose),
-      }))
-    );
-
-    setValue(
-      "buyOuts",
-      (borrower.buyOutAccounts ?? []).map((x) => ({
-        pn: x.pn,
-        name: x.name ?? "",
-        amortization: toNumber(x.amortization),
-        outstandingBalance: toNumber(x.outstandingBalance),
-      }))
-    );
-
-    setValue(
-      "incomingLoans",
-      (borrower.incomingLoans ?? []).map((i) => ({
-        name: i.name ?? "",
-        deductions: toNumber(i.deductions),
-        remarks: i.remarks ?? "",
-      }))
-    );
+    // Mark the form as loaded — `isLoaded` is derived from
+    // `useWatch({ control, name: "client" })` above.
   };
 
   return (

@@ -51,6 +51,17 @@ export const queryKeys = {
             ["loans", "monitoring", filters, pagination, sorting] as const,
     },
 
+    // ── WebLoans (CIS lookup / outstanding / pending) ──────────────────────
+    webLoans: {
+        cis: (cisNo: string) => ["webloans", "cis", cisNo] as const,
+        activeLoans: (cisNo: string, accountNo: string) =>
+            ["webloans", "active-loans", cisNo, accountNo] as const,
+        outstandingLoans: (cisNo: string, accountNo: string) =>
+            ["webloans", "outstanding-loans", cisNo, accountNo] as const,
+        pendingLoan: (cisNo: string, accountNo: string) =>
+            ["webloans", "pending-loan", cisNo, accountNo] as const,
+    },
+
     // ── Dashboard ───────────────────────────────────────────────────────────
     dashboard: {
         summary: ["dashboard", "summary"] as const,

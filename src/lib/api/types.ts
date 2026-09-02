@@ -257,135 +257,99 @@ export const WEBLOAN_BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
 ];
 
 // ─── WebLoans (CIS lookup) ───────────────────────────────────────────────────
+//
+// Mirrors `EBI.ALAS.Api.Features.WebLoans.WebLoanDtos.cs` —
+// `CisSearchResponse(BorrowerDto, IReadOnlyList<AccountDto>)`. The backend
+// returns the search payload as a flat `{ borrower, accounts[] }` envelope;
+// nested "sections" (branchAndType / personalInformation / loanInformation /
+// ...) were a planned shape that was never implemented on the server side,
+// so the frontend MUST treat these two top-level keys as the contract.
 
-/** Branch & Type section of the CIS lookup response (BranchAndTypeSection). */
-export interface WebLoanBranchAndType {
-    /** Loan type label of the borrower's most recent active loan (e.g. "Reloan"). */
-    type: string | null;
-    typeCode: number | null;
-    branchCode: string | null;
-    /**
-     * Requesting officer's full name. Resolved from
-     * `loan_acct_info.solicitor` → `mis_group.path` (group_no=2) →
-     * `description`. Falls back to null when the borrower's account has no
-     * solicitor or the path cannot be resolved.
-     */
-    requestingOfficer: string | null;
-    cisNo: string | null;
-    /** Loan Account Info numbers (acct_no) owned by this client. */
-    lai: string[];
+/**
+ * One account (Loan Account Info / LAI) attached to a CIS.
+ *
+ * `accountNo` is the value the frontend feeds into the LAI picker; the
+ * other fields are surfaced for context in the table card. Mirrors
+ * `AccountDto` on the backend (Features/WebLoans/WebLoanDtos.cs).
+ */
+export interface WebLoanAccount {
+    bankCode: string;
+    branchCode: string;
+    accountNo: string;
+    name: string | null;
+    creditLimit: number | null;
+    usedCredit: number | null;
+    borrowerType: string | null;
 }
 
-/** Personal Information section — sourced from cis_info (PersonalInformationSection). */
-export interface WebLoanPersonalInformation {
-    firstName: string | null;
+/**
+ * Borrower section of the CIS search payload. Mirrors `BorrowerDto` on
+ * the backend.
+ *
+ * Fields are nullable because the webloan DB itself is nullable on every
+ * one of them — `cis_info.b_*` columns allow nulls and many borrowers
+ * simply have no `cis_info_misc_data` row, etc. The frontend must always
+ * default missing values to "" / 0 before rendering.
+ */
+export interface WebLoanBorrower {
+    /** CIS number (cis_info.cis_no). */
+    cisNo: string;
+    firstName: string;
     middleName: string | null;
-    lastName: string | null;
-    suffix: string | null;
-    birthdate: string | null;
+    lastName: string;
+    /** Title (Mr/Ms/...) — surfaced but rarely displayed. */
+    title: string | null;
+    /** Suffix / appelation. */
+    appelation: string | null;
+    /** ISO 8601 datetime (date portion is the birthday). */
+    birthDate: string | null;
+    /** Pre-joined address (zip, street, city, province, brgy, village). */
     address: string | null;
-    agencyName: string | null;
-    agencyTypeCode: number | null;
     /**
-     * Agency type description resolved from `cis_info_misc_data` (id_code=14)
-     * → `mis_group.id_code` in the agency-type group. e.g. "RPSU".
-     * Falls back to null when the borrower has no misc row or the id_code
+     * Agency-type description resolved from `cis_info_misc_data`
+     * (id_code=14) → `mis_group.id_code` in the agency-type group.
+     * e.g. "RPSU". Null when the borrower has no misc row or the id_code
      * is unknown.
      */
     agencyType: string | null;
     positionTitle: string | null;
-    /** Not stored in webloan — always null. Populated in ALAS. */
-    lengthOfService: string | null;
+    /** Human-readable region label (e.g. "Region 1", "NCR"). */
+    region: string | null;
     regionCode: string | null;
     divisionCode: string | null;
     stationCode: string | null;
-    employeeNo: string | null;
-    /**
-     * Primary MIS path from `loan_acct_info.cat_mis_group` (e.g. "INDIV/SAL").
-     * The resolved agency name (e.g. "DEPED LIANGA") is `misAgencyName`.
-     */
+    /** Employee number (cis_info.employee_no). */
+    employeeNumber: string | null;
+    /** Resolved secondary MIS agency name (cat_mis_group2 → mis_group.path). */
     misAgency: string | null;
     /**
-     * Resolved secondary MIS agency name from
-     * `loan_acct_info.cat_mis_group2` → `mis_group.path` (e.g. "DEPED LIANGA").
+     * Requesting officer's full name. Resolved from
+     * `loan_acct_info.solicitor` → `mis_group.path` (group_no=2) →
+     * `description`. Falls back to null when the borrower's account has
+     * no solicitor or the path cannot be resolved.
      */
-    misAgencyName: string | null;
+    requestingOfficer: string | null;
+    /** "<years> years, <months> months" — sourced from check_list_data CCR10. */
+    lengthOfService: string | null;
 }
 
-/** Optional Information section (OptionalInformationSection) — not stored in webloan yet. */
-export interface WebLoanOptionalInformation {
-    referrer: string | null;
-    school: string | null;
-}
-
-/** Loan Information section — borrower's most recent active loan (LoanInformationSection). */
-export interface WebLoanLoanInformation {
-    productCode: string | null;
-    productDescription: string | null;
-    termMonths: number | null;
-    paymentIntervalMonths: number | null;
-    interestRate: number | null;
-    purpose: string | null;
-    proposedAmount: number | null;
-    /** Captured in ALAS at application time; not stored in webloan — always null. */
-    nthp: number | null;
-    nthpDate: string | null;
-}
-
-/** Deviations section (DeviationSection) — assessed within ALAS, always empty here. */
-export interface WebLoanDeviation {
-    hasDeviations: boolean;
-    deviations: string[];
-}
-
-/** Outstanding Loans row (OutstandingLoanItem). */
-export interface WebLoanOutstandingLoan {
-    pn: string;
-    accountNo: string | null;
-    principalBalance: number | null;
-    amortization: number | null;
-    outstandingBalance: number | null;
-    dateGranted: string | null;
-    dateMaturity: string | null;
-    status: string | null;
-}
-
-/** EBI account considered for reloan (EbiReloanAccountItem). */
-export interface WebLoanEbiReloanAccount {
-    pn: string;
-    name: string | null;
-    existingDeductions: number | null;
-    payToClose: number | null;
-    principalBalance: number | null;
-    status: string | null;
-}
-
-/** Buy-out accounts from other FIs (BuyOutAccountItem). */
-export interface WebLoanBuyOutAccount {
-    pn: string;
-    name: string | null;
-    amortization: number | null;
-    outstandingBalance: number | null;
-}
-
-/** Incoming/undeducted loans (IncomingLoanItem). */
-export interface WebLoanIncomingLoan {
-    name: string | null;
-    deductions: number | null;
-    remarks: string | null;
-}
-
-/** Full borrower profile returned by GET /api/webloans/cis/{cisNo} (WebLoanBorrowerResponse). */
-export interface WebLoanBorrower {
-    branchAndType: WebLoanBranchAndType;
-    personalInformation: WebLoanPersonalInformation;
-    optionalInformation: WebLoanOptionalInformation;
-    loanInformation: WebLoanLoanInformation;
-    deviation: WebLoanDeviation;
-    outstandingLoans: WebLoanOutstandingLoan[];
-    ebiReloanAccounts: WebLoanEbiReloanAccount[];
-    buyOutAccounts: WebLoanBuyOutAccount[];
-    incomingLoans: WebLoanIncomingLoan[];
+/**
+ * Full payload returned by `GET /api/webloans/cis/{cisNo}/search`.
+ *
+ * NOTE: the legacy comment block above this contract mentioned several
+ * nested sections (`branchAndType.lai`, `personalInformation.firstName`,
+ * `outstandingLoans`, `ebiReloanAccounts`, `buyOutAccounts`,
+ * `incomingLoans`, `deviation`, `optionalInformation`). Those do NOT
+ * exist on the wire — the backend returns ONLY the two flat keys below.
+ * Outstanding loans are sourced from the dedicated
+ * `GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/pending-loan`
+ * endpoint once the AO picks an account; EBI reloan / buy-out /
+ * incoming-loan sections are entered manually in ALAS (no backend
+ * endpoint exposes them yet).
+ */
+export interface WebLoanCisSearchResponse {
+    borrower: WebLoanBorrower;
+    accounts: WebLoanAccount[];
 }
 
 // ─── Active Loans (CIS + Account) ────────────────────────────────────────────
@@ -425,6 +389,82 @@ export interface ActiveLoansResponse {
     accountNo: string;
     cisNo: string;
     loans: ActiveLoan[];
+}
+
+// ─── Outstanding Loans (CIS + Account + bch) ─────────────────────────────────
+
+/**
+ * One row from GET
+ * `/api/webloans/cis/{cisNo}/accounts/{accountNo}/outstanding-loans`.
+ *
+ * Mirrors `OutstandingLoanDto` on the backend. Backed by the reference SQL
+ * (see `WebLoanRepository.GetOutstandingLoansAsync`):
+ *
+ *   SELECT ... FROM webloan.dbo.loan_data
+ *    WHERE acct_no = @acct
+ *      AND (@bch IS NULL OR bch = @bch)
+ *      AND webloan.dbo.is_loan(loan_no) = 1
+ *      AND loan_status != 10
+ *    ORDER BY date_granted DESC
+ *
+ * The list is branch-scoped server-side: non-Admin callers only see their
+ * own branch's outstanding balances (== JWT `branchId`); Admin bypasses
+ * the branch filter and `branchCode` echoes `"ALL"`.
+ *
+ * **Field mapping note — `principalBalance` IS the OUTSTANDING BALANCE.**
+ * `principalBalance` mirrors `loan_data.principal_bal` (current principal
+ * balance, not original). The frontend uses this value to populate the
+ * "Outstanding Balance" column of the obligations table on the new-loan
+ * form. `principal` mirrors `loan_data.principal` (original loan amount)
+ * and feeds the "Principal Balance" column so the AO can see both side by
+ * side.
+ *
+ * `productStatus` is a pre-joined `"<productCode> - <status label>"`
+ * display string the backend assembles in `WebLoanService`. The
+ * `productCode` field is the bare loan_product code (e.g. `"PL"`).
+ */
+export interface OutstandingLoan {
+    /** Promissory Note number (loan_data.loan_no). */
+    loanNo: string | null;
+    /** Original loan principal (loan_data.principal). */
+    principal: number | null;
+    /** Current principal balance — i.e. OUTSTANDING BALANCE (loan_data.principal_bal). */
+    principalBalance: number | null;
+    /** Date the loan was granted (ISO 8601, full datetime — slice to yyyy-MM-dd for <input type="date">). */
+    dateGranted: string | null;
+    /** Maturity date (ISO 8601, full datetime). */
+    dateMaturity: string | null;
+    /** Loan product code (loan_data.loan_product, e.g. "PL"). */
+    productCode: string;
+    /** Pre-joined "<productCode> - <status label>" display string. */
+    productStatus: string;
+}
+
+/**
+ * Response from GET
+ * `/api/webloans/cis/{cisNo}/accounts/{accountNo}/outstanding-loans`.
+ *
+ * The backend returns:
+ *   - 200 with `{ loans: [] }` when the (cisNo, accountNo) pair is valid
+ *     but has no outstanding balances; the frontend treats this as a
+ *     successful empty list.
+ *   - 404 when the account↔CIS pair is unknown (anti-enumeration guard
+ *     runs before any loan row is read, even for Admin). The caller
+ *     surfaces that as an error.
+ */
+export interface OutstandingLoansResponse {
+    /** Echo of the cis filter. */
+    cisNo: string;
+    /**
+     * Branch code that produced this list — equals the JWT user's branch
+     * (`branchId` claim) for non-Admin, or `"ALL"` when the Admin role
+     * bypassed the branch filter.
+     */
+    branchCode: string;
+    /** Echo of the account filter. */
+    accountNo: string;
+    /** Active `loan_data` rows for the (cisNo, accountNo) pair. */
+    loans: OutstandingLoan[];
 }
 
 // ─── PreLoans (CIS + Account + bch) ──────────────────────────────────────────
@@ -485,6 +525,74 @@ export interface PreLoansQuery {
     cisNo?: string;
     /** Filter by account number (typically the LAI account selected in the UI). */
     accountNo?: string;
+}
+
+// ─── Pending Loans (CIS + Account + bch) ───────────────────────────────────
+
+/**
+ * One row from GET
+ * `/api/webloans/cis/{cisNo}/accounts/{accountNo}/pending-loan`.
+ *
+ * Mirrors `PendingLoanDto` on the backend. Each row represents one
+ * in-flight pre_loan_data row enriched with loan_data fields
+ * (principal, granted rate, product, purpose).
+ *
+ * **Important — `principalBalance` is the OUTSTANDING BALANCE.**
+ * On the backend, `Principal` (loan_data.principal) is the **current
+ * principal balance** (i.e. `principal_bal`) for an active loan — it is
+ * NOT the original loan amount. The frontend treats this field as the
+ * outstanding balance when pre-filling the obligation rows.
+ */
+export interface PendingLoan {
+    /** Loan number (loan_data.loan_no / pre_loan_data.loan_no). */
+    loanNo: string;
+    /**
+     * Current principal balance. Mirrors `loan_data.principal` on the
+     * backend, which is `principal_bal` (the outstanding balance) for
+     * an active loan, not the original principal.
+     */
+    principal: number | null;
+    /** Interest rate as a number (loan_data.granted_rate). */
+    grantedRate: number | null;
+    /** Total term in days (`total_amortization * 30` from the SQL). */
+    totalTermDays: number | null;
+    /**
+     * "<loan_product> - <description>" display string, pre-joined on the
+     * backend (e.g. "PL - Payroll Loan"). Falls back to the bare product
+     * code when no description resolves.
+     */
+    productWithDescription: string;
+    /** Loan purpose description (loan_data.cat_loan_purpose → mis_group). */
+    loanPurpose: string | null;
+}
+
+/**
+ * Response wrapper for
+ * GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/pending-loan.
+ *
+ * The endpoint returns a 200 with `loans: []` (and `loan: null`) when
+ * the (cisNo, accountNo) pair is valid but has no in-flight loans; the
+ * frontend treats this as a successful empty list. A 404 means the
+ * account↔CIS pair is unknown — that is a real error and surfaces in
+ * the same way as the other webloan endpoints.
+ */
+export interface PendingLoanResponse {
+    /** Echo of the cis filter. */
+    cisNo: string;
+    /**
+     * Branch code that produced this list — equals the JWT user's branch
+     * (`branchId` claim) for non-Admin, or "ALL" when the Admin role
+     * bypassed the branch filter.
+     */
+    branchCode: string;
+    /** Echo of the account filter. */
+    accountNo: string;
+    /** In-flight pre_loan_data rows enriched with loan_data fields. */
+    loans: PendingLoan[];
+    /** CIS-level NTHP (Net Take-Home Pay) amount (CCR07 row). */
+    nthp: string | null;
+    /** CCR07 expiration — NTHP date. */
+    nthpDate: string | null;
 }
 
 // ─── Audit Logs ─────────────────────────────────────────────────────────────────
