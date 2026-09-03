@@ -33,6 +33,22 @@ export const clientSchema = z.object({
 });
 
 // ── Outstanding Loan (existing obligation) ─────────────────────
+//
+// `productWithDescription` is a frontend-only carry-over: the backend's
+// `OutstandingLoanDto.productWithDescription` (e.g. "C35 - Quick Loan")
+// is the *product description* we want to surface as the EBI reloan's
+// `name` when a row is transferred from Outstanding → EBI Reloans.
+// We persist it on the row so the transfer in `mapToEbi` has access to
+// it without a re-fetch; it is optional because:
+//   1. manually-added outstanding rows (none today, but possible) may
+//      not have a product description attached, and
+//   2. Zod's default object() strips unknown keys at parse time, so
+//      making the field declared-but-optional is required to survive a
+//      round-trip through `zodResolver` for any submit / reset cycle.
+//
+// `status` is kept as a separate field for the existing "Status" column
+// in the obligations table — it is the loan's *status* label
+// (e.g. "Active"), distinct from the *product description*.
 export const outstandingLoanSchema = z.object({
     pn: z.string(),
     principalBalance: z.number().default(0),
@@ -41,6 +57,7 @@ export const outstandingLoanSchema = z.object({
     dateGranted: z.string().optional(),
     dateMaturity: z.string().optional(),
     status: z.string().default("Active"),
+    productWithDescription: z.string().optional(),
 });
 
 // ── Preloan (CIS + Account + bch) ───────────────────────────────

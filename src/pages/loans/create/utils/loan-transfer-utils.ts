@@ -12,8 +12,13 @@
  *
  * The mapping rules deliberately mirror the way a loan officer would
  * classify the same obligation on paper: when a row is moved from
- * "Outstanding" to "EBI Reloans", the previous `status` (e.g. a product
- * description) becomes the `name`, and `amortization` becomes
+ * "Outstanding" to "EBI Reloans", the **product description** (e.g.
+ * "C35 - Quick Loan" — the backend's pre-joined
+ * `OutstandingLoanDto.productWithDescription`) becomes the EBI row's
+ * `name`. The loan's *status* label (`<productCode> - <status label>`,
+ * e.g. "C35 - Active") is *not* what the AO expects to see on an EBI
+ * reloan row — the EBI reloan name is a description of the underlying
+ * loan product, not its current state. `amortization` becomes
  * `existingDeduction`. The intent is to lose the minimum amount of
  * information possible while producing a valid record for the target
  * section.
@@ -32,6 +37,20 @@ export type OutstandingFormRow = {
     dateGranted: string;
     dateMaturity: string;
     status: string;
+    /**
+     * Frontend carry-over of the backend's
+     * `OutstandingLoanDto.productWithDescription` (e.g.
+     * "C35 - Quick Loan"). This is the *product description* — what the
+     * AO expects to see as the EBI reloan's `name` after an
+     * Outstanding → EBI transfer — and is intentionally distinct from
+     * `status` (the loan's current *status* label, e.g. "C35 - Active").
+     *
+     * Empty string when the backend couldn't resolve a description
+     * (orphaned/retired product code); `mapToEbi` falls back to
+     * `status` in that case so the EBI row still has a human-readable
+     * `name` rather than an empty cell.
+     */
+    productWithDescription: string;
 };
 
 export type EbiReloanFormRow = {
@@ -50,24 +69,34 @@ export type EbiReloanFormRow = {
     // intended UX signal for the AO's first keystroke.
     payToClose: number;
     // ── Round-trip ghost fields ──────────────────────────────────────
-    // The EBI schema has no `dateGranted` / `dateMaturity` columns, so
-    // mapping an Outstanding row *into* EBI would otherwise lose its
-    // dates forever — and the reverse map (EBI → Outstanding) would
-    // have nothing to restore them from. To make the Outstanding ↔ EBI
-    // round trip lossless for dates, we carry the two dates on the
-    // EBI row as ghost fields. They are:
+    // The EBI schema has no `dateGranted` / `dateMaturity` / `status`
+    // columns, so mapping an Outstanding row *into* EBI would otherwise
+    // lose those fields forever — and the reverse map (EBI →
+    // Outstanding) would have nothing to restore them from. To make
+    // the Outstanding ↔ EBI round trip lossless, we carry the relevant
+    // source-row values on the EBI row as ghost fields. They are:
     //
     //   • NOT registered to any input (the AO never sees or edits them)
     //   • NOT part of `ebiReloanSchema`, so Zod's `zodResolver` strips
     //     them at submit time without rejecting the row
     //   • restored verbatim on the reverse transfer by `mapToOutstanding`
     //
-    // Keeping them on the row object (rather than in a separate
-    // `Map<rowId, {dateGranted, dateMaturity}>`) makes the round trip
-    // survive re-renders, schema resets, and the `useFieldArray`
-    // snapshot churn that previously bit us.
+    // `sourceStatus` specifically: the EBI row's `name` column is the
+    // loan product's *description* (e.g. "C35 - Quick Loan"), not its
+    // current *status* label (e.g. "C35 - Active"). The Outstanding
+    // row needs the original status back when the AO moves the row
+    // back to Outstanding — without this ghost, the round trip would
+    // overwrite the Outstanding row's `status` with the EBI row's
+    // `name` (the product description), corrupting the Status column
+    // in Section 4.
+    //
+    // Keeping these on the row object (rather than in a separate
+    // `Map<rowId, ...>`) makes the round trip survive re-renders,
+    // schema resets, and the `useFieldArray` snapshot churn that
+    // previously bit us.
     dateGranted?: string;
     dateMaturity?: string;
+    sourceStatus?: string;
 };
 
 export type BuyOutFormRow = {
@@ -120,13 +149,36 @@ export function mapToOutstanding(row: any, source: LoanSection): OutstandingForm
         dateGranted: "",
         dateMaturity: "",
         status: "",
+        productWithDescription: "",
     };
 
     if (source === "ebi") {
         return {
             ...defaults,
             pn: safeString(row?.pn),
-            status: safeString(row?.name),
+            // The EBI row's `name` is the product *description*
+            // (e.g. "C35 - Quick Loan"), not the loan's *status*
+            // label (e.g. "C35 - Active"). Restoring `status` from
+            // `row.name` would corrupt the Status column in Section 4
+            // after the round trip — the AO would see the product
+            // description in the Status cell. Instead, we read the
+            // original `status` from the ghost field stashed by
+            // `mapToEbi` (see `EbiReloanFormRow.sourceStatus`).
+            //
+            // Fallback order:
+            //   1. `row.sourceStatus` — the original backend status,
+            //      preserved on the EBI row at transfer time.
+            //   2. `row.name` — defensive: only kicks in for EBI rows
+            //      that predate the `sourceStatus` ghost field (e.g.
+            //      rows added manually before this change), where
+            //      `name` would have been set to `status` instead of
+            //      `productWithDescription` by the previous `mapToEbi`
+            //      implementation. We accept the slight imperfection
+            //      here rather than rendering an empty Status cell.
+            //   3. `""` — empty default; `safeString(undefined) === ""`.
+            status:
+                safeString(row?.sourceStatus) ||
+                safeString(row?.name),
             amortization: safeNumber(row?.existingDeduction),
             outstandingBalance: safeNumber(row?.outstandingBalance),
             principalBalance: safeNumber(row?.outstandingBalance),
@@ -182,10 +234,35 @@ export function mapToEbi(row: any, source: LoanSection): EbiReloanFormRow {
     };
 
     if (source === "outstanding") {
+        // ── `name` source: product description (NOT status) ───────────
+        // The EBI reloan's `name` column is the loan product's
+        // *description* (e.g. "C35 - Quick Loan"), not the loan's
+        // current *status* label (e.g. "C35 - Active"). They were
+        // previously conflated because `mapToEbi` used to read
+        // `row.status`, which carries the backend's pre-joined
+        // `<code> - <status label>` string. The fix: the Outstanding
+        // row now carries the backend's pre-joined
+        // `OutstandingLoanDto.productWithDescription` as
+        // `row.productWithDescription` (see `active-loans-table.tsx`),
+        // and we read THAT here.
+        //
+        // When `productWithDescription` is empty (orphaned/retired
+        // product code on the backend, no description resolved), we
+        // fall back to `status` so the EBI row still has a
+        // human-readable `name` rather than an empty cell. The
+        // fallback is a *defensive* path — every row hydrated from
+        // the live /outstanding-loans endpoint now carries
+        // `productWithDescription`, so the fallback only kicks in
+        // for legacy rows (e.g. the dummy-data seeded in
+        // approval/dummy-data.ts) or any row that predates this
+        // change.
+        const productDesc = safeString(row?.productWithDescription);
+        const fallbackStatus = safeString(row?.status);
+
         return {
             ...defaults,
             pn: safeString(row?.pn),
-            name: safeString(row?.status),
+            name: productDesc || fallbackStatus,
             existingDeduction: safeNumber(row?.amortization),
             outstandingBalance: safeNumber(row?.outstandingBalance),
             // ── Stash dates for round-trip restore ──────────────────────
@@ -200,6 +277,14 @@ export function mapToEbi(row: any, source: LoanSection): EbiReloanFormRow {
             // the reverse path.
             dateGranted: safeString(row?.dateGranted),
             dateMaturity: safeString(row?.dateMaturity),
+            // ── Stash source status for round-trip restore ────────────
+            // The EBI row's `name` is the product *description*, NOT
+            // the loan's *status* — so the reverse map (EBI → Outstanding)
+            // can't derive the Outstanding row's `status` from `name`
+            // without corrupting the Status column in Section 4.
+            // Stash the source `status` here so `mapToOutstanding`
+            // can restore it verbatim when the AO moves the row back.
+            sourceStatus: safeString(row?.status),
         };
     }
 
@@ -238,10 +323,17 @@ export function mapToBuyOut(row: any, source: LoanSection): BuyOutFormRow {
     };
 
     if (source === "outstanding") {
+        // Same product-description preference as `mapToEbi`: the
+        // buyout row's `name` is a description of the loan product
+        // (e.g. "C35 - Quick Loan"), not its current status label
+        // (e.g. "C35 - Active"). Fall back to `status` when no
+        // product description resolved on the backend.
+        const productDesc = safeString(row?.productWithDescription);
+        const fallbackStatus = safeString(row?.status);
         return {
             ...defaults,
             pn: safeString(row?.pn),
-            name: safeString(row?.status),
+            name: productDesc || fallbackStatus,
             amortization: safeNumber(row?.amortization),
             outstandingBalance: safeNumber(row?.outstandingBalance),
         };
@@ -279,9 +371,17 @@ export function mapToIncoming(row: any, source: LoanSection): IncomingFormRow {
     };
 
     if (source === "outstanding") {
+        // Same product-description preference as `mapToEbi` /
+        // `mapToBuyOut`: the incoming row's `name` is a description
+        // of the loan product (e.g. "C35 - Quick Loan"), not its
+        // current status label (e.g. "C35 - Active"). Fall back to
+        // `status` when no product description resolved on the
+        // backend.
+        const productDesc = safeString(row?.productWithDescription);
+        const fallbackStatus = safeString(row?.status);
         return {
             ...defaults,
-            name: safeString(row?.status),
+            name: productDesc || fallbackStatus,
             deductions: safeNumber(row?.amortization),
             remarks: safeString(row?.pn),
         };

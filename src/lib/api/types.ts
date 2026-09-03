@@ -456,6 +456,20 @@ export interface OutstandingLoan {
     productCode: string;
     /** Pre-joined "<productCode> - <status label>" display string. */
     productStatus: string;
+    /**
+     * Pre-joined "<productCode> - <description>" display string (e.g.
+     * "C35 - Quick Loan"). Sourced from a LEFT JOIN to
+     * webloan.dbo.loan_product on (ld.loan_product = lp.id_code); falls
+     * back to the bare product code when no description resolves.
+     *
+     * Frontend contract: this is the *product description* we display
+     * for the obligation's "name" when it is moved into the EBI Reloans
+     * section. `productStatus` is the loan's *status* label (e.g. "C35
+     * - Active") and is intentionally distinct from the product
+     * description — see `mapToEbi` in `loan-transfer-utils.ts` for the
+     * transfer that wires this through.
+     */
+    productWithDescription: string;
 }
 
 /**

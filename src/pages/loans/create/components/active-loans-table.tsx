@@ -211,6 +211,14 @@ export function ActiveLoansTable({
                         ? row.dateMaturity.slice(0, 10)
                         : "",
                     status: row.productStatus ?? "Active",
+                    // Carry the backend's pre-joined product description
+                    // (e.g. "C35 - Quick Loan") onto the row so the
+                    // Outstanding → EBI transfer can use it as the EBI
+                    // reloan's `name` — see `mapToEbi` in
+                    // `loan-transfer-utils.ts`. `status` (above) is the
+                    // loan's *status label* and is intentionally
+                    // distinct from this product description.
+                    productWithDescription: row.productWithDescription ?? "",
                 })),
                 { shouldDirty: false }
             );
@@ -309,11 +317,12 @@ export function ActiveLoansTable({
     // and remounted fresh whenever the AO switches clients — no explicit
     // effect-driven reset required.
     return (
-        <Card key={cisNo}>
+        <Card key={cisNo} className="shadow-none">
             <CardHeader className="border-b bg-muted/30 pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                    <Receipt size={20} weight="bold" className="text-primary" />
-                    2. Account & Preloan
+                <CardTitle className="flex items-center gap-2 text-base">
+                    <Receipt size={16} weight="bold" className="text-primary" />
+                    <span className="tabular-nums text-muted-foreground">1.3</span>
+                    Account & preloan
                     {typeof totalActiveLoansCount === "number" &&
                         totalActiveLoansCount > 0 && (
                             <Badge variant="secondary" className="ml-1">
