@@ -215,6 +215,23 @@ export const incomingLoanSchema = z.object({
 });
 
 // ── Loan Parameters ────────────────────────────────────────────
+//
+// The fee fields (notarial / doc stamps / insurance) implement the
+// "Smart Default with Editable Override" pattern:
+//   - `max()` bounds are *sanity* checks (catch fat-finger ₱50000 vs ₱500),
+//     not policy limits. The bank policy lives in `LoanProductResponse.fees[]`
+//     and is enforced server-side — the schema can't know per-product
+//     thresholds at parse time, so the *deviation-justification* rule
+//     below catches the policy breach instead.
+//   - `deviationJustification` lives at the *form* level (not per-field)
+//     because the AO typically has one reason for any/all overrides
+//     ("notary charged ₱750 because the docs were 4 pages instead of 2").
+//   - The `standardFeesSnapshot` is *derived*, not entered — written by
+//     the wizard from `computeExpectedFees(product, principal)` at the
+//     moment the AO picks a product / changes the principal, so the
+//     audit trail captures what the bank policy said *at that moment*.
+//     The backend stores both numbers so Compliance can run "AO
+//     override frequency" reports.
 export const loanParametersSchema = z.object({
     product: z.string().min(1, "Loan product is required"),
     purpose: z.string().min(1, "Loan purpose is required"),
@@ -225,6 +242,39 @@ export const loanParametersSchema = z.object({
     term: z.number().min(1, "Term must be at least 1 month").max(360),
     interestRate: z.number().min(0).max(100).optional(),
     nthpDate: z.string().optional(),
+
+    // ── Bank-fee fields (Smart Default + Editable Override) ─────
+    // `.default(0)` matches the legacy form behavior — fees start at
+    // zero and are auto-populated the moment a product is picked.
+    notarialFee: z
+        .number()
+        .min(0, "Notarial fee cannot be negative")
+        .max(50_000, "Notarial fee exceeds maximum allowable threshold")
+        .default(0),
+    docStamps: z
+        .number()
+        .min(0, "Doc stamps cannot be negative")
+        .max(50_000, "Doc stamps exceeds maximum allowable threshold")
+        .default(0),
+    insurance: z
+        .number()
+        .min(0, "Insurance cannot be negative")
+        .max(50_000, "Insurance exceeds maximum allowable threshold")
+        .default(0),
+
+    // ── Audit snapshot — what the bank policy expected ──────────
+    // The wizard writes these on every (product, principal) change so
+    // the backend stores *both* the AO's actual entry and the system's
+    // expected value. Compliance uses the delta to detect training
+    // gaps (one AO consistently types ₱500 for notarial on every loan
+    // — probably a copy/paste error) and fraud patterns.
+    standardFeesSnapshot: z
+        .object({
+            notarialFee: z.number().default(0),
+            docStamps: z.number().default(0),
+            insurance: z.number().default(0),
+        })
+        .default({ notarialFee: 0, docStamps: 0, insurance: 0 }),
 });
 
 // ── Verification Conducted ─────────────────────────────────────
@@ -249,6 +299,13 @@ export const verificationSchema = z.object({
 //
 // `otherRemarks` is always required, even when there are no
 // deviations, so the AO leaves a trace for downstream reviewers.
+//
+// `feeDeviationJustification` is conditionally required at the root
+// schema's `superRefine` (see below) — *only* when one of the fee
+// fields deviates from `standardFeesSnapshot` by more than the per-fee
+// `maxAllowedDeviation` stored on the product rule. We mark it
+// optional here so the per-field error path stays clean; the root
+// superRefine attaches the cross-field error.
 export const DEVIATION_REASONS = [
     "Age not within the prescribed parameters",
     "Discounted Application Fee",
@@ -292,6 +349,16 @@ export const deviationsSchema = z
             .string()
             .trim()
             .min(1, "Other remarks are required."),
+        /**
+         * Justification for any fee override (notarial / doc stamps /
+         * insurance). Conditionally required at the root schema's
+         * `superRefine` — see `loanApplicationSchema` below.
+         *
+         * Stored on the deviations bucket because it shares the same
+         * audit-trail machinery as policy deviations: both end up on
+         * the printed approval form under "Remarks".
+         */
+        feeDeviationJustification: z.string().trim().optional(),
     })
     .superRefine((data, ctx) => {
         if (data.hasDeviations && data.deviationDetails.length === 0) {
@@ -340,7 +407,7 @@ export const loanApplicationSchema = z
         deviations: deviationsSchema,
     })
     .superRefine((data, ctx) => {
-        const { loan, client, ebiReloans, buyOuts, incomingLoans } = data;
+        const { loan, client, ebiReloans, buyOuts, incomingLoans, deviations } = data;
 
         // Only run the cross-field rules when the underlying loan
         // parameters are themselves valid. The `loanParametersSchema`
@@ -408,6 +475,44 @@ export const loanApplicationSchema = z
                 message: `Monthly Amortization exceeds Total Disposable Income. Shortfall: ${formatCurrency(
                     Math.abs(totalDisposable),
                 )}.`,
+            });
+        }
+
+        // Rule #3: fee-deviation justification.
+        //
+        // If any of the three fee fields (notarial / doc stamps /
+        // insurance) deviates from the `standardFeesSnapshot` that
+        // the wizard wrote at the last (product, principal) change,
+        // the AO must supply a `feeDeviationJustification`. The
+        // snapshot lives on the form so the rule works without the
+        // wizard having to re-fetch the product rule on submit.
+        //
+        // We use a 0.01 ₱ tolerance (matches `CurrencyInput`'s
+        // `VALUE_TOLERANCE`) so floating-point noise doesn't trigger
+        // the requirement. The *exact* per-product `maxAllowedDeviation`
+        // threshold is enforced server-side — the backend is the
+        // source of truth and the schema's job is just to refuse an
+        // unjustified override at all.
+        const snapshot = loan.standardFeesSnapshot ?? {
+            notarialFee: 0,
+            docStamps: 0,
+            insurance: 0,
+        };
+        const FEES_TOLERANCE = 0.01;
+        const hasFeeOverride =
+            Math.abs((loan.notarialFee ?? 0) - (snapshot.notarialFee ?? 0)) >
+                FEES_TOLERANCE ||
+            Math.abs((loan.docStamps ?? 0) - (snapshot.docStamps ?? 0)) >
+                FEES_TOLERANCE ||
+            Math.abs((loan.insurance ?? 0) - (snapshot.insurance ?? 0)) >
+                FEES_TOLERANCE;
+
+        if (hasFeeOverride && !deviations?.feeDeviationJustification?.trim()) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["deviations", "feeDeviationJustification"],
+                message:
+                    "Provide a justification — at least one fee deviates from the bank's standard rate.",
             });
         }
     });

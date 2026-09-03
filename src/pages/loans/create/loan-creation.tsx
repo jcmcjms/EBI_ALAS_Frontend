@@ -493,6 +493,25 @@ export function LoanCreationPage() {
         term: 0,
         interestRate: 0,
         nthpDate: "",
+        // Bank-fee fields (Smart Default + Editable Override). Seeded
+        // with zeros because the wizard writes the standard values
+        // from `LoanProductResponse.fees[]` the moment a product is
+        // picked — see `LoanParametersSection`. The schema defaults
+        // these to `0` too, so omitting them here would still pass
+        // the resolver, but listing them explicitly keeps the form
+        // shape self-documenting.
+        notarialFee: 0,
+        docStamps: 0,
+        insurance: 0,
+        // Audit snapshot — populated by `LoanParametersSection` on
+        // every (product, principal) change. Stays at zero until the
+        // first product pick. The schema's fee-deviation gate
+        // compares this against the three fee fields above.
+        standardFeesSnapshot: {
+          notarialFee: 0,
+          docStamps: 0,
+          insurance: 0,
+        },
       },
       outstandingLoans: [],
       ebiReloans: [],
@@ -510,6 +529,10 @@ export function LoanCreationPage() {
         aoRecommendation: "",
         otherRemarks: "",
         remarks: "",
+        // Optional on mount — the schema's root `superRefine` upgrades
+        // it to required *only* when a fee override is detected, so
+        // we don't need a sentinel value here.
+        feeDeviationJustification: "",
       },
     },
   });
