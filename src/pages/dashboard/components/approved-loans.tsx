@@ -38,7 +38,7 @@ export function ApprovedLoans({ data }: ApprovedLoansProps) {
                                 <Avatar size="sm" className="border"><AvatarFallback>{initialsOf(item.fullName)}</AvatarFallback></Avatar>
                                 <div className="flex-1 min-w-0">
                                     <p className="truncate text-sm font-medium">{item.fullName}</p>
-                                    <p className="truncate font-mono text-xs text-muted-foreground">{item.lamId}</p>
+                                    <p className="truncate text-xs text-muted-foreground">{item.lamId}</p>
                                 </div>
                                 <div className="text-right shrink-0">
                                     <span className="text-xs text-muted-foreground">{item.branch}</span>

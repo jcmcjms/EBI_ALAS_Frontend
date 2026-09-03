@@ -108,7 +108,7 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
     const columns = columnHelper.columns([
         columnHelper.accessor("formNumber", {
             header: "Form #",
-            cell: (info) => <span className="font-mono text-xs font-semibold">{info.getValue()}</span>,
+            cell: (info) => <span className="text-xs font-semibold">{info.getValue()}</span>,
             meta: { className: "sticky left-0 bg-background z-10 border-r" }
         }),
         columnHelper.accessor("branchCode", { header: "Branch", cell: (info) => <span className="text-xs">{info.getValue()}</span> }),

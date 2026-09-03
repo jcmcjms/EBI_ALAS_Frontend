@@ -595,7 +595,7 @@ export function LoanCreationPage() {
                   title="Preloans are filtered to this branch"
                 >
                   <IdentificationBadge size={12} weight="bold" />
-                  <span className="font-mono">Branch</span>
+                  <span>Branch</span>
                   <span className="text-muted-foreground">·</span>
                   <span>{userBranchName}</span>
                 </Badge>
@@ -609,7 +609,7 @@ export function LoanCreationPage() {
                   <LockSimple size={12} weight="bold" />
                   Preloan #{selectedPreLoan.payload.id}
                   {selectedPreLoan.payload.formNumber && (
-                    <span className="font-mono text-[10px] text-muted-foreground">
+                    <span className="text-[10px] text-muted-foreground">
                       · {selectedPreLoan.payload.formNumber}
                     </span>
                   )}
@@ -746,7 +746,7 @@ export function LoanCreationPage() {
                   icon={<Stack size={16} weight="bold" />}
                   step="Step 3"
                   title="Attach a preloan"
-                  body={`Preloans under your branch (${userBranchId || "—"}) only — pick one to resume.`}
+                  body={`Pick one to resume.`}
                 />
                 <WorkflowHint
                   icon={<PaperPlaneTilt size={16} weight="bold" />}

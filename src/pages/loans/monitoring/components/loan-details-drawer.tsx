@@ -48,7 +48,7 @@ export function LoanDetailsDrawer({ loan, onClose }: LoanDetailsDrawerProps) {
                         <SheetHeader className="p-6 pb-4 border-b bg-muted/30">
                             <div className="flex items-start justify-between gap-4">
                                 <div>
-                                    <SheetTitle className="font-mono text-base">{loan.formNumber}</SheetTitle>
+                                    <SheetTitle className="text-base">{loan.formNumber}</SheetTitle>
                                     <SheetDescription className="text-xs mt-1">
                                         {loan.customerName} — {loan.product}
                                     </SheetDescription>

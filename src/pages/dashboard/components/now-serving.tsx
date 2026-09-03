@@ -26,7 +26,7 @@ export function NowServing({ data }: NowServingProps) {
                                 <Avatar size="sm" className="border"><AvatarFallback>{initialsOf(item.checker)}</AvatarFallback></Avatar>
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-medium">{item.checker}</p>
-                                    <p className="truncate font-mono text-xs text-muted-foreground">{item.lamId}</p>
+                                    <p className="truncate text-xs text-muted-foreground">{item.lamId}</p>
                                 </div>
                                 {item.number === 1 && (
                                     <Badge variant="outline" className="gap-1.5 border-emerald-300 bg-emerald-50 font-normal text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">

@@ -161,7 +161,7 @@ export function UserEditDrawer({
                                 <Input
                                     id="edit-username"
                                     value={user?.username ?? ""}
-                                    className="h-9 font-mono"
+                                    className="h-9"
                                     disabled
                                 />
                                 <p className="text-xs text-muted-foreground">Usernames cannot be changed.</p>

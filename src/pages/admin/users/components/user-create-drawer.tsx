@@ -197,7 +197,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                                         readOnly
                                         value={tempPassword}
                                         onFocus={(e) => e.target.select()}
-                                        className="h-9 font-mono"
+                                        className="h-9"
                                     />
                                     <Button variant="outline" size="icon" className="shrink-0" onClick={handleCopyPassword}>
                                         <Copy size={14} />
@@ -230,7 +230,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                                     onChange={(e) => handleFieldChange("username", e.target.value)}
                                     placeholder="jdelacruz"
                                     autoComplete="off"
-                                    className="h-9 font-mono"
+                                    className="h-9"
                                 />
                                 <p className="text-xs text-muted-foreground">Letters, numbers and underscores only.</p>
                             </div>

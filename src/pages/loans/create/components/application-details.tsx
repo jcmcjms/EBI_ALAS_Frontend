@@ -28,7 +28,7 @@ export function ApplicationDetailsSection() {
                     <Label className="text-xs text-muted-foreground flex items-center gap-1">
                         <LockSimple size={12} /> Loan Application ID (LAI)
                     </Label>
-                    <Input value="LA-2026-08-9942" readOnly className="bg-muted/50 h-9 font-mono text-xs font-bold" />
+                    <Input value="LA-2026-08-9942" readOnly className="bg-muted/50 h-9 text-xs font-bold" />
                 </div>
 
                 <div className="space-y-1.5">

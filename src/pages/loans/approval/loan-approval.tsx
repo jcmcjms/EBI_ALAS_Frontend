@@ -86,7 +86,7 @@ export function LoanApprovalPage() {
                 <div className="container mx-auto flex h-16 items-center justify-between px-6">
                     <div className="flex flex-wrap items-center gap-4">
                         <h1 className="text-xl font-semibold tracking-tight">Loan Approval</h1>
-                        <Badge variant="outline" className="font-mono text-xs">
+                        <Badge variant="outline" className="text-xs">
                             {lai}
                         </Badge>
                         <Badge

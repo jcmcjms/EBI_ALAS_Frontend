@@ -507,7 +507,7 @@ export function AccountPage() {
                                                             return (
                                                                 <TableRow key={app.id}>
                                                                     <TableCell>
-                                                                        <p className="font-mono text-xs font-medium">
+                                                                        <p className="text-xs font-medium">
                                                                             {app.formNumber}
                                                                         </p>
                                                                         <p className="text-xs text-muted-foreground">

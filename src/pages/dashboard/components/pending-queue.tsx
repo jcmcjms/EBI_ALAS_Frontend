@@ -67,7 +67,7 @@ export function PendingQueue({ data }: PendingQueueProps) {
                                     <Avatar size="sm" className="border"><AvatarFallback>{item.lamId.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <p className="font-mono text-sm font-medium truncate">{item.lamId}</p>
+                                            <p className="text-sm font-medium truncate">{item.lamId}</p>
                                             <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-4 font-normal", statusStyles[item.status])}>{item.status}</Badge>
                                         </div>
                                         <p className="text-xs text-muted-foreground truncate">{item.branch}</p>

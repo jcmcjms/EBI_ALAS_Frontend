@@ -128,7 +128,7 @@ export function PersonalInfoSection() {
                         <Input
                             {...register("client.employeeId")}
                             readOnly
-                            className="h-9 cursor-default bg-muted/50 font-mono text-xs"
+                            className="h-9 cursor-default bg-muted/50 tabular-nums text-xs"
                         />
                     </div>
 
@@ -202,7 +202,7 @@ export function PersonalInfoSection() {
                         <Input
                             {...register("client.divisionCode")}
                             readOnly
-                            className="h-9 cursor-default bg-muted/50 font-mono text-xs"
+                            className="h-9 cursor-default bg-muted/50 tabular-nums text-xs"
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -210,7 +210,7 @@ export function PersonalInfoSection() {
                         <Input
                             {...register("client.stationCode")}
                             readOnly
-                            className="h-9 cursor-default bg-muted/50 font-mono text-xs"
+                            className="h-9 cursor-default bg-muted/50 tabular-nums text-xs"
                         />
                     </div>
                 </div>

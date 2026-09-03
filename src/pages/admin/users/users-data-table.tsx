@@ -150,7 +150,7 @@ const columns = columnHelper.columns([
     }),
     columnHelper.accessor("username", {
         header: "Username",
-        cell: (info) => <span className="font-mono text-xs text-muted-foreground">{info.getValue()}</span>,
+        cell: (info) => <span className="text-xs text-muted-foreground">{info.getValue()}</span>,
     }),
     columnHelper.accessor("branchId", {
         header: "Branch",

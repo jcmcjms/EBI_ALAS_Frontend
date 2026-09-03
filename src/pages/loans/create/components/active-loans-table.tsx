@@ -338,7 +338,7 @@ export function ActiveLoansTable({
                         >
                             <SelectTrigger
                                 id="active-loans-account"
-                                className="h-10 w-full font-mono"
+                                className="h-10 w-full"
                             >
                                 <SelectValue placeholder="Select an LAI..." />
                             </SelectTrigger>
@@ -347,7 +347,7 @@ export function ActiveLoansTable({
                                     <SelectItem
                                         key={acct.accountId}
                                         value={acct.accountId}
-                                        className="font-mono"
+className=""
                                     >
                                         {/* Render the combined "<bch>-<acctNo>"
                                             form so the AO sees the branch
@@ -374,7 +374,7 @@ export function ActiveLoansTable({
                             selectedAccountId && handleFetch(selectedAccountId)
                         }
                         disabled={!selectedAccountId || isLoading}
-                        className="h-10 shrink-0 gap-1.5"
+                        className="h-10 shrink-0 gap-1.5 font-normal"
                     >
                         <MagnifyingGlass size={14} weight="bold" />
                         Refresh
@@ -454,7 +454,7 @@ export function ActiveLoansTable({
                                 {loans.length} loan
                                 {loans.length === 1 ? "" : "s"} in flight for
                                 account{" "}
-                                <span className="font-mono">
+                                <span className="">
                                     {selectedAccountId}
                                 </span>
                             </span>
@@ -506,7 +506,7 @@ export function ActiveLoansTable({
                                         {/* Body */}
                                         <div className="min-w-0 flex-1 space-y-1">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <span className="font-mono text-xs font-semibold">
+                                                <span className="text-xs font-semibold">
                                                     {l.loanNo}
                                                 </span>
                                                 <Badge

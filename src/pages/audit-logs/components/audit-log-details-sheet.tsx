@@ -35,7 +35,7 @@ export function AuditLogDetailsSheet({ log, onClose }: Props) {
             <SheetContent className="w-full sm:max-w-xl overflow-y-auto p-0">
                 <SheetHeader className="p-6 pb-4 border-b sticky top-0 bg-background z-10">
                     <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="font-mono">
+                        <Badge variant="outline" className="tabular-nums">
                             #{log.id}
                         </Badge>
                         <Badge variant="secondary" className="capitalize">
@@ -83,7 +83,7 @@ export function AuditLogDetailsSheet({ log, onClose }: Props) {
                                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                                     <Globe size={12} /> IP Address
                                 </p>
-                                <p className="text-sm font-mono">
+                                <p className="text-sm tabular-nums">
                                     {log.ipAddress ?? "N/A"}
                                 </p>
                             </div>
@@ -92,7 +92,7 @@ export function AuditLogDetailsSheet({ log, onClose }: Props) {
                                     <Devices size={12} /> Device / User-Agent
                                 </p>
                                 <p
-                                    className="text-xs font-mono text-muted-foreground truncate"
+                                    className="text-xs text-muted-foreground truncate"
                                     title={log.userAgent ?? undefined}
                                 >
                                     {log.userAgent ?? "N/A"}

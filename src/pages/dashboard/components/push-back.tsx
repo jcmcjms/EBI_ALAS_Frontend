@@ -40,7 +40,7 @@ export function PushBack({ data }: PushBackProps) {
                                     <ArrowArcLeft size={16} weight="bold" className="text-red-500 dark:text-red-400" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-mono text-sm font-medium truncate">{item.lamId}</p>
+                                    <p className="text-sm font-medium truncate">{item.lamId}</p>
                                     <p className="text-xs text-red-600 dark:text-red-400 truncate">{item.reason}</p>
                                 </div>
                                 <div className="text-right shrink-0">

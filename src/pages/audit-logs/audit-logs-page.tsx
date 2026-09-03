@@ -207,7 +207,7 @@ export function AuditLogsPage() {
                                         className="cursor-pointer hover:bg-muted/50"
                                         onClick={() => setSelectedLog(log)}
                                     >
-                                        <TableCell className="font-mono text-xs text-muted-foreground">
+                                        <TableCell className="text-xs text-muted-foreground tabular-nums">
                                             {formatDate(log.timestamp)}
                                         </TableCell>
                                         <TableCell className="font-medium flex items-center gap-2">

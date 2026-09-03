@@ -321,7 +321,7 @@ export function CISLookup({
                 if (!val.trim() && isLoaded) clearForm();
               }}
               onKeyDown={(e) => e.key === "Enter" && handleLookup()}
-              className="h-10 pl-9 font-mono"
+              className="h-10 pl-9 tabular-nums"
               disabled={isLoading}
             />
           </div>
@@ -410,7 +410,7 @@ export function CISLookup({
                     .join(" \u2022 ") || "No agency details on file"}
                 </p>
               </div>
-              <Badge variant="outline" className="font-mono">
+              <Badge variant="outline" className="tabular-nums">
                 CIS {client.cisId}
               </Badge>
               <Button
