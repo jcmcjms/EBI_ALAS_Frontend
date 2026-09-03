@@ -1,10 +1,11 @@
 import { useFormContext, useWatch } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Label } from "@/src/components/ui/label";
 import { Checkbox } from "@/src/components/ui/checkbox";
 import { Warning, Check } from "@phosphor-icons/react";
 
 import { DEVIATION_REASONS, type DeviationReason } from "../schema";
+import { SectionCard } from "./section-card";
+import { getSection } from "../sections";
 
 // Typed view of the deviations error subtree returned by RHF's
 // errors object. `deviationDetails` is now an array, so its error
@@ -47,16 +48,16 @@ export function DeviationsSection() {
         setValue("deviations.deviationDetails", next, { shouldValidate: true });
     };
 
-    return (
-        <Card>
-            <CardHeader className="pb-3 border-b bg-muted/30">
-                <CardTitle className="text-lg flex items-center gap-2">
-                    <Warning size={20} weight="bold" className="text-primary" />
-                    7. Remarks & Deviations
-                </CardTitle>
-            </CardHeader>
+    const section = getSection("deviations");
 
-            <CardContent className="pt-6 space-y-5">
+    return (
+        <SectionCard
+            step={section.step}
+            title={section.label}
+            description={section.description}
+            icon={<Warning size={20} weight="bold" className="text-primary" />}
+        >
+            <div className="space-y-5">
                 {/* Deviation toggle */}
                 <div className="flex items-center space-x-3">
                     <Checkbox
@@ -162,7 +163,7 @@ export function DeviationsSection() {
                         }
                     />
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </SectionCard>
     );
 }

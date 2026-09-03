@@ -3,9 +3,10 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { FilePdf, Printer } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { cn } from "@/src/lib/utils";
 
+import { SectionCard } from "./section-card";
+import { getSection } from "../sections";
 import type { ClientFormData, LoanApplicationFormData } from "../schema";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
@@ -197,13 +198,16 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
             (x): x is string => !!x
         );
 
+        const section = getSection("approval-form");
+
         return (
-            <Card>
-                <CardHeader className="flex-row items-center justify-between border-b bg-muted/30">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <FilePdf size={20} weight="bold" className="text-primary" />
-                        Approval Form Preview
-                    </CardTitle>
+            <SectionCard
+                step={section.step}
+                title={section.label}
+                description={section.description}
+                systemSourced
+                icon={<FilePdf size={20} weight="bold" className="text-primary" />}
+                badge={
                     <div className="flex items-center gap-2">
                         <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => window.print()}>
                             <Printer size={14} weight="bold" />
@@ -216,15 +220,15 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                             </Button>
                         )}
                     </div>
-                </CardHeader>
-
-                <CardContent className="p-0">
-                    {/* Captured area — replicates the LOAN APPROVAL FORM template 1:1 */}
-                    <div
-                        ref={ref}
-                        id="approval-form-preview"
-                        className="bg-white p-5 text-[10px] leading-[1.4] text-black"
-                    >
+                }
+                contentClassName="p-0"
+            >
+                {/* Captured area — replicates the LOAN APPROVAL FORM template 1:1 */}
+                <div
+                    ref={ref}
+                    id="approval-form-preview"
+                    className="bg-white p-5 text-[10px] leading-[1.4] text-black"
+                >
                         <h1 className="mb-2 text-sm font-bold underline">LOAN APPROVAL FORM</h1>
 
                         <div className="border-2 border-black">
@@ -527,8 +531,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+            </SectionCard>
         );
     }
 );

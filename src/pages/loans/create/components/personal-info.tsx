@@ -1,11 +1,4 @@
 import { useFormContext } from "react-hook-form";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import {
@@ -14,7 +7,7 @@ import {
     UserCirclePlus,
     WarningCircle,
 } from "@phosphor-icons/react";
-import { Badge } from "@/src/components/ui/badge";
+
 import { cn } from "@/src/lib/utils";
 import {
     Select,
@@ -23,6 +16,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/src/components/ui/select";
+
+import { SectionCard } from "./section-card";
+import { getSection } from "../sections";
 import type { LoanApplicationFormData } from "../schema";
 
 export function PersonalInfoSection() {
@@ -46,25 +42,17 @@ export function PersonalInfoSection() {
         };
     };
 
-    return (
-        <Card>
-            <CardHeader className="border-b bg-muted/30 pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                    2. Personal & Agency Information
-                    <Badge
-                        variant="outline"
-                        className="flex items-center gap-1 text-xs font-normal"
-                    >
-                        <LockSimple size={12} weight="bold" />
-                        System Verified
-                    </Badge>
-                </CardTitle>
-                <CardDescription className="pt-1 text-xs text-muted-foreground">
-                    Core borrower details sourced directly from the legacy CIS database. Fields other than Suffix are read-only.
-                </CardDescription>
-            </CardHeader>
+    const section = getSection("personal-info");
 
-            <CardContent className="space-y-6 pt-6">
+    return (
+        <SectionCard
+            step={section.step}
+            title={section.label}
+            description={section.description}
+            systemSourced
+            icon={<LockSimple size={20} weight="bold" className="text-primary" />}
+        >
+            <div className="space-y-6">
                 {/* ── System Verified Section ─────────────────────────── */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     {/* Row 1 — Names */}
@@ -184,7 +172,7 @@ export function PersonalInfoSection() {
                         <Input
                             {...register("client.netTakeHomePay")}
                             readOnly
-                            className="h-9 cursor-default bg-muted/50 font-bold text-emerald-600"
+                            className="h-9 cursor-default bg-muted/50 font-bold"
                         />
                     </div>
 
@@ -288,7 +276,7 @@ export function PersonalInfoSection() {
                         </div>
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </SectionCard>
     );
 }

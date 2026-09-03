@@ -3,22 +3,15 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
   ArrowCounterClockwise,
+  CloudCheck,
   IdentificationCard,
-  LockSimple,
   MagnifyingGlass,
   WarningCircle,
 } from "@phosphor-icons/react";
 
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { getWebLoanByCis } from "@/src/lib/api/webloans";
@@ -31,17 +24,18 @@ import {
 import { cn } from "@/src/lib/utils";
 
 import { ActiveLoansTable } from "./active-loans-table";
+import {
+  ReadOnlyField,
+  SectionCard,
+  SubSectionHeading,
+} from "./section-card";
+import { getSection } from "../sections";
 import type { LoanApplicationFormData } from "../schema";
 
 /** Formats an ISO datetime as yyyy-MM-dd for <input type="date"> fields. */
 function toDateInput(iso?: string | null): string {
   return iso ? iso.slice(0, 10) : "";
 }
-
-/** Null-safe numeric coercion for decimal fields coming from the API. */
-// (Removed legacy helper — CIS search no longer carries decimal fields
-// that the form pre-fills; loan parameters and obligations come from the
-// dedicated pending-loan endpoint or are entered manually later.)
 
 interface CISLookupProps {
   /** Acting user's branchId — passed down to the preloan picker as a UI label. */
@@ -57,8 +51,7 @@ export function CISLookup({
   selectedPreLoanId,
   onPreLoanChange,
 }: CISLookupProps) {
-  const { control, setValue, register } =
-    useFormContext<LoanApplicationFormData>();
+  const { control, setValue } = useFormContext<LoanApplicationFormData>();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -86,6 +79,10 @@ export function CISLookup({
   // Single source of truth: the loaded client is derived from form state,
   // so draft restore / future hydration works without duplicated state.
   const client = useWatch({ control, name: "client" });
+  // Branch & Type values live in form state too — kept in sync with the
+  // CIS search response. Watched here so 1.2 "Branch & type" can render
+  // them as plain text via <ReadOnlyField />.
+  const branchType = useWatch({ control, name: "branchType" });
   const isLoaded = !!client.cisId;
 
   const fullName = [
@@ -285,112 +282,107 @@ export function CISLookup({
     // `useWatch({ control, name: "client" })` above.
   };
 
-  return (
-    <Card className="flex max-h-[max(28rem,calc(100dvh_-_var(--header-height)_-_12rem))] flex-col overflow-hidden">
-      <CardHeader className="shrink-0 border-b bg-muted/30 pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <IdentificationCard
-            size={20}
-            weight="bold"
-            className="text-primary"
-          />
-          1. Client Lookup (CIS Number)
-        </CardTitle>
-      </CardHeader>
-      <CardContent
-        className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain pt-6"
-        role="region"
-        aria-label="Client lookup, account and preloan selection"
-        tabIndex={0}
-      >
-        {/* ── CIS search ─────────────────────────────────────── */}
-        <div className="flex gap-3 items-center">
-          <div className="relative min-w-0 flex-1">
-            <MagnifyingGlass
-              size={16}
-              weight="bold"
-              className="absolute left-3 top-3 text-muted-foreground"
-            />
-            <Input
-              placeholder="Enter CIS Number..."
-              aria-label="CIS number"
-              value={searchQuery}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSearchQuery(val);
-                if (!val.trim() && isLoaded) clearForm();
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleLookup()}
-              className="h-10 pl-9 tabular-nums"
-              disabled={isLoading}
-            />
-          </div>
-          <Button
-            onClick={handleLookup}
-            disabled={isLoading || !searchQuery.trim()}
-            className="h-10 shrink-0 px-6"
-          >
-            {isLoading ? "Fetching..." : "Fetch Profile"}
-          </Button>
-        </div>
+  const section = getSection("cis-lookup");
 
-        {/* ── Persistent inline error ────────────────────────── */}
-        {/* Toast alone disappears before it can be acted on. */}
-        {lookupError && (
-          <div
-            role="alert"
-            className="flex items-start justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
-          >
-            <div className="flex items-start gap-2">
-              <WarningCircle
+  return (
+    <SectionCard
+      step={section.step}
+      title={section.label}
+      description={section.description}
+      icon={<IdentificationCard size={20} weight="bold" className="text-primary" />}
+    >
+      <div className="space-y-6">
+        {/* ── 1.1 Client lookup (CIS number) ──────────────── */}
+        <div className="space-y-4">
+          <SubSectionHeading step="1.1" title="Client lookup (CIS number)" />
+
+          <div className="flex items-center gap-3">
+            <div className="relative min-w-0 flex-1">
+              <MagnifyingGlass
                 size={16}
-                weight="fill"
-                className="mt-0.5 shrink-0"
+                weight="bold"
+                className="absolute left-3 top-3 text-muted-foreground"
               />
-              <div>
-                <p className="font-medium">Unable to load client profile</p>
-                <p className="text-xs opacity-90">{lookupError}</p>
-              </div>
+              <Input
+                placeholder="Enter CIS number…"
+                aria-label="CIS number"
+                value={searchQuery}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchQuery(val);
+                  if (!val.trim() && isLoaded) clearForm();
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                className="h-10 pl-9 tabular-nums"
+                disabled={isLoading}
+              />
             </div>
             <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 shrink-0 gap-1.5 text-destructive"
               onClick={handleLookup}
+              disabled={isLoading || !searchQuery.trim()}
+              className="h-10 shrink-0 px-6"
             >
-              <ArrowCounterClockwise size={14} weight="bold" />
-              Retry
+              {isLoading ? "Fetching…" : "Fetch Profile"}
             </Button>
           </div>
-        )}
 
-        {/* ── Loading skeleton ────────────────────────────────── */}
-        {isLoading && (
-          <div
-            className="space-y-4 rounded-md border bg-muted/20 p-4"
-            aria-label="Loading client profile"
-            aria-busy="true"
-          >
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-3 w-32" />
+          {lookupError && (
+            <div
+              role="alert"
+              className="flex items-start justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+            >
+              <div className="flex items-start gap-2">
+                <WarningCircle size={16} weight="fill" className="mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium">Unable to load client profile</p>
+                  <p className="text-xs opacity-90">{lookupError}</p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 shrink-0 gap-1.5 text-destructive"
+                onClick={handleLookup}
+              >
+                <ArrowCounterClockwise size={14} weight="bold" />
+                Retry
+              </Button>
+            </div>
+          )}
+
+          {isLoading && (
+            <div
+              className="space-y-4 rounded-md border bg-muted/20 p-4"
+              aria-label="Loading client profile"
+              aria-busy="true"
+            >
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Skeleton className="h-9" />
+                <Skeleton className="h-9" />
+                <Skeleton className="h-9" />
+                <Skeleton className="h-9" />
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Skeleton className="h-9" />
-              <Skeleton className="h-9" />
-              <Skeleton className="h-9" />
-              <Skeleton className="h-9" />
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* ── Loaded client summary + system-verified routing ── */}
+          {!isLoaded && !isLoading && !lookupError && (
+            <p className="text-xs text-muted-foreground">
+              Profile, branch routing and existing obligations are pulled
+              automatically from the CIS.
+            </p>
+          )}
+        </div>
+
         {isLoaded && !isLoading && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* Client identity strip */}
             <div className="flex flex-wrap items-center gap-3 rounded-md border border-primary/20 bg-primary/5 p-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
@@ -407,7 +399,7 @@ export function CISLookup({
                     client.employeeId && `ID ${client.employeeId}`,
                   ]
                     .filter(Boolean)
-                    .join(" \u2022 ") || "No agency details on file"}
+                    .join(" • ") || "No agency details on file"}
                 </p>
               </div>
               <Badge variant="outline" className="tabular-nums">
@@ -437,58 +429,40 @@ export function CISLookup({
               </Button>
             </div>
 
-            {/* Branch & Type (system-verified, read-only) */}
-            <div className="space-y-4 rounded-md border bg-muted/20 p-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Branch & Type
-                </h4>
-                <Badge
-                  variant="outline"
-                  className="flex items-center gap-1 text-xs font-normal"
-                >
-                  <LockSimple size={12} weight="bold" />
-                  System Verified
-                </Badge>
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">
-                    Loan Type
-                  </Label>
-                  <Input
-                    {...register("branchType.loanType")}
-                    readOnly
-                    className="h-9 bg-muted/50"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">
-                    Branch
-                  </Label>
-                  <Input
-                    {...register("branchType.branch")}
-                    readOnly
-                    className="h-9 bg-muted/50"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">
-                    Requesting Officer
-                  </Label>
-                  <Input
-                    {...register("branchType.requestingOfficer")}
-                    readOnly
-                    className="h-9 bg-muted/50"
-                  />
-                </div>
-              </div>
+            {/* ── 1.2 Branch & type (verified data as text) ── */}
+            <div className="space-y-3 rounded-md border bg-muted/20 p-4">
+              <SubSectionHeading
+                step="1.2"
+                title="Branch & type"
+                actions={
+                  <Badge
+                    variant="outline"
+                    className="gap-1 text-xs font-normal"
+                  >
+                    <CloudCheck size={12} weight="bold" />
+                    System verified
+                  </Badge>
+                }
+              />
+              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <ReadOnlyField
+                  label="Loan type"
+                  value={branchType.loanType}
+                  hint={
+                    branchType.loanType
+                      ? undefined
+                      : "Set from the selected preloan"
+                  }
+                />
+                <ReadOnlyField label="Branch" value={branchType.branch} />
+                <ReadOnlyField
+                  label="Requesting officer"
+                  value={branchType.requestingOfficer}
+                />
+              </dl>
             </div>
 
-            {/* Active Loans by Account — mirrors the reference "Active
-                Loans by existing borrower" SQL for the selected (CIS,
-                account) pair. Renders a picker for the borrower's
-                accounts and a table of up to 10 active PN rows. */}
+            {/* ── 1.3 Account & preloan ── */}
             <ActiveLoansTable
               cisNo={client.cisId}
               accounts={laiAccounts}
@@ -499,17 +473,7 @@ export function CISLookup({
             />
           </div>
         )}
-
-
-        {/* ── Pristine helper text ───────────────────────────── */}
-        {!isLoaded && !isLoading && !lookupError && (
-          <p className="text-xs text-muted-foreground">
-            Profile, branch routing and existing obligations are pulled
-            automatically from the CIS.
-          </p>
-        )}
-
-      </CardContent>
-    </Card>
+      </div>
+    </SectionCard>
   );
 }
