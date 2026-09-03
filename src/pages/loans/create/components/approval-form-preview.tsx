@@ -261,7 +261,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                     </tr>
                                     <tr>
                                         <L>Loan Application Type:</L>
-                                        <V blue colSpan={3}>{dash(branchType.loanType)}</V>
+                                        <V blue colSpan={3}>{dash(branchType.creationTypeLabel)}</V>
                                         <L>LAM ID:</L>
                                         <V blue colSpan={3}>{dash(branchType.lai)}</V>
                                     </tr>

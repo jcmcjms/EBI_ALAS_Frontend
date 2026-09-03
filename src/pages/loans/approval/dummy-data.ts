@@ -1,8 +1,15 @@
 import type { LoanApplicationFormData } from "../create/schema";
+import { CREATION_TYPE } from "../create/schema";
 
 export const dummyLoanData: LoanApplicationFormData = {
   branchType: {
-    loanType: "Salary Loan",
+    // Dummy data mirrors a Salary Loan / Reloan scenario so the
+    // approval-form preview has a non-empty "Loan Application Type"
+    // label to render. The typed `creationTypeCode` (1 = Reloan)
+    // is the source of truth for the wizard; the label is the
+    // display string the printed form shows next to it.
+    creationTypeCode: CREATION_TYPE.RELOAN,
+    creationTypeLabel: "Reloan",
     branch: "007",
     requestingOfficer: "Maria Santos",
     lai: "LA-2026-08-9942",

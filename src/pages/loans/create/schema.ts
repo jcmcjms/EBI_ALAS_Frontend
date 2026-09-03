@@ -1,8 +1,100 @@
 import { z } from "zod";
 
+/**
+ * Typed view of the backend's `loan_data.creation_type` byte — the
+ * canonical list is a hard-coded `CASE` block on the .NET side (see
+ * `WebLoanRegions.CreationTypeLabel`), not driven by any lookup
+ * table. We mirror it here so the form has a single typed source
+ * for the codes (schema, label map, and "should-hide-Section-4"
+ * predicate all consume these constants).
+ */
+export const CREATION_TYPE = {
+    NEW_LOAN: 0,
+    RELOAN: 1,
+    RESTRUCTURED: 2,
+    ADDITIONAL_LOAN: 6,
+} as const;
+
+/** Mirror of the backend's `CreationTypeLabel` switch (verbatim). */
+export const CREATION_TYPE_LABELS: Record<
+    (typeof CREATION_TYPE)[keyof typeof CREATION_TYPE],
+    string
+> = {
+    [CREATION_TYPE.NEW_LOAN]: "New Loan",
+    [CREATION_TYPE.RELOAN]: "Reloan",
+    [CREATION_TYPE.RESTRUCTURED]: "Restructured",
+    [CREATION_TYPE.ADDITIONAL_LOAN]: "Additional Loan",
+};
+
+/**
+ * True when the picked preloan's creation type means the borrower's
+ * existing loan portfolio has *not* been acquired by another FI —
+ * i.e. the new application is a fresh acquisition (new loan) or
+ * sits alongside an existing one (additional loan). In both cases
+ * the AO should not be asked to re-list the borrower's outstanding
+ * obligations from the WebLoan feed, and Section 4 ("Outstanding
+ * Loans") is hidden in the wizard.
+ *
+ * The codes live on the backend as a `byte?`; the frontend
+ * narrows them via `creationTypeCodeSchema` so this predicate
+ * receives a typed value (or `null`).
+ *
+ * `null` (no preloan picked yet, or the joined `loan_data` row
+ * was missing on the backend) defaults to **showing** Section 4 —
+ * the conservative behavior the wizard had before this change.
+ */
+export const HidesOutstandingLoans = (
+    code: CreationTypeCode | null | undefined
+): boolean =>
+    code === CREATION_TYPE.NEW_LOAN ||
+    code === CREATION_TYPE.ADDITIONAL_LOAN;
+
 // ── Branch & Type ──────────────────────────────────────────────
+//
+// `creationTypeCode` is the *typed* backend code from
+// loan_data.creation_type. The backend ships a raw `byte?` and maps
+// it to a human label on the same `PendingLoanDto` (see
+// `src/lib/api/types.ts` for the contract). The valid set is:
+//   0 = New Loan
+//   1 = Reloan
+//   2 = Restructured
+//   6 = Additional Loan
+// Anything else (including an unrecognized future code) is rejected
+// at parse time by `zodResolver` — the schema hard-blocks. `null` is
+// the "no preloan picked yet" state and is accepted by the schema;
+// the wizard's own gating (`isComplete` / `canSubmit`) refuses to
+// submit until one of the four known codes is set.
+//
+// `creationTypeLabel` is the humanized string from the same DTO
+// (e.g. "New Loan"). Kept separately so:
+//   - Section 1.2 ("Branch & type") can render the read-only label
+//     without re-deriving it from the code, and
+//   - the printed approval form (Sections 8 / approval-form-document)
+//     shows the label the AO expects to see.
+//
+// `loanType` (the previous free-form string field) was removed: the
+// hide-condition for Section 4 ("Outstanding Loans") and the
+// step-3-completion check both need the *code*, not the label, and
+// keeping both representations in lockstep on the form lets us detect
+// drift (e.g. label set without code) at the type level.
+export const creationTypeCodeSchema = z.union([
+    z.literal(0),
+    z.literal(1),
+    z.literal(2),
+    z.literal(6),
+    z.null(),
+]);
+
 export const branchTypeSchema = z.object({
-    loanType: z.string().min(1, "Loan type is required"),
+    creationTypeCode: creationTypeCodeSchema,
+    // Required so the schema's input shape matches the form's
+    // `defaultValues` (which always sets this to `""` on mount); a
+    // `.default("")` here would make the field optional on input and
+    // cause a resolver type-mismatch with `useForm`/`useFormContext`.
+    // Both writers (`active-loans-table.tsx` on loan pick and account
+    // switch, `cis-lookup.tsx` on clear / search result) always set
+    // it, so the required-ness is safe.
+    creationTypeLabel: z.string(),
     branch: z.string().min(1, "Branch is required"),
     requestingOfficer: z.string().min(1, "Requesting officer is required"),
     lai: z.string().optional(), // Loan Application Index
@@ -227,6 +319,10 @@ export const loanApplicationSchema = z.object({
 
 // ── Inferred types ─────────────────────────────────────────────
 export type BranchTypeData = z.infer<typeof branchTypeSchema>;
+/** Typed view of the backend's `loan_data.creation_type` byte. */
+export type CreationTypeCode = NonNullable<
+    z.infer<typeof creationTypeCodeSchema>
+>;
 export type ClientFormData = z.infer<typeof clientSchema>;
 export type OutstandingLoan = z.infer<typeof outstandingLoanSchema>;
 export type EbiReloan = z.infer<typeof ebiReloanSchema>;

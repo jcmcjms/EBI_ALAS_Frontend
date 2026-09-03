@@ -24,7 +24,11 @@ import { useAuthStore } from "@/src/store/authStore";
 import { WEBLOAN_BRANCHES } from "@/src/lib/api/types";
 import type { PreLoanItem } from "@/src/lib/api/types";
 
-import { loanApplicationSchema, type LoanApplicationFormData } from "./schema";
+import {
+  loanApplicationSchema,
+  HidesOutstandingLoans,
+  type LoanApplicationFormData,
+} from "./schema";
 import { LoanTransfersProvider } from "./loan-transfers-provider";
 import { CISLookup } from "./components/cis-lookup";
 import { PersonalInfoSection } from "./components/personal-info-section";
@@ -116,12 +120,23 @@ function useSectionProgress(
   const isComplete = (id: SectionId): boolean => {
     switch (id) {
       case "cis-lookup":
-        // The lookup is "complete" when a client is loaded, an account has
-        // been picked (handled by the parent lifting `isClientLoaded` to
-        // mean "profile sourced") and a preloan — bch-scoped to the acting
-        // user — has been attached. The preloan is optional at the schema
-        // level but tracked here as part of the step's overall completeness.
-        return isClientLoaded && !!branchType.requestingOfficer && preLoanSelected;
+        // The lookup is "complete" when a client is loaded, an account
+        // has been picked (handled by the parent lifting `isClientLoaded`
+        // to mean "profile sourced"), a preloan — bch-scoped to the
+        // acting user — has been attached, AND the preloan's typed
+        // `creationTypeCode` is one of the four known backend values
+        // (0/1/2/6). The code is the source of truth for Section 4
+        // ("Outstanding Loans") visibility; without a known code the
+        // wizard can't decide whether to render that section.
+        // `creationTypeCode === undefined` guards against the schema's
+        // `null` initial state — `useWatch` returns `undefined` for
+        // a field that hasn't been touched.
+        return (
+          isClientLoaded &&
+          !!branchType.requestingOfficer &&
+          preLoanSelected &&
+          branchType.creationTypeCode != null
+        );
       case "personal-info":
       case "obligations":
       case "other-obligations":
@@ -169,15 +184,7 @@ function useSectionProgress(
   const errorCount = (id: SectionId) =>
     submitAttempted ? sectionErrorCount(formState.errors, id) : 0;
 
-  // Count everything that is "ready" — either user-completed or
-  // auto-populated — so the progress bar reflects the real readiness
-  // (e.g. "5 of 8 ready" once the client and their obligations are
-  // in, not "1 of 8 required").
-  const readyCount = SECTIONS.filter(
-    (s) => isComplete(s.id) || (s.systemSourced && isClientLoaded)
-  ).length;
-
-  return { getStatus, errorCount, readyCount };
+  return { getStatus, errorCount, isComplete };
 }
 
 // ── Status icon ─────────────────────────────────────────────────
@@ -227,6 +234,14 @@ interface StepperProps {
   preLoanSelected: boolean;
   submitAttempted: boolean;
   onNavigate: (id: SectionId) => void;
+  /**
+   * Sections to render in the stepper list. The full `SECTIONS`
+   * registry from `./sections` is the source of truth; `loan-creation`
+   * filters out sections that should not appear (e.g. Section 4 —
+   * "Outstanding Loans" — when the picked preloan is a New Loan or
+   * Additional Loan, where there is no portfolio to enumerate).
+   */
+  visibleSections: readonly SectionDef[];
 }
 
 function DesktopStepper({
@@ -235,13 +250,20 @@ function DesktopStepper({
   preLoanSelected,
   submitAttempted,
   onNavigate,
+  visibleSections,
 }: StepperProps) {
-  const { getStatus, errorCount, readyCount } = useSectionProgress(
+  const { getStatus, errorCount, isComplete } = useSectionProgress(
     isClientLoaded,
     preLoanSelected,
     submitAttempted,
     activeSection
   );
+  // Ready count is scoped to the visible sections so a Section 4
+  // that's been hidden for a New Loan / Additional Loan preloan
+  // doesn't drag the progress bar down.
+  const readyCount = visibleSections.filter(
+    (s) => isComplete(s.id) || (s.systemSourced && isClientLoaded)
+  ).length;
 
   return (
     <aside className="hidden w-64 shrink-0 lg:block">
@@ -253,7 +275,7 @@ function DesktopStepper({
               Application progress
             </h2>
             <span className="text-xs tabular-nums text-muted-foreground">
-              {readyCount} of {SECTIONS.length} ready
+              {readyCount} of {visibleSections.length} ready
             </span>
           </div>
           <div
@@ -261,19 +283,19 @@ function DesktopStepper({
             role="progressbar"
             aria-label="Sections ready"
             aria-valuemin={0}
-            aria-valuemax={SECTIONS.length}
+            aria-valuemax={visibleSections.length}
             aria-valuenow={readyCount}
           >
             <div
               className="h-full rounded-full bg-primary transition-all duration-500"
-              style={{ width: `${(readyCount / SECTIONS.length) * 100}%` }}
+              style={{ width: `${(readyCount / visibleSections.length) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Section nav */}
         <nav aria-label="Application sections" className="space-y-1">
-          {SECTIONS.map((section, index) => {
+          {visibleSections.map((section, index) => {
             const status = getStatus(section, index);
             const errors = errorCount(section.id);
             return (
@@ -327,6 +349,7 @@ function MobileSectionNav({
   preLoanSelected,
   submitAttempted,
   onNavigate,
+  visibleSections,
 }: StepperProps) {
   const { getStatus, errorCount } = useSectionProgress(
     isClientLoaded,
@@ -339,7 +362,7 @@ function MobileSectionNav({
     <div className="sticky top-[var(--header-height)] z-20 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:hidden">
       <nav aria-label="Application sections">
         <div className="flex gap-2 overflow-x-auto px-4 py-2">
-          {SECTIONS.map((section, index) => {
+          {visibleSections.map((section, index) => {
             const status = getStatus(section, index);
             const errors = errorCount(section.id);
             return (
@@ -431,7 +454,14 @@ export function LoanCreationPage() {
     mode: "onBlur",
     defaultValues: {
       branchType: {
-        loanType: "",
+        // Typed creation-type code (0/1/2/6) + matching label. Both
+        // reset together on account / preloan change — see
+        // `active-loans-table.tsx` and `cis-lookup.tsx` for the
+        // clear paths. `null` here means "no preloan picked yet",
+        // which the schema accepts; the wizard refuses to mark Step
+        // 3 (cis-lookup) complete without a known code.
+        creationTypeCode: null,
+        creationTypeLabel: "",
         branch: "",
         requestingOfficer: "",
         lai: "",
@@ -570,12 +600,36 @@ export function LoanCreationPage() {
     ? SECTIONS.reduce((n, s) => n + sectionErrorCount(errors, s.id), 0)
     : 0;
 
+  // Section 4 ("Outstanding Loans") is hidden when the picked preloan
+  // is a New Loan (code 0) or an Additional Loan (code 6) — there is
+  // no prior portfolio to enumerate in either case, and the WebLoan
+  // /outstanding-loans endpoint deliberately returns nothing for
+  // these. The hide-state is derived from the *code* (typed), not
+  // the human label, so a localized label or a future backend label
+  // change can't desync the visibility check. `null`/unknown
+  // defaults to "show" (conservative — matches the prior behavior).
+  const branchTypeCode = watch("branchType.creationTypeCode");
+  const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode);
+
+  // Filter the section registry down to what should actually render.
+  // The full `SECTIONS` array stays the single source of truth — we
+  // never mutate it — but the stepper list, the progress counter, and
+  // the form layout all consume this filtered view so an "Outstanding
+  // Loans" section that has no obligations to show never appears in
+  // the navigation or the on-page flow. Computed BEFORE `stepperProps`
+  // because the stepper takes `visibleSections` as a prop (TDZ-free
+  // top-down ordering).
+  const visibleSections = hideOutstandingSection
+    ? SECTIONS.filter((s) => s.id !== "obligations")
+    : SECTIONS;
+
   const stepperProps: StepperProps = {
     activeSection,
     isClientLoaded,
     preLoanSelected: !!selectedPreLoan.id,
     submitAttempted,
     onNavigate: scrollToSection,
+    visibleSections,
   };
 
   const canSubmit = isClientLoaded && !!selectedPreLoan.id;
@@ -705,14 +759,16 @@ export function LoanCreationPage() {
                 >
                   <LoanParametersSection />
                 </section>
-                <section
-                  id="obligations"
-                  ref={(el) => {
-                    sectionRefs.current["obligations"] = el;
-                  }}
-                >
-                  <ObligationsSection />
-                </section>
+                {!hideOutstandingSection && (
+                  <section
+                    id="obligations"
+                    ref={(el) => {
+                      sectionRefs.current["obligations"] = el;
+                    }}
+                  >
+                    <ObligationsSection />
+                  </section>
+                )}
                 <section
                   id="other-obligations"
                   ref={(el) => {

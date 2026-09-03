@@ -113,7 +113,14 @@ export function CISLookup({
 
   /** Resets all CIS-populated fields so a new client can be loaded. */
   const clearForm = useCallback(() => {
-    setValue("branchType.loanType", "");
+    // Both loan-creation-type fields must reset together: the code
+    // drives Section 4 ("Outstanding Loans") visibility and the
+    // schema-level hard-block; the label is what the AO sees in
+    // Section 1.2 and the printed approval form. Resetting only one
+    // would leave the wizard in a half-state (e.g. label set, code
+    // null → "show" Section 4 even after the AO picked a New Loan).
+    setValue("branchType.creationTypeCode", null);
+    setValue("branchType.creationTypeLabel", "");
     setValue("branchType.branch", "");
     setValue("branchType.requestingOfficer", "");
     setValue("branchType.lai", "");
@@ -187,7 +194,14 @@ export function CISLookup({
    * `src/lib/api/types.ts`): a flat `{ borrower, accounts[] }` envelope.
    *  - `borrower.*`  → `client.*` (and `branchType.requestingOfficer`).
    *  - `accounts[]`  → LAI picker (`laiAccounts` + `branchType.branch`
-   *                    + `branchType.loanType` + `branchType.lai`).
+   *                    + `branchType.lai`). Note: the loan creation
+   *                    type (`branchType.creationTypeCode` /
+   *                    `branchType.creationTypeLabel`) is *not* set
+   *                    here — it lives on `loan_data.creation_type`
+   *                    and is only sourced from the dedicated
+   *                    `/pending-loan` endpoint after the AO picks an
+   *                    account + loan number (see
+   *                    `active-loans-table.tsx`).
    *
    * Fields the backend does NOT supply (purpose / proposedAmount /
    * term / interestRate / outstandingLoans / ebiReloans / buyOuts /
@@ -225,7 +239,8 @@ export function CISLookup({
       ? WEBLOAN_BRANCHES.find((x) => x.code === firstBranchCode)?.name ??
         firstBranchCode
       : "";
-    setValue("branchType.loanType", "");
+    setValue("branchType.creationTypeCode", null);
+    setValue("branchType.creationTypeLabel", "");
     setValue("branchType.branch", branchName);
     // Join the combined "<bch>-<acctNo>" identifiers into the form's
     // display string. Mirrors the route parameter so the AO sees the
@@ -447,9 +462,9 @@ export function CISLookup({
               <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <ReadOnlyField
                   label="Loan type"
-                  value={branchType.loanType}
+                  value={branchType.creationTypeLabel}
                   hint={
-                    branchType.loanType
+                    branchType.creationTypeLabel
                       ? undefined
                       : "Set from the selected preloan"
                   }

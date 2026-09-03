@@ -28,6 +28,10 @@ import { getOutstandingLoans, getPendingLoan } from "@/src/lib/api/webloans";
 import type { OutstandingLoan, PendingLoan, WebLoanAccount } from "@/src/lib/api/types";
 
 import type { LoanApplicationFormData } from "../schema";
+import {
+    CREATION_TYPE,
+    type CreationTypeCode,
+} from "../schema";
 import type { PreLoanItem } from "@/src/lib/api/types";
 
 interface ActiveLoansTableProps {
@@ -146,11 +150,16 @@ export function ActiveLoansTable({
         setValue("loan.term", 0);
         setValue("loan.product", "");
         setValue("loan.purpose", "");
-        // Loan Type in the Branch & Type section is sourced from the
-        // picked pending-loan's `creationTypeLabel` ("New Loan" /
-        // "Reloan" / ...). Clearing it on account switch prevents the
-        // previously-picked loan's type from leaking across accounts.
-        setValue("branchType.loanType", "");
+        // Loan creation type is sourced from the picked pending-loan's
+        // `creationType` (raw code) + `creationTypeLabel`. Clearing
+        // both on account switch prevents the previously-picked loan's
+        // type from leaking across accounts — the hide-condition for
+        // Section 4 ("Outstanding Loans") reads the code, so we MUST
+        // reset both fields together or the wizard would either
+        // remember a stale "New Loan" hide from a previous account or
+        // render an empty label with a non-null code (or vice versa).
+        setValue("branchType.creationTypeCode", null);
+        setValue("branchType.creationTypeLabel", "");
         setIsLoading(true);
         setLoadError(null);
 
@@ -281,18 +290,45 @@ export function ActiveLoansTable({
         setValue("loan.purpose", picked.loanPurpose ?? "", {
             shouldDirty: false,
         });
-        // Loan Type in the Branch & Type section ("New Loan" / "Reloan" /
-        // "Restructured" / "Additional Loan" / "Unknown") comes from the
-        // picked pending-loan row's `creationTypeLabel` — sourced from
-        // loan_data.creation_type via the backend's
-        // WebLoanRegions.CreationTypeLabel CASE. The field is read-only
-        // in the UI (CIS-verified), so it stays in sync with whatever
-        // loan the AO picks. Falling back to "" when the label is null
-        // is intentional — a missing label renders as a blank input
-        // rather than a misleading "Unknown" string.
-        setValue("branchType.loanType", picked.creationTypeLabel ?? "", {
-            shouldDirty: false,
-        });
+// Loan Type in the Branch & Type section is sourced from the
+// picked pending-loan row's `creationType` (raw byte) + matching
+// label. We write *both* fields in lockstep because:
+//   - `creationTypeCode` (typed 0|1|2|6|null) drives the wizard
+//     logic — Section 4 ("Outstanding Loans") is hidden when the
+//     code is NEW_LOAN (0) or ADDITIONAL_LOAN (6); see
+//     `HidesOutstandingLoans` in `schema.ts`.
+//   - `creationTypeLabel` (e.g. "New Loan", "Additional Loan") is
+//     what the AO sees in Section 1.2 ("Branch & type") and what
+//     the printed approval form renders.
+//
+// Narrowing: the backend's `creationType` is `number | null`. We
+// accept only the four valid codes (0/1/2/6) and coerce anything
+// else — including a future unrecognized code, or a `null` when no
+// `loan_data` row joined onto the preloan — to `null`. The schema
+// (see `creationTypeCodeSchema` in `schema.ts`) hard-blocks
+// unknown codes at parse time, but null is always valid and means
+// "default the Section-4 hide-state to its conservative value
+// (show)". The label is the backend's verbatim string — we never
+// re-derive it from the code, so a localized label (e.g. Filipino)
+// would still round-trip through the form intact. The runtime
+// guard below (`KNOWN_CODES.has(...)`) does NOT narrow the type
+// for TS (Set.has returns `boolean`, not a type-predicate), so we
+// cast through the typed alias to satisfy the schema.
+const KNOWN_CODES: ReadonlySet<CreationTypeCode> = new Set([
+    CREATION_TYPE.NEW_LOAN,
+    CREATION_TYPE.RELOAN,
+    CREATION_TYPE.RESTRUCTURED,
+    CREATION_TYPE.ADDITIONAL_LOAN,
+]);
+const rawCode = picked.creationType;
+const code: CreationTypeCode | null =
+    rawCode != null && (KNOWN_CODES as Set<number>).has(rawCode)
+        ? (rawCode as CreationTypeCode)
+        : null;
+setValue("branchType.creationTypeCode", code, { shouldDirty: false });
+setValue("branchType.creationTypeLabel", picked.creationTypeLabel ?? "", {
+    shouldDirty: false,
+});
         if (picked.principal != null && Number.isFinite(picked.principal)) {
             setValue("loan.proposedAmount", picked.principal, {
                 shouldDirty: false,
