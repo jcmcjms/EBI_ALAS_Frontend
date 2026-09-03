@@ -6,6 +6,7 @@ import {
   ArrowUp,
   CheckCircle,
   ClipboardText,
+  CloudCheck,
   IdentificationBadge,
   LockSimple,
   MagnifyingGlass,
@@ -35,41 +36,30 @@ import { DeviationsSection } from "./components/deviations-section";
 import { ApprovalFormPreview } from "./components/approval-form-preview";
 
 // ── Section definitions ─────────────────────────────────────────
-// Mirrors the rendered <section> elements. "Branch & Type" lives
-// inside the Client Lookup card (system-verified), not a separate step.
-type SectionId =
-  | "cis-lookup"
-  | "personal-info"
-  | "loan-params"
-  | "obligations"
-  | "other-obligations"
-  | "verification"
-  | "deviations"
-  | "approval-form";
+// Sourced from ./sections so the stepper, mobile nav and every
+// section header derive their numbering from one place. Adding or
+// re-ordering sections is a single-file change.
+import { SECTIONS, type SectionId, type SectionDef } from "./sections";
 
-interface SectionDef {
-  id: SectionId;
-  label: string;
-  optional?: boolean;
-}
-
-const SECTIONS: SectionDef[] = [
-  { id: "cis-lookup", label: "Client, Account & Preloan" },
-  { id: "personal-info", label: "Personal & Agency" },
-  { id: "loan-params", label: "Loan Parameters" },
-  { id: "obligations", label: "Outstanding Loans" },
-  { id: "other-obligations", label: "EBI, Buy-Outs & Incoming" },
-  { id: "verification", label: "Verification Conducted" },
-  { id: "deviations", label: "Remarks & Deviations" },
-  { id: "approval-form", label: "Approval Form" },
-];
-
-const REQUIRED_SECTION_COUNT = SECTIONS.filter((s) => !s.optional).length;
 const SCROLL_OFFSET_PX = 96;
 
 // ── Error counting utilities ────────────────────────────────────
 
-type SectionStatus = "active" | "complete" | "error" | "locked" | "upcoming" | "optional";
+/**
+ * Per-section completion state for the stepper.
+ *
+ *  - `auto`     — data sourced from an upstream system (CIS, preloan,
+ *                 approval generator). Shown with a distinct glyph so
+ *                 the user doesn't conflate "data on file" with a
+ *                 user-earned "complete" check.
+ *  - `complete` — Account-Officer-entered data passes the presence
+ *                 checks.
+ *  - `error`    — there is a validation error after a submit attempt.
+ *  - `active`   — currently in view (IntersectionObserver / scroll target).
+ *  - `locked`   — section can't be reached yet (no client loaded).
+ *  - `upcoming` — not yet started.
+ */
+type SectionStatus = "active" | "complete" | "auto" | "error" | "locked" | "upcoming";
 
 /** Counts leaf validation messages in an RHF error subtree (objects or arrays). */
 function countFieldErrors(node: unknown): number {
@@ -167,19 +157,27 @@ function useSectionProgress(
     if (submitAttempted && sectionErrorCount(formState.errors, section.id) > 0)
       return "error";
     if (activeSection === section.id) return "active";
+    // System-sourced sections become "auto" (data on file) the moment
+    // a client is loaded — never a user-earned "complete" check.
+    if (section.systemSourced)
+      return isClientLoaded ? "auto" : "upcoming";
     if (isComplete(section.id)) return "complete";
     if (!isClientLoaded && index > 0) return "locked";
-    return section.optional ? "optional" : "upcoming";
+    return "upcoming";
   };
 
   const errorCount = (id: SectionId) =>
     submitAttempted ? sectionErrorCount(formState.errors, id) : 0;
 
-  const completedRequired = SECTIONS.filter(
-    (s) => !s.optional && isComplete(s.id)
+  // Count everything that is "ready" — either user-completed or
+  // auto-populated — so the progress bar reflects the real readiness
+  // (e.g. "5 of 8 ready" once the client and their obligations are
+  // in, not "1 of 8 required").
+  const readyCount = SECTIONS.filter(
+    (s) => isComplete(s.id) || (s.systemSourced && isClientLoaded)
   ).length;
 
-  return { getStatus, errorCount, completedRequired };
+  return { getStatus, errorCount, readyCount };
 }
 
 // ── Status icon ─────────────────────────────────────────────────
@@ -190,6 +188,15 @@ function StatusIcon({ status }: { status: SectionStatus }) {
   if (status === "error")
     return (
       <WarningCircle size={20} weight="fill" className="text-destructive" />
+    );
+  // `auto` = data sourced from an upstream system. Distinct glyph so
+  // it doesn't read as a user-earned "complete" check.
+  if (status === "auto")
+    return (
+      <div className="flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
+        <CloudCheck size={12} weight="bold" className="text-primary" />
+        <span className="sr-only">Auto-populated</span>
+      </div>
     );
   if (status === "locked")
     return (
@@ -229,7 +236,7 @@ function DesktopStepper({
   submitAttempted,
   onNavigate,
 }: StepperProps) {
-  const { getStatus, errorCount, completedRequired } = useSectionProgress(
+  const { getStatus, errorCount, readyCount } = useSectionProgress(
     isClientLoaded,
     preLoanSelected,
     submitAttempted,
@@ -238,30 +245,28 @@ function DesktopStepper({
 
   return (
     <aside className="hidden w-64 shrink-0 lg:block">
-      <div className="sticky top-[calc(var(--header-height)+4rem)] space-y-6">
+      <div className="sticky top-[calc(var(--header-height)+1rem)] space-y-6">
         {/* Progress summary */}
         <div className="space-y-2 px-2">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Application Progress
+            <h2 className="text-xs font-semibold text-muted-foreground">
+              Application progress
             </h2>
             <span className="text-xs tabular-nums text-muted-foreground">
-              {completedRequired}/{REQUIRED_SECTION_COUNT} required
+              {readyCount} of {SECTIONS.length} ready
             </span>
           </div>
           <div
             className="h-1 rounded-full bg-muted"
             role="progressbar"
-            aria-label="Required sections completed"
+            aria-label="Sections ready"
             aria-valuemin={0}
-            aria-valuemax={REQUIRED_SECTION_COUNT}
-            aria-valuenow={completedRequired}
+            aria-valuemax={SECTIONS.length}
+            aria-valuenow={readyCount}
           >
             <div
               className="h-full rounded-full bg-primary transition-all duration-500"
-              style={{
-                width: `${(completedRequired / REQUIRED_SECTION_COUNT) * 100}%`,
-              }}
+              style={{ width: `${(readyCount / SECTIONS.length) * 100}%` }}
             />
           </div>
         </div>
@@ -291,23 +296,20 @@ function DesktopStepper({
                   <StatusIcon status={status} />
                 </div>
                 <span className="min-w-0 flex-1 truncate">
-                  {index + 1}. {section.label}
+                  {section.step}. {section.label}
                 </span>
-                {errors > 0 && (
+                {errors > 0 ? (
                   <Badge
                     variant="destructive"
                     className="h-5 min-w-5 px-1 tabular-nums text-[10px]"
                   >
                     {errors}
                   </Badge>
-                )}
-                {section.optional &&
-                  errors === 0 &&
-                  status !== "complete" && (
-                    <span className="text-[10px] font-normal uppercase tracking-wide text-muted-foreground/70">
-                      Optional
-                    </span>
-                  )}
+                ) : status === "auto" ? (
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    Auto
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -335,40 +337,39 @@ function MobileSectionNav({
 
   return (
     <div className="sticky top-[var(--header-height)] z-20 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:hidden">
-      <div
-        className="flex gap-2 overflow-x-auto px-4 py-2"
-        role="tablist"
-        aria-label="Application sections"
-      >
-        {SECTIONS.map((section, index) => {
-          const status = getStatus(section, index);
-          const errors = errorCount(section.id);
-          return (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => onNavigate(section.id)}
-              disabled={status === "locked"}
-              className={cn(
-                "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                status === "active"
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : status === "error"
-                    ? "border-destructive/40 bg-destructive/5 text-destructive"
-                    : status === "complete"
-                      ? "border-primary/30 bg-primary/5 text-primary"
-                      : "border-border text-muted-foreground",
-                status === "locked" && "opacity-50"
-              )}
-            >
-              {index + 1}. {section.label}
-              {errors > 0 && (
-                <span className="tabular-nums font-bold">({errors})</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      <nav aria-label="Application sections">
+        <div className="flex gap-2 overflow-x-auto px-4 py-2">
+          {SECTIONS.map((section, index) => {
+            const status = getStatus(section, index);
+            const errors = errorCount(section.id);
+            return (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => onNavigate(section.id)}
+                disabled={status === "locked"}
+                aria-current={status === "active" ? "step" : undefined}
+                className={cn(
+                  "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  status === "active"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : status === "error"
+                      ? "border-destructive/40 bg-destructive/5 text-destructive"
+                      : status === "complete" || status === "auto"
+                        ? "border-primary/30 bg-primary/5 text-primary"
+                        : "border-border text-muted-foreground",
+                  status === "locked" && "opacity-50"
+                )}
+              >
+                {section.step}. {section.label}
+                {errors > 0 && (
+                  <span className="tabular-nums font-bold">({errors})</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
@@ -526,11 +527,18 @@ export function LoanCreationPage() {
   const scrollToSection = (id: SectionId) => {
     const element = sectionRefs.current[id];
     if (!element) return;
+    setActiveSection(id);
     const top = Math.max(
       0,
       element.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET_PX
     );
     window.scrollTo({ top, behavior: "smooth" });
+    // Move screen-reader focus to the section heading so the user lands
+    // on the destination, not at the bottom of the previous section.
+    // Visual scroll stays smooth/unchanged (`preventScroll: true`).
+    element
+      .querySelector<HTMLElement>("[data-section-heading]")
+      ?.focus({ preventScroll: true });
   };
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -569,6 +577,11 @@ export function LoanCreationPage() {
     submitAttempted,
     onNavigate: scrollToSection,
   };
+
+  const canSubmit = isClientLoaded && !!selectedPreLoan.id;
+  const firstErrorSection = submitAttempted
+    ? SECTIONS.find((s) => sectionErrorCount(errors, s.id) > 0)
+    : undefined;
 
   return (
     <FormProvider {...methods}>
@@ -641,12 +654,9 @@ export function LoanCreationPage() {
         <MobileSectionNav {...stepperProps} />
 
         <div className="container mx-auto flex flex-1 gap-8 px-6 py-8">
-          {/* ── Desktop sidebar stepper (sticky) ──────────────── */}
-          <div className="hidden xl:block w-56 shrink-0">
-            <div className="sticky top-[calc(var(--header-height)+1rem)]">
-              <DesktopStepper {...stepperProps} />
-            </div>
-          </div>
+          {/* ── Desktop sidebar stepper (sticky wrapper lives inside
+                DesktopStepper itself — single sticky container). */}
+          <DesktopStepper {...stepperProps} />
 
           {/* ── Main form content ─────────────────────────────── */}
           <main className="mx-auto w-full max-w-4xl flex-1 space-y-8">
@@ -759,7 +769,7 @@ export function LoanCreationPage() {
                   icon={<Stack size={16} weight="bold" />}
                   step="Step 3"
                   title="Attach a preloan"
-                  body={`Pick one to resume.`}
+                  body="If the borrower has a pending preloan on the selected account, pick one to resume it."
                 />
                 <WorkflowHint
                   icon={<PaperPlaneTilt size={16} weight="bold" />}
@@ -784,31 +794,36 @@ export function LoanCreationPage() {
                 role="alert"
               >
                 <WarningCircle size={16} weight="fill" />
-                {totalErrors} field{totalErrors === 1 ? "" : "s"} need
-                {totalErrors === 1 ? "s" : ""} attention.
+                <button
+                  type="button"
+                  onClick={() =>
+                    firstErrorSection && scrollToSection(firstErrorSection.id)
+                  }
+                  className="underline-offset-4 hover:underline"
+                >
+                  {totalErrors} field{totalErrors === 1 ? "" : "s"} need
+                  {totalErrors === 1 ? "s" : ""} attention — jump to first
+                </button>
               </div>
             ) : (
-              <div className="hidden text-sm text-muted-foreground md:block">
+              <p
+                id="submit-hint"
+                className="hidden text-sm text-muted-foreground md:block"
+              >
                 {!isClientLoaded
-                  ? "Search for a CIS ID to begin."
+                  ? "Search for a CIS number to begin."
                   : !selectedPreLoan.id
-                    ? `Pick an account and a preloan to continue.`
+                    ? "Pick an account and a preloan to continue."
                     : "Client verified, preloan attached. Ready for processing."}
-              </div>
+              </p>
             )}
             <div className="flex items-center gap-3">
               <Button
                 type="submit"
                 size="lg"
                 className="gap-2 px-6"
-                disabled={!isClientLoaded || !selectedPreLoan.id}
-                title={
-                  !isClientLoaded
-                    ? "Load a client to enable submission"
-                    : !selectedPreLoan.id
-                      ? "Pick a preloan to enable submission"
-                      : undefined
-                }
+                disabled={!canSubmit}
+                aria-describedby={canSubmit ? undefined : "submit-hint"}
               >
                 <PaperPlaneTilt size={16} weight="bold" />
                 Submit for Recommendation
