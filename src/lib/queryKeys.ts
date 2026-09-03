@@ -21,6 +21,11 @@ export const queryKeys = {
             ["branches", "list", params] as const,
         detail: (id: number) => ["branches", "detail", id] as const,
     },
+    loanProducts: {
+        all: ["loan-products"] as const,
+        list: (params: { isActive?: boolean; code?: string } = {}) =>
+            ["loan-products", "list", params] as const,
+    },
     loanStatuses: {
         all: ["loan-statuses"] as const,
         list: () => ["loan-statuses", "list"] as const,

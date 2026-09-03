@@ -675,3 +675,79 @@ export interface AuditLogQueryParams {
     startDate?: string;
     endDate?: string;
 }
+
+// ─── Loan Products (fee rules) ────────────────────────────────────────────────
+//
+// Mirrors the backend `Features/LoanProducts/LoanProductDtos.cs` contract.
+// Loan products are the *bank policy* source-of-truth for fee defaults
+// (notarial, doc stamps, insurance). Storing them in a configuration table
+// (instead of hard-coding in the form / service) lets Compliance adjust
+// rates without a code deploy.
+//
+// "Smart Default with Editable Override":
+//   - Frontend fetches `LoanProductResponse` for the picked product.
+//   - Computes the *standard* fee on the fly (`expected*` snapshot).
+//   - AO may edit; deviations beyond `maxAllowedDeviation` need a
+//     `deviationJustification`.
+//   - Backend re-runs the same calculation on submit (see
+//     `src/lib/loan-fee-contract.ts` for the mirrored rules) — the
+//     frontend's value is *never* trusted.
+
+/** How a loan-product fee is calculated. Mirrors backend `FeeType`. */
+export type FeeType = "FLAT" | "PERCENTAGE";
+
+/**
+ * Mirrors `LoanProductFeeRuleDto` on the backend.
+ *
+ * Each fee (notarial / doc stamps / insurance) is described by:
+ *   - `feeType`: "FLAT" → a flat peso amount; "PERCENTAGE" → a % of
+ *     principal.
+ *   - `defaultValue`: the value used when `feeType === "FLAT"`.
+ *   - `rate`: the percentage (0-100) used when `feeType === "PERCENTAGE"`.
+ *   - `maxAllowedDeviation`: the AO may override, but anything beyond this
+ *     absolute delta (in pesos) requires `deviationJustification`. Set to
+ *     `0` to forbid overrides entirely; set to `Infinity` (or a very large
+ *     number) to allow free-form entry without a justification.
+ *
+ * The backend stores these rules in `dbo.loan_product_fee_rules` keyed by
+ * `(productId, feeCode)` — never hard-coded. Compliance changes the row;
+ * the frontend re-reads it.
+ */
+export interface LoanProductFeeRule {
+    /** Which fee this rule describes (e.g. "NOTARIAL_FEE"). */
+    feeCode: "NOTARIAL_FEE" | "DOC_STAMPS" | "INSURANCE";
+    feeType: FeeType;
+    /** Used when `feeType === "FLAT"`. In PHP. */
+    defaultValue: number;
+    /** Used when `feeType === "PERCENTAGE"`. 0-100, two-decimal. */
+    rate: number;
+    /** Absolute ₱ delta an AO may override without justification. */
+    maxAllowedDeviation: number;
+}
+
+/** Mirrors `LoanProductResponse` on the backend. */
+export interface LoanProductResponse {
+    /** Stable product id (PK on `dbo.loan_product`). */
+    id: number;
+    /** Internal product code (e.g. "PL", "MPL", "C35"). */
+    code: string;
+    /** Human-readable description shown in the LAI / approval form. */
+    description: string;
+    /** Whether the product is currently sellable. Inactive products must not appear in wizards. */
+    isActive: boolean;
+    /** All fee rules attached to this product (notarial, doc stamps, insurance). */
+    fees: LoanProductFeeRule[];
+}
+
+/** Response wrapper for GET /api/loan-products. */
+export interface LoanProductsResponse {
+    items: LoanProductResponse[];
+}
+
+/** Query parameters for GET /api/loan-products. */
+export interface LoanProductsQuery {
+    /** Restrict to active products (default true for AO-facing dropdowns). */
+    isActive?: boolean;
+    /** Optional filter by code (e.g. "PL"). */
+    code?: string;
+}
