@@ -19,7 +19,7 @@ export default function Login() {
                     <div className="w-full max-w-xs space-y-8">
                         {/* System Branding */}
                         <div className="text-center">
-                            <h1 className="text-3xl font-bold tracking-tight">ALAS</h1>
+                            <h1 className="text-3xl font-bold tracking-tight">ALAS (CL)</h1>
                             <p className="text-sm text-muted-foreground mt-1">Enterprise Bank Inc.</p>
                         </div>
 
