@@ -1,13 +1,15 @@
 import { forwardRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { FilePdf, Printer } from "@phosphor-icons/react";
+import { FilePdf, Printer, Warning } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
+import { Badge } from "@/src/components/ui/badge";
 import { cn } from "@/src/lib/utils";
 
 import { SectionCard } from "./section-card";
 import { getSection } from "../sections";
 import type { ClientFormData, LoanApplicationFormData } from "../schema";
+import { useLoanComputations } from "@/src/hooks/use-loan-computations";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
 
@@ -22,16 +24,6 @@ function dash(value?: string | null): string {
 
 function isoDate(iso?: string): string {
     return iso ? iso.slice(0, 10) : "-";
-}
-
-function longDate(iso?: string): string {
-    if (!iso) return "";
-    return new Date(iso).toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-    });
 }
 
 function fullNameOf(client: Partial<ClientFormData>): string {
@@ -55,68 +47,48 @@ const BLUE = "bg-[#d9eaf7]";
 const B = "border border-black";
 const DOUBLE_UNDERLINE: React.CSSProperties = { borderBottom: "3px double #000" };
 
-/* ── preview computations (TODO(api): backend is authoritative) ── */
+/* ── Legacy template rates ──────────────────────────────────────────────
+ *
+ * The A16 product historically hard-codes the upfront deduction rates
+ * in the printed Approval Form: 5.04% application charge + 0.75% doc
+ * stamp + ₱500 notarial fee. These are **template/formatting** values
+ * (they don't affect the bank's capacity-to-pay gate, which only uses
+ * the computed monthly amortization) and are kept inline here so the
+ * PDF export matches the legacy spreadsheet line-for-line. Once the
+ * Loan Product DTO is wired through TanStack Query, replace these
+ * constants with the values returned by the selected product.
+ */
+const LEGACY_APPLICATION_CHARGE_RATE = 0.0504;
+const LEGACY_DOC_STAMP_RATE = 0.0075;
+const LEGACY_NOTARIAL_FEE = 500;
 
-function useLoanComputations(data: LoanApplicationFormData) {
-    const { loan, outstandingLoans, ebiReloans, buyOuts, incomingLoans, client } = data;
+/* ── Capacity-to-pay badge ─────────────────────────────────────────────
+ *
+ * Reads the shared engine's results and surfaces the two banking rules
+ * (minimum amortization + total disposable income) as a single chip on
+ * the preview header. The same rules are enforced authoritatively by
+ * `loanApplicationSchema.superRefine`; this badge is the *preview-time*
+ * mirror so the AO sees the violation before they hit Submit.
+ */
+function CapacityToPayBadge() {
+    const m = useLoanComputations();
+    const hasPrincipal = m.monthlyAmortization > 0;
 
-    const totalBalance = outstandingLoans.reduce((s, l) => s + (l.outstandingBalance || 0), 0);
-    const totalPrincipal = outstandingLoans.reduce((s, l) => s + (l.principalBalance || 0), 0);
-    const ebiDeductions = ebiReloans.reduce((s, r) => s + (r.existingDeduction || 0), 0);
-    const ebiOb = ebiReloans.reduce((s, r) => s + (r.outstandingBalance || 0), 0);
-    const buyOutBalance = buyOuts.reduce((s, b) => s + (b.outstandingBalance || 0), 0);
-    const incomingTotal = incomingLoans.reduce((s, i) => s + (i.deductions || 0), 0);
+    if (!hasPrincipal) return null;
 
-    const months = loan.term || 0;
-    const monthlyRate = (loan.interestRate || 0) / 100 / 12;
-    const amortization =
-        months > 0 && monthlyRate > 0
-            ? (loan.proposedAmount * (monthlyRate * (1 + monthlyRate) ** months)) / ((1 + monthlyRate) ** months - 1)
-            : 0;
+    const exceeds = m.isAmortizationExceedingDisposable;
+    const belowMin =
+        m.minimumRequiredAmortization > 0 &&
+        m.monthlyAmortization < m.minimumRequiredAmortization;
 
-    const applicationCharge = loan.proposedAmount * 0.0504;
-    const docStamp = loan.proposedAmount * 0.0075;
-    const notarialFee = 500;
-    const deductionsSubtotal = applicationCharge + docStamp + notarialFee;
-    const deductionPct = loan.proposedAmount > 0 ? (deductionsSubtotal / loan.proposedAmount) * 100 : 0;
+    if (!exceeds && !belowMin) return null;
 
-    const grossProceeds = loan.proposedAmount - deductionsSubtotal;
-    const netProceedsDs = grossProceeds - ebiOb;
-    const netProceedsClient = netProceedsDs - buyOutBalance;
-    const totalExposure = loan.proposedAmount + totalPrincipal;
-
-    const nthp = client.netTakeHomePay || 0;
-    const netPayAfterDeduction = nthp - amortization + ebiDeductions;
-    const totalMonthlyIncome = netPayAfterDeduction;
-    const totalDisposableGross = nthp + ebiDeductions;
-    const totalDeductionsFinal = nthp + incomingTotal;
-    const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
-
-    return {
-        termDays: months * 30,
-        amortization,
-        applicationCharge,
-        docStamp,
-        notarialFee,
-        deductionsSubtotal,
-        deductionPct,
-        grossProceeds,
-        netProceedsDs,
-        netProceedsClient,
-        totalExposure,
-        totalBalance,
-        totalPrincipal,
-        ebiDeductions,
-        ebiOb,
-        buyOutBalance,
-        incomingTotal,
-        nthp,
-        netPayAfterDeduction,
-        totalMonthlyIncome,
-        totalDisposableGross,
-        totalDeductionsFinal,
-        totalDisposableNet,
-    };
+    return (
+        <Badge variant="destructive" className="gap-1.5 py-1 text-xs">
+            <Warning size={12} weight="fill" />
+            {exceeds ? "Exceeds disposable income" : "Below minimum amortization"}
+        </Badge>
+    );
 }
 
 /* ── small presentational atoms ── */
@@ -188,7 +160,47 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         const buyOuts = form?.buyOuts ?? [];
         const incomingLoans = form?.incomingLoans ?? [];
 
-        const c = useLoanComputations(form);
+        // ── Shared engine results ─────────────────────────────────
+        // The canonical numbers come from `@/src/lib/loan-computations`
+        // (via `useLoanComputations`). The fields below that aren't
+        // part of that contract — `termDays`, `docStamp`,
+        // `notarialFee`, `deductionPct`, `totalPrincipal`,
+        // `totalExposure`, `netPayAfterDeduction`,
+        // `totalMonthlyIncome`, `totalDeductionsFinal`,
+        // `totalDisposableNet` — are layout-/presentation-only and
+        // are computed locally so the PDF keeps matching the
+        // historical spreadsheet line-for-line.
+        const metrics = useLoanComputations();
+
+        // Legacy-template numbers (kept inline because the printed
+        // form must match the legacy Excel regardless of what the
+        // engine uses for the capacity-to-pay gate).
+        const months = loan.term || 0;
+        const termDays = months * 30;
+        const applicationChargeLegacy = (loan.proposedAmount || 0) * LEGACY_APPLICATION_CHARGE_RATE;
+        const docStamp = (loan.proposedAmount || 0) * LEGACY_DOC_STAMP_RATE;
+        const notarialFee = LEGACY_NOTARIAL_FEE;
+        const deductionsSubtotal = applicationChargeLegacy + docStamp + notarialFee;
+        const deductionPct = loan.proposedAmount > 0 ? (deductionsSubtotal / loan.proposedAmount) * 100 : 0;
+
+        // Aggregated outstanding balances for the printed layout.
+        const totalPrincipal = outstandingLoans.reduce((s, l) => s + (l.principalBalance || 0), 0);
+        const ebiDeductions = ebiReloans.reduce((s, r) => s + (r.existingDeduction || 0), 0);
+        const ebiOb = ebiReloans.reduce((s, r) => s + (r.outstandingBalance || 0), 0);
+        const buyOutBalance = buyOuts.reduce((s, b) => s + (b.outstandingBalance || 0), 0);
+        const incomingTotal = incomingLoans.reduce((s, i) => s + (i.deductions || 0), 0);
+
+        const grossProceeds = (loan.proposedAmount || 0) - deductionsSubtotal;
+        const netProceedsDs = grossProceeds - ebiOb;
+        const netProceedsClient = netProceedsDs - buyOutBalance;
+        const totalExposure = (loan.proposedAmount || 0) + totalPrincipal;
+
+        const nthp = client.netTakeHomePay || 0;
+        const netPayAfterDeduction = nthp - metrics.monthlyAmortization + ebiDeductions;
+        const totalMonthlyIncome = netPayAfterDeduction;
+        const totalDisposableGross = nthp + ebiDeductions;
+        const totalDeductionsFinal = nthp + incomingTotal;
+        const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
 
         const productLine = loan.product
             ? `[ ${loan.product} ] ${loan.term || 0} months @ ${loan.interestRate || 0}% per Annum`
@@ -209,6 +221,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                 icon={<FilePdf size={20} weight="bold" className="text-primary" />}
                 badge={
                     <div className="flex items-center gap-2">
+                        <CapacityToPayBadge />
                         <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => window.print()}>
                             <Printer size={14} weight="bold" />
                             Print
@@ -291,7 +304,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                         <V rowSpan={2} className="align-top font-bold">{dash(loan.product)}</V>
                                         <L rowSpan={2} className="align-top">
                                             TERM (Days):<br />
-                                            <span className="font-bold">{(c.termDays || 0).toLocaleString()}</span>
+                                            <span className="font-bold">{termDays.toLocaleString()}</span>
                                         </L>
                                         <V blue colSpan={5}>{productLine}</V>
                                     </tr>
@@ -310,35 +323,41 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                 <div className={cn(B, "border-r-0 p-2")}>
                                     <AmtRow label={<span className="font-bold">Maximum Loanable Amount **</span>} value={num(loan.proposedAmount)} blue underline />
                                     <AmtRow label={<span className="font-bold">Proposed Loan for Approval</span>} value={<span className="font-bold">{num(loan.proposedAmount)}</span>} blue />
-                                    <div className="pt-1 font-bold" style={DOUBLE_UNDERLINE ? undefined : undefined}>Less:</div>
+                                    <div className="pt-1 font-bold">Less:</div>
                                     <div className="pl-3">
-                                        <AmtRow label="Application Charge" value={num(c.applicationCharge)} />
-                                        <AmtRow label="Doc. Stamp" value={num(c.docStamp)} />
-                                        <AmtRow label="Notarial Fee" value={num(c.notarialFee)} />
+                                        {/* Application charge on the printed form uses the
+                                            legacy 5.04% rate; the capacity-to-pay engine uses
+                                            the configurable 6% (DEFAULT_APPLICATION_CHARGE_RATE)
+                                            via `metrics.applicationCharge`. */}
+                                        <AmtRow label="Application Charge" value={num(applicationChargeLegacy)} />
+                                        <AmtRow label="Doc. Stamp" value={num(docStamp)} />
+                                        <AmtRow label="Notarial Fee" value={num(notarialFee)} />
                                         <AmtRow label="Insurance (MRI)" value="-" />
                                         <AmtRow label="Advance Interest" value="-" />
                                     </div>
                                     <div className="flex items-end justify-between gap-2 py-[1px]">
                                         <span className="font-bold">Total Deductions</span>
-                                        <span className="tabular-nums">{c.deductionPct.toFixed(2)}%</span>
-                                        <span className="min-w-24 border-b border-black text-right tabular-nums">{num(c.deductionsSubtotal)}</span>
+                                        <span className="tabular-nums">{deductionPct.toFixed(2)}%</span>
+                                        <span className="min-w-24 border-b border-black text-right tabular-nums">{num(deductionsSubtotal)}</span>
                                     </div>
-                                    <AmtRow label={<span className="font-bold">GROSS PROCEEDS</span>} value={<span className="font-bold">{num(c.grossProceeds)}</span>} blue underline />
+                                    <AmtRow label={<span className="font-bold">GROSS PROCEEDS</span>} value={<span className="font-bold">{num(grossProceeds)}</span>} blue underline />
                                     <div className="h-3" />
-                                    <AmtRow label={<span className="font-bold">Less: Total Accounts Balance</span>} value={num(c.ebiOb)} underline />
-                                    <AmtRow label={<span className="font-bold">Net Proceeds on DS for CM/MC</span>} value={num(c.netProceedsDs)} underline />
+                                    <AmtRow label={<span className="font-bold">Less: Total Accounts Balance</span>} value={num(ebiOb)} underline />
+                                    <AmtRow label={<span className="font-bold">Net Proceeds on DS for CM/MC</span>} value={num(netProceedsDs)} underline />
                                     <div className="h-3" />
-                                    <AmtRow label={<span className="font-bold">Less: Total Buy-Out Balance</span>} value={num(c.buyOutBalance)} underline />
-                                    <AmtRow label={<span className="font-bold">NET PROCEEDS to Client</span>} value={<span className="font-bold">{num(c.netProceedsClient)}</span>} blue />
+                                    <AmtRow label={<span className="font-bold">Less: Total Buy-Out Balance</span>} value={num(buyOutBalance)} underline />
+                                    <AmtRow label={<span className="font-bold">NET PROCEEDS to Client</span>} value={<span className="font-bold">{num(netProceedsClient)}</span>} blue />
                                     <div className="h-3" />
-                                    <AmtRow label={<span className="font-bold">Monthly Amortization</span>} value={`PHP ${num(c.amortization)}`} underline />
+                                    {/* Monthly Amortization comes from the shared engine so
+                                        this value matches the Zod gate's number 1:1. */}
+                                    <AmtRow label={<span className="font-bold">Monthly Amortization</span>} value={`PHP ${num(metrics.monthlyAmortization)}`} underline />
                                     <div className="h-3" />
-                                    <AmtRow label={<span className="font-bold">NetPay After Deduction</span>} value={num(c.netPayAfterDeduction)} underline />
+                                    <AmtRow label={<span className="font-bold">NetPay After Deduction</span>} value={num(netPayAfterDeduction)} underline />
                                     <div className="h-3" />
                                     <div className="flex items-end justify-between gap-2 py-[1px]">
                                         <span className="font-bold">Net Take Home Pay as of:</span>
                                         <span className={cn(`${BLUE} px-1 font-bold`)}>{isoDate(loan.nthpDate || new Date().toISOString())}</span>
-                                        <span className="min-w-24 border-b border-black text-right font-bold tabular-nums">{num(c.nthp)}</span>
+                                        <span className="min-w-24 border-b border-black text-right font-bold tabular-nums">{num(nthp)}</span>
                                     </div>
                                 </div>
 
@@ -374,7 +393,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                             </tr>
                                             <tr className="[&>td]:px-1 [&>td]:py-0.5">
                                                 <td colSpan={2} />
-                                                <td className="border-b border-black text-right font-bold tabular-nums">{num(c.totalPrincipal)}</td>
+                                                <td className="border-b border-black text-right font-bold tabular-nums">{num(totalPrincipal)}</td>
                                                 <td />
                                             </tr>
                                         </tbody>
@@ -392,7 +411,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                     <div className="flex items-end justify-between px-1 py-[1px]">
                                         <span className="font-bold">Total Exposure</span>
                                         <span className={`${BLUE} px-1 font-bold tabular-nums`} style={DOUBLE_UNDERLINE}>
-                                            {num(c.totalExposure)}
+                                            {num(totalExposure)}
                                         </span>
                                     </div>
 
@@ -402,10 +421,10 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                             Net Pay After Deduction Plus Other Sources of Income
                                         </div>
                                         <div className="p-1.5">
-                                            <AmtRow label={<i>Net Pay After Deduction</i>} value={num(c.netPayAfterDeduction)} />
+                                            <AmtRow label={<i>Net Pay After Deduction</i>} value={num(netPayAfterDeduction)} />
                                             <div className="italic">Other Income:</div>
                                             <AmtRow label={<span className="pl-3">NONE</span>} value="-" />
-                                            <AmtRow label={<i>Total Monthly Income</i>} value={num(c.totalMonthlyIncome)} underline />
+                                            <AmtRow label={<i>Total Monthly Income</i>} value={num(totalMonthlyIncome)} underline />
                                         </div>
                                     </div>
                                 </div>
@@ -436,8 +455,8 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                             <DashRows count={Math.max(0, 4 - ebiReloans.length)} cols={4} />
                                             <tr className="[&>td]:px-1 [&>td]:py-0.5">
                                                 <td className="font-bold">Total Accounts for reloans</td>
-                                                <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(c.ebiDeductions)}</td>
-                                                <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(c.ebiOb)}</td>
+                                                <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiDeductions)}</td>
+                                                <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
                                                 <td />
                                             </tr>
                                         </tbody>
@@ -466,13 +485,13 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                 </div>
 
                                 <div className={cn(B, "border-l-0 p-2")}>
-                                    <AmtRow label={<span className="font-bold">Total Reloan&Buy-out Accounts</span>} value={num(c.ebiDeductions)} underline />
+                                    <AmtRow label={<span className="font-bold">Total Reloan&Buy-out Accounts</span>} value={num(ebiDeductions)} underline />
                                     <div className="flex justify-between py-[1px]">
                                         <span />
-                                        <span className="min-w-24 text-right tabular-nums" style={DOUBLE_UNDERLINE}>{num(c.ebiOb)}</span>
+                                        <span className="min-w-24 text-right tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</span>
                                     </div>
-                                    <AmtRow label={<span className="font-bold">Total Disposable</span>} value={num(c.totalDisposableGross)} underline />
-                                    <AmtRow label={<span className="font-bold">Less: Minimum NTHP</span>} value={num(c.nthp)} />
+                                    <AmtRow label={<span className="font-bold">Total Disposable</span>} value={num(totalDisposableGross)} underline />
+                                    <AmtRow label={<span className="font-bold">Less: Minimum NTHP</span>} value={num(nthp)} />
 
                                     <div className="flex justify-between pt-2 font-bold">
                                         <span>Incoming/undeducted Loans:</span>
@@ -491,8 +510,8 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                         </tbody>
                                     </table>
 
-                                    <AmtRow label={<span className="font-bold">Total Deductions</span>} value={num(c.totalDeductionsFinal)} underline />
-                                    <AmtRow label={<span className="font-bold">Total Disposable</span>} value={num(c.totalDisposableNet)} blue underline />
+                                    <AmtRow label={<span className="font-bold">Total Deductions</span>} value={num(totalDeductionsFinal)} underline />
+                                    <AmtRow label={<span className="font-bold">Total Disposable</span>} value={num(totalDisposableNet)} blue underline />
                                     <AmtRow label={<span className="font-bold">Maximum Loanable Amount</span>} value={<span className="font-bold">PhP{num(loan.proposedAmount)}</span>} blue underline />
                                 </div>
                             </div>
