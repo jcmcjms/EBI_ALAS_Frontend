@@ -49,6 +49,25 @@ export type EbiReloanFormRow = {
     // because `undefined > 0` is `false`, masking the schema's
     // intended UX signal for the AO's first keystroke.
     payToClose: number;
+    // ── Round-trip ghost fields ──────────────────────────────────────
+    // The EBI schema has no `dateGranted` / `dateMaturity` columns, so
+    // mapping an Outstanding row *into* EBI would otherwise lose its
+    // dates forever — and the reverse map (EBI → Outstanding) would
+    // have nothing to restore them from. To make the Outstanding ↔ EBI
+    // round trip lossless for dates, we carry the two dates on the
+    // EBI row as ghost fields. They are:
+    //
+    //   • NOT registered to any input (the AO never sees or edits them)
+    //   • NOT part of `ebiReloanSchema`, so Zod's `zodResolver` strips
+    //     them at submit time without rejecting the row
+    //   • restored verbatim on the reverse transfer by `mapToOutstanding`
+    //
+    // Keeping them on the row object (rather than in a separate
+    // `Map<rowId, {dateGranted, dateMaturity}>`) makes the round trip
+    // survive re-renders, schema resets, and the `useFieldArray`
+    // snapshot churn that previously bit us.
+    dateGranted?: string;
+    dateMaturity?: string;
 };
 
 export type BuyOutFormRow = {
@@ -111,6 +130,18 @@ export function mapToOutstanding(row: any, source: LoanSection): OutstandingForm
             amortization: safeNumber(row?.existingDeduction),
             outstandingBalance: safeNumber(row?.outstandingBalance),
             principalBalance: safeNumber(row?.outstandingBalance),
+            // ── Restore dates stashed by `mapToEbi` ─────────────────────
+            // The EBI row carries the original dates as ghost fields
+            // (see `EbiReloanFormRow.dateGranted` / `.dateMaturity`).
+            // We pull them back here so the Outstanding cell renders
+            // the original dates after an EBI ↔ Outstanding round
+            // trip. `defaults.dateGranted` / `dateMaturity` are `""`,
+            // and `safeString(undefined) === ""`, so a row that *wasn't*
+            // transferred through EBI (or that predates this change)
+            // falls through to the empty defaults — no regression for
+            // rows that never had dates in the first place.
+            dateGranted: safeString(row?.dateGranted),
+            dateMaturity: safeString(row?.dateMaturity),
         };
     }
 
@@ -157,6 +188,18 @@ export function mapToEbi(row: any, source: LoanSection): EbiReloanFormRow {
             name: safeString(row?.status),
             existingDeduction: safeNumber(row?.amortization),
             outstandingBalance: safeNumber(row?.outstandingBalance),
+            // ── Stash dates for round-trip restore ──────────────────────
+            // The EBI cell has no date columns, so the dates would be
+            // lost on the reverse transfer otherwise. We carry them as
+            // ghost fields on the EBI row object — see the type doc
+            // on `EbiReloanFormRow.dateGranted` / `.dateMaturity` for
+            // the strip-on-submit contract. `safeString` is used
+            // (rather than a direct property read) so an already-empty
+            // / undefined source date round-trips as `""`, not as a
+            // missing key, which keeps `mapToOutstanding` simple on
+            // the reverse path.
+            dateGranted: safeString(row?.dateGranted),
+            dateMaturity: safeString(row?.dateMaturity),
         };
     }
 
