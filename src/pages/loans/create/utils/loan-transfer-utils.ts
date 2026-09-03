@@ -39,6 +39,16 @@ export type EbiReloanFormRow = {
     name: string;
     existingDeduction: number;
     outstandingBalance: number;
+    // `payToClose` is the amount the AO intends to settle on this EBI
+    // loan. It is hand-keyed in the table cell (not auto-populated by
+    // a transfer), but the `ebiReloanSchema.superRefine` rule compares
+    // it against `outstandingBalance`. We seed it with `0` in the
+    // mapped defaults so the value is never `undefined` between the
+    // append and the input mounting; otherwise the first render of
+    // the row would briefly fail `payToClose <= outstandingBalance`
+    // because `undefined > 0` is `false`, masking the schema's
+    // intended UX signal for the AO's first keystroke.
+    payToClose: number;
 };
 
 export type BuyOutFormRow = {
@@ -137,6 +147,7 @@ export function mapToEbi(row: any, source: LoanSection): EbiReloanFormRow {
         name: "",
         existingDeduction: 0,
         outstandingBalance: 0,
+        payToClose: 0,
     };
 
     if (source === "outstanding") {

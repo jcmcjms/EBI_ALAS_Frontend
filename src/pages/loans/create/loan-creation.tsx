@@ -24,6 +24,7 @@ import { WEBLOAN_BRANCHES } from "@/src/lib/api/types";
 import type { PreLoanItem } from "@/src/lib/api/types";
 
 import { loanApplicationSchema, type LoanApplicationFormData } from "./schema";
+import { LoanTransfersProvider } from "./loan-transfers-provider";
 import { CISLookup } from "./components/cis-lookup";
 import { PersonalInfoSection } from "./components/personal-info-section";
 import { LoanParametersSection } from "./components/loan-parameters-section";
@@ -567,10 +568,18 @@ export function LoanCreationPage() {
 
   return (
     <FormProvider {...methods}>
-      <form
-        onSubmit={handleSubmit(onSubmit, onInvalid)}
-        className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40"
-      >
+      {/* ── LoanTransfersProvider ─────────────────────────────────────
+       * Must sit inside FormProvider because `useLoanTransfers` reads the
+       * form via `useFormContext`. It mounts exactly one `useFieldArray`
+       * per array name; Section 4 (Outstanding Loans) and Section 5
+       * (EBI, Buy-Outs & Incoming) consume the shared instance via
+       * `useLoanTransfersContext()` so a transfer in one section is
+       * reflected in the other on the same render. */}
+      <LoanTransfersProvider>
+        <form
+          onSubmit={handleSubmit(onSubmit, onInvalid)}
+          className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40"
+        >
         {/* ── Top header ──────────────────────────────── */}
         <header className="border-b bg-background">
           <div className="container mx-auto flex h-16 items-center justify-between px-6">
@@ -818,6 +827,7 @@ export function LoanCreationPage() {
           </Button>
         )}
       </form>
+      </LoanTransfersProvider>
     </FormProvider>
   );
 }

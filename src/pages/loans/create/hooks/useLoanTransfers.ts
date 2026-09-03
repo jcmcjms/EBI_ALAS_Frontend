@@ -9,6 +9,20 @@
  * that atomically moves a row from one section to another while
  * re-mapping its columns through `loan-transfer-utils`.
  *
+ * ── Single-instance contract ─────────────────────────────────────
+ * `useFieldArray` must be mounted ONCE per array name — react-hook-form
+ * explicitly does not support multiple `useFieldArray` instances with
+ * the same `name`, because each instance keeps a private `fields`
+ * snapshot that is not re-synchronised when a sibling instance mutates
+ * the same array. The symptom is the "transfer toast fires but the
+ * target table stays empty" bug we hit three commits in a row.
+ *
+ * This hook is therefore only invoked by `<LoanTransfersProvider>`,
+ * mounted once inside `<FormProvider>` in `loan-creation.tsx`.
+ * Components obtain it via `useLoanTransfersContext()`. A second direct
+ * `useLoanTransfers()` call from any component would silently desync
+ * that component's render from the provider's.
+ *
  * ── Bidirectional transfer contract ───────────────────────────────────
  * Reclassification is strictly bidirectional and only between
  * `outstanding` and `ebi`:

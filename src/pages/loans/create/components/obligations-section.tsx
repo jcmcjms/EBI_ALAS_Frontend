@@ -3,12 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/ca
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Badge } from "@/src/components/ui/badge";
 
-import { useLoanTransfers } from "../hooks/useLoanTransfers";
+import { useLoanTransfersContext } from "../loan-transfers-provider";
 import { TransferActionMenu } from "./transfer-action-menu";
 
 export function ObligationsSection() {
     const { control } = useFormContext();
-    const { arrays, handleTransfer } = useLoanTransfers();
+    // Consume the SINGLE shared `useLoanTransfers` instance via context.
+    // Calling `useLoanTransfers()` directly here would mount a second
+    // `useFieldArray("outstandingLoans")` instance whose `fields`
+    // snapshot never sees mutations made by the EBI section's instance,
+    // re-introducing the "transfer toast fires but target stays empty"
+    // bug. See loan-transfers-provider.tsx for the full contract.
+    const { arrays, handleTransfer } = useLoanTransfersContext();
     const outstandingFields = arrays.outstanding.fields;
 
     // Re-render when the underlying outstanding-loans form state changes

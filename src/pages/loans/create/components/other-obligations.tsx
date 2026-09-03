@@ -30,7 +30,7 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { Bank, CreditCard, ArrowLineDown, Plus, Trash } from "@phosphor-icons/react";
 
-import { useLoanTransfers } from "../hooks/useLoanTransfers";
+import { useLoanTransfersContext } from "../loan-transfers-provider";
 import { TransferActionMenu } from "./transfer-action-menu";
 
 type EbiRow = {
@@ -49,7 +49,14 @@ export function OtherObligationsSection() {
     // append/remove helpers used by the Add/Delete buttons. The
     // bidirectional transfer hook (`handleTransfer`) is wired up to
     // the EBI rows below.
-    const { arrays, handleTransfer } = useLoanTransfers();
+    // Consume the SINGLE shared `useLoanTransfers` instance via context.
+    // Calling `useLoanTransfers()` directly here would mount a second
+    // `useFieldArray("ebiReloans")` (and a second set for the other
+    // three arrays) whose `fields` snapshots never see mutations made
+    // by Section 4's instance, so a transfer fired from the Outstanding
+    // Loans table would silently disappear here. See
+    // loan-transfers-provider.tsx for the full contract.
+    const { arrays, handleTransfer } = useLoanTransfersContext();
 
     // Row-level validation errors raised by `ebiReloanSchema`'s
     // `superRefine` (e.g. payToClose > outstandingBalance) live at
