@@ -124,18 +124,53 @@ export const verificationSchema = z.object({
 });
 
 // ── Deviations / Remarks ───────────────────────────────────────
+//
 // `hasDeviations` is the user-controlled toggle. When it is `true`,
-// `deviationDetails` must also be supplied — we enforce that with a
-// `superRefine` rather than with a plain `.min(1)` so that a user who
-// legitimately ticks the flag and then unticks it does not see a
-// stale required-error on an empty textarea.
+// `deviationDetails` must contain at least one selected reason from
+// the fixed catalogue — we enforce that with a `superRefine` rather
+// than a plain `.min(1)` so a user who legitimately ticks the flag
+// and then unticks it does not see a stale required-error on the
+// (now empty) selection.
 //
 // `otherRemarks` is always required, even when there are no
 // deviations, so the AO leaves a trace for downstream reviewers.
+export const DEVIATION_REASONS = [
+    "Age not within the prescribed parameters",
+    "Discounted Application Fee",
+    "Interest rate reduction",
+    "Lacking bank statement of account",
+    "Lacking CIBI",
+    "Lacking marriage cert. with surname as single",
+    "Lacking one or two payslip(s) for new atm loan",
+    "Lacking signature in application form",
+    "Lacking SPAs to claim ATM",
+    "No appointment record and/or service record",
+    "No FI SOA and loan ledger",
+    "No interview sheet",
+    "No latest payslip",
+    "No orientation form or old form submitted",
+    "No valid identification cards",
+    "Total consumer loan exposure exceeding 1.2 million",
+    "With blocked ATIM in same school",
+    "With history of delinquency in the latest loan availment",
+    "With NFIS findings",
+    "With past due account - non performing loan",
+    "With past due account - performing",
+] as const;
+
+export type DeviationReason = (typeof DEVIATION_REASONS)[number];
+
 export const deviationsSchema = z
     .object({
         hasDeviations: z.boolean().default(false),
-        deviationDetails: z.string().default(""),
+        // Free-form string → fixed enum[] of deviation reasons. The
+        // wizard now surfaces a checkbox group from `DEVIATION_REASONS`
+        // and stores the selected reasons verbatim so the printed
+        // approval form renders them as a numbered list (1:, 2:, …)
+        // rather than whatever the AO happened to type.
+        deviationDetails: z
+            .array(z.enum(DEVIATION_REASONS))
+            .default([]),
         remarks: z.string().optional(),
         aoRecommendation: z.string().optional(),
         otherRemarks: z
@@ -144,15 +179,12 @@ export const deviationsSchema = z
             .min(1, "Other remarks are required."),
     })
     .superRefine((data, ctx) => {
-        if (
-            data.hasDeviations &&
-            data.deviationDetails.trim().length === 0
-        ) {
+        if (data.hasDeviations && data.deviationDetails.length === 0) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 path: ["deviationDetails"],
                 message:
-                    "Deviation details are required when the deviations flag is enabled.",
+                    "Select at least one deviation reason when the deviations flag is enabled.",
             });
         }
     });

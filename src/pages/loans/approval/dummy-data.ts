@@ -54,7 +54,12 @@ export const dummyLoanData: LoanApplicationFormData = {
   },
   deviations: {
     hasDeviations: false,
-    deviationDetails: "",
+    // `deviationDetails` is now a DeviationReason[] (the fixed
+    // catalogue surfaced by the wizard's checkbox group). The dummy
+    // approval document renders an empty list as "-", so we seed
+    // the array explicitly even when the toggle is off — this keeps
+    // the type narrow and avoids a string → array widening here.
+    deviationDetails: [],
     aoRecommendation: "Highly recommended for approval. Good repayment history.",
     otherRemarks: "",
     remarks: "",

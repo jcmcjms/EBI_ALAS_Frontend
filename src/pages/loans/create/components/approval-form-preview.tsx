@@ -497,7 +497,17 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                             <div className="grid grid-cols-2">
                                 <div className={cn(B, "min-h-56 border-r-0 p-1.5")}>
                                     <div className="font-bold">Deviations:</div>
-                                    <p className="mt-1 whitespace-pre-wrap">{deviations?.deviationDetails || ""}</p>
+                                    {deviations?.hasDeviations && deviations.deviationDetails.length > 0 ? (
+                                        <ol className="mt-1 space-y-0.5 list-none">
+                                            {deviations.deviationDetails.map((reason, i) => (
+                                                <li key={reason}>
+                                                    {i + 1}) {reason}
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    ) : (
+                                        <p className="mt-1">-</p>
+                                    )}
                                 </div>
                                 <div className={cn(B, "min-h-56 p-1.5")}>
                                     <div className="font-bold">Verifications Conducted:</div>

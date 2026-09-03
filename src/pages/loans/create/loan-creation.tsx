@@ -148,14 +148,14 @@ function useSectionProgress(
         // `findings` is a required, non-empty string in the schema.
         return !!verification?.findings?.trim();
       case "deviations":
-        // `otherRemarks` is always required. `deviationDetails` is also
-        // required when `hasDeviations` is true — the schema's
-        // superRefine enforces that at submit time.
+        // `otherRemarks` is always required. `deviationDetails` is
+        // also required (as a non-empty array) when `hasDeviations`
+        // is true — the schema's superRefine enforces the same at
+        // submit time, but we mirror the check here so the sidebar
+        // stepper turns green as soon as the AO has selected at
+        // least one reason, without waiting for a submit attempt.
         if (!deviations?.otherRemarks?.trim()) return false;
-        if (
-          deviations.hasDeviations &&
-          !deviations.deviationDetails?.trim()
-        )
+        if (deviations.hasDeviations && (deviations.deviationDetails?.length ?? 0) === 0)
           return false;
         return true;
       case "approval-form":
@@ -471,7 +471,11 @@ export function LoanCreationPage() {
       verification: { findings: "" },
       deviations: {
         hasDeviations: false,
-        deviationDetails: "",
+        // `deviationDetails` is now a DeviationReason[] (the fixed
+        // catalogue of deviation reasons surfaced by the wizard's
+        // checkbox group). Seed as an empty array so the form passes
+        // a stable, type-narrow shape to RHF on first mount.
+        deviationDetails: [],
         aoRecommendation: "",
         otherRemarks: "",
         remarks: "",
