@@ -80,7 +80,7 @@ export function LoanParametersSection() {
 
     const estMonthlyLegacy =
         term > 0 && proposedAmount > 0
-            ? (proposedAmount + proposedAmount * (interestRate / 100) * (term / 12)) / term
+            ? (proposedAmount + proposedAmount * (interestRate / 100) * (term / 365)) / (term / 30)
             : 0;
 
     // ── Live capacity-to-pay panel ─────────────────────────────────────
@@ -206,14 +206,14 @@ export function LoanParametersSection() {
 
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                        <CalendarBlank size={12} weight="bold" /> Term (months)
+                        <CalendarBlank size={12} weight="bold" /> Term (days)
                     </Label>
                     <Input
                         {...register("loan.term", { valueAsNumber: true })}
                         type="number"
-                        placeholder="e.g. 24"
+                        placeholder="e.g. 720"
                         min={1}
-                        max={360}
+                        max={2555}
                         readOnly
                         className="h-9 bg-muted/50"
                     />

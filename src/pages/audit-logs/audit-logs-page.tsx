@@ -24,8 +24,6 @@ import {
     FileText,
     MagnifyingGlass,
     ShieldCheck,
-    SignIn,
-    SignOut,
     Trash,
     UserCircle,
     WarningCircle,
@@ -50,14 +48,6 @@ const actionConfig: Record<
     StatusChange: {
         color: "bg-purple-50 text-purple-700 border-purple-200",
         icon: <FileText size={14} weight="bold" />,
-    },
-    Login: {
-        color: "bg-slate-100 text-slate-700 border-slate-200",
-        icon: <SignIn size={14} weight="bold" />,
-    },
-    Logout: {
-        color: "bg-slate-100 text-slate-600 border-slate-200",
-        icon: <SignOut size={14} weight="bold" />,
     },
     Delete: {
         color: "bg-red-50 text-red-700 border-red-200",
@@ -154,8 +144,6 @@ export function AuditLogsPage() {
                             <SelectItem value="StatusChange">
                                 Status Change
                             </SelectItem>
-                            <SelectItem value="Login">Login</SelectItem>
-                            <SelectItem value="Logout">Logout</SelectItem>
                             <SelectItem value="Delete">Delete</SelectItem>
                         </SelectContent>
                     </Select>

@@ -162,13 +162,13 @@ const columns = columnHelper.columns([
             );
         },
     }),
-    columnHelper.accessor("minTermMonths", {
-        header: "Term (mo)",
+    columnHelper.accessor("minTermDays", {
+        header: "Term (days)",
         cell: (info) => {
             const row = info.row.original;
             return (
                 <span className="text-xs font-medium tabular-nums">
-                    {row.minTermMonths}–{row.maxTermMonths}
+                    {row.minTermDays}–{row.maxTermDays}
                 </span>
             );
         },
@@ -265,33 +265,49 @@ const columns = columnHelper.columns([
         cell: (info) => {
             const product = info.row.original;
             const meta = info.table.options.meta;
+            // The actions cell is wrapped in a span with `onClickCapture`
+            // that calls `stopPropagation()`. Without this guard, clicking
+            // the chevron would *also* trigger the row-level `onClick`
+            // (which opens the edit sheet) — so a single click would do
+            // two things. Stopping propagation keeps the dropdown and the
+            // row click independent: chevron → menu only; anywhere else
+            // on the row → edit sheet.
             return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label={`Actions for ${product.code}`}
-                            />
+                <span
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
                         }
-                    >
-                        <CaretDown size={16} weight="bold" />
-                        <span className="sr-only">Open menu</span>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[180px]">
-                        <DropdownMenuItem
-                            onClick={() => meta?.onEditProduct?.(product)}
+                    }}
+                >
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            render={
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    aria-label={`Actions for ${product.code}`}
+                                />
+                            }
                         >
-                            <PencilSimple size={14} /> Edit Policy
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => meta?.onSyncNow?.()}
-                        >
-                            <ArrowsClockwise size={14} /> Sync from webloan
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            <CaretDown size={16} weight="bold" />
+                            <span className="sr-only">Open menu</span>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[180px]">
+                            <DropdownMenuItem
+                                onClick={() => meta?.onEditProduct?.(product)}
+                            >
+                                <PencilSimple size={14} /> Edit Policy
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => meta?.onSyncNow?.()}
+                            >
+                                <ArrowsClockwise size={14} /> Sync from webloan
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </span>
             );
         },
     }),
@@ -588,8 +604,13 @@ export function ProductsTable() {
                                     pagedRows.map((row) => (
                                         <TableRow
                                             key={row.id}
+                                            onClick={() =>
+                                                table.options.meta?.onEditProduct?.(
+                                                        row.original
+                                                    )
+                                            }
                                             className={cn(
-                                                "transition-colors hover:bg-muted/30",
+                                                "cursor-pointer transition-colors hover:bg-muted/30",
                                                 row.original.isRetired &&
                                                     "opacity-70"
                                             )}

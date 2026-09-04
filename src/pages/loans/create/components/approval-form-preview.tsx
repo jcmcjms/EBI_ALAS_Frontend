@@ -175,8 +175,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         // Legacy-template numbers (kept inline because the printed
         // form must match the legacy Excel regardless of what the
         // engine uses for the capacity-to-pay gate).
-        const months = loan.term || 0;
-        const termDays = months * 30;
+        const termDays = loan.term || 0;
         const applicationChargeLegacy = (loan.proposedAmount || 0) * LEGACY_APPLICATION_CHARGE_RATE;
         const docStamp = (loan.proposedAmount || 0) * LEGACY_DOC_STAMP_RATE;
         const notarialFee = LEGACY_NOTARIAL_FEE;
@@ -203,7 +202,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
 
         const productLine = loan.product
-            ? `[ ${loan.product} ] ${loan.term || 0} months @ ${loan.interestRate || 0}% per Annum`
+            ? `[ ${loan.product} ] ${loan.term || 0} days @ ${loan.interestRate || 0}% per Annum`
             : "-";
 
         const remarksLines = [deviations?.remarks, deviations?.aoRecommendation, deviations?.otherRemarks].filter(

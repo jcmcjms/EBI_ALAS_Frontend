@@ -340,9 +340,11 @@ setValue("branchType.creationTypeLabel", picked.creationTypeLabel ?? "", {
             });
         }
         if (picked.totalTermDays != null && Number.isFinite(picked.totalTermDays)) {
-            // Backend reports term in days (`total_amortization * 30`);
-            // the form's `loan.term` is months, so round days ÷ 30.
-            setValue("loan.term", Math.round(picked.totalTermDays / 30), {
+            // Backend reports term in days (`total_amortization * 30`),
+            // and the form's `loan.term` is now days as well — pass
+            // through unchanged. Round to a whole number to keep the
+            // Zod integer check happy.
+            setValue("loan.term", Math.round(picked.totalTermDays), {
                 shouldDirty: false,
             });
         }

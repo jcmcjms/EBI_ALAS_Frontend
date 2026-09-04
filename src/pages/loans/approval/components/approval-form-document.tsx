@@ -60,11 +60,12 @@ export function computeLoanMetrics(data: LoanApplicationFormData) {
     const buyOutBalance = buyOuts.reduce((s, b) => s + (b.outstandingBalance || 0), 0);
     const incomingTotal = incomingLoans.reduce((s, i) => s + (i.deductions || 0), 0);
 
-    const months = loan.term || 0;
+    const termDays = loan.term || 0;
+    const termMonths = Math.floor(termDays / 30);
     const monthlyRate = (loan.interestRate || 0) / 100 / 12;
     const amortization =
-        months > 0 && monthlyRate > 0
-            ? (loan.proposedAmount * (monthlyRate * (1 + monthlyRate) ** months)) / ((1 + monthlyRate) ** months - 1)
+        termMonths > 0 && monthlyRate > 0
+            ? (loan.proposedAmount * (monthlyRate * (1 + monthlyRate) ** termMonths)) / ((1 + monthlyRate) ** termMonths - 1)
             : 0;
 
     const applicationCharge = loan.proposedAmount * 0.0504;
@@ -86,7 +87,7 @@ export function computeLoanMetrics(data: LoanApplicationFormData) {
     const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
 
     return {
-        termDays: months * 30,
+        termDays,
         amortization,
         applicationCharge,
         docStamp,
@@ -184,7 +185,7 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
     const c = computeLoanMetrics(data);
 
     const productLine = loan.product
-        ? `[ ${loan.product} ] ${loan.term || 0} months @ ${loan.interestRate || 0}% per Annum`
+        ? `[ ${loan.product} ] ${loan.term || 0} days @ ${loan.interestRate || 0}% per Annum`
         : "-";
 
     const remarksLines = [deviations?.remarks, deviations?.aoRecommendation, deviations?.otherRemarks].filter(

@@ -38,7 +38,7 @@ export const dummyLoanData: LoanApplicationFormData = {
     product: "Multi-Purpose Loan",
     purpose: "Home Renovation and Tuition Fee",
     proposedAmount: 150000,
-    term: 36,
+    term: 1080, // 36 months × 30 days = 1,080 days
     interestRate: 1.5,
     nthpDate: "2026-08-30",
   },

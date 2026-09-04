@@ -536,7 +536,7 @@ export interface PreLoanItem {
     productDescription?: string | null;
     /** Last proposed terms captured in the draft. */
     proposedAmount?: number | null;
-    termMonths?: number | null;
+    termDays?: number | null;
     interestRate?: number | null;
     purpose?: string | null;
     /** When the preloan was last edited (ISO 8601). */
@@ -697,7 +697,7 @@ export interface AuditLogQueryParams {
 // of `UpdateLoanProductRequest` on the backend, validated by
 // `UpdateLoanProductValidator` server-side:
 //   - MinAmount, MaxAmount                  (eligibility bounds, PHP)
-//   - MinTermMonths, MaxTermMonths          (eligibility bounds, months)
+//   - MinTermDays, MaxTermDays              (eligibility bounds, days)
 //   - NotarialFee, DocStampFee, InsuranceFee (flat fees, PHP)
 //   - AdvanceInterestRate                   (decimal fraction, 0-1)
 //
@@ -724,10 +724,10 @@ export interface LoanProductResponse {
     minAmount: number;
     /** Ceiling on the principal (PHP). */
     maxAmount: number;
-    /** Shortest term an AO can request (whole months). */
-    minTermMonths: number;
-    /** Longest term (months). Capped at 84 by the validator (7-year bank rule). */
-    maxTermMonths: number;
+    /** Shortest term an AO can request (whole days). */
+    minTermDays: number;
+    /** Longest term (days). Capped at 2555 by the validator (7-year bank rule). */
+    maxTermDays: number;
     /** Flat notarial fee (PHP). */
     notarialFee: number;
     /** Flat documentary-stamps fee (PHP). */
@@ -758,8 +758,8 @@ export interface LoanProductResponse {
 export interface UpdateLoanProductPayload {
     minAmount: number;
     maxAmount: number;
-    minTermMonths: number;
-    maxTermMonths: number;
+    minTermDays: number;
+    maxTermDays: number;
     notarialFee: number;
     docStampFee: number;
     insuranceFee: number;

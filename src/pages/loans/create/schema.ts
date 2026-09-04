@@ -239,7 +239,7 @@ export const loanParametersSchema = z.object({
         .number()
         .min(1, "Proposed amount is required")
         .max(5_000_000, "Amount exceeds maximum allowed"),
-    term: z.number().min(1, "Term must be at least 1 month").max(360),
+    term: z.number().min(1, "Term must be at least 1 day").max(2555),
     interestRate: z.number().min(0).max(100).optional(),
     nthpDate: z.string().optional(),
 

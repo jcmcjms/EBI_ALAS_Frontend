@@ -93,8 +93,8 @@ export interface LoanComputationInputs {
     principal: number;
     /** Nominal annual interest rate, in percent (e.g. 7.0 for 7%). */
     annualRatePercent: number;
-    /** Term in months. */
-    termMonths: number;
+    /** Term in days. */
+    termDays: number;
     /**
      * Upfront application charge as a fraction of `principal`
      * (e.g. 0.06 for 6%). In production this should be sourced from
@@ -164,21 +164,31 @@ export interface LoanComputationResults {
  * Standard PMT (amortizing payment) for a fixed-rate, fully-amortizing
  * loan.
  *
- * @param principal Loan principal in PHP.
- * @param annualRatePercent Nominal APR in percent (e.g. 7.5 for 7.5%).
- * @param termMonths Term in months.
- * @returns Monthly payment, rounded to 2 decimal places. Returns 0
+ * @param principal loan principal in PHP.
+ * @param annualRatePercent nominal APR in percent (e.g. 7.5 for 7.5%).
+ * @param termDays term in days (the loan term throughout the system is
+ *                 days; the engine internally converts to monthly
+ *                 periods because the PMT formula is parameterized in
+ *                 months — converting at the boundary keeps the API
+ *                 shape uniform).
+ * @returns monthly payment, rounded to 2 decimal places. Returns 0
  *          for non-positive principal or term.
  */
 export function computeMonthlyAmortization(
     principal: number,
     annualRatePercent: number,
-    termMonths: number,
+    termDays: number,
 ): number {
-    if (!Number.isFinite(principal) || !Number.isFinite(annualRatePercent) || !Number.isFinite(termMonths)) {
+    if (!Number.isFinite(principal) || !Number.isFinite(annualRatePercent) || !Number.isFinite(termDays)) {
         return 0;
     }
-    if (principal <= 0 || termMonths <= 0) return 0;
+    if (principal <= 0 || termDays <= 0) return 0;
+    // Convert days → months. Using 30 days per month keeps the legacy
+    // "1 month = 30 days" convention the rest of the system (preloan
+    // totalTermDays, approval-form preview, etc.) already uses, so the
+    // engine output matches what the printed form shows.
+    const termMonths = Math.floor(termDays / 30);
+    if (termMonths <= 0) return 0;
     if (annualRatePercent === 0) return round2(principal / termMonths);
 
     const r = annualRatePercent / 100 / 12;
@@ -233,7 +243,7 @@ export function computeLoanMetrics(
     const {
         principal,
         annualRatePercent,
-        termMonths,
+        termDays,
         applicationChargeRate,
         docStamp,
         notarialFee,
@@ -246,7 +256,7 @@ export function computeLoanMetrics(
     const monthlyAmortization = computeMonthlyAmortization(
         principal,
         annualRatePercent,
-        termMonths,
+        termDays,
     );
 
     const applicationCharge = round2(principal * applicationChargeRate);
@@ -325,7 +335,7 @@ export function buildLoanMetricsSnapshot(
 } {
     const principal = form.loan?.proposedAmount || 0;
     const annualRatePercent = form.loan?.interestRate || 0;
-    const termMonths = form.loan?.term || 0;
+    const termDays = form.loan?.term || 0;
 
     // The Excel's "Total Accounts Balance" line is the EBI reloan OB
     // (not the raw WebLoan outstanding feed — those are listed under
@@ -354,7 +364,7 @@ export function buildLoanMetricsSnapshot(
         loan: {
             principal,
             annualRatePercent,
-            termMonths,
+            termDays,
             applicationChargeRate,
             // TODO(product-config): once the Loan Product DTO is wired
             // through TanStack Query, replace these zeros with the

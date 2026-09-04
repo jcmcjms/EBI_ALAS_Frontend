@@ -53,10 +53,10 @@ import type { LoanProductResponse } from "@/src/lib/api/types";
  * backend stays the security boundary:
  *   - all amount fields >= 0
  *   - maxAmount >= minAmount
- *   - minTermMonths, maxTermMonths >= 0
- *   - maxTermMonths >= minTermMonths
- *   - maxTermMonths <= 84 (the absolute 7-year bank ceiling, mirrored
- *     from `LoanProductService.AbsoluteMaxTermMonths`)
+ *   - minTermDays, maxTermDays >= 0
+ *   - maxTermDays >= minTermDays
+ *   - maxTermDays <= 2555 (the absolute 7-year bank ceiling, mirrored
+ *     from `LoanProductService.AbsoluteMaxTermDays`)
  *   - advanceInterestRate between 0 and 1 (decimal fraction;
  *     0.12 = 12% p.a.)
  */
@@ -69,16 +69,16 @@ const productFormSchema = z
         maxAmount: z.coerce
             .number({ message: "Max amount is required." })
             .min(0, "Max amount cannot be negative."),
-        // Term bounds (months) ───────────────────────────────────────
-        minTermMonths: z.coerce
+        // Term bounds (days) ───────────────────────────────────────
+        minTermDays: z.coerce
             .number({ message: "Min term is required." })
-            .int("Min term must be a whole number of months.")
+            .int("Min term must be a whole number of days.")
             .min(0, "Min term cannot be negative."),
-        maxTermMonths: z.coerce
+        maxTermDays: z.coerce
             .number({ message: "Max term is required." })
-            .int("Max term must be a whole number of months.")
+            .int("Max term must be a whole number of days.")
             .min(0, "Max term cannot be negative.")
-            .max(84, "Max term cannot exceed 84 months (7 years)."),
+            .max(2555, "Max term cannot exceed 2555 days (7 years)."),
         // Bank fees (flat PHP) ──────────────────────────────────────
         notarialFee: z.coerce
             .number({ message: "Notarial fee is required." })
@@ -99,9 +99,9 @@ const productFormSchema = z
         message: "Max amount must be greater than or equal to min amount.",
         path: ["maxAmount"],
     })
-    .refine((v) => v.maxTermMonths >= v.minTermMonths, {
+    .refine((v) => v.maxTermDays >= v.minTermDays, {
         message: "Max term must be greater than or equal to min term.",
-        path: ["maxTermMonths"],
+        path: ["maxTermDays"],
     });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -276,7 +276,7 @@ export function ProductEditSheet({
                         <section className="space-y-4">
                             <SectionHeading
                                 title="Eligibility Bounds"
-                                description="Min and max principal (₱) and term (months) an AO can request for this product."
+                                description="Min and max principal (₱) and term (days) an AO can request for this product."
                             />
                             <div className="grid grid-cols-2 gap-4">
                                 <NumberField
@@ -296,21 +296,21 @@ export function ProductEditSheet({
                                     {...register("maxAmount")}
                                 />
                                 <NumberField
-                                    id="minTermMonths"
-                                    label="Min Term (months)"
-                                    error={errors.minTermMonths?.message}
+                                    id="minTermDays"
+                                    label="Min Term (days)"
+                                    error={errors.minTermDays?.message}
                                     disabled={!canEdit}
                                     step="1"
-                                    {...register("minTermMonths")}
+                                    {...register("minTermDays")}
                                 />
                                 <NumberField
-                                    id="maxTermMonths"
-                                    label="Max Term (months)"
-                                    error={errors.maxTermMonths?.message}
-                                    hint="Hard ceiling: 84 months (7 years)."
+                                    id="maxTermDays"
+                                    label="Max Term (days)"
+                                    error={errors.maxTermDays?.message}
+                                    hint="Hard ceiling: 2555 days (7 years)."
                                     disabled={!canEdit}
                                     step="1"
-                                    {...register("maxTermMonths")}
+                                    {...register("maxTermDays")}
                                 />
                             </div>
                         </section>
@@ -357,7 +357,7 @@ export function ProductEditSheet({
                         <section className="space-y-4">
                             <SectionHeading
                                 title="Advance Interest Rate"
-                                description="Annual rate, stored as a decimal fraction. The disbursement service multiplies this by principal and (termMonths / 12) to compute the advance-interest deduction."
+                                description="Annual rate, stored as a decimal fraction. The disbursement service multiplies this by principal and (termDays / 365) to compute the advance-interest deduction."
                             />
                             <div className="max-w-xs">
                                 <NumberField
@@ -442,8 +442,8 @@ function emptyValues(): ProductFormValues {
     return {
         minAmount: 0,
         maxAmount: 0,
-        minTermMonths: 0,
-        maxTermMonths: 0,
+        minTermDays: 0,
+        maxTermDays: 0,
         notarialFee: 0,
         docStampFee: 0,
         insuranceFee: 0,
@@ -455,8 +455,8 @@ function valuesFromProduct(p: LoanProductResponse): ProductFormValues {
     return {
         minAmount: p.minAmount,
         maxAmount: p.maxAmount,
-        minTermMonths: p.minTermMonths,
-        maxTermMonths: p.maxTermMonths,
+        minTermDays: p.minTermDays,
+        maxTermDays: p.maxTermDays,
         notarialFee: p.notarialFee,
         docStampFee: p.docStampFee,
         insuranceFee: p.insuranceFee,
