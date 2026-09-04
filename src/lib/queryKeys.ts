@@ -25,6 +25,9 @@ export const queryKeys = {
         all: ["loan-products"] as const,
         list: (params: { isActive?: boolean; code?: string } = {}) =>
             ["loan-products", "list", params] as const,
+        // Single-product fetch (GET /api/loan-products/{code}). Keyed by
+        // the natural-key `code` (string) — same value used in the URL.
+        detail: (code: string) => ["loan-products", "detail", code] as const,
     },
     loanStatuses: {
         all: ["loan-statuses"] as const,

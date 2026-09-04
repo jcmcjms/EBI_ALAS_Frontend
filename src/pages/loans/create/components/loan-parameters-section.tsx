@@ -61,6 +61,23 @@ export function LoanParametersSection() {
     const interestRate = useWatch({ control, name: "loan.interestRate" }) ?? 1.5;
     const productDisplayName = useWatch({ control, name: "loan.product" }) ?? "";
 
+    // ── Fee field watchers ─────────────────────────────────────────────
+    // Hoisted out of the conditional `{selectedProduct && (...)}` block
+    // below so hook call order stays stable across renders. The smart-
+    // default fees section only *renders* once a product is selected,
+    // but these subscriptions must be registered unconditionally — see
+    // Rules of Hooks (https://react.dev/link/rules-of-hooks). Calling
+    // `useWatch` inside the conditional block produced the "change in
+    // the order of Hooks" / "Rendered more hooks than during the
+    // previous render" error the first time the product catalog
+    // resolved and `selectedProduct` transitioned to defined.
+    const notarialFee =
+        useWatch({ control, name: "loan.notarialFee" }) ?? undefined;
+    const docStamps =
+        useWatch({ control, name: "loan.docStamps" }) ?? undefined;
+    const insurance =
+        useWatch({ control, name: "loan.insurance" }) ?? undefined;
+
     const estMonthlyLegacy =
         term > 0 && proposedAmount > 0
             ? (proposedAmount + proposedAmount * (interestRate / 100) * (term / 12)) / term
@@ -254,11 +271,7 @@ export function LoanParametersSection() {
                                 Notarial Fee
                             </Label>
                             <CurrencyInput
-                                value={
-                                    useWatch({ control, name: "loan.notarialFee" }) as
-                                        | number
-                                        | undefined
-                                }
+                                value={notarialFee as number | undefined}
                                 onChange={(v) =>
                                     setValue("loan.notarialFee", v, {
                                         shouldDirty: true,
@@ -279,11 +292,7 @@ export function LoanParametersSection() {
                                 Doc Stamps
                             </Label>
                             <CurrencyInput
-                                value={
-                                    useWatch({ control, name: "loan.docStamps" }) as
-                                        | number
-                                        | undefined
-                                }
+                                value={docStamps as number | undefined}
                                 onChange={(v) =>
                                     setValue("loan.docStamps", v, { shouldDirty: true })
                                 }
@@ -302,11 +311,7 @@ export function LoanParametersSection() {
                                 Insurance
                             </Label>
                             <CurrencyInput
-                                value={
-                                    useWatch({ control, name: "loan.insurance" }) as
-                                        | number
-                                        | undefined
-                                }
+                                value={insurance as number | undefined}
                                 onChange={(v) =>
                                     setValue("loan.insurance", v, { shouldDirty: true })
                                 }

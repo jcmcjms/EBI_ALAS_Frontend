@@ -164,3 +164,4 @@ import type { LoanProductResponse } from "@/src/lib/api/types";
 // (The actual contract lives in `src/lib/api/types.ts` — the C# spec
 // above is the doc; this is just a typed anchor.)
 export type _LoanProductResponse = LoanProductResponse;
+

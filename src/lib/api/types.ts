@@ -676,75 +676,119 @@ export interface AuditLogQueryParams {
     endDate?: string;
 }
 
-// ─── Loan Products (fee rules) ────────────────────────────────────────────────
+// ─── Loan Products (bank policy mirror) ──────────────────────────────────────
 //
-// Mirrors the backend `Features/LoanProducts/LoanProductDtos.cs` contract.
-// Loan products are the *bank policy* source-of-truth for fee defaults
-// (notarial, doc stamps, insurance). Storing them in a configuration table
-// (instead of hard-coding in the form / service) lets Compliance adjust
-// rates without a code deploy.
+// Mirrors the backend `Features/Loans/ILoanProductService.cs` and
+// `Features/Loans/LoanProduct.cs` contract. The ALAS backend is the *mirror*
+// of webloan's `dbo.loan_product` catalog — it owns the policy columns
+// (eligibility bounds, fees, advance-interest rate) and webloan is the
+// source of truth for existence + retirement.
 //
-// "Smart Default with Editable Override":
-//   - Frontend fetches `LoanProductResponse` for the picked product.
-//   - Computes the *standard* fee on the fly (`expected*` snapshot).
-//   - AO may edit; deviations beyond `maxAllowedDeviation` need a
-//     `deviationJustification`.
-//   - Backend re-runs the same calculation on submit (see
-//     `src/lib/loan-fee-contract.ts` for the mirrored rules) — the
-//     frontend's value is *never* trusted.
-
-/** How a loan-product fee is calculated. Mirrors backend `FeeType`. */
-export type FeeType = "FLAT" | "PERCENTAGE";
+// Two responsibilities are split between the two systems:
+//   - **Existence & retirement** — driven by the webloan sync
+//     (`POST /api/loan-products/sync`). Updates `IsRetired` and
+//     `LastSyncedAt` on every run. The admin UI cannot change these.
+//   - **Policy fields** — owned by ALAS. Updated by ops through the admin
+//     UI via `PUT /api/loan-products/{code}`. The PK in the URL is the
+//     webloan `id_code` (e.g. "C35"), NOT a surrogate int — the entity
+//     has no int id column.
+//
+// Editable surface (UpdateLoanProductPayload) is the exact 8-field shape
+// of `UpdateLoanProductRequest` on the backend, validated by
+// `UpdateLoanProductValidator` server-side:
+//   - MinAmount, MaxAmount                  (eligibility bounds, PHP)
+//   - MinTermMonths, MaxTermMonths          (eligibility bounds, months)
+//   - NotarialFee, DocStampFee, InsuranceFee (flat fees, PHP)
+//   - AdvanceInterestRate                   (decimal fraction, 0-1)
+//
+// `IsRetired` and `LastSyncedAt` are **read-only** from the admin surface
+// — they are owned by the sync. The admin row shows them as a
+// staleness/retirement chip so ops can spot a stale row at a glance.
 
 /**
- * Mirrors `LoanProductFeeRuleDto` on the backend.
+ * Mirrors `LoanProductResponse` on the backend (the list/get response
+ * for `/api/loan-products` and `/api/loan-products/active`).
  *
- * Each fee (notarial / doc stamps / insurance) is described by:
- *   - `feeType`: "FLAT" → a flat peso amount; "PERCENTAGE" → a % of
- *     principal.
- *   - `defaultValue`: the value used when `feeType === "FLAT"`.
- *   - `rate`: the percentage (0-100) used when `feeType === "PERCENTAGE"`.
- *   - `maxAllowedDeviation`: the AO may override, but anything beyond this
- *     absolute delta (in pesos) requires `deviationJustification`. Set to
- *     `0` to forbid overrides entirely; set to `Infinity` (or a very large
- *     number) to allow free-form entry without a justification.
- *
- * The backend stores these rules in `dbo.loan_product_fee_rules` keyed by
- * `(productId, feeCode)` — never hard-coded. Compliance changes the row;
- * the frontend re-reads it.
+ * PK is `code` (string), matching the backend's choice of
+ * `webloan.loan_product.id_code` as the natural key. The mirror
+ * deliberately does NOT carry an `id: number` — the entity has no
+ * surrogate id, and adding one on the FE would silently mask the
+ * `string`-keyed URL the backend actually routes on.
  */
-export interface LoanProductFeeRule {
-    /** Which fee this rule describes (e.g. "NOTARIAL_FEE"). */
-    feeCode: "NOTARIAL_FEE" | "DOC_STAMPS" | "INSURANCE";
-    feeType: FeeType;
-    /** Used when `feeType === "FLAT"`. In PHP. */
-    defaultValue: number;
-    /** Used when `feeType === "PERCENTAGE"`. 0-100, two-decimal. */
-    rate: number;
-    /** Absolute ₱ delta an AO may override without justification. */
-    maxAllowedDeviation: number;
-}
-
-/** Mirrors `LoanProductResponse` on the backend. */
 export interface LoanProductResponse {
-    /** Stable product id (PK on `dbo.loan_product`). */
-    id: number;
-    /** Internal product code (e.g. "PL", "MPL", "C35"). */
+    /** webloan `id_code` (e.g. "PL", "MPL", "C35", "C23"). Natural key. */
     code: string;
-    /** Human-readable description shown in the LAI / approval form. */
+    /** Human-readable description (synced from webloan; admin cannot edit). */
     description: string;
-    /** Whether the product is currently sellable. Inactive products must not appear in wizards. */
-    isActive: boolean;
-    /** All fee rules attached to this product (notarial, doc stamps, insurance). */
-    fees: LoanProductFeeRule[];
+    /** Floor on the principal an AO can request (PHP). */
+    minAmount: number;
+    /** Ceiling on the principal (PHP). */
+    maxAmount: number;
+    /** Shortest term an AO can request (whole months). */
+    minTermMonths: number;
+    /** Longest term (months). Capped at 84 by the validator (7-year bank rule). */
+    maxTermMonths: number;
+    /** Flat notarial fee (PHP). */
+    notarialFee: number;
+    /** Flat documentary-stamps fee (PHP). */
+    docStampFee: number;
+    /** Flat insurance fee (PHP). */
+    insuranceFee: number;
+    /** Advance-interest annual rate as a decimal fraction (0.12 = 12% p.a.). */
+    advanceInterestRate: number;
+    /**
+     * Mirrored from webloan. Read-only on the admin surface.
+     * True when webloan has a non-null `expiration` on the source row.
+     */
+    isRetired: boolean;
+    /** When the row was last touched by the sync. Drives the staleness chip. */
+    lastSyncedAt: string;
 }
 
-/** Response wrapper for GET /api/loan-products. */
-export interface LoanProductsResponse {
-    items: LoanProductResponse[];
+/**
+ * Admin write payload for `PUT /api/loan-products/{code}`.
+ *
+ * This is intentionally narrow: the endpoint can ONLY change policy
+ * fields. Sync-owned fields (code, description, isRetired, lastSyncedAt)
+ * are preserved by `LoanProductService.UpdateAsync` — sending them here
+ * would be ignored, so we don't accept them in the type.
+ *
+ * Mirrors `UpdateLoanProductRequest` (`Features/Loans/ILoanProductService.cs`).
+ */
+export interface UpdateLoanProductPayload {
+    minAmount: number;
+    maxAmount: number;
+    minTermMonths: number;
+    maxTermMonths: number;
+    notarialFee: number;
+    docStampFee: number;
+    insuranceFee: number;
+    advanceInterestRate: number;
 }
 
-/** Query parameters for GET /api/loan-products. */
+/**
+ * Result of a manual sync run (`POST /api/loan-products/sync`).
+ * Mirrors `LoanProductSyncResult` on the backend.
+ */
+export interface LoanProductSyncResult {
+    /** Brand-new rows added to the ALAS mirror. */
+    added: number;
+    /** Existing rows whose IsRetired or Description changed during the run. */
+    updated: number;
+    /** Rows whose policy fields were left untouched by the sync. */
+    preserved: number;
+    /** When the run finished (UTC, ISO-8601). */
+    syncedAt: string;
+}
+
+/**
+ * Query parameters for `GET /api/loan-products/active`.
+ *
+ * The list endpoint (`GET /api/loan-products`) takes no params — it
+ * returns every row in the mirror (active + retired). The `/active`
+ * variant is what the AO-facing loan-creation form uses to populate
+ * its product dropdown.
+ */
 export interface LoanProductsQuery {
     /** Restrict to active products (default true for AO-facing dropdowns). */
     isActive?: boolean;

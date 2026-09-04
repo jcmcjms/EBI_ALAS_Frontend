@@ -8,6 +8,7 @@ const Login = lazy(() => import("./pages/auth/login"));
 const ChangePassword = lazy(() => import("./pages/auth/change-password"));
 const Dashboard = lazy(() => import("./pages/dashboard").then(m => ({ default: m.Dashboard })));
 const UsersPage = lazy(() => import("./pages/admin/users/index").then(m => ({ default: m.UsersPage })));
+const LoanProductsPage = lazy(() => import("./pages/admin/loan-products/index").then(m => ({ default: m.LoanProductsPage })));
 const LoanCreation = lazy(() => import("./pages/loans/create/index"));
 const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
 const LoanApproval = lazy(() => import("./pages/loans/approval/index"));
@@ -77,6 +78,11 @@ function App() {
                     <Route path="/admin/users" element={
                         <ProtectedRoute requiredPermission={PERMISSIONS.userView}>
                             <UsersPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/loan-products" element={
+                        <ProtectedRoute requiredPermission={PERMISSIONS.loanProductView}>
+                            <LoanProductsPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/admin/audit-logs" element={

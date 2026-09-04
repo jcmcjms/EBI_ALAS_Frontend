@@ -67,6 +67,11 @@ export const navMain: NavItem[] = [
                 requiredPermission: "user.view",
             },
             {
+                title: "Loan Products",
+                url: "/admin/loan-products",
+                requiredPermission: "loan_product.view",
+            },
+            {
                 title: "Audit Logs",
                 url: "/admin/audit-logs",
                 requiredPermission: "auditLogs.view",
