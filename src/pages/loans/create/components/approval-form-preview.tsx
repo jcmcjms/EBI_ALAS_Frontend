@@ -64,11 +64,11 @@ const LEGACY_NOTARIAL_FEE = 500;
 
 /* ── Capacity-to-pay badge ─────────────────────────────────────────────
  *
- * Reads the shared engine's results and surfaces the two banking rules
- * (minimum amortization + total disposable income) as a single chip on
- * the preview header. The same rules are enforced authoritatively by
- * `loanApplicationSchema.superRefine`; this badge is the *preview-time*
- * mirror so the AO sees the violation before they hit Submit.
+ * Reads the shared engine's results and surfaces the "exceeds disposable
+ * income" rule as a chip on the preview header. The (legacy) "below
+ * minimum amortization" check was previously surfaced here too, but it
+ * has been removed from the form-level validation gate; the badge no
+ * longer needs to mirror it.
  */
 function CapacityToPayBadge() {
     const m = useLoanComputations();
@@ -77,16 +77,13 @@ function CapacityToPayBadge() {
     if (!hasPrincipal) return null;
 
     const exceeds = m.isAmortizationExceedingDisposable;
-    const belowMin =
-        m.minimumRequiredAmortization > 0 &&
-        m.monthlyAmortization < m.minimumRequiredAmortization;
 
-    if (!exceeds && !belowMin) return null;
+    if (!exceeds) return null;
 
     return (
         <Badge variant="destructive" className="gap-1.5 py-1 text-xs">
             <Warning size={12} weight="fill" />
-            {exceeds ? "Exceeds disposable income" : "Below minimum amortization"}
+            Exceeds disposable income
         </Badge>
     );
 }

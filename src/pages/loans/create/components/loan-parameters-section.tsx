@@ -1,20 +1,12 @@
 import { useEffect, useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import {
-    Calculator,
-    CalendarBlank,
-    CheckCircle,
-    CurrencyDollar,
-    WarningCircle,
-} from "@phosphor-icons/react";
+import { CalendarBlank, CurrencyDollar } from "@phosphor-icons/react";
 
-import { Badge } from "@/src/components/ui/badge";
 import { CurrencyInput } from "@/src/components/ui/currency-input";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { useLoanProducts } from "@/src/lib/api/loan-products";
 import { computeExpectedFees } from "@/src/lib/loan-fee-rules";
-import { useLoanComputations } from "@/src/hooks/use-loan-computations";
 
 import { SectionCard } from "./section-card";
 import { getSection } from "../sections";
@@ -50,15 +42,8 @@ function extractProductCode(productDisplayName: string | undefined): string | un
 export function LoanParametersSection() {
     const { register, control, setValue } = useFormContext();
 
-    // ── Header "Est. Monthly" badge (legacy formula, unchanged) ───────
-    // Kept on the legacy "add interest then divide by term" formula
-    // so the AO doesn't see the badge jump on the first render. The
-    // live PMT (used by the capacity-to-pay panel below) is computed
-    // by the shared engine so the Zod gate and this UI stay in lockstep.
     const proposedAmount =
         useWatch({ control, name: "loan.proposedAmount" }) ?? 0;
-    const term = useWatch({ control, name: "loan.term" }) ?? 0;
-    const interestRate = useWatch({ control, name: "loan.interestRate" }) ?? 1.5;
     const productDisplayName = useWatch({ control, name: "loan.product" }) ?? "";
 
     // ── Fee field watchers ─────────────────────────────────────────────
@@ -77,29 +62,6 @@ export function LoanParametersSection() {
         useWatch({ control, name: "loan.docStamps" }) ?? undefined;
     const insurance =
         useWatch({ control, name: "loan.insurance" }) ?? undefined;
-
-    const estMonthlyLegacy =
-        term > 0 && proposedAmount > 0
-            ? (proposedAmount + proposedAmount * (interestRate / 100) * (term / 365)) / (term / 30)
-            : 0;
-
-    // ── Live capacity-to-pay panel ─────────────────────────────────────
-    // Reads the same engine that drives the Approval Form preview and
-    // the Zod gate. Showing the same values here means the AO can fix
-    // the principal/term before submission instead of being blocked at
-    // the Submit button. The numbers update on every keystroke without
-    // re-rendering the rest of the wizard because the hook only
-    // subscribes to the slices it reads.
-    const metrics = useLoanComputations();
-    const hasPrincipal = metrics.monthlyAmortization > 0;
-
-    const exceedsDisposable = metrics.isAmortizationExceedingDisposable;
-    const belowMin =
-        metrics.minimumRequiredAmortization > 0 &&
-        metrics.monthlyAmortization < metrics.minimumRequiredAmortization;
-
-    const showCapacityPanel = hasPrincipal;
-    const isHealthy = !exceedsDisposable && !belowMin;
 
     // ── Smart-default fee rules (the new "Smart Default + Editable ─────
     //    Override" behavior) ───────────────────────────────────────────────
@@ -157,17 +119,6 @@ export function LoanParametersSection() {
             title={section.label}
             description={section.description}
             icon={<CurrencyDollar size={20} weight="bold" className="text-primary" />}
-            badge={
-                estMonthlyLegacy > 0 ? (
-                    <Badge variant="secondary" className="font-normal text-xs flex items-center gap-1.5 py-1 px-3">
-                        <Calculator size={13} weight="bold" />
-                        Est. Monthly:{" "}
-                        <span className="font-bold">
-                            {php(estMonthlyLegacy)}
-                        </span>
-                    </Badge>
-                ) : undefined
-            }
         >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {/* Row 1 — Product & Purpose */}
@@ -325,96 +276,6 @@ export function LoanParametersSection() {
                             )}
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* ── Live Capacity-to-Pay Panel ─────────────────────────
-             * Renders only when the AO has typed enough terms for the
-             * PMT to be meaningful. The status mirrors the Zod gate's
-             * exact rules; messages match what the AO will see at the
-             * Submit button. Hidden while the form is "empty" so we
-             * don't surface a "below minimum" warning on the empty
-             * defaultValues. */}
-            {showCapacityPanel && (
-                <div
-                    className={
-                        "mt-5 rounded-lg border p-4 text-xs " +
-                        (isHealthy
-                            ? "border-primary/30 bg-primary/5 text-foreground"
-                            : "border-destructive/40 bg-destructive/5 text-destructive")
-                    }
-                    role={isHealthy ? "status" : "alert"}
-                >
-                    <div className="mb-2 flex items-center gap-2">
-                        {isHealthy ? (
-                            <CheckCircle size={14} weight="fill" className="text-primary" />
-                        ) : (
-                            <WarningCircle size={14} weight="fill" />
-                        )}
-                        <span className="font-semibold uppercase tracking-wider">
-                            Capacity-to-Pay
-                        </span>
-                    </div>
-
-                    <div className="grid gap-2 sm:grid-cols-3">
-                        <div>
-                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                                Monthly Amortization
-                            </div>
-                            <div className="font-bold tabular-nums">
-                                {php(metrics.monthlyAmortization)}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                                Total Disposable
-                            </div>
-                            <div
-                                className={
-                                    "font-bold tabular-nums " +
-                                    (exceedsDisposable ? "text-destructive" : "")
-                                }
-                            >
-                                {php(metrics.totalDisposable)}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                                Minimum Required
-                            </div>
-                            <div
-                                className={
-                                    "font-bold tabular-nums " +
-                                    (belowMin ? "text-destructive" : "")
-                                }
-                            >
-                                {php(metrics.minimumRequiredAmortization)}
-                            </div>
-                        </div>
-                    </div>
-
-                    {!isHealthy && (
-                        <p className="mt-3 leading-relaxed">
-                            {exceedsDisposable && (
-                                <>
-                                    Monthly amortization exceeds the borrower's
-                                    disposable by{" "}
-                                    <span className="font-bold">
-                                        {php(Math.abs(metrics.totalDisposable))}
-                                    </span>
-                                    .{" "}
-                                </>
-                            )}
-                            {belowMin && (
-                                <>
-                                    Computed amortization is below the{" "}
-                                    {php(metrics.minimumRequiredAmortization)}{" "}
-                                    floor for this amount.{" "}
-                                </>
-                            )}
-                            Adjust the principal or term before submitting.
-                        </p>
-                    )}
                 </div>
             )}
         </SectionCard>

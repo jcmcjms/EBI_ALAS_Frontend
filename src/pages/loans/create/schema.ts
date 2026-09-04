@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-import {
-    buildLoanMetricsSnapshot,
-    computeMonthlyAmortization,
-    getMinimumRequiredAmortization,
-} from "@/src/lib/loan-computations";
-
 /**
  * Typed view of the backend's `loan_data.creation_type` byte — the
  * canonical list is a hard-coded `CASE` block on the .NET side (see
@@ -385,20 +379,19 @@ export const deviationsSchema = z
 // ── Full Loan Application ──────────────────────────────────────
 //
 // `loanApplicationSchema` is the root schema wired to `useForm`'s
-// resolver. It carries two cross-field validation rules via
-// `superRefine` — these are the legacy Excel's "Capacity to Pay"
-// checks, encoded here so the AO can't submit a form that violates
-// them (the .NET 8 backend re-runs the same checks authoritatively):
+// resolver. It carries one cross-field validation rule via `superRefine`:
+// if any of the three fee fields (notarial / doc stamps / insurance)
+// deviates from the `standardFeesSnapshot` that the wizard wrote at the
+// last (product, principal) change, the AO must supply a
+// `feeDeviationJustification`. The exact per-product `maxAllowedDeviation`
+// threshold is enforced server-side — the schema's job is just to refuse
+// an unjustified override at all.
 //
-//   1. Monthly Amortization must not exceed Total Disposable Income.
-//   2. Computed monthly amortization must meet (or exceed) the
-//      minimum required for the proposed amount, per the tiered
-//      lookup table in `@/src/lib/loan-computations`.
-//
-// Both rules are deliberately only enforced when the loan params
-// are well-formed (positive principal, positive term). The
-// `loanParametersSchema` already surfaces a top-level error for
-// those, so we don't double-flag.
+// (The legacy Excel's "Capacity to Pay" checks — monthly amortization
+// vs. disposable income, and computed amortization vs. the tiered
+// minimum table — were previously enforced here. The UI no longer
+// surfaces a capacity-to-pay panel in the Loan Parameters section, and
+// the .NET 8 backend re-runs both checks authoritatively on submit.)
 export const loanApplicationSchema = z
     .object({
         branchType: branchTypeSchema,
@@ -418,92 +411,20 @@ export const loanApplicationSchema = z
         deviations: deviationsSchema,
     })
     .superRefine((data, ctx) => {
-        const { loan, client, ebiReloans, buyOuts, incomingLoans, deviations } = data;
+        const { loan, deviations } = data;
 
-        // Only run the cross-field rules when the underlying loan
-        // parameters are themselves valid. The `loanParametersSchema`
-        // already emits field-level issues for principal/term, so
-        // piling capacity-to-pay errors on top of a `Term is required`
-        // error would be noise.
-        if (!loan?.proposedAmount || loan.proposedAmount <= 0) return;
-        if (!loan?.term || loan.term <= 0) return;
-        if (loan?.interestRate == null || loan.interestRate < 0) return;
-
-        // The engine treats a 0% rate as "straight-line" amortization;
-        // the rule still applies but produces a smaller payment.
-        const monthlyAmortization = computeMonthlyAmortization(
-            loan.proposedAmount,
-            loan.interestRate,
-            loan.term,
-        );
-
-        // Rule #2 first: the tiered minimum table is a hard floor for
-        // any loan amount above ₱100k. Surface it on `term` so the
-        // AO's eye lands on the column they can actually edit to
-        // bring the payment up (longer term → smaller payment).
-        const minimumAmortization = getMinimumRequiredAmortization(
-            loan.proposedAmount,
-        );
-        if (minimumAmortization > 0 && monthlyAmortization < minimumAmortization) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ["loan", "term"],
-                message: `Computed amortization (${formatCurrency(
-                    monthlyAmortization,
-                )}) is below the minimum required (${formatCurrency(
-                    minimumAmortization,
-                )}) for this loan amount. Extend the term or reduce the principal.`,
-            });
-        }
-
-        // Rule #1: capacity-to-pay. Aggregating the obligations into
-        // the scalar inputs the engine expects keeps the rule logic
-        // in one place — the same snapshot `useLoanComputations`
-        // derives for the preview. We only consume the `income` slice
-        // here because `loan` is already represented by
-        // `monthlyAmortization` above (computed directly from the
-        // form's loan params, which is the canonical value the engine
-        // also returns).
-        const { income } = buildLoanMetricsSnapshot({
-            loan,
-            client,
-            outstandingLoans: data.outstandingLoans,
-            ebiReloans,
-            buyOuts,
-            incomingLoans,
-        });
-        const totalMonthlyObligations =
-            monthlyAmortization + (income.otherMonthlyObligations || 0);
-        const totalDisposable =
-            (income.nthp || 0) +
-            (income.otherIncome || 0) -
-            totalMonthlyObligations;
-
-        if (totalDisposable < 0) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ["client", "netTakeHomePay"],
-                message: `Monthly Amortization exceeds Total Disposable Income. Shortfall: ${formatCurrency(
-                    Math.abs(totalDisposable),
-                )}.`,
-            });
-        }
-
-        // Rule #3: fee-deviation justification.
+        // Rule: fee-deviation justification.
         //
         // If any of the three fee fields (notarial / doc stamps /
-        // insurance) deviates from the `standardFeesSnapshot` that
-        // the wizard wrote at the last (product, principal) change,
-        // the AO must supply a `feeDeviationJustification`. The
-        // snapshot lives on the form so the rule works without the
-        // wizard having to re-fetch the product rule on submit.
+        // insurance) deviates from the `standardFeesSnapshot` that the
+        // wizard wrote at the last (product, principal) change, the AO
+        // must supply a `feeDeviationJustification`. The snapshot lives
+        // on the form so the rule works without the wizard having to
+        // re-fetch the product rule on submit.
         //
         // We use a 0.01 ₱ tolerance (matches `CurrencyInput`'s
         // `VALUE_TOLERANCE`) so floating-point noise doesn't trigger
-        // the requirement. The *exact* per-product `maxAllowedDeviation`
-        // threshold is enforced server-side — the backend is the
-        // source of truth and the schema's job is just to refuse an
-        // unjustified override at all.
+        // the requirement.
         const snapshot = loan.standardFeesSnapshot ?? {
             notarialFee: 0,
             docStamps: 0,
@@ -544,21 +465,3 @@ export type LoanParameters = z.infer<typeof loanParametersSchema>;
 export type VerificationData = z.infer<typeof verificationSchema>;
 export type DeviationsData = z.infer<typeof deviationsSchema>;
 export type LoanApplicationFormData = z.infer<typeof loanApplicationSchema>;
-
-// ── Validation message formatting ─────────────────────────────────────
-//
-// `formatCurrency` is the only PHP-aware helper this file needs. It
-// exists locally so the schema module stays free of any UI-specific
-// imports (the validation messages must render even in non-browser
-// contexts, e.g. server-side parsing of a persisted form state).
-function formatCurrency(value: number): string {
-    if (!Number.isFinite(value)) return "₱0.00";
-    const rounded = Math.round(value * 100) / 100;
-    // The legacy templates use a plain comma-thousands + 2dp format
-    // (e.g. "3,500.00"). `Intl.NumberFormat("en-PH")` is locale-correct
-    // but emits a non-breaking space that reads as "3 500.00" — the
-    // template uses ASCII commas, so we reproduce that here.
-    const [whole, fraction] = rounded.toFixed(2).split(".");
-    const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    return `₱${withCommas}.${fraction}`;
-}
