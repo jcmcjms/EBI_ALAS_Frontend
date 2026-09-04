@@ -11,11 +11,14 @@ const baseURL = import.meta.env.DEV ? '' : import.meta.env.VITE_API_BASE_URL;
 /**
  * Backend CSRF contract (CsrfValidationMiddleware):
  *  - All non-GET/HEAD/OPTIONS requests must carry `X-XSRF-TOKEN: <value>`.
- *  - Expected value is the `xsrfToken` claim in the access JWT.
+ *  - Expected value is the `XsrfToken` claim in the access JWT
+ *    (matches `JwtTokenService.XsrfTokenClaim` on the backend; note the
+ *    PascalCase — JWT claim names are case-sensitive and ASP.NET preserves
+ *    the claim key as-is when serializing).
  *  - The token lives in the access JWT only — never in a cookie — to prevent
  *    CSRF from a leaked refresh cookie.
  *
- * See backend docs: CsrfValidationMiddleware + JwtXsrfTokenIssuer.
+ * See backend docs: CsrfValidationMiddleware + JwtTokenService.
  */
 const CSRF_HEADER = "X-XSRF-TOKEN";
 
@@ -23,11 +26,14 @@ const CSRF_HEADER = "X-XSRF-TOKEN";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /**
- * Parse the access JWT and return the `xsrfToken` claim, or null when:
+ * Parse the access JWT and return the `XsrfToken` claim, or null when:
  *  - token is null/empty
  *  - token is not a 3-part JWT (e.g. malformed, legacy, or absent)
  *  - payload cannot be decoded
  *  - claim is missing or non-string
+ *
+ * The backend serializes the claim with PascalCase (`JwtTokenService.XsrfTokenClaim`).
+ * JWT claim names are case-sensitive, so `xsrfToken` (camelCase) would always miss.
  *
  * Never throws — a parse failure should *skip* the header (the backend will
  * respond with a structured 403), not crash the request.
@@ -37,8 +43,8 @@ function extractXsrfToken(jwt: string | null): string | null {
     const parts = jwt.split(".");
     if (parts.length !== 3) return null;
     try {
-        const payload = decodeJwtPayload(jwt) as { xsrfToken?: unknown } | null;
-        return typeof payload?.xsrfToken === "string" ? payload.xsrfToken : null;
+        const payload = decodeJwtPayload(jwt) as { XsrfToken?: unknown } | null;
+        return typeof payload?.XsrfToken === "string" ? payload.XsrfToken : null;
     } catch {
         return null;
     }
@@ -132,7 +138,8 @@ async function refreshAccessToken(): Promise<string> {
 // ── Request interceptor ──────────────────────────────────────────────────────
 // 1. Attach the in-memory Bearer token (access token stays in Zustand — never
 //    in a cookie or localStorage — to prevent XSS theft).
-// 2. On unsafe methods, attach `X-XSRF-TOKEN` from the JWT's `xsrfToken` claim.
+// 2. On unsafe methods, attach `X-XSRF-TOKEN` from the JWT's `XsrfToken` claim
+//    (PascalCase — matches `JwtTokenService.XsrfTokenClaim` on the backend).
 //    This satisfies CsrfValidationMiddleware. We skip silently when the claim
 //    is missing or the JWT is malformed — the backend will reject the request
 //    with a structured 403 which we handle in the response interceptor.
@@ -153,7 +160,7 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
             // Don't crash the request; just log. The response interceptor will
             // surface a CSRF failure if the backend rejects it.
             console.warn(
-                "[CSRF] Authenticated request without xsrfToken claim — backend will reject.",
+                "[CSRF] Authenticated request without XsrfToken claim — backend will reject.",
                 { method, url: config.url }
             );
         }
@@ -168,21 +175,21 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 //   (a) 401: silent refresh-then-retry (existing flow, preserved).
 //
 //   (b) 403 with `code === "CSRF_VALIDATION_FAILED"`: the access JWT we sent
-//       does not carry an `xsrfToken` claim the backend accepts. Possible
+//       does not carry an `XsrfToken` claim the backend accepts. Possible
 //       causes:
 //         - the user logged in before the backend started issuing tokens with
-//           an xsrfToken claim (legacy token) and the refresh cookie is still
+//           an XsrfToken claim (legacy token) and the refresh cookie is still
 //           valid,
 //         - the access token was refreshed but the in-flight mutation still
-//           holds the old xsrfToken claim (rare race),
+//           holds the old XsrfToken claim (rare race),
 //         - the user signed in on another device and the JWT signature/claim
 //           changed silently,
 //         - the backend was redeployed with a rotated signing key.
 //       We DO retry once via the same silent-refresh path as 401 — the
 //       `/auth/refresh` endpoint is CSRF-exempt and will mint a fresh
-//       access JWT whose xsrfToken claim the backend accepts. If refresh
+//       access JWT whose XsrfToken claim the backend accepts. If refresh
 //       fails (cookie expired, backend unreachable, or the new token
-//       still lacks xsrfToken), we surface a toast and force re-auth.
+//       still lacks XsrfToken), we surface a toast and force re-auth.
 //
 //   (c) anything else: reject as-is.
 apiClient.interceptors.response.use(
@@ -196,7 +203,7 @@ apiClient.interceptors.response.use(
             const method = (originalRequest.method ?? "?").toUpperCase();
             console.warn(
                 `[CSRF] Backend rejected ${method} ${url} as CSRF_VALIDATION_FAILED. ` +
-                "Attempting silent refresh to mint a fresh xsrfToken claim."
+                "Attempting silent refresh to mint a fresh XsrfToken claim."
             );
 
             // Don't loop forever on the refresh endpoint itself.
@@ -220,7 +227,7 @@ apiClient.interceptors.response.use(
                     // Refresh succeeded but the new token still lacks the claim.
                     // Backend config issue — surface a toast and bail.
                     console.error(
-                        "[CSRF] Refreshed access token still has no xsrfToken claim. " +
+                        "[CSRF] Refreshed access token still has no XsrfToken claim. " +
                         "Backend must include the claim in issued access JWTs."
                     );
                     toast.error("Session security token expired — please log in again.");

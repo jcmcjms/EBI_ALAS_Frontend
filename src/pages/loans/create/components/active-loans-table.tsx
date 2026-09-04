@@ -160,6 +160,13 @@ export function ActiveLoansTable({
         // render an empty label with a non-null code (or vice versa).
         setValue("branchType.creationTypeCode", null);
         setValue("branchType.creationTypeLabel", "");
+        // Clear the picked loan number too — otherwise the approval
+        // form's "PN:" cell would keep showing the previous account's
+        // loan after the AO switches accounts (the picked PN is
+        // account-scoped, not borrower-scoped). Mirrors the
+        // creationType reset above since both are written by the
+        // same pick event in `handleLoanPick`.
+        setValue("branchType.selectedLoanNo", "", { shouldDirty: false });
         setIsLoading(true);
         setLoadError(null);
 
@@ -270,6 +277,14 @@ export function ActiveLoansTable({
         setSelectedLoanNo(loanNo);
         const picked = loans.find((l) => l.loanNo === loanNo);
         if (!picked) return;
+
+        // The approval form's "PN:" cell mirrors the loan number picked
+        // here — lift it into form state so Section 8 can render it.
+        // Written alongside `creationTypeCode/Label` (below) because
+        // all three are sourced from the same pick event and the printed
+        // document must stay in lockstep with the wizard's view of
+        // "this application is based on loan X".
+        setValue("branchType.selectedLoanNo", loanNo, { shouldDirty: false });
 
         // The "Outstanding Loans" table is now driven by the
         // /outstanding-loans endpoint (see handleFetch) and intentionally

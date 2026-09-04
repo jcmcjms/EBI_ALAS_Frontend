@@ -465,6 +465,16 @@ export function LoanCreationPage() {
         branch: "",
         requestingOfficer: "",
         lai: "",
+        // PN (loan number) the AO picked in 1.3. Lifted into form
+        // state so the printed approval form's "PN:" cell mirrors
+        // the in-flight loan the application is based on. Seeded to
+        // "" so the form passes a stable shape to RHF on first mount;
+        // the schema accepts the empty string (and treats it as
+        // "nothing picked yet", which `dash()` renders as "-").
+        // Same write/clear discipline as `creationTypeCode/Label` —
+        // see `active-loans-table.tsx` (pick / account switch) and
+        // `cis-lookup.tsx` (client clear / search).
+        selectedLoanNo: "",
       },
       client: {
         cisId: "",

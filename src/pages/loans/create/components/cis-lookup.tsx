@@ -121,6 +121,11 @@ export function CISLookup({
     // null → "show" Section 4 even after the AO picked a New Loan).
     setValue("branchType.creationTypeCode", null);
     setValue("branchType.creationTypeLabel", "");
+    // Clear the picked loan number too — a fresh client means any
+    // previously-displayed PN belongs to the prior borrower. Mirrors
+    // the creationType reset above since both are written by the
+    // same pick event in `active-loans-table.tsx#handleLoanPick`.
+    setValue("branchType.selectedLoanNo", "");
     setValue("branchType.branch", "");
     setValue("branchType.requestingOfficer", "");
     setValue("branchType.lai", "");
@@ -241,6 +246,11 @@ export function CISLookup({
       : "";
     setValue("branchType.creationTypeCode", null);
     setValue("branchType.creationTypeLabel", "");
+    // A fresh CIS search over an already-loaded client must not keep
+    // the previous client's picked loan number — the printed PN is
+    // account-scoped, not borrower-scoped, and would otherwise leak
+    // across profiles. Mirrors the creationType reset above.
+    setValue("branchType.selectedLoanNo", "");
     setValue("branchType.branch", branchName);
     // Join the combined "<bch>-<acctNo>" identifiers into the form's
     // display string. Mirrors the route parameter so the AO sees the

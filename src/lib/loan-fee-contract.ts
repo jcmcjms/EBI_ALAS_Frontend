@@ -149,7 +149,7 @@
  * The endpoint must enforce:
  *   - `Bearer <access JWT>` (Authorization header, attached by
  *     `apiClient`'s request interceptor).
- *   - `X-XSRF-TOKEN` matching the JWT's `xsrfToken` claim (the
+ *   - `X-XSRF-TOKEN` matching the JWT's `XsrfToken` claim (the
  *     `CsrfValidationMiddleware` runs on all non-GET/HEAD/OPTIONS).
  *   - `loans.create` permission on the calling user.
  *

@@ -104,6 +104,17 @@ export const branchTypeSchema = z.object({
     branch: z.string().min(1, "Branch is required"),
     requestingOfficer: z.string().min(1, "Requesting officer is required"),
     lai: z.string().optional(), // Loan Application Index
+    /**
+     * PN (loan number) the AO picked in 1.3 "Account & preloan".
+     * Written in lockstep with `creationTypeCode/Label` by
+     * `active-loans-table.tsx` on loan pick and cleared on account
+     * switch / client change. The printed approval form's "PN:" cell
+     * renders this so the document always reflects the in-flight loan
+     * the application is based on — never the outstanding-loans list.
+     * Display-only: the backend re-derives the authoritative PN from
+     * the server-side preloan/loan reference on submit.
+     */
+    selectedLoanNo: z.string().optional(),
 });
 
 // ── Client / CIS Info ──────────────────────────────────────────
