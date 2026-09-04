@@ -642,6 +642,14 @@ export function LoanCreationPage() {
   // change can't desync the visibility check. `null`/unknown
   // defaults to "show" (conservative — matches the prior behavior).
   const branchTypeCode = watch("branchType.creationTypeCode");
+
+  // The 1.3 loan-number pick writes `branchType.selectedLoanNo`
+  // (active-loans-table.tsx handleLoanPick) and clears it on account
+  // switch / client change. This replaced the retired PreLoanPicker's
+  // `selectedPreLoan` local state as the source of truth for "a loan
+  // is attached" — the stepper gate and submit gate both read it.
+  const selectedLoanNo = watch("branchType.selectedLoanNo");
+  const preLoanSelected = !!selectedLoanNo;
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode);
 
   // Filter the section registry down to what should actually render.
@@ -659,13 +667,13 @@ export function LoanCreationPage() {
   const stepperProps: StepperProps = {
     activeSection,
     isClientLoaded,
-    preLoanSelected: !!selectedPreLoan.id,
+    preLoanSelected,               // was: !!selectedPreLoan.id
     submitAttempted,
     onNavigate: scrollToSection,
     visibleSections,
   };
 
-  const canSubmit = isClientLoaded && !!selectedPreLoan.id;
+  const canSubmit = isClientLoaded && preLoanSelected;   // was: !!selectedPreLoan.id
   const firstErrorSection = submitAttempted
     ? SECTIONS.find((s) => sectionErrorCount(errors, s.id) > 0)
     : undefined;
@@ -901,7 +909,7 @@ export function LoanCreationPage() {
               >
                 {!isClientLoaded
                   ? "Search for a CIS number to begin."
-                  : !selectedPreLoan.id
+                  : !preLoanSelected
                     ? "Pick an account and a preloan to continue."
                     : "Client verified, preloan attached. Ready for processing."}
               </p>
