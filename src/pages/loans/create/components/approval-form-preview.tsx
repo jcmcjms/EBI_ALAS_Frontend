@@ -211,8 +211,10 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         const nthp = client.netTakeHomePay || 0;
         const netPayAfterDeduction = nthp - metrics.monthlyAmortization + ebiDeductions;
         const totalMonthlyIncome = netPayAfterDeduction;
-        const totalDisposableGross = nthp + ebiDeductions;
-        const totalDeductionsFinal = nthp + incomingTotal;
+        // Incoming loans are added to gross disposable income (more income sources),
+        // while NTHP is the preserved floor/minimum (deducted to get net capacity).
+        const totalDisposableGross = nthp + ebiDeductions + incomingTotal;
+        const totalDeductionsFinal = nthp;
         const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
 
         const maximumLoanableAmount = computeMaximumLoanableAmount(
