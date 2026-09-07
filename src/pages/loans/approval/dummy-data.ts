@@ -67,6 +67,12 @@ export const dummyLoanData: LoanApplicationFormData = {
     // the array explicitly even when the toggle is off — this keeps
     // the type narrow and avoids a string → array widening here.
     deviationDetails: [],
+    // Per-reason justification map (see schema.ts::deviationsSchema).
+    // The toggle is off so the map stays empty, but it must exist on
+    // the dummy payload to satisfy the typed form shape — the live
+    // form gets it from `loan-creation.tsx`'s defaultValues, but this
+    // file is a hand-rolled constant.
+    deviationJustifications: {},
     aoRecommendation: "Highly recommended for approval. Good repayment history.",
     otherRemarks: "",
     remarks: "",

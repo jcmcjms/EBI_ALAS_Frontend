@@ -9,9 +9,15 @@ import { SectionCard } from "./section-card";
 import { getSection } from "../sections";
 
 // Typed view of the deviations error subtree returned by RHF's
-// errors object. `deviationDetails` is now an array, so its error
-// path is `deviations.deviationDetails` (still a single Zod issue
-// for the "select at least one" refine).
+// errors object.
+//
+// `deviationDetails` is the array-level error (the "select at least
+// one" refine). `deviationJustifications` is a *record* whose keys
+// are the selected `DeviationReason`s — each carries a per-reason
+// message emitted by the schema's relational superRefine. Reading
+// it as `Record<string, { message?: string }>` lets the UI look up
+// a specific reason's error inline without casting at the call site.
+//
 // `feeDeviationJustification` carries the cross-field issue from the
 // root schema's `superRefine` — attached at the same path the Zod
 // refine emits (so the AO sees the error under the right field).
@@ -19,6 +25,7 @@ type DeviationsErrors = {
     otherRemarks?: { message?: string };
     deviationDetails?: { message?: string };
     feeDeviationJustification?: { message?: string };
+    deviationJustifications?: Record<string, { message?: string }>;
 };
 
 /**
@@ -76,19 +83,44 @@ export function DeviationsSection() {
     const otherRemarksError = devErrors?.otherRemarks?.message;
     const deviationDetailsError = devErrors?.deviationDetails?.message;
     const feeJustificationError = devErrors?.feeDeviationJustification?.message;
+    // Lookup is keyed by the *exact* `DeviationReason` string the
+    // schema emitted in its issue path. RHF stores nested paths as
+    // nested objects, so `deviationJustifications?.[reason]?.message`
+    // gives us the inline error for that specific row.
+    const justificationErrorFor = (reason: DeviationReason): string | undefined =>
+        devErrors?.deviationJustifications?.[reason]?.message;
 
     /**
-     * Toggle a single deviation reason. We re-write the entire array
-     * (rather than calling `setValue` twice for add/remove) so RHF's
-     * dirty-tracking and `useFieldArray`-style snapshot updates fire
-     * exactly once per click and the approval-form preview sees a
-     * single, atomic state change.
+     * Toggle a single deviation reason. Two responsibilities:
+     *
+     *  1. Re-write the `deviationDetails` array atomically (so RHF's
+     *     dirty-tracking fires once per click and the approval-form
+     *     preview sees a single state change).
+     *  2. When *un-checking*, prune the matching key from
+     *     `deviationJustifications`. The schema allows orphan
+     *     justification entries, but a banking-grade audit trail
+     *     should not ship a justification for a reason the AO no
+     *     longer claims — so the payload stays clean.
+     *
+     * We deliberately do NOT trigger validation on the uncheck path
+     * (the removed key takes its error with it; the user just acted
+     * and re-running validation feels punishing).
      */
     const toggleReason = (reason: DeviationReason, checked: boolean) => {
         const next = checked
             ? Array.from(new Set([...selected, reason]))
             : selected.filter((r) => r !== reason);
         setValue("deviations.deviationDetails", next, { shouldValidate: true });
+
+        if (!checked) {
+            // Clear the justification value (keeping the record key
+            // would re-introduce it on the next check, which is
+            // surprising; an empty string is the explicit "AO said
+            // nothing for this reason" state).
+            setValue(`deviations.deviationJustifications.${reason}`, "", {
+                shouldValidate: false,
+            });
+        }
     };
 
     const section = getSection("deviations");
@@ -125,7 +157,7 @@ export function DeviationsSection() {
                         <div className="flex items-center gap-2 text-sm text-amber-700">
                             <Warning size={14} weight="fill" />
                             <span className="font-medium">
-                                Select all deviations that apply. The approval form will list them in the order shown below.
+                                Select all deviations that apply. Each selected reason requires a written justification for the audit trail.
                             </span>
                         </div>
 
@@ -140,30 +172,96 @@ export function DeviationsSection() {
                                     </span>
                                 )}
                             </div>
+
+                            {/* UX: vertical stack (space-y-3) instead of a
+                                 grid — when a justification textarea expands
+                                 below a row, a grid would compress or shift
+                                 neighbouring rows. The vertical layout lets
+                                 each row's textarea breathe naturally. */}
                             <div
                                 role="group"
                                 aria-label="Deviation reasons"
-                                className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 rounded-md border border-input bg-background p-3"
+                                className="space-y-3 rounded-md border border-input bg-background p-4"
                             >
                                 {DEVIATION_REASONS.map((reason) => {
                                     const id = `deviation-${reason}`;
                                     const checked = selected.includes(reason);
+                                    const justificationError =
+                                        justificationErrorFor(reason);
+
                                     return (
-                                        <div key={reason} className="flex items-start gap-2">
-                                            <Checkbox
-                                                id={id}
-                                                checked={checked}
-                                                onCheckedChange={(c) =>
-                                                    toggleReason(reason, !!c)
-                                                }
-                                                className="mt-0.5"
-                                            />
-                                            <label
-                                                htmlFor={id}
-                                                className="text-sm leading-snug peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                            >
-                                                {reason}
-                                            </label>
+                                        <div key={reason} className="space-y-2">
+                                            <div className="flex items-start gap-2">
+                                                <Checkbox
+                                                    id={id}
+                                                    checked={checked}
+                                                    onCheckedChange={(c) =>
+                                                        toggleReason(reason, !!c)
+                                                    }
+                                                    className="mt-0.5"
+                                                />
+                                                <label
+                                                    htmlFor={id}
+                                                    className="text-sm leading-snug peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                >
+                                                    {reason}
+                                                </label>
+                                            </div>
+
+                                            {/* Progressive disclosure:
+                                                 the per-reason justification
+                                                 textarea only renders once the
+                                                 row is checked, with a soft
+                                                 fade/slide-in so the layout
+                                                 transition is calm rather than
+                                                 jarring. The keyed wrapper
+                                                 remounts the textarea on every
+                                                 check/uncheck so the entry
+                                                 animation fires. */}
+                                            {checked && (
+                                                <div
+                                                    key={`${reason}-justification`}
+                                                    className="ml-6 mt-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200"
+                                                >
+                                                    <Label
+                                                        htmlFor={`${id}-justification`}
+                                                        className="text-xs text-muted-foreground"
+                                                    >
+                                                        Justification for &quot;{reason}&quot;
+                                                    </Label>
+                                                    <textarea
+                                                        id={`${id}-justification`}
+                                                        {...register(
+                                                            `deviations.deviationJustifications.${reason}`
+                                                        )}
+                                                        placeholder='Explain why this deviation is allowed (e.g., "Borrower is 66 but has strong co-maker and collateral.").'
+                                                        rows={2}
+                                                        aria-invalid={!!justificationError}
+                                                        className={
+                                                            "w-full rounded-md border bg-transparent px-3 py-2 text-sm " +
+                                                            "placeholder:text-muted-foreground focus-visible:border-ring " +
+                                                            "focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y " +
+                                                            (justificationError
+                                                                ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50"
+                                                                : "border-input")
+                                                        }
+                                                    />
+                                                    {/* Inline contextual error —
+                                                         points the AO directly
+                                                         at the offending
+                                                         textarea instead of a
+                                                         generic top-of-form
+                                                         banner. */}
+                                                    {justificationError && (
+                                                        <p
+                                                            role="alert"
+                                                            className="text-xs text-destructive font-medium"
+                                                        >
+                                                            {justificationError}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}

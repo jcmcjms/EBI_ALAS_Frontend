@@ -159,9 +159,21 @@ function useSectionProgress(
         // submit time, but we mirror the check here so the sidebar
         // stepper turns green as soon as the AO has selected at
         // least one reason, without waiting for a submit attempt.
+        //
+        // Each selected reason also needs a non-empty justification
+        // in `deviationJustifications` (≥5 chars per `MIN_JUSTIFICATION_LENGTH`
+        // in schema.ts). Mirroring that here so the stepper reflects
+        // the *full* audit-trail requirement, not just the count.
         if (!deviations?.otherRemarks?.trim()) return false;
-        if (deviations.hasDeviations && (deviations.deviationDetails?.length ?? 0) === 0)
-          return false;
+        if (deviations.hasDeviations) {
+          const details = deviations.deviationDetails ?? [];
+          if (details.length === 0) return false;
+          const justifications = deviations.deviationJustifications ?? {};
+          const allJustified = details.every(
+            (reason) => (justifications[reason] ?? "").trim().length >= 5
+          );
+          if (!allJustified) return false;
+        }
         return true;
       case "approval-form":
         return isClientLoaded; // preview available once client is loaded
@@ -536,6 +548,12 @@ export function LoanCreationPage() {
         // checkbox group). Seed as an empty array so the form passes
         // a stable, type-narrow shape to RHF on first mount.
         deviationDetails: [],
+        // Relational map of per-reason justifications (see
+        // `schema.ts::deviationsSchema`). Seeded empty — entries are
+        // written by the deviations section's textarea when the AO
+        // checks a reason, and pruned on uncheck so the payload
+        // doesn't ship orphaned keys.
+        deviationJustifications: {},
         aoRecommendation: "",
         otherRemarks: "",
         remarks: "",

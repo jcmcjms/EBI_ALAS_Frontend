@@ -302,6 +302,23 @@ export const verificationSchema = z.object({
 // and then unticks it does not see a stale required-error on the
 // (now empty) selection.
 //
+// `deviationJustifications` is a relational map keyed by the same
+// `DeviationReason` enum used by `deviationDetails`. It carries the
+// per-reason justification the AO must write for each selected
+// deviation (e.g. "Borrower is 66 but has strong co-maker and
+// collateral"). The schema's `superRefine` enforces the relational
+// invariant: every reason present in `deviationDetails` MUST have a
+// non-empty, ≥5-char justification in the map. This guarantees the
+// audit trail is complete *before* the application is submitted —
+// Compliance can later query "every loan that deviated on X came
+// with this justification", which a flat `string[]` of free-form
+// reasons could never support.
+//
+// Justifications for *unchecked* reasons are tolerated (carried as
+// stale entries until the AO clears the toggle / unchecks the row
+// — see `deviations-section.tsx`'s `toggleReason` which prunes them
+// on uncheck so the payload doesn't ship with orphaned keys).
+//
 // `otherRemarks` is always required, even when there are no
 // deviations, so the AO leaves a trace for downstream reviewers.
 //
@@ -323,8 +340,8 @@ export const DEVIATION_REASONS = [
     "Lacking SPAs to claim ATM",
     "No appointment record and/or service record",
     "No FI SOA and loan ledger",
-    "No interview sheet",
     "No latest payslip",
+    "No interview sheet",
     "No orientation form or old form submitted",
     "No valid identification cards",
     "Total consumer loan exposure exceeding 1.2 million",
@@ -337,6 +354,13 @@ export const DEVIATION_REASONS = [
 
 export type DeviationReason = (typeof DEVIATION_REASONS)[number];
 
+/**
+ * Minimum length for a per-reason justification. Set to 5 to
+ * reject lazy inputs ("ok", "n/a", "...") that would technically
+ * satisfy a non-empty check but provide no real audit value.
+ */
+const MIN_JUSTIFICATION_LENGTH = 5;
+
 export const deviationsSchema = z
     .object({
         hasDeviations: z.boolean().default(false),
@@ -348,6 +372,16 @@ export const deviationsSchema = z
         deviationDetails: z
             .array(z.enum(DEVIATION_REASONS))
             .default([]),
+        /**
+         * Relational map: each selected `DeviationReason` keys a free-
+         * text justification (≥MIN_JUSTIFICATION_LENGTH chars after
+         * trim). The map is optional so an empty form on first mount
+         * passes parsing; the relational `superRefine` below upgrades
+         * it to required *per checked reason*.
+         */
+        deviationJustifications: z
+            .record(z.string(), z.string().trim())
+            .default({}),
         remarks: z.string().optional(),
         aoRecommendation: z.string().optional(),
         otherRemarks: z
@@ -372,6 +406,34 @@ export const deviationsSchema = z
                 path: ["deviationDetails"],
                 message:
                     "Select at least one deviation reason when the deviations flag is enabled.",
+            });
+        }
+
+        // ── Relational rule: every checked reason needs a justification
+        //
+        // Iterates the *checked* reasons and emits a Zod issue whose
+        // `path` points at `deviationJustifications[<reason>]`. RHF's
+        // `errors` object surfaces that path as a nested record — the
+        // UI (deviations-section.tsx) reads
+        // `errors.deviations.deviationJustifications?.[reason]?.message`
+        // and renders the error directly under the offending textarea,
+        // so the AO sees the gap at the field, not at the top of the
+        // form.
+        //
+        // Reverse direction (a justification without a checked reason)
+        // is NOT rejected here: stale entries are pruned by the UI's
+        // `toggleReason` on uncheck, and the schema stays declarative.
+        if (data.hasDeviations && data.deviationDetails.length > 0) {
+            data.deviationDetails.forEach((reason) => {
+                const justification = data.deviationJustifications?.[reason];
+                const trimmed = justification?.trim() ?? "";
+                if (trimmed.length < MIN_JUSTIFICATION_LENGTH) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        path: ["deviationJustifications", reason],
+                        message: `Provide a justification (at least ${MIN_JUSTIFICATION_LENGTH} characters) for "${reason}".`,
+                    });
+                }
             });
         }
     });
