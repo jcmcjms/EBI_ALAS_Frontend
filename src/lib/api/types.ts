@@ -647,6 +647,27 @@ export interface PendingLoanResponse {
     nthpDate: string | null;
 }
 
+// ─── Loan Class (CIS + Account + bch) ─────────────────────────────────────────
+
+/**
+ * Response from GET /api/webloans/loan-class.
+ * Mirrors `CatLoanClassResponse` on the backend.
+ *
+ * Resolves `cat_loan_class` for a single (bch, loan_no, loan_product)
+ * tuple in dbo.loan_data. All three parameters are required query params.
+ *
+ * 200 with data when the loan is found (cat_loan_class may be null if the
+ * DB column is NULL).
+ * 400 when any param is missing or whitespace.
+ * 404 when no row matches the (bch, loan_no, loan_product) triple.
+ */
+export interface CatLoanClassResponse {
+    bch: string;
+    loanNo: string;
+    loanProduct: string;
+    catLoanClass: string | null;
+}
+
 // ─── Audit Logs ─────────────────────────────────────────────────────────────────
 
 /** Audit log record returned by GET /api/audit-logs (AuditLogResponse). */

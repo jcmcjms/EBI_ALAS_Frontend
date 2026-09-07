@@ -3,6 +3,7 @@ import {
     unwrapApiData,
     type ActiveLoansResponse,
     type ApiResponse,
+    type CatLoanClassResponse,
     type OutstandingLoansResponse,
     type PendingLoanResponse,
     type PreLoansQuery,
@@ -156,6 +157,33 @@ export async function getPendingLoan(
 ): Promise<PendingLoanResponse> {
     const res = await apiClient.get<ApiResponse<PendingLoanResponse>>(
         `/api/webloans/cis/${encodeURIComponent(cisNo)}/accounts/${encodeURIComponent(accountId)}/pending-loan`
+    );
+    return unwrapApiData(res.data);
+}
+
+/**
+ * GET /api/webloans/loan-class?bch={bch}&loanNo={loanNo}&loanProduct={loanProduct}
+ *
+ * Resolves `cat_loan_class` from dbo.loan_data for a single
+ * (bch, loan_no, loan_product) composite key.
+ *
+ * All three query parameters are required. Returns:
+ * - 200 with CatLoanClassResponse when the loan is found (catLoanClass may be null)
+ * - 400 when any parameter is missing or whitespace
+ * - 404 when no row matches the (bch, loan_no, loan_product) triple
+ *
+ * The (bch, loan_no, loan_product) triple is taken from the caller's context
+ * — no JWT-derived branch fallback. The composite key is specific enough that
+ * cross-tenant enumeration is not a concern.
+ */
+export async function getCatLoanClass(
+    bch: string,
+    loanNo: string,
+    loanProduct: string
+): Promise<CatLoanClassResponse> {
+    const res = await apiClient.get<ApiResponse<CatLoanClassResponse>>(
+        "/api/webloans/loan-class",
+        { params: { bch, loanNo, loanProduct } }
     );
     return unwrapApiData(res.data);
 }
