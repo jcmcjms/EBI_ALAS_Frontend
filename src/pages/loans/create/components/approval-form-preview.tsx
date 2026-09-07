@@ -10,6 +10,11 @@ import { SectionCard } from "./section-card";
 import { getSection } from "../sections";
 import type { ClientFormData, LoanApplicationFormData } from "../schema";
 import { useLoanComputations } from "@/src/hooks/use-loan-computations";
+import { useCatLoanClass } from "@/src/hooks/use-cat-loan-class";
+import {
+    parseProductCode,
+    resolveLoanProductDisplayName,
+} from "@/src/lib/loan-product-display";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
 
@@ -157,6 +162,25 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         const buyOuts = form?.buyOuts ?? [];
         const incomingLoans = form?.incomingLoans ?? [];
 
+        // ── Loan product display name ─────────────────────────────────
+        // The form prints curated product names (C21 → ATM SAL, A16 →
+        // APDS - RPSU, …), not the raw webloan description. C23/C35 further
+        // depend on the selected preloan's cat_loan_class, resolved against
+        // the (bch, loan_no, loan_product) key that 1.3 writes on loan pick.
+        const productCode = parseProductCode(loan.product);
+        const selectedLoanNo = branchType.selectedLoanNo ?? "";
+        const preLoanBranchCode =
+            branchType.selectedLoanBch?.trim() || form?.preLoan?.bch?.trim() || "";
+        const { data: loanClass } = useCatLoanClass(
+            preLoanBranchCode,
+            selectedLoanNo,
+            productCode
+        );
+        const productDisplay = resolveLoanProductDisplayName(
+            loan.product,
+            loanClass?.catLoanClass
+        );
+
         // ── Shared engine results ─────────────────────────────────
         // The canonical numbers come from `@/src/lib/loan-computations`
         // (via `useLoanComputations`). The fields below that aren't
@@ -297,7 +321,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                     </tr>
                                     <tr>
                                         <L rowSpan={2} className="align-top">Loan Product:</L>
-                                        <V rowSpan={2} className="align-top font-bold">{dash(loan.product)}</V>
+                                        <V rowSpan={2} className="align-top font-bold">{dash(productDisplay)}</V>
                                         <L rowSpan={2} className="align-top">
                                             TERM (Days):<br />
                                             <span className="font-bold">{termDays.toLocaleString()}</span>

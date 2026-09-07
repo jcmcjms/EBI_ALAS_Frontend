@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { cn } from "@/src/lib/utils";
+import { resolveLoanProductDisplayName } from "@/src/lib/loan-product-display";
 import type { ClientFormData, LoanApplicationFormData } from "../../create/schema";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
@@ -169,9 +170,16 @@ function DashRows({ count, cols }: { count: number; cols: number }) {
 
 interface ApprovalFormDocumentProps {
     data: LoanApplicationFormData;
+    /**
+     * `loan_data.cat_loan_class` of the selected preloan, resolved by the
+     * page via GET /api/webloans/loan-class. Only class-scoped products
+     * (C23/C35 → BONUS / YEB vs BONUS / MYB) consume it; null/undefined
+     * falls back to the backend description (see loan-product-display.ts).
+     */
+    catLoanClass?: string | null;
 }
 
-export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data }, ref) => {
+export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, catLoanClass }, ref) => {
     const client = data?.client ?? ({} as LoanApplicationFormData["client"]);
     const branchType = data?.branchType ?? ({} as LoanApplicationFormData["branchType"]);
     const loan = data?.loan ?? ({} as LoanApplicationFormData["loan"]);
@@ -183,6 +191,8 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
     const incomingLoans = data?.incomingLoans ?? [];
 
     const c = computeLoanMetrics(data);
+
+    const productDisplay = resolveLoanProductDisplayName(loan.product, catLoanClass);
 
     const productLine = loan.product
         ? `[ ${loan.product} ] ${loan.term || 0} days @ ${loan.interestRate || 0}% per Annum`
@@ -257,7 +267,7 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
                         </tr>
                         <tr>
                             <L rowSpan={2} className="align-top">Loan Product:</L>
-                            <V rowSpan={2} className="align-top font-bold">{dash(loan.product)}</V>
+                            <V rowSpan={2} className="align-top font-bold">{dash(productDisplay)}</V>
                             <L rowSpan={2} className="align-top">
                                 TERM (Days):<br />
                                 <span className="font-bold">{(c.termDays || 0).toLocaleString()}</span>

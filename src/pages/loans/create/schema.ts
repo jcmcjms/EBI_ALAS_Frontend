@@ -109,6 +109,20 @@ export const branchTypeSchema = z.object({
      * the server-side preloan/loan reference on submit.
      */
     selectedLoanNo: z.string().optional(),
+    /**
+     * Webloan `bch` of the preloan picked in 1.3 "Account & preloan".
+     * Written in lockstep with `selectedLoanNo` by
+     * `active-loans-table.tsx#handleLoanPick` (first segment of the selected
+     * LAI's "<bch>-<acctNo>" identifier — same split rule as the backend's
+     * `WebLoanAccountId.Parse`) and cleared on the same paths (account
+     * switch, client clear, fresh CIS search). The approval form needs it as
+     * the branch half of the (bch, loan_no, loan_product) key for
+     * GET /api/webloans/loan-class, which resolves cat_loan_class for the
+     * C23/C35 product names. Optional like `selectedLoanNo` so untouched
+     * forms still parse; the wizard never submits a class-scoped product
+     * without both fields set because the pick writes them together.
+     */
+    selectedLoanBch: z.string().optional(),
 });
 
 // ── Client / CIS Info ──────────────────────────────────────────

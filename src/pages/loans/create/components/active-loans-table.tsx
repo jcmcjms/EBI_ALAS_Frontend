@@ -167,6 +167,10 @@ export function ActiveLoansTable({
         // creationType reset above since both are written by the
         // same pick event in `handleLoanPick`.
         setValue("branchType.selectedLoanNo", "", { shouldDirty: false });
+        // Same write/clear discipline as selectedLoanNo — together they form
+        // the (bch, loan_no) half of the loan-class lookup key, and a stale
+        // branch must never pair with a freshly-picked loan number.
+        setValue("branchType.selectedLoanBch", "", { shouldDirty: false });
         setIsLoading(true);
         setLoadError(null);
 
@@ -285,6 +289,24 @@ export function ActiveLoansTable({
         // document must stay in lockstep with the wizard's view of
         // "this application is based on loan X".
         setValue("branchType.selectedLoanNo", loanNo, { shouldDirty: false });
+
+        // The approval form's product name (C23/C35 → BONUS / YEB vs MYB) is
+        // resolved via GET /api/webloans/loan-class, which keys on
+        // (bch, loan_no, loan_product). `selectedAccountId` is the combined
+        // "<bch>-<acctNo>" identifier from the CIS search, so the first dash
+        // segment is the preloan's branch — mirror of the backend's
+        // WebLoanAccountId.Parse. Both segments must be non-empty, otherwise
+        // we store "" and the loan-class query stays disabled rather than
+        // firing with a half key.
+        const [branchSegment, ...accountSegments] = selectedAccountId.split("-");
+        const accountSegment = accountSegments.join("-");
+        setValue(
+            "branchType.selectedLoanBch",
+            branchSegment?.trim() && accountSegment.trim()
+                ? branchSegment.trim()
+                : "",
+            { shouldDirty: false }
+        );
 
         // The "Outstanding Loans" table is now driven by the
         // /outstanding-loans endpoint (see handleFetch) and intentionally

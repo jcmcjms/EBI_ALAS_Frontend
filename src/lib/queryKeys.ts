@@ -72,6 +72,10 @@ export const queryKeys = {
             ["webloans", "outstanding-loans", cisNo, accountId] as const,
         pendingLoan: (cisNo: string, accountId: string) =>
             ["webloans", "pending-loan", cisNo, accountId] as const,
+        // cat_loan_class of the selected preloan — composite key
+        // (bch, loan_no, loan_product); mirrors GET /api/webloans/loan-class.
+        loanClass: (bch: string, loanNo: string, loanProduct: string) =>
+            ["webloans", "loan-class", bch, loanNo, loanProduct] as const,
     },
 
     // ── Dashboard ───────────────────────────────────────────────────────────

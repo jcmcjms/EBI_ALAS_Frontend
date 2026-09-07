@@ -37,6 +37,8 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/src/store/authStore";
 import { ApprovalFormDocument } from "./components/approval-form-document";
 import { dummyLoanData } from "./dummy-data";
+import { useCatLoanClass } from "@/src/hooks/use-cat-loan-class";
+import { parseProductCode } from "@/src/lib/loan-product-display";
 
 export function LoanApprovalPage() {
     const [remarks, setRemarks] = useState("");
@@ -47,6 +49,16 @@ export function LoanApprovalPage() {
     // this page; for now we render the static dummy dataset.
     const loanData = dummyLoanData;
     const lai = loanData.branchType.lai || "LA-2026-08-9942";
+
+    // C23/C35 product names on the printed form depend on the preloan's
+    // cat_loan_class. Stays disabled while the page runs on dummy data (no
+    // selected PN yet) — lights up automatically once the real application
+    // record (with branchType.selectedLoanNo/selectedLoanBch) is wired in.
+    const loanClassQuery = useCatLoanClass(
+        loanData.branchType.selectedLoanBch ?? loanData.preLoan?.bch ?? "",
+        loanData.branchType.selectedLoanNo ?? "",
+        parseProductCode(loanData.loan.product)
+    );
 
     const authUser = useAuthStore((s) => s.user);
     const fullNameOfUser = authUser
@@ -139,7 +151,7 @@ export function LoanApprovalPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <ApprovalFormDocument data={loanData} />
+                                <ApprovalFormDocument data={loanData} catLoanClass={loanClassQuery.data?.catLoanClass ?? null} />
                             </CardContent>
                         </Card>
                     </div>

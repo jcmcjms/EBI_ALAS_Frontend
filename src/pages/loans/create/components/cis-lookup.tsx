@@ -126,6 +126,8 @@ export function CISLookup({
     // the creationType reset above since both are written by the
     // same pick event in `active-loans-table.tsx#handleLoanPick`.
     setValue("branchType.selectedLoanNo", "");
+    // Lockstep clear — see schema.ts (selectedLoanBch).
+    setValue("branchType.selectedLoanBch", "");
     setValue("branchType.branch", "");
     setValue("branchType.requestingOfficer", "");
     setValue("branchType.lai", "");
@@ -251,6 +253,8 @@ export function CISLookup({
     // account-scoped, not borrower-scoped, and would otherwise leak
     // across profiles. Mirrors the creationType reset above.
     setValue("branchType.selectedLoanNo", "");
+    // Lockstep clear — see schema.ts (selectedLoanBch).
+    setValue("branchType.selectedLoanBch", "");
     setValue("branchType.branch", branchName);
     // Join the combined "<bch>-<acctNo>" identifiers into the form's
     // display string. Mirrors the route parameter so the AO sees the
