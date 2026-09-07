@@ -127,7 +127,7 @@ export function OtherObligationsSection() {
                 <SubSectionHeading
                     step="5.1"
                     title="EBI Accounts for Reloans"
-                    icon={<Bank size={16} weight="bold" className="text-primary" />}
+                    icon={<Bank size={16} weight="bold" className="text-primary" aria-hidden />}
                 />
                 <Table className="mt-3">
                     <TableHeader>
@@ -271,25 +271,30 @@ export function OtherObligationsSection() {
 
             {/* ── Buy-Outs from Other FIs ─────────────────────────── */}
             <div className="p-4">
-                <div className="mb-3 flex items-center justify-between">
-                    <SubSectionHeading
-                        step="5.2"
-                        title="Buy-Out Accounts (Other FIs)"
-                        actions={
-                            <CreditCard size={16} weight="bold" className="text-primary" />
-                        }
-                    />
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addBuyOut}
-                        className="gap-1.5"
-                    >
-                        <Plus size={14} weight="bold" /> Add Account
-                    </Button>
-                </div>
-                <Table>
+                <SubSectionHeading
+                    step="5.2"
+                    title="Buy-Out Accounts (Other FIs)"
+                    icon={
+                        <CreditCard
+                            size={16}
+                            weight="bold"
+                            className="text-primary"
+                            aria-hidden
+                        />
+                    }
+                    actions={
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={addBuyOut}
+                            className="gap-1.5"
+                        >
+                            <Plus size={14} weight="bold" /> Add Account
+                        </Button>
+                    }
+                />
+                <Table className="mt-3">
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[120px]">PN / Ref No.</TableHead>
@@ -374,25 +379,30 @@ export function OtherObligationsSection() {
 
             {/* ── Incoming / Undeducted ───────────────────────────── */}
             <div className="p-4">
-                <div className="mb-3 flex items-center justify-between">
-                    <SubSectionHeading
-                        step="5.3"
-                        title="Incoming / Undeducted Loans"
-                        actions={
-                            <ArrowLineDown size={16} weight="bold" className="text-primary" />
-                        }
-                    />
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addIncoming}
-                        className="gap-1.5"
-                    >
-                        <Plus size={14} weight="bold" /> Add Loan
-                    </Button>
-                </div>
-                <Table>
+                <SubSectionHeading
+                    step="5.3"
+                    title="Incoming / Undeducted Loans"
+                    icon={
+                        <ArrowLineDown
+                            size={16}
+                            weight="bold"
+                            className="text-primary"
+                            aria-hidden
+                        />
+                    }
+                    actions={
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={addIncoming}
+                            className="gap-1.5"
+                        >
+                            <Plus size={14} weight="bold" /> Add Loan
+                        </Button>
+                    }
+                />
+                <Table className="mt-3">
                     <TableHeader>
                         <TableRow>
                             <TableHead>Creditor / Name</TableHead>
