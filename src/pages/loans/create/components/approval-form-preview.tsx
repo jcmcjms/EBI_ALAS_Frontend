@@ -469,9 +469,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                         <tr className="[&>th]:border-b [&>th]:border-black [&>th]:px-1 [&>th]:py-0.5 [&>th]:font-bold [&>th]:underline">
                                             <th className="text-left">Name of Financial Institution</th>
                                             <th className="text-right">Deductions</th>
-                                            <th className="text-right">
-                                                Old Loan/Buy-Out Balance<br />OB to be paid/closed
-                                            </th>
+                                            <th className="text-right">OB to be paid/closed</th>
                                             <th className="text-left">PN Number</th>
                                         </tr>
                                     </thead>

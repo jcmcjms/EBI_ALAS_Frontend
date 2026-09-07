@@ -424,7 +424,7 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
                         <tr>
                             <td className="px-1.5 py-0.5 font-bold underline">Name of Financial Institution</td>
                             <td className="px-1.5 py-0.5 text-right font-bold underline">Deductions</td>
-                            <td className="px-1.5 py-0.5 text-right font-bold underline">Old Loan/Buy-Out Balance<br />OB to be paid/closed</td>
+                            <td className="px-1.5 py-0.5 text-right font-bold underline">OB to be paid/closed</td>
                             <td className="px-1.5 py-0.5 font-bold underline">PN Number</td>
                         </tr>
                         {Array.from({ length: 6 }).map((_, i) => {
