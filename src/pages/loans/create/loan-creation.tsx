@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FormProvider, useForm, useWatch, useFormContext, useFieldArray } from "react-hook-form";
+import { FormProvider, useForm, useWatch, useFormContext } from "react-hook-form";
 import type { FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -664,11 +664,19 @@ export function LoanCreationPage() {
     : undefined;
 
   const { control } = methods;
-  const { fields: loanFields } = useFieldArray({ control, name: "loans" });
   const watchedLoans = useWatch({ control, name: "loans" }) ?? [];
+  const hasSelectedLoans = watchedLoans.length > 0;
 
-  // For tab state - default to first loan's loanNo or empty string
-  const firstLoanNo = loanFields[0]?.loanNo ?? "";
+  // Controlled tab state: uncontrolled `defaultValue` + key-remount is what
+  // forced the hacky `key={firstLoanNo}` before. Now we use a controlled value
+  // so the visible tab always points at an existing loan without remounting.
+  const [activeLoanTab, setActiveLoanTab] = useState<string>("");
+  useEffect(() => {
+    if (watchedLoans.length === 0) return setActiveLoanTab("");
+    if (!watchedLoans.some((l) => l?.loanNo === activeLoanTab)) {
+      setActiveLoanTab(watchedLoans[0].loanNo);
+    }
+  }, [watchedLoans, activeLoanTab]);
 
   return (
     <FormProvider {...methods}>
@@ -792,34 +800,19 @@ export function LoanCreationPage() {
                     sectionRefs.current["loan-params"] = el;
                   }}
                 >
-                  {loanFields.length > 0 ? (
-                    // key forces Tabs to remount when firstLoanNo changes from "" to actual loan number
-                    // (defaultValue is only used on initial mount, so we need remount to pick up the new value)
-                    <Tabs key={firstLoanNo} defaultValue={firstLoanNo} className="w-full">
+                {hasSelectedLoans ? (
+                    <Tabs value={activeLoanTab} onValueChange={setActiveLoanTab} className="w-full">
                       <TabsList className="mb-4 flex h-auto flex-wrap gap-2 bg-muted/50 p-2">
-                        {loanFields.map((field, i) => {
-                          const loan = watchedLoans[i];
-                          return (
-                            <TabsTrigger
-                              key={field.id}
-                              value={field.loanNo}
-                              className="text-xs md:text-sm"
-                            >
-                              {field.loanNo}
-                              <span className="ml-1.5 text-muted-foreground">
-                                ({loan?.productCode})
-                              </span>
-                            </TabsTrigger>
-                          );
-                        })}
+                        {watchedLoans.map((loan) => (
+                          <TabsTrigger key={loan.loanNo} value={loan.loanNo} className="text-xs md:text-sm">
+                            {loan.loanNo}
+                            <span className="ml-1.5 text-muted-foreground">({loan.productCode})</span>
+                          </TabsTrigger>
+                        ))}
                       </TabsList>
 
-                      {loanFields.map((field, i) => (
-                        <TabsContent
-                          key={field.id}
-                          value={field.loanNo}
-                          className="space-y-6"
-                        >
+                      {watchedLoans.map((loan, i) => (
+                        <TabsContent key={loan.loanNo} value={loan.loanNo} className="space-y-6">
                           <LoanParametersSection
                             fieldPrefix={`loans.${i}.parameters`}
                             loanIndex={i}

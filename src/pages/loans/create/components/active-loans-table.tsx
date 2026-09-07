@@ -119,7 +119,7 @@ export function ActiveLoansTable({
     const { control, setValue } = useFormContext<LoanApplicationFormData>();
 
     // useFieldArray manages the loans array in form state
-    const { fields, append, remove } = useFieldArray({
+    const { fields, append, remove, replace } = useFieldArray({
         control,
         name: "loans",
     });
@@ -127,6 +127,10 @@ export function ActiveLoansTable({
     // Watch loans array for O(1) product code lookup
     const watchedLoans = useWatch({ control, name: "loans" }) ?? [];
     const selectedLoanNos = fields.map((f) => f.loanNo);
+
+    // Captures the CIS-level NTHP date from /pending-loan so it can be
+    // stamped onto each loan's parameters when the AO toggles them on.
+    const [pendingNthpDate, setPendingNthpDate] = useState("");
     const selectedProductCodes = new Set(
         watchedLoans.map((f) => f.productCode).filter(Boolean)
     );
@@ -157,10 +161,8 @@ export function ActiveLoansTable({
         if (!accountRow) return;
         setSelectedAccountId(accountId);
 
-        // Clear all selected loans using useFieldArray's remove
-        while (fields.length > 0) {
-            remove(0);
-        }
+        // Clear all selected loans using a single atomic replace
+        replace([]);
         onPreLoanChange("", null);
 
         // Wipe any obligations row that came from a previous account — the
@@ -171,7 +173,7 @@ export function ActiveLoansTable({
         // the fresh fetch below re-hydrates them from the response.
         setValue("outstandingLoans", []);
         setValue("client.netTakeHomePay", 0);
-        setValue("loan.nthpDate", "");
+        setPendingNthpDate("");
 
         // Clear creation type since we're switching accounts
         setValue("branchType.creationTypeCode", null);
@@ -272,10 +274,10 @@ export function ActiveLoansTable({
             }
             if (pending.nthpDate) {
                 // Backend returns ISO 8601 (date or datetime) — keep just
-                // the yyyy-MM-dd portion for the <input type="date">.
-                setValue("loan.nthpDate", pending.nthpDate.slice(0, 10), {
-                    shouldDirty: false,
-                });
+                // the yyyy-MM-dd portion for the <input type="date"> and
+                // stamp it onto every loan's parameters when toggled on.
+                const d = pending.nthpDate.slice(0, 10);
+                setPendingNthpDate(d);
             }
         }
 
@@ -347,7 +349,7 @@ export function ActiveLoansTable({
                 proposedAmount: loan.principal ?? 0,
                 interestRate: loan.grantedRate ?? 0,
                 term: Math.round(loan.totalTermDays ?? 0),
-                nthpDate: "",
+                nthpDate: pendingNthpDate,
                 notarialFee: 0,
                 docStamps: 0,
                 insurance: 0,

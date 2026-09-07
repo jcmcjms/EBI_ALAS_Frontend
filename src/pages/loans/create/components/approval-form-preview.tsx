@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { useFormContext, useWatch, useFieldArray } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { FilePdf, Printer, Warning } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
@@ -81,8 +81,9 @@ const BAND_MAIN = "grid grid-cols-[58%_42%]";
 const BAND_FOOT = "grid grid-cols-[62%_38%]";
 
 /* ── Capacity-to-pay badge ───────────────────────────────────────── */
-function CapacityToPayBadge() {
-    const m = useLoanComputations();
+// Now accepts parameters so each loan form shows its own result.
+function CapacityToPayBadge({ params }: { params: LoanApplicationFormData["loans"][number]["parameters"] | undefined }) {
+    const m = useLoanComputations(params);
     const hasPrincipal = m.monthlyAmortization > 0;
 
     if (!hasPrincipal) return null;
@@ -174,8 +175,8 @@ function SingleLoanApprovalForm({ loan, client, branchType, form, index }: Singl
 
     // ── Loan product display name ─────────────────────────────────
     const productCode = parseProductCode(parameters.product);
-    const preLoanBranchCode =
-        branchType.selectedLoanBch?.trim() || form?.preLoan?.bch?.trim() || "";
+    // Each loan carries its own branchCode (extracted from accountId at toggle time)
+    const preLoanBranchCode = loan.branchCode?.trim() || form?.preLoan?.bch?.trim() || "";
     const { data: loanClass } = useCatLoanClass(
         preLoanBranchCode,
         loan.loanNo,
@@ -187,8 +188,8 @@ function SingleLoanApprovalForm({ loan, client, branchType, form, index }: Singl
         loanClass?.catLoanClass
     );
 
-    // ── Shared engine results ─────────────────────────────────
-    const metrics = useLoanComputations();
+    // ── Shared engine results — now per-loan via explicit params ────
+    const metrics = useLoanComputations(parameters);
 
     const termDays = parameters.term || 0;
     const applicationChargeLegacy = (parameters.proposedAmount || 0) * LEGACY_APPLICATION_CHARGE_RATE;
@@ -589,8 +590,9 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
     ({ onGeneratePdf }, ref) => {
         const { control } = useFormContext<LoanApplicationFormData>();
 
-        // useFieldArray for loans array
-        const { fields } = useFieldArray({ control, name: "loans" });
+        // useWatch subscribes to live form values — no desync risk from
+        // a second useFieldArray snapshot. Each loan form reads via
+        // useLoanComputations(parameters) for per-loan computation.
         const watchedLoans = useWatch({ control, name: "loans" }) ?? [];
         const watchedForm = useWatch({ control }) as LoanApplicationFormData;
 
@@ -631,20 +633,19 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                     className="bg-white text-black print:bg-white"
                 >
                     {/* Empty state */}
-                    {fields.length === 0 && (
+                    {watchedLoans.length === 0 && (
                         <div className="p-8 text-center text-muted-foreground">
                             Select loan numbers in Step 1.3 to generate approval forms.
                         </div>
                     )}
 
                     {/* Map over loans array to render each approval form */}
-                    {fields.map((field, index) => {
-                        const loan = watchedLoans[index];
+                    {watchedLoans.map((loan, index) => {
                         if (!loan) return null;
 
                         return (
                             <SingleLoanApprovalForm
-                                key={field.id}
+                                key={loan.loanNo}
                                 loan={loan}
                                 client={client}
                                 branchType={branchType}
