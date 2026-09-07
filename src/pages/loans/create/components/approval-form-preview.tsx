@@ -71,6 +71,7 @@ const LEGACY_NOTARIAL_FEE = 500;
  * placeholders padding unused rows. */
 const RELOAN_TEMPLATE_ROWS = 6;
 const BUYOUT_TEMPLATE_ROWS = 6;
+const INCOMING_TEMPLATE_ROWS = 5;
 
 /* Column bands of the legacy sheet: computations and the reloan band
  * split 58/42; the deviations band splits 62/38. */
@@ -423,11 +424,10 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                             </div>
 
                             {/* ── EBI / Buy-Out / Incoming ──
-                                One shared-row table: the legacy sheet prints the
-                                right-hand totals on the same row lines as the left
-                                matrices, and a single fixed grid keeps both matrices'
-                                columns aligned. Row counts are constant (6 reloan /
-                                6 buy-out / 5 incoming), dash-padded. */}
+                                Single fixed grid: both matrices share one colgroup so
+                                their columns stay aligned. The summary stack
+                                (Total Reloan&Buy-out … Maximum Loanable Amount) prints
+                                BELOW the "Total Accounts for Buy-out" row, full width. */}
                             <table className={cn(B, "w-full table-fixed border-collapse border-t-0")}>
                                 <colgroup>
                                     <col className="w-[26%]" />
@@ -441,7 +441,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                 <tbody>
                                     <tr>
                                         <td colSpan={4} className="px-1.5 py-0.5 font-bold">Add: EBI Accounts for reloans</td>
-                                        <td colSpan={3} rowSpan={8} className="border-l border-black px-1.5 py-0.5 align-top" />
+                                        <td colSpan={3} rowSpan={17} className="border-l border-black px-1.5 py-0.5" />
                                     </tr>
                                     <tr>
                                         <td className="px-1.5 py-0.5 font-bold underline">Name of Financial Institution</td>
@@ -465,15 +465,9 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                         <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiDeductions)}</td>
                                         <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
                                         <td />
-                                        <td className="border-l border-black px-1.5 py-0.5 font-bold">Total Reloan&Buy-out Accounts</td>
-                                        <td />
-                                        <td className="border-b border-black px-1.5 py-0.5 text-right tabular-nums">{num(ebiDeductions)}</td>
                                     </tr>
                                     <tr>
                                         <td colSpan={4} className="px-1.5 py-0.5 font-bold">Add: Buy-Out Accounts from other FI's</td>
-                                        <td className="border-l border-black" />
-                                        <td />
-                                        <td className="px-1.5 py-0.5 text-right tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
                                     </tr>
                                     {Array.from({ length: BUYOUT_TEMPLATE_ROWS }).map((_, i) => {
                                         const b = buyOuts[i];
@@ -483,63 +477,56 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                                 <td className="px-1.5 py-0.5 text-right tabular-nums">{b ? num(b.amortization) : "-"}</td>
                                                 <td className="px-1.5 py-0.5 text-right tabular-nums">{b ? num(b.outstandingBalance) : "-"}</td>
                                                 <td className="px-1.5 py-0.5">{b ? b.pn : "-"}</td>
-                                                {i === 0 && (
-                                                    <>
-                                                        <td colSpan={2} className="border-l border-black px-1.5 py-0.5 font-bold">Total Disposabe</td>
-                                                        <td className="border-b border-black px-1.5 py-0.5 text-right tabular-nums">{num(totalDisposableGross)}</td>
-                                                    </>
-                                                )}
-                                                {i === 1 && (
-                                                    <>
-                                                        <td colSpan={2} className="border-l border-black px-1.5 py-0.5 font-bold">Less: Minimum NTHP</td>
-                                                        <td className="px-1.5 py-0.5 text-right tabular-nums">{num(nthp)}</td>
-                                                    </>
-                                                )}
-                                                {i === 2 && (
-                                                    <>
-                                                        <td className="border-l border-black px-1.5 py-0.5 font-bold">Incoming/undeducted Loans:</td>
-                                                        <td colSpan={2} className="px-1.5 py-0.5 font-bold underline">Remarks on Incominng/Unlled Loans</td>
-                                                    </>
-                                                )}
-                                                {i >= 3 && (
-                                                    <>
-                                                        <td className="border-l border-black px-1.5 py-0.5 text-center">-</td>
-                                                        <td className="px-1.5 py-0.5 text-center">-</td>
-                                                        <td className="px-1.5 py-0.5 text-center">-</td>
-                                                    </>
-                                                )}
                                             </tr>
                                         );
                                     })}
-                                    {/* two incoming-loan dash rows continue past the buy-out matrix */}
-                                    <tr>
-                                        <td colSpan={4} />
-                                        <td className="border-l border-black px-1.5 py-0.5 text-center">-</td>
-                                        <td className="px-1.5 py-0.5 text-center">-</td>
-                                        <td className="px-1.5 py-0.5 text-center">-</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={4} />
-                                        <td className="border-l border-black px-1.5 py-0.5 text-center">-</td>
-                                        <td className="px-1.5 py-0.5 text-center">-</td>
-                                        <td className="px-1.5 py-0.5 text-center">-</td>
-                                    </tr>
                                     <tr>
                                         <td className="px-1.5 py-0.5 font-bold">Total Accounts for Buy-out</td>
                                         <td className="px-1.5 py-0.5 text-right tabular-nums" style={DOUBLE_UNDERLINE} />
                                         <td className="px-1.5 py-0.5 text-right tabular-nums" style={DOUBLE_UNDERLINE} />
                                         <td />
-                                        <td colSpan={2} className="border-l border-black px-1.5 py-0.5 font-bold">Total Deductions</td>
+                                    </tr>
+
+                                    {/* ── summary stack: prints below the buy-out total ── */}
+                                    <tr>
+                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Total Reloan&Buy-out Accounts</td>
+                                        <td className="border-b border-black px-1.5 py-0.5 text-right tabular-nums">{num(ebiDeductions)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={6} />
+                                        <td className="px-1.5 py-0.5 text-right tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Total Disposabe</td>
+                                        <td className="border-b border-black px-1.5 py-0.5 text-right tabular-nums">{num(totalDisposableGross)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Less: Minimum NTHP</td>
+                                        <td className="px-1.5 py-0.5 text-right tabular-nums">{num(nthp)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={3} className="px-1.5 py-0.5 font-bold">Incoming/undeducted Loans:</td>
+                                        <td colSpan={4} className="px-1.5 py-0.5 font-bold underline">Remarks on Incominng/Unlled Loans</td>
+                                    </tr>
+                                    {Array.from({ length: INCOMING_TEMPLATE_ROWS }).map((_, i) => {
+                                        const inc = incomingLoans[i];
+                                        return (
+                                            <tr key={`incoming-${i}`}>
+                                                <td colSpan={3} className="px-1.5 py-0.5 text-center">{inc ? `${inc.name}  ${num(inc.deductions)}` : "-"}</td>
+                                                <td colSpan={4} className="px-1.5 py-0.5 text-center">{inc ? inc.remarks : "-"}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                    <tr>
+                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Total Deductions</td>
                                         <td className="border-b border-black px-1.5 py-0.5 text-right tabular-nums">{num(totalDeductionsFinal)}</td>
                                     </tr>
                                     <tr>
-                                        <td colSpan={4} />
-                                        <td colSpan={2} className="border-l border-black px-1.5 py-0.5 font-bold">Total Disposabe</td>
+                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Total Disposabe</td>
                                         <td className={cn(BLUE, "border-b border-black px-1.5 py-0.5 text-right font-bold tabular-nums")}>{num(totalDisposableNet)}</td>
                                     </tr>
                                     <tr>
-                                        <td colSpan={4} />
-                                        <td colSpan={2} className="border-l border-black px-1.5 py-0.5 font-bold">Maximum Loanable Amount</td>
+                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Maximum Loanable Amount</td>
                                         <td className={cn(BLUE, "border-b border-black px-1.5 py-0.5 text-right font-bold tabular-nums")}>
                                             {maximumLoanableAmount < 0
                                                 ? `(PHP${num(Math.abs(maximumLoanableAmount))})`
