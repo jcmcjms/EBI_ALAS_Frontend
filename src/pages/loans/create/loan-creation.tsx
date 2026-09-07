@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FormProvider, useForm, useWatch, useFormContext } from "react-hook-form";
+import { FormProvider, useForm, useWatch, useFormContext, useFieldArray } from "react-hook-form";
 import type { FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store/authStore";
 import { WEBLOAN_BRANCHES } from "@/src/lib/api/types";
@@ -78,7 +79,10 @@ function sectionErrorCount(errors: FieldErrors<LoanApplicationFormData>, id: Sec
     case "cis-lookup":
       return countFieldErrors(errors.branchType) + countFieldErrors(errors.client);
     case "loan-params":
-      return countFieldErrors(errors.loan);
+      // Count errors across all loans in the array
+      const loans = errors.loans;
+      if (!loans || !Array.isArray(loans)) return 0;
+      return loans.reduce((sum, loanError) => sum + countFieldErrors(loanError), 0);
     case "obligations":
       return countFieldErrors(errors.outstandingLoans);
     case "other-obligations":
@@ -113,7 +117,8 @@ function useSectionProgress(
 ) {
   const { control, formState } = useFormContext<LoanApplicationFormData>();
   const branchType = useWatch({ control, name: "branchType" });
-  const loan = useWatch({ control, name: "loan" });
+  // CHANGED: watch loans array instead of single loan
+  const loans = useWatch({ control, name: "loans" });
   const verification = useWatch({ control, name: "verification" });
   const deviations = useWatch({ control, name: "deviations" });
 
@@ -122,32 +127,26 @@ function useSectionProgress(
       case "cis-lookup":
         // The lookup is "complete" when a client is loaded, an account
         // has been picked (handled by the parent lifting `isClientLoaded`
-        // to mean "profile sourced"), a preloan — bch-scoped to the
-        // acting user — has been attached, AND the preloan's typed
-        // `creationTypeCode` is one of the four known backend values
-        // (0/1/2/6). The code is the source of truth for Section 4
-        // ("Outstanding Loans") visibility; without a known code the
-        // wizard can't decide whether to render that section.
-        // `creationTypeCode === undefined` guards against the schema's
-        // `null` initial state — `useWatch` returns `undefined` for
-        // a field that hasn't been touched.
+        // to mean "profile sourced"), AND at least one loan has been
+        // selected. For multi-loan, we check if any loan has parameters.
         return (
           isClientLoaded &&
           !!branchType.requestingOfficer &&
-          preLoanSelected &&
-          branchType.creationTypeCode != null
+          preLoanSelected
         );
       case "personal-info":
       case "obligations":
       case "other-obligations":
         return isClientLoaded; // read-only, complete once sourced from CIS
       case "loan-params":
-        return (
-          isClientLoaded &&
-          !!loan.product &&
-          !!loan.purpose &&
-          loan.proposedAmount > 0 &&
-          loan.term > 0
+        // All selected loans must have valid parameters
+        if (!Array.isArray(loans) || loans.length === 0) return false;
+        return loans.every(
+          (loan) =>
+            loan?.parameters?.product &&
+            loan?.parameters?.purpose &&
+            (loan?.parameters?.proposedAmount ?? 0) > 0 &&
+            (loan?.parameters?.term ?? 0) > 0
         );
       case "verification":
         // `findings` is a required, non-empty string in the schema.
@@ -477,10 +476,6 @@ export function LoanCreationPage() {
         branch: "",
         requestingOfficer: "",
         lai: "",
-        // CHANGED: from single string to array of strings for multi-select
-        selectedLoanNos: [],
-        // Same write/clear discipline as selectedLoanNos — see schema.ts.
-        selectedLoanBch: "",
       },
       client: {
         cisId: "",
@@ -502,33 +497,8 @@ export function LoanCreationPage() {
         school: "",
         referrer: "",
       },
-      loan: {
-        product: "",
-        purpose: "",
-        proposedAmount: 0,
-        term: 0,
-        interestRate: 0,
-        nthpDate: "",
-        // Bank-fee fields (Smart Default + Editable Override). Seeded
-        // with zeros because the wizard writes the standard values
-        // from `LoanProductResponse.fees[]` the moment a product is
-        // picked — see `LoanParametersSection`. The schema defaults
-        // these to `0` too, so omitting them here would still pass
-        // the resolver, but listing them explicitly keeps the form
-        // shape self-documenting.
-        notarialFee: 0,
-        docStamps: 0,
-        insurance: 0,
-        // Audit snapshot — populated by `LoanParametersSection` on
-        // every (product, principal) change. Stays at zero until the
-        // first product pick. The schema's fee-deviation gate
-        // compares this against the three fee fields above.
-        standardFeesSnapshot: {
-          notarialFee: 0,
-          docStamps: 0,
-          insurance: 0,
-        },
-      },
+      // CHANGED: loans array (managed by useFieldArray in active-loans-table)
+      loans: [],
       outstandingLoans: [],
       ebiReloans: [],
       buyOuts: [],
@@ -655,13 +625,16 @@ export function LoanCreationPage() {
   // defaults to "show" (conservative — matches the prior behavior).
   const branchTypeCode = watch("branchType.creationTypeCode");
 
-  // The 1.3 loan-number pick writes `branchType.selectedLoanNos`
+  // CHANGED: preLoanSelected is now based on loans array length
+  // The 1.3 loan-number pick writes to `loans` array via useFieldArray
   // (active-loans-table.tsx handleLoanToggle) and clears it on account
-  // switch / client change. This replaced the retired PreLoanPicker's
-  // `selectedPreLoan` local state as the source of truth for "a loan
-  // is attached" — the stepper gate and submit gate both read it.
-  const selectedLoanNos = watch("branchType.selectedLoanNos");
-  const preLoanSelected = selectedLoanNos.length > 0;
+  // switch / client change. The stepper gate and submit gate both read it.
+  const loans = watch("loans");
+  const preLoanSelected = Array.isArray(loans) && loans.length > 0;
+
+  // For backwards-compatible UI text, derive creationTypeLabel from first loan
+  const firstLoanCreationTypeLabel = loans?.[0]?.creationTypeLabel ?? "";
+
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode);
 
   // Filter the section registry down to what should actually render.
@@ -689,6 +662,13 @@ export function LoanCreationPage() {
   const firstErrorSection = submitAttempted
     ? SECTIONS.find((s) => sectionErrorCount(errors, s.id) > 0)
     : undefined;
+
+  const { control } = methods;
+  const { fields: loanFields } = useFieldArray({ control, name: "loans" });
+  const watchedLoans = useWatch({ control, name: "loans" }) ?? [];
+
+  // For tab state - default to first loan's loanNo or empty string
+  const firstLoanNo = loanFields[0]?.loanNo ?? "";
 
   return (
     <FormProvider {...methods}>
@@ -804,14 +784,57 @@ export function LoanCreationPage() {
                 >
                   <PersonalInfoSection />
                 </section>
+
+                {/* 2. Loan Parameters - Tabbed interface for multi-loan support */}
                 <section
                   id="loan-params"
                   ref={(el) => {
                     sectionRefs.current["loan-params"] = el;
                   }}
                 >
-                  <LoanParametersSection />
+                  {loanFields.length > 0 ? (
+                    // key forces Tabs to remount when firstLoanNo changes from "" to actual loan number
+                    // (defaultValue is only used on initial mount, so we need remount to pick up the new value)
+                    <Tabs key={firstLoanNo} defaultValue={firstLoanNo} className="w-full">
+                      <TabsList className="mb-4 flex h-auto flex-wrap gap-2 bg-muted/50 p-2">
+                        {loanFields.map((field, i) => {
+                          const loan = watchedLoans[i];
+                          return (
+                            <TabsTrigger
+                              key={field.id}
+                              value={field.loanNo}
+                              className="text-xs md:text-sm"
+                            >
+                              {field.loanNo}
+                              <span className="ml-1.5 text-muted-foreground">
+                                ({loan?.productCode})
+                              </span>
+                            </TabsTrigger>
+                          );
+                        })}
+                      </TabsList>
+
+                      {loanFields.map((field, i) => (
+                        <TabsContent
+                          key={field.id}
+                          value={field.loanNo}
+                          className="space-y-6"
+                        >
+                          <LoanParametersSection
+                            fieldPrefix={`loans.${i}.parameters`}
+                            loanIndex={i}
+                          />
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  ) : (
+                    // Empty state - no loans selected yet
+                    <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                      Select loan numbers in Step 1.3 to configure loan parameters.
+                    </div>
+                  )}
                 </section>
+
                 {!hideOutstandingSection && (
                   <section
                     id="obligations"
@@ -922,8 +945,8 @@ export function LoanCreationPage() {
                 {!isClientLoaded
                   ? "Search for a CIS number to begin."
                   : !preLoanSelected
-                    ? "Pick an account and a preloan to continue."
-                    : "Client verified, preloan attached. Ready for processing."}
+                    ? "Select at least one loan to continue."
+                    : `${loans.length} loan${loans.length === 1 ? "" : "s"} selected. Ready for processing.`}
               </p>
             )}
             <div className="flex items-center gap-3">

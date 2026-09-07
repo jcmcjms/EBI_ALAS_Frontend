@@ -38,12 +38,38 @@ function extractProductCode(productDisplayName: string | undefined): string | un
         : productDisplayName.slice(0, dash).trim();
 }
 
-export function LoanParametersSection() {
+interface LoanParametersSectionProps {
+    /**
+     * Field prefix for the parameters within a selected loan.
+     * Example: "loans.0.parameters" for the first loan in the array.
+     * This allows the component to be reused for each loan in the
+     * multi-loan application workflow.
+     */
+    fieldPrefix: string;
+    /** Index of the loan in the loans array (for display purposes). */
+    loanIndex: number;
+}
+
+export function LoanParametersSection({ fieldPrefix, loanIndex }: LoanParametersSectionProps) {
     const { register, control, setValue } = useFormContext();
 
+    // Build prefixed field names
+    const productPath = `${fieldPrefix}.product` as const;
+    const proposedAmountPath = `${fieldPrefix}.proposedAmount` as const;
+    const purposePath = `${fieldPrefix}.purpose` as const;
+    const termPath = `${fieldPrefix}.term` as const;
+    const interestRatePath = `${fieldPrefix}.interestRate` as const;
+    const nthpDatePath = `${fieldPrefix}.nthpDate` as const;
+    const notarialFeePath = `${fieldPrefix}.notarialFee` as const;
+    const docStampsPath = `${fieldPrefix}.docStamps` as const;
+    const insurancePath = `${fieldPrefix}.insurance` as const;
+    const snapshotNotarialPath = `${fieldPrefix}.standardFeesSnapshot.notarialFee` as const;
+    const snapshotDocStampsPath = `${fieldPrefix}.standardFeesSnapshot.docStamps` as const;
+    const snapshotInsurancePath = `${fieldPrefix}.standardFeesSnapshot.insurance` as const;
+
     const proposedAmount =
-        useWatch({ control, name: "loan.proposedAmount" }) ?? 0;
-    const productDisplayName = useWatch({ control, name: "loan.product" }) ?? "";
+        useWatch({ control, name: proposedAmountPath }) ?? 0;
+    const productDisplayName = useWatch({ control, name: productPath }) ?? "";
 
     // ── Fee field watchers ─────────────────────────────────────────────
     // Hoisted out of the conditional `{selectedProduct && (...)}` block
@@ -56,11 +82,11 @@ export function LoanParametersSection() {
     // previous render" error the first time the product catalog
     // resolved and `selectedProduct` transitioned to defined.
     const notarialFee =
-        useWatch({ control, name: "loan.notarialFee" }) ?? undefined;
+        useWatch({ control, name: notarialFeePath }) ?? undefined;
     const docStamps =
-        useWatch({ control, name: "loan.docStamps" }) ?? undefined;
+        useWatch({ control, name: docStampsPath }) ?? undefined;
     const insurance =
-        useWatch({ control, name: "loan.insurance" }) ?? undefined;
+        useWatch({ control, name: insurancePath }) ?? undefined;
 
     // ── Smart-default fee rules (the new "Smart Default + Editable ─────
     //    Override" behavior) ───────────────────────────────────────────────
@@ -104,18 +130,20 @@ export function LoanParametersSection() {
         if (!selectedProduct || proposedAmount <= 0) return;
 
         const snapshot = computeExpectedFees(selectedProduct, proposedAmount);
-        setValue("loan.standardFeesSnapshot", snapshot, { shouldDirty: false });
-        setValue("loan.notarialFee", snapshot.notarialFee, { shouldDirty: false });
-        setValue("loan.docStamps", snapshot.docStamps, { shouldDirty: false });
-        setValue("loan.insurance", snapshot.insurance, { shouldDirty: false });
-    }, [selectedProduct, proposedAmount, setValue]);
+        setValue(snapshotNotarialPath, snapshot.notarialFee, { shouldDirty: false });
+        setValue(snapshotDocStampsPath, snapshot.docStamps, { shouldDirty: false });
+        setValue(snapshotInsurancePath, snapshot.insurance, { shouldDirty: false });
+        setValue(notarialFeePath, snapshot.notarialFee, { shouldDirty: false });
+        setValue(docStampsPath, snapshot.docStamps, { shouldDirty: false });
+        setValue(insurancePath, snapshot.insurance, { shouldDirty: false });
+    }, [selectedProduct, proposedAmount, setValue, notarialFeePath, docStampsPath, insurancePath, snapshotNotarialPath, snapshotDocStampsPath, snapshotInsurancePath]);
 
     const section = getSection("loan-params");
 
     return (
         <SectionCard
             step={section.step}
-            title={section.label}
+            title={`Loan Parameters ${loanIndex > 0 ? `(Loan ${loanIndex + 1})` : ""}`}
             description={section.description}
             icon={<CurrencyDollar size={20} weight="bold" className="text-primary" />}
         >
@@ -124,7 +152,7 @@ export function LoanParametersSection() {
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Loan Product</Label>
                     <Input
-                        {...register("loan.product")}
+                        {...register(productPath)}
                         placeholder="e.g. Salary Loan, Multi-Purpose Loan"
                         readOnly
                         className="h-9 bg-muted/50"
@@ -134,7 +162,7 @@ export function LoanParametersSection() {
                 <div className="space-y-1.5 md:col-span-2">
                     <Label className="text-xs text-muted-foreground">Purpose of Loan</Label>
                     <Input
-                        {...register("loan.purpose")}
+                        {...register(purposePath)}
                         placeholder="e.g. Home renovation, tuition fees, debt consolidation"
                         readOnly
                         className="h-9 bg-muted/50"
@@ -145,7 +173,7 @@ export function LoanParametersSection() {
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Proposed Amount (₱)</Label>
                     <Input
-                        {...register("loan.proposedAmount", { valueAsNumber: true })}
+                        {...register(proposedAmountPath, { valueAsNumber: true })}
                         type="number"
                         placeholder="0.00"
                         min={0}
@@ -159,7 +187,7 @@ export function LoanParametersSection() {
                         <CalendarBlank size={12} weight="bold" /> Term (days)
                     </Label>
                     <Input
-                        {...register("loan.term", { valueAsNumber: true })}
+                        {...register(termPath, { valueAsNumber: true })}
                         type="number"
                         placeholder="e.g. 720"
                         min={1}
@@ -172,7 +200,7 @@ export function LoanParametersSection() {
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Interest Rate (% p.a.)</Label>
                     <Input
-                        {...register("loan.interestRate", { valueAsNumber: true })}
+                        {...register(interestRatePath, { valueAsNumber: true })}
                         type="number"
                         step="0.1"
                         placeholder="1.5"
@@ -187,7 +215,7 @@ export function LoanParametersSection() {
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">NTHP Date</Label>
                     <Input
-                        {...register("loan.nthpDate")}
+                        {...register(nthpDatePath)}
                         type="date"
                         readOnly
                         className="h-9 bg-muted/50"
@@ -223,7 +251,7 @@ export function LoanParametersSection() {
                             <CurrencyInput
                                 value={notarialFee as number | undefined}
                                 onChange={(v) =>
-                                    setValue("loan.notarialFee", v, {
+                                    setValue(notarialFeePath, v, {
                                         shouldDirty: true,
                                     })
                                 }
@@ -244,7 +272,7 @@ export function LoanParametersSection() {
                             <CurrencyInput
                                 value={docStamps as number | undefined}
                                 onChange={(v) =>
-                                    setValue("loan.docStamps", v, { shouldDirty: true })
+                                    setValue(docStampsPath, v, { shouldDirty: true })
                                 }
                                 suggestedValue={expectedFees.docStamps}
                                 aria-label="Doc stamps"
@@ -263,7 +291,7 @@ export function LoanParametersSection() {
                             <CurrencyInput
                                 value={insurance as number | undefined}
                                 onChange={(v) =>
-                                    setValue("loan.insurance", v, { shouldDirty: true })
+                                    setValue(insurancePath, v, { shouldDirty: true })
                                 }
                                 suggestedValue={expectedFees.insurance}
                                 aria-label="Insurance"
