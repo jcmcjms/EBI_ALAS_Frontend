@@ -52,39 +52,39 @@ function ageFrom(isoDateStr?: string): string {
 const BLUE = "bg-[#d9eaf7]";
 const B = "border border-black";
 const DOUBLE_UNDERLINE: React.CSSProperties = { borderBottom: "3px double #000" };
+const TOP_LINE: React.CSSProperties = { borderTop: "1px solid #000" };
 
-/* ── Legacy template rates ──────────────────────────────────────────────
+/* ── Legacy template constants ─────────────────────────────────────
  *
  * The A16 product historically hard-codes the upfront deduction rates
- * in the printed Approval Form: 5.04% application charge + 0.75% doc
- * stamp + ₱500 notarial fee. These are **template/formatting** values
- * (they don't affect the bank's capacity-to-pay gate, which only uses
- * the computed monthly amortization) and are kept inline here so the
- * PDF export matches the legacy spreadsheet line-for-line. Once the
- * Loan Product DTO is wired through TanStack Query, replace these
- * constants with the values returned by the selected product.
+ * and the fixed grid geometry of the printed Approval Form. These are
+ * **template/formatting** values (they don't affect the bank's
+ * capacity-to-pay gate) and are kept inline so the PDF export matches
+ * the legacy spreadsheet line-for-line.
  */
 const LEGACY_APPLICATION_CHARGE_RATE = 0.0504;
 const LEGACY_DOC_STAMP_RATE = 0.0075;
 const LEGACY_NOTARIAL_FEE = 500;
 
-/* ── Capacity-to-pay badge ─────────────────────────────────────────────
- *
- * Reads the shared engine's results and surfaces the "exceeds disposable
- * income" rule as a chip on the preview header. The (legacy) "below
- * minimum amortization" check was previously surfaced here too, but it
- * has been removed from the form-level validation gate; the badge no
- * longer needs to mirror it.
- */
+/* Fixed row counts of the legacy Excel grid: the reloan and buy-out
+ * matrices always print 6 rows, the incoming-loan matrix 5, with "-"
+ * placeholders padding unused rows. */
+const RELOAN_TEMPLATE_ROWS = 6;
+const BUYOUT_TEMPLATE_ROWS = 6;
+const INCOMING_TEMPLATE_ROWS = 5;
+
+/* Column bands of the legacy sheet: computations and the reloan band
+ * split 58/42; the deviations band splits 62/38. */
+const BAND_MAIN = "grid grid-cols-[58%_42%]";
+const BAND_FOOT = "grid grid-cols-[62%_38%]";
+
+/* ── Capacity-to-pay badge ───────────────────────────────────────── */
 function CapacityToPayBadge() {
     const m = useLoanComputations();
     const hasPrincipal = m.monthlyAmortization > 0;
 
     if (!hasPrincipal) return null;
-
-    const exceeds = m.isAmortizationExceedingDisposable;
-
-    if (!exceeds) return null;
+    if (!m.isAmortizationExceedingDisposable) return null;
 
     return (
         <Badge variant="destructive" className="gap-1.5 py-1 text-xs">
@@ -124,7 +124,7 @@ function AmtRow({ label, value, blue, bold, underline, topLine, labelBold }: {
             <span className={cn(labelBold && "font-bold")}>{label}</span>
             <span
                 className={cn("min-w-24 text-right tabular-nums", bold && "font-bold", blue && `${BLUE} px-1`, underline && "border-b border-black")}
-                style={topLine ? { borderTop: "1px solid #000" } : undefined}
+                style={topLine ? TOP_LINE : undefined}
             >
                 {value}
             </span>
@@ -164,10 +164,6 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         const incomingLoans = form?.incomingLoans ?? [];
 
         // ── Loan product display name ─────────────────────────────────
-        // The form prints curated product names (C21 → ATM SAL, A16 →
-        // APDS - RPSU, …), not the raw webloan description. C23/C35 further
-        // depend on the selected preloan's cat_loan_class, resolved against
-        // the (bch, loan_no, loan_product) key that 1.3 writes on loan pick.
         const productCode = parseProductCode(loan.product);
         const selectedLoanNo = branchType.selectedLoanNo ?? "";
         const preLoanBranchCode =
@@ -183,20 +179,8 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         );
 
         // ── Shared engine results ─────────────────────────────────
-        // The canonical numbers come from `@/src/lib/loan-computations`
-        // (via `useLoanComputations`). The fields below that aren't
-        // part of that contract — `termDays`, `docStamp`,
-        // `notarialFee`, `deductionPct`, `totalPrincipal`,
-        // `totalExposure`, `netPayAfterDeduction`,
-        // `totalMonthlyIncome`, `totalDeductionsFinal`,
-        // `totalDisposableNet` — are layout-/presentation-only and
-        // are computed locally so the PDF keeps matching the
-        // historical spreadsheet line-for-line.
         const metrics = useLoanComputations();
 
-        // Legacy-template numbers (kept inline because the printed
-        // form must match the legacy Excel regardless of what the
-        // engine uses for the capacity-to-pay gate).
         const termDays = loan.term || 0;
         const applicationChargeLegacy = (loan.proposedAmount || 0) * LEGACY_APPLICATION_CHARGE_RATE;
         const docStamp = (loan.proposedAmount || 0) * LEGACY_DOC_STAMP_RATE;
@@ -204,7 +188,6 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         const deductionsSubtotal = applicationChargeLegacy + docStamp + notarialFee;
         const deductionPct = loan.proposedAmount > 0 ? (deductionsSubtotal / loan.proposedAmount) * 100 : 0;
 
-        // Aggregated outstanding balances for the printed layout.
         const totalPrincipal = outstandingLoans.reduce((s, l) => s + (l.principalBalance || 0), 0);
         const ebiDeductions = ebiReloans.reduce((s, r) => s + (r.existingDeduction || 0), 0);
         const ebiOb = ebiReloans.reduce((s, r) => s + (r.outstandingBalance || 0), 0);
@@ -223,10 +206,6 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         const totalDeductionsFinal = nthp + incomingTotal;
         const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
 
-        // Legacy LAM: the MLA is the capacity-to-pay ceiling derived from
-        // the net disposable line (NTHP + EBI reloan deductions − minimum
-        // NTHP − incoming deductions), NOT the proposed amount. Floored to
-        // ₱100 so the quoted MLA's amortization always fits the capacity.
         const maximumLoanableAmount = computeMaximumLoanableAmount(
             totalDisposableNet,
             loan.interestRate || 0,
@@ -268,12 +247,14 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                 }
                 contentClassName="p-0"
             >
-                {/* Captured area — replicates the LOAN APPROVAL FORM template 1:1 */}
+                {/* Captured area — replicates the LOAN APPROVAL FORM template 1:1.
+                    Fixed 800px sheet + Arial to mirror the Excel print geometry. */}
                 <div
                     ref={ref}
                     id="approval-form-preview"
-                    className="bg-white p-5 text-[10px] leading-[1.4] text-black"
+                    className="bg-white p-5 text-[9px] leading-[1.35] text-black [font-family:Arial,Helvetica,sans-serif]"
                 >
+                    <div className="mx-auto w-[800px] max-w-full">
                         <h1 className="mb-2 text-sm font-bold underline">LOAN APPROVAL FORM</h1>
 
                         <div className="border-2 border-black">
@@ -313,7 +294,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                     <tr>
                                         <L>Region Code :</L>
                                         <V blue>{dash(client.region)}</V>
-                                        <V blue colSpan={2} rowSpan={3} className="align-middle">
+                                        <V blue colSpan={2} rowSpan={3} className="align-bottom">
                                             PN: {dash(branchType.selectedLoanNo)}
                                         </V>
                                         <L>Branch Code :</L>
@@ -350,17 +331,13 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                             {/* ══ LOAN COMPUTATIONS ══ */}
                             <div className={cn(B, "text-center font-bold")}>LOAN COMPUTATIONS</div>
 
-                            <div className="grid grid-cols-2">
+                            <div className={BAND_MAIN}>
                                 {/* ── LEFT column ── */}
                                 <div className={cn(B, "border-r-0 p-2")}>
                                     <AmtRow label={<span className="font-bold">Maximum Loanable Amount **</span>} value={num(maximumLoanableAmount)} blue underline />
                                     <AmtRow label={<span className="font-bold">Proposed Loan for Approval</span>} value={<span className="font-bold">{num(loan.proposedAmount)}</span>} blue />
                                     <div className="pt-1 font-bold">Less:</div>
                                     <div className="pl-3">
-                                        {/* Application charge on the printed form uses the
-                                            legacy 5.04% rate; the capacity-to-pay engine uses
-                                            the configurable 6% (DEFAULT_APPLICATION_CHARGE_RATE)
-                                            via `metrics.applicationCharge`. */}
                                         <AmtRow label="Application Charge" value={num(applicationChargeLegacy)} />
                                         <AmtRow label="Doc. Stamp" value={num(docStamp)} />
                                         <AmtRow label="Notarial Fee" value={num(notarialFee)} />
@@ -380,8 +357,6 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                     <AmtRow label={<span className="font-bold">Less: Total Buy-Out Balance</span>} value={num(buyOutBalance)} underline />
                                     <AmtRow label={<span className="font-bold">NET PROCEEDS to Client</span>} value={<span className="font-bold">{num(netProceedsClient)}</span>} blue />
                                     <div className="h-3" />
-                                    {/* Monthly Amortization comes from the shared engine so
-                                        this value matches the Zod gate's number 1:1. */}
                                     <AmtRow label={<span className="font-bold">Monthly Amortization</span>} value={`PHP ${num(metrics.monthlyAmortization)}`} underline />
                                     <div className="h-3" />
                                     <AmtRow label={<span className="font-bold">NetPay After Deduction</span>} value={num(netPayAfterDeduction)} underline />
@@ -425,7 +400,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                             </tr>
                                             <tr className="[&>td]:px-1 [&>td]:py-0.5">
                                                 <td colSpan={2} />
-                                                <td className="border-b border-black text-right font-bold tabular-nums">{num(totalPrincipal)}</td>
+                                                <td className="text-right font-bold tabular-nums" style={TOP_LINE}>{num(totalPrincipal)}</td>
                                                 <td />
                                             </tr>
                                         </tbody>
@@ -438,7 +413,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                         <span className="tabular-nums">{num(loan.proposedAmount)}</span>
                                     </div>
                                     <div className="flex justify-end px-1 py-[1px]">
-                                        <span className="min-w-24 border-b border-black text-right tabular-nums">{num(loan.proposedAmount)}</span>
+                                        <span className="min-w-24 text-right tabular-nums" style={TOP_LINE}>{num(loan.proposedAmount)}</span>
                                     </div>
                                     <div className="flex items-end justify-between px-1 py-[1px]">
                                         <span className="font-bold">Total Exposure</span>
@@ -462,99 +437,117 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                 </div>
                             </div>
 
-                            {/* ── EBI / Buy-Out / Incoming ── */}
-                            <div className={cn(B, "grid grid-cols-2 border-t-0")}>
-                                <div className="p-2">
-                                    <div className="font-bold">Add: EBI Accounts for reloans</div>
-                                    <table className="w-full border-collapse">
-                                        <thead>
-                                            <tr className="[&>th]:border-b [&>th]:border-black [&>th]:px-1 [&>th]:py-0.5 [&>th]:text-left [&>th]:font-bold [&>th]:underline">
-                                                <th>Name of Financial Institution</th>
-                                                <th className="text-right!">Deductions</th>
-                                                <th className="text-right!">Old Loan/Buy-Out Balance<br />OB to be paid/closed</th>
-                                                <th>PN Number</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {ebiReloans.map((r) => (
-                                                <tr key={r.pn} className="[&>td]:px-1 [&>td]:py-0.5">
-                                                    <td>{r.name || r.pn}</td>
-                                                    <td className="text-right tabular-nums">{num(r.existingDeduction)}</td>
-                                                    <td className="text-right tabular-nums">{num(r.outstandingBalance)}</td>
-                                                    <td>{r.pn}</td>
+                            {/* ── EBI / Buy-Out / Incoming ──
+                                The right-hand totals stack does NOT start at the top
+                                of the band: on the legacy sheet it begins level with
+                                the "Total Accounts for reloans" row, so a spacer
+                                reproduces that offset. */}
+                            <div className={cn(B, BAND_MAIN, "border-t-0")}>
+                                <div className="flex flex-col p-2">
+                                    <div>
+                                        <div className="font-bold">Add: EBI Accounts for reloans</div>
+                                        <table className="w-full border-collapse">
+                                            <thead>
+                                                <tr className="[&>th]:border-b [&>th]:border-black [&>th]:px-1 [&>th]:py-0.5 [&>th]:text-left [&>th]:font-bold [&>th]:underline">
+                                                    <th>Name of Financial Institution</th>
+                                                    <th className="text-right!">Deductions</th>
+                                                    <th className="text-right!">Old Loan/Buy-Out Balance<br />OB to be paid/closed</th>
+                                                    <th>PN Number</th>
                                                 </tr>
-                                            ))}
-                                            <DashRows count={Math.max(0, 4 - ebiReloans.length)} cols={4} />
-                                            <tr className="[&>td]:px-1 [&>td]:py-0.5">
-                                                <td className="font-bold">Total Accounts for reloans</td>
-                                                <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiDeductions)}</td>
-                                                <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
-                                                <td />
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {ebiReloans.map((r) => (
+                                                    <tr key={r.pn} className="[&>td]:px-1 [&>td]:py-0.5">
+                                                        <td>{r.name || r.pn}</td>
+                                                        <td className="text-right tabular-nums">{num(r.existingDeduction)}</td>
+                                                        <td className="text-right tabular-nums">{num(r.outstandingBalance)}</td>
+                                                        <td>{r.pn}</td>
+                                                    </tr>
+                                                ))}
+                                                <DashRows count={Math.max(0, RELOAN_TEMPLATE_ROWS - ebiReloans.length)} cols={4} />
+                                                <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                                    <td className="font-bold">Total Accounts for reloans</td>
+                                                    <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiDeductions)}</td>
+                                                    <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
+                                                    <td />
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
 
-                                    <div className="pt-2 font-bold">Add: Buy-Out Accounts from other FI's</div>
-                                    <table className="w-full border-collapse">
-                                        <tbody>
-                                            {buyOuts.map((b) => (
-                                                <tr key={b.pn} className="[&>td]:px-1 [&>td]:py-0.5">
-                                                    <td>{b.name || b.pn}</td>
-                                                    <td className="text-right tabular-nums">{num(b.amortization)}</td>
-                                                    <td className="text-right tabular-nums">{num(b.outstandingBalance)}</td>
-                                                    <td>{b.pn}</td>
+                                    <div className="pt-2">
+                                        <div className="font-bold">Add: Buy-Out Accounts from other FI's</div>
+                                        <table className="w-full border-collapse">
+                                            <tbody>
+                                                {buyOuts.map((b) => (
+                                                    <tr key={b.pn} className="[&>td]:px-1 [&>td]:py-0.5">
+                                                        <td>{b.name || b.pn}</td>
+                                                        <td className="text-right tabular-nums">{num(b.amortization)}</td>
+                                                        <td className="text-right tabular-nums">{num(b.outstandingBalance)}</td>
+                                                        <td>{b.pn}</td>
+                                                    </tr>
+                                                ))}
+                                                <DashRows count={Math.max(0, BUYOUT_TEMPLATE_ROWS - buyOuts.length)} cols={4} />
+                                                <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                                    <td className="font-bold">Total Accounts for Buy-out</td>
+                                                    <td className="text-right tabular-nums" style={DOUBLE_UNDERLINE} />
+                                                    <td className="text-right tabular-nums" style={DOUBLE_UNDERLINE} />
+                                                    <td />
                                                 </tr>
-                                            ))}
-                                            <DashRows count={Math.max(0, 4 - buyOuts.length)} cols={4} />
-                                            <tr className="[&>td]:px-1 [&>td]:py-0.5">
-                                                <td className="font-bold">Total Accounts for Buy-out</td>
-                                                <td className="text-right tabular-nums" style={DOUBLE_UNDERLINE}>-</td>
-                                                <td className="text-right tabular-nums" style={DOUBLE_UNDERLINE}>-</td>
-                                                <td />
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
 
-                                <div className={cn(B, "border-l-0 p-2")}>
-                                    <AmtRow label={<span className="font-bold">Total Reloan&Buy-out Accounts</span>} value={num(ebiDeductions)} underline />
-                                    <div className="flex justify-between py-[1px]">
-                                        <span />
-                                        <span className="min-w-24 text-right tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</span>
-                                    </div>
-                                    <AmtRow label={<span className="font-bold">Total Disposable</span>} value={num(totalDisposableGross)} underline />
-                                    <AmtRow label={<span className="font-bold">Less: Minimum NTHP</span>} value={num(nthp)} />
+                                <div className={cn(B, "border-l-0 flex flex-col p-0")}>
+                                    {/* spacer: pushes the stack down to the reloans total row */}
+                                    <div className="shrink-0 grow-0 basis-[53%]" />
+                                    <div className="p-2">
+                                        <AmtRow label={<span className="font-bold">Total Reloan&Buy-out Accounts</span>} value={num(ebiDeductions)} underline />
+                                        <div className="flex justify-between py-[1px]">
+                                            <span />
+                                            <span className="min-w-24 text-right tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</span>
+                                        </div>
+                                        <AmtRow label={<span className="font-bold">Total Disposabe</span>} value={num(totalDisposableGross)} underline />
+                                        <AmtRow label={<span className="font-bold">Less: Minimum NTHP</span>} value={num(nthp)} />
 
-                                    <div className="flex justify-between pt-2 font-bold">
-                                        <span>Incoming/undeducted Loans:</span>
-                                        <span className="underline">Remarks on Incoming/Unded Loans</span>
-                                    </div>
-                                    <table className="w-full border-collapse">
-                                        <tbody>
-                                            {incomingLoans.map((i, idx) => (
-                                                <tr key={idx} className="[&>td]:px-1 [&>td]:py-0.5">
-                                                    <td>{i.name}</td>
-                                                    <td className="text-right tabular-nums">{num(i.deductions)}</td>
-                                                    <td>{i.remarks}</td>
-                                                </tr>
-                                            ))}
-                                            <DashRows count={Math.max(0, 5 - incomingLoans.length)} cols={3} />
-                                        </tbody>
-                                    </table>
+                                        <div className="flex justify-between pt-2 font-bold">
+                                            <span>Incoming/undeducted Loans:</span>
+                                            <span className="underline">Remarks on Incominng/Unlled Loans</span>
+                                        </div>
+                                        <table className="w-full border-collapse">
+                                            <tbody>
+                                                {incomingLoans.map((i, idx) => (
+                                                    <tr key={idx} className="[&>td]:px-1 [&>td]:py-0.5">
+                                                        <td>{i.name}</td>
+                                                        <td className="text-right tabular-nums">{num(i.deductions)}</td>
+                                                        <td>{i.remarks}</td>
+                                                    </tr>
+                                                ))}
+                                                <DashRows count={Math.max(0, INCOMING_TEMPLATE_ROWS - incomingLoans.length)} cols={3} />
+                                            </tbody>
+                                        </table>
 
-                                    <AmtRow label={<span className="font-bold">Total Deductions</span>} value={num(totalDeductionsFinal)} underline />
-                                    <AmtRow label={<span className="font-bold">Total Disposable</span>} value={num(totalDisposableNet)} blue underline />
-                                    {(() => {
-                                        const mlaDisplayRight = maximumLoanableAmount < 0
-                                            ? `(PhP${num(Math.abs(maximumLoanableAmount))})`
-                                            : `PhP${num(maximumLoanableAmount)}`;
-                                        return <AmtRow label={<span className="font-bold">Maximum Loanable Amount</span>} value={<span className="font-bold">{mlaDisplayRight}</span>} blue underline />;
-                                    })()}
+                                        <AmtRow label={<span className="font-bold">Total Deductions</span>} value={num(totalDeductionsFinal)} underline />
+                                        <AmtRow label={<span className="font-bold">Total Disposabe</span>} value={num(totalDisposableNet)} blue underline />
+                                        <AmtRow
+                                            label={<span className="font-bold">Maximum Loanable Amount</span>}
+                                            value={
+                                                <span className="font-bold">
+                                                    {maximumLoanableAmount < 0
+                                                        ? `(PHP${num(Math.abs(maximumLoanableAmount))})`
+                                                        : `PHP${num(maximumLoanableAmount)}`}
+                                                </span>
+                                            }
+                                            blue
+                                            underline
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
                             {/* ══ DEVIATIONS / VERIFICATIONS ══ */}
-                            <div className="grid grid-cols-2">
+                            <div className={BAND_FOOT}>
                                 <div className={cn(B, "min-h-56 border-r-0 p-1.5")}>
                                     <div className="font-bold">Deviations:</div>
                                     {deviations?.hasDeviations && deviations.deviationDetails.length > 0 ? (
@@ -587,6 +580,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                             </div>
                         </div>
                     </div>
+                </div>
             </SectionCard>
         );
     }
