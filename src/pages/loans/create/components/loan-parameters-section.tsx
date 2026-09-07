@@ -21,18 +21,17 @@ function php(value: number): string {
 }
 
 /**
- * The form stores `loan.product` as the pre-joined `"<code> - <description>"`
- * string the backend ships on `PendingLoanDto.productWithDescription`. The
- * LoanProduct catalog uses the *bare* code (`"PL"`, `"MPL"`, `"C35"`, …)
- * as its primary key. Extract the leading token so we can look up the
- * matching product rule and seed the smart-default fees.
- *
- * Returns `undefined` for inputs that don't follow the convention — the
- * form's auto-fill stays dormant in that case (no fees, no Reset button,
- * no warnings) rather than crashing on an unknown shape.
+ * Extract product code (e.g., "C21" from "C21 - Salary Loan").
+ * Returns `undefined` for inputs that don't follow the convention —
+ * the form's auto-fill stays dormant in that case (no fees, no Reset
+ * button, no warnings) rather than crashing on an unknown shape.
+ * Also returns `undefined` for "Consolidated" products since there is
+ * no single product code to look up fees against.
  */
 function extractProductCode(productDisplayName: string | undefined): string | undefined {
     if (!productDisplayName) return undefined;
+    // Skip consolidated products — no single product code exists
+    if (productDisplayName.startsWith("Consolidated")) return undefined;
     const dash = productDisplayName.indexOf(" - ");
     return dash === -1
         ? productDisplayName.trim()

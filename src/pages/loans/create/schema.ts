@@ -98,29 +98,29 @@ export const branchTypeSchema = z.object({
     branch: z.string().min(1, "Branch is required"),
     requestingOfficer: z.string().min(1, "Requesting officer is required"),
     lai: z.string().optional(), // Loan Application Index
+
     /**
-     * PN (loan number) the AO picked in 1.3 "Account & preloan".
+     * Array of PN (loan numbers) the AO picked in 1.3 "Account & preloan".
+     * Supports multi-select for debt consolidation / restructuring workflows
+     * where multiple loans of different products can be selected together.
      * Written in lockstep with `creationTypeCode/Label` by
-     * `active-loans-table.tsx` on loan pick and cleared on account
+     * `active-loans-table.tsx` on loan toggle and cleared on account
      * switch / client change. The printed approval form's "PN:" cell
-     * renders this so the document always reflects the in-flight loan
-     * the application is based on — never the outstanding-loans list.
-     * Display-only: the backend re-derives the authoritative PN from
-     * the server-side preloan/loan reference on submit.
+     * renders all selected PNs. Display-only: the backend re-derives
+     * the authoritative PN from the server-side preloan/loan reference.
      */
-    selectedLoanNo: z.string().optional(),
+    selectedLoanNos: z.array(z.string()).min(1, "Select at least one loan").default([]),
+
     /**
-     * Webloan `bch` of the preloan picked in 1.3 "Account & preloan".
-     * Written in lockstep with `selectedLoanNo` by
-     * `active-loans-table.tsx#handleLoanPick` (first segment of the selected
+     * Webloan `bch` of the preloan(s) picked in 1.3 "Account & preloan".
+     * Written in lockstep with `selectedLoanNos` by
+     * `active-loans-table.tsx#handleLoanToggle` (first segment of the selected
      * LAI's "<bch>-<acctNo>" identifier — same split rule as the backend's
      * `WebLoanAccountId.Parse`) and cleared on the same paths (account
      * switch, client clear, fresh CIS search). The approval form needs it as
      * the branch half of the (bch, loan_no, loan_product) key for
      * GET /api/webloans/loan-class, which resolves cat_loan_class for the
-     * C23/C35 product names. Optional like `selectedLoanNo` so untouched
-     * forms still parse; the wizard never submits a class-scoped product
-     * without both fields set because the pick writes them together.
+     * C23/C35 product names.
      */
     selectedLoanBch: z.string().optional(),
 });

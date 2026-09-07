@@ -477,9 +477,9 @@ export function LoanCreationPage() {
         branch: "",
         requestingOfficer: "",
         lai: "",
-        // Same stable-shape seeding as selectedLoanNo (see schema.ts).
-        selectedLoanNo: "",
-        // Same write/clear discipline as selectedLoanNo — see schema.ts.
+        // CHANGED: from single string to array of strings for multi-select
+        selectedLoanNos: [],
+        // Same write/clear discipline as selectedLoanNos — see schema.ts.
         selectedLoanBch: "",
       },
       client: {
@@ -655,13 +655,13 @@ export function LoanCreationPage() {
   // defaults to "show" (conservative — matches the prior behavior).
   const branchTypeCode = watch("branchType.creationTypeCode");
 
-  // The 1.3 loan-number pick writes `branchType.selectedLoanNo`
-  // (active-loans-table.tsx handleLoanPick) and clears it on account
+  // The 1.3 loan-number pick writes `branchType.selectedLoanNos`
+  // (active-loans-table.tsx handleLoanToggle) and clears it on account
   // switch / client change. This replaced the retired PreLoanPicker's
   // `selectedPreLoan` local state as the source of truth for "a loan
   // is attached" — the stepper gate and submit gate both read it.
-  const selectedLoanNo = watch("branchType.selectedLoanNo");
-  const preLoanSelected = !!selectedLoanNo;
+  const selectedLoanNos = watch("branchType.selectedLoanNos");
+  const preLoanSelected = selectedLoanNos.length > 0;
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode);
 
   // Filter the section registry down to what should actually render.

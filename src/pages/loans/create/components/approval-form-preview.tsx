@@ -174,14 +174,25 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
 
         // ── Loan product display name ─────────────────────────────────
         const productCode = parseProductCode(loan.product);
-        const selectedLoanNo = branchType.selectedLoanNo ?? "";
+        // CHANGED: selectedLoanNos is now an array
+        const selectedLoanNos = branchType.selectedLoanNos ?? [];
+        // For loan-class lookup, use the first selected PN (if any)
+        const primaryLoanNo = selectedLoanNos[0] ?? "";
         const preLoanBranchCode =
             branchType.selectedLoanBch?.trim() || form?.preLoan?.bch?.trim() || "";
         const { data: loanClass } = useCatLoanClass(
             preLoanBranchCode,
-            selectedLoanNo,
+            primaryLoanNo,
             productCode
         );
+
+        // Create a display string for multiple PNs
+        const pnDisplay =
+            selectedLoanNos.length === 0
+                ? "-"
+                : selectedLoanNos.length === 1
+                  ? selectedLoanNos[0]
+                  : selectedLoanNos.join(", ");
         const productDisplay = resolveLoanProductDisplayName(
             loan.product,
             loanClass?.catLoanClass
@@ -305,8 +316,9 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                     <tr>
                                         <L>Region Code :</L>
                                         <V blue>{dash(client.region)}</V>
+                                        {/* CHANGED: PN now displays all selected loan numbers */}
                                         <V blue colSpan={2} rowSpan={3} className="align-bottom">
-                                            PN: {dash(branchType.selectedLoanNo)}
+                                            PN: {pnDisplay}
                                         </V>
                                         <L>Branch Code :</L>
                                         <V blue colSpan={3}>{dash(branchType.branch)}</V>
@@ -418,8 +430,13 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                     </table>
 
                                     <div className="pt-2 font-bold">This loan availment:</div>
+                                    {/* CHANGED: Show "Consolidated PNs" when multiple loans selected */}
                                     <div className="flex justify-between px-1 py-[1px]">
-                                        <span>{"<this PN>"}</span>
+                                        <span>
+                                            {selectedLoanNos.length > 1
+                                                ? "Consolidated PNs"
+                                                : "<this PN>"}
+                                        </span>
                                         <span className="tabular-nums">{num(loan.proposedAmount)}</span>
                                         <span className="tabular-nums">{num(loan.proposedAmount)}</span>
                                     </div>

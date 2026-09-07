@@ -109,7 +109,8 @@ export function ActiveLoansTable({
     // `accountNo` — it's a different controller (`/api/preloans`).
     const [selectedAccountId, setSelectedAccountId] = useState<string>("");
     const [loans, setLoans] = useState<PendingLoan[]>([]);
-    const [selectedLoanNo, setSelectedLoanNo] = useState<string>("");
+    // CHANGED: from single string to array for multi-select
+    const [selectedLoanNos, setSelectedLoanNos] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
@@ -134,7 +135,7 @@ export function ActiveLoansTable({
         // picker's list refreshes alongside the pending-loan list. Calling
         // the parent setter is fine here because it does not cascade back
         // into our local state — the parent owns `selectedPreLoanId`.
-        setSelectedLoanNo("");
+        setSelectedLoanNos([]);
         onPreLoanChange("", null);
         // Wipe any obligations row that came from a previous account — the
         // outstanding balance is loan-specific and must not leak across
@@ -160,13 +161,13 @@ export function ActiveLoansTable({
         // render an empty label with a non-null code (or vice versa).
         setValue("branchType.creationTypeCode", null);
         setValue("branchType.creationTypeLabel", "");
-        // Clear the picked loan number too — otherwise the approval
+        // Clear the picked loan number(s) too — otherwise the approval
         // form's "PN:" cell would keep showing the previous account's
         // loan after the AO switches accounts (the picked PN is
         // account-scoped, not borrower-scoped). Mirrors the
         // creationType reset above since both are written by the
-        // same pick event in `handleLoanPick`.
-        setValue("branchType.selectedLoanNo", "", { shouldDirty: false });
+        // same pick event in `handleLoanToggle`.
+        setValue("branchType.selectedLoanNos", [], { shouldDirty: false });
         // Same write/clear discipline as selectedLoanNo — together they form
         // the (bch, loan_no) half of the loan-class lookup key, and a stale
         // branch must never pair with a freshly-picked loan number.
@@ -277,27 +278,54 @@ export function ActiveLoansTable({
         setIsLoading(false);
     };
 
-    const handleLoanPick = (loanNo: string) => {
-        setSelectedLoanNo(loanNo);
+    /**
+     * Extract product code (e.g., "C21" from "C21 - Salary Loan").
+     * Returns null for consolidated products or malformed strings.
+     */
+    const getProductCode = (desc: string | undefined): string | null => {
+        if (!desc) return null;
+        if (desc.startsWith("Consolidated")) return null;
+        const dash = desc.indexOf(" - ");
+        return dash === -1 ? desc.trim() : desc.slice(0, dash).trim();
+    };
+
+    /**
+     * Toggle a loan number in/out of the selection.
+     * Enforces "no same product" constraint and aggregates loan parameters.
+     */
+    const handleLoanToggle = (loanNo: string) => {
         const picked = loans.find((l) => l.loanNo === loanNo);
         if (!picked) return;
 
-        // The approval form's "PN:" cell mirrors the loan number picked
-        // here — lift it into form state so Section 8 can render it.
-        // Written alongside `creationTypeCode/Label` (below) because
-        // all three are sourced from the same pick event and the printed
-        // document must stay in lockstep with the wizard's view of
-        // "this application is based on loan X".
-        setValue("branchType.selectedLoanNo", loanNo, { shouldDirty: false });
+        let newSelectedNos: string[];
 
-        // The approval form's product name (C23/C35 → BONUS / YEB vs MYB) is
-        // resolved via GET /api/webloans/loan-class, which keys on
-        // (bch, loan_no, loan_product). `selectedAccountId` is the combined
-        // "<bch>-<acctNo>" identifier from the CIS search, so the first dash
-        // segment is the preloan's branch — mirror of the backend's
-        // WebLoanAccountId.Parse. Both segments must be non-empty, otherwise
-        // we store "" and the loan-class query stays disabled rather than
-        // firing with a half key.
+        if (selectedLoanNos.includes(loanNo)) {
+            // Deselect: remove from array
+            newSelectedNos = selectedLoanNos.filter((no) => no !== loanNo);
+        } else {
+            // Select: check product constraint
+            const pickedCode = getProductCode(picked.productWithDescription);
+
+            if (pickedCode) {
+                const hasDuplicate = selectedLoanNos.some((no) => {
+                    const existing = loans.find((l) => l.loanNo === no);
+                    return getProductCode(existing?.productWithDescription) === pickedCode;
+                });
+
+                if (hasDuplicate) {
+                    toast.error(
+                        `Cannot select multiple loans of the same product (${pickedCode}).`
+                    );
+                    return;
+                }
+            }
+            newSelectedNos = [...selectedLoanNos, loanNo];
+        }
+
+        setSelectedLoanNos(newSelectedNos);
+        setValue("branchType.selectedLoanNos", newSelectedNos, { shouldDirty: true });
+
+        // Update branch logic (kept single since all loans share the account/branch)
         const [branchSegment, ...accountSegments] = selectedAccountId.split("-");
         const accountSegment = accountSegments.join("-");
         setValue(
@@ -308,82 +336,99 @@ export function ActiveLoansTable({
             { shouldDirty: false }
         );
 
-        // The "Outstanding Loans" table is now driven by the
-        // /outstanding-loans endpoint (see handleFetch) and intentionally
-        // NOT mutated here — picking a loan number identifies which
-        // in-flight preloan this application is based on; it doesn't
-        // narrow the obligations list. The two are independent.
+        // ── Parameter Generation (Aggregation) ──────────────────────────
+        if (newSelectedNos.length > 0) {
+            const selectedLoans = loans.filter((l) =>
+                newSelectedNos.includes(l.loanNo)
+            );
 
-        // ── Hydrate Loan Parameters from the picked loan row ────────────
-        // The pending-loan endpoint pre-joins loan_data fields onto the
-        // pre_loan_data row, so each card carries the proposed product /
-        // purpose / granted rate / term-in-days / outstanding principal.
-        // Map those onto the form so the Loan Parameters section pre-fills
-        // the moment the AO picks a loan — they remain editable, but the
-        // values match what the backend sourced from loan_data.
-        setValue("loan.product", picked.productWithDescription ?? "", {
-            shouldDirty: false,
-        });
-        setValue("loan.purpose", picked.loanPurpose ?? "", {
-            shouldDirty: false,
-        });
-// Loan Type in the Branch & Type section is sourced from the
-// picked pending-loan row's `creationType` (raw byte) + matching
-// label. We write *both* fields in lockstep because:
-//   - `creationTypeCode` (typed 0|1|2|6|null) drives the wizard
-//     logic — Section 4 ("Outstanding Loans") is hidden when the
-//     code is NEW_LOAN (0) or ADDITIONAL_LOAN (6); see
-//     `HidesOutstandingLoans` in `schema.ts`.
-//   - `creationTypeLabel` (e.g. "New Loan", "Additional Loan") is
-//     what the AO sees in Section 1.2 ("Branch & type") and what
-//     the printed approval form renders.
-//
-// Narrowing: the backend's `creationType` is `number | null`. We
-// accept only the four valid codes (0/1/2/6) and coerce anything
-// else — including a future unrecognized code, or a `null` when no
-// `loan_data` row joined onto the preloan — to `null`. The schema
-// (see `creationTypeCodeSchema` in `schema.ts`) hard-blocks
-// unknown codes at parse time, but null is always valid and means
-// "default the Section-4 hide-state to its conservative value
-// (show)". The label is the backend's verbatim string — we never
-// re-derive it from the code, so a localized label (e.g. Filipino)
-// would still round-trip through the form intact. The runtime
-// guard below (`KNOWN_CODES.has(...)`) does NOT narrow the type
-// for TS (Set.has returns `boolean`, not a type-predicate), so we
-// cast through the typed alias to satisfy the schema.
-const KNOWN_CODES: ReadonlySet<CreationTypeCode> = new Set([
-    CREATION_TYPE.NEW_LOAN,
-    CREATION_TYPE.RELOAN,
-    CREATION_TYPE.RESTRUCTURED,
-    CREATION_TYPE.ADDITIONAL_LOAN,
-]);
-const rawCode = picked.creationType;
-const code: CreationTypeCode | null =
-    rawCode != null && (KNOWN_CODES as Set<number>).has(rawCode)
-        ? (rawCode as CreationTypeCode)
-        : null;
-setValue("branchType.creationTypeCode", code, { shouldDirty: false });
-setValue("branchType.creationTypeLabel", picked.creationTypeLabel ?? "", {
-    shouldDirty: false,
-});
-        if (picked.principal != null && Number.isFinite(picked.principal)) {
-            setValue("loan.proposedAmount", picked.principal, {
+            // Proposed Amount: Sum of principal balances
+            const totalPrincipal = selectedLoans.reduce(
+                (sum, l) => sum + (l.principal ?? 0),
+                0
+            );
+            setValue("loan.proposedAmount", totalPrincipal, { shouldDirty: false });
+
+            // Interest Rate: Weighted average based on principal
+            const weightedRateSum = selectedLoans.reduce(
+                (sum, l) => sum + (l.principal ?? 0) * (l.grantedRate ?? 0),
+                0
+            );
+            const avgRate =
+                totalPrincipal > 0 ? weightedRateSum / totalPrincipal : 0;
+            setValue("loan.interestRate", Number(avgRate.toFixed(2)), {
                 shouldDirty: false,
             });
-        }
-        if (picked.grantedRate != null && Number.isFinite(picked.grantedRate)) {
-            setValue("loan.interestRate", picked.grantedRate, {
-                shouldDirty: false,
-            });
-        }
-        if (picked.totalTermDays != null && Number.isFinite(picked.totalTermDays)) {
-            // Backend reports term in days (`total_amortization * 30`),
-            // and the form's `loan.term` is now days as well — pass
-            // through unchanged. Round to a whole number to keep the
-            // Zod integer check happy.
-            setValue("loan.term", Math.round(picked.totalTermDays), {
-                shouldDirty: false,
-            });
+
+            // Term: Maximum of selected loans
+            const maxTerm = Math.max(
+                ...selectedLoans.map((l) => l.totalTermDays ?? 0)
+            );
+            setValue("loan.term", maxTerm, { shouldDirty: false });
+
+            if (newSelectedNos.length === 1) {
+                // Single loan: use its product/purpose/creation type
+                const single = selectedLoans[0];
+                setValue("loan.product", single.productWithDescription ?? "", {
+                    shouldDirty: false,
+                });
+                setValue("loan.purpose", single.loanPurpose ?? "", {
+                    shouldDirty: false,
+                });
+
+                // Set creation type from the single loan
+                const KNOWN_CODES: ReadonlySet<CreationTypeCode> = new Set([
+                    CREATION_TYPE.NEW_LOAN,
+                    CREATION_TYPE.RELOAN,
+                    CREATION_TYPE.RESTRUCTURED,
+                    CREATION_TYPE.ADDITIONAL_LOAN,
+                ]);
+                const rawCode = single.creationType;
+                const code: CreationTypeCode | null =
+                    rawCode != null && (KNOWN_CODES as Set<number>).has(rawCode)
+                        ? (rawCode as CreationTypeCode)
+                        : null;
+                setValue("branchType.creationTypeCode", code, {
+                    shouldDirty: false,
+                });
+                setValue(
+                    "branchType.creationTypeLabel",
+                    single.creationTypeLabel ?? "",
+                    { shouldDirty: false }
+                );
+            } else {
+                // Multiple loans: consolidated product
+                const productCodes = selectedLoans
+                    .map((l) => l.productWithDescription?.split(" - ")[0])
+                    .join(", ");
+                setValue(
+                    "loan.product",
+                    `Consolidated (${productCodes})`,
+                    { shouldDirty: false }
+                );
+                setValue(
+                    "loan.purpose",
+                    "Debt consolidation / Restructuring",
+                    { shouldDirty: false }
+                );
+                setValue("branchType.creationTypeCode", CREATION_TYPE.RESTRUCTURED, {
+                    shouldDirty: false,
+                });
+                setValue(
+                    "branchType.creationTypeLabel",
+                    CREATION_TYPE_LABELS[CREATION_TYPE.RESTRUCTURED],
+                    { shouldDirty: false }
+                );
+            }
+        } else {
+            // No loans selected: clear all parameters
+            setValue("loan.proposedAmount", 0, { shouldDirty: false });
+            setValue("loan.interestRate", 0, { shouldDirty: false });
+            setValue("loan.term", 0, { shouldDirty: false });
+            setValue("loan.product", "", { shouldDirty: false });
+            setValue("loan.purpose", "", { shouldDirty: false });
+            setValue("branchType.creationTypeCode", null, { shouldDirty: false });
+            setValue("branchType.creationTypeLabel", "", { shouldDirty: false });
         }
     };
 
@@ -518,10 +563,10 @@ className=""
                     </div>
                 )}
 
-                {/* Loan number picker (radio-style cards) — only after the
+                {/* Loan number picker (checkbox-style multi-select) — only after the
                     pending-loan list has been fetched. The principalBalance
                     of the picked loan is what pre-fills the Outstanding
-                    Loans table (handled in `handleLoanPick`). */}
+                    Loans table (handled in `handleLoanToggle`). */}
                 {!isLoading && hasFetched && loans.length > 0 && (
                     <section
                         aria-label="Pending loan selection"
@@ -532,34 +577,30 @@ className=""
                                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Loan Number
                                 </h4>
-                               
+
                             </div>
                             <span className="text-[11px] text-muted-foreground">
-                                {loans.length} loan
-                                {loans.length === 1 ? "" : "s"} in flight for
-                                account{" "}
-                                <span className="">
-                                    {selectedAccountId}
-                                </span>
+                                Select one or more (max 1 per product)
                             </span>
                         </div>
 
+                        {/* CHANGED: role="group" instead of "radiogroup" */}
                         <div
-                            role="radiogroup"
-                            aria-label="Select a loan number"
+                            role="group"
+                            aria-label="Select loan numbers"
                             className="grid gap-2"
                         >
                             {loans.map((l) => {
                                 const isSelected =
-                                    selectedLoanNo === l.loanNo;
+                                    selectedLoanNos.includes(l.loanNo);
                                 return (
                                     <button
                                         key={l.loanNo}
                                         type="button"
-                                        role="radio"
+                                        role="checkbox" // CHANGED from radio
                                         aria-checked={isSelected}
                                         onClick={() =>
-                                            handleLoanPick(l.loanNo)
+                                            handleLoanToggle(l.loanNo)
                                         }
                                         className={cn(
                                             "group relative flex w-full items-start gap-3 rounded-md border bg-background p-3 text-left transition-all hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
@@ -568,10 +609,10 @@ className=""
                                                 : "border-border"
                                         )}
                                     >
-                                        {/* Radio indicator */}
+                                        {/* CHANGED: Checkbox indicator (rounded rectangle) */}
                                         <div
                                             className={cn(
-                                                "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                                                "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors",
                                                 isSelected
                                                     ? "border-primary bg-primary"
                                                     : "border-muted-foreground/40 group-hover:border-primary/60"
@@ -682,16 +723,16 @@ className=""
                     accountId — NOT the accountId itself. */}
                 {selectedAccountId &&
                     hasFetched &&
-                    selectedLoanNo && (
+                    selectedLoanNos.length > 0 && (
                         <>
                             <div className="my-2 border-t border-dashed" />
 
                         </>
                     )}
-                {!selectedLoanNo && selectedAccountId && hasFetched && loans.length > 0 && (
+                {selectedLoanNos.length === 0 && selectedAccountId && hasFetched && loans.length > 0 && (
                     <div className="flex items-center gap-2 rounded-md border border-dashed bg-muted/20 p-3 text-[11px] text-muted-foreground">
                         <Stack size={14} weight="bold" />
-                        Pick a loan number above to enable preloan selection.
+                        Pick one or more loan numbers above to enable preloan selection.
                     </div>
                 )}
             </CardContent>
