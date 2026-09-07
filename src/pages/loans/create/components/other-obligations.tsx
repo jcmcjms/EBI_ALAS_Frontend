@@ -127,9 +127,7 @@ export function OtherObligationsSection() {
                 <SubSectionHeading
                     step="5.1"
                     title="EBI Accounts for Reloans"
-                    actions={
-                        <Bank size={16} weight="bold" className="text-primary" />
-                    }
+                    icon={<Bank size={16} weight="bold" className="text-primary" />}
                 />
                 <Table className="mt-3">
                     <TableHeader>

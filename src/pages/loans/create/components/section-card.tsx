@@ -87,19 +87,28 @@ export function SectionCard({
  * Decimal sub-heading (1.1, 1.2 …) for nested blocks inside a section.
  * Keeps nesting visually obvious without competing with the section's
  * own step number.
+ *
+ * `icon` renders inline next to the title — matching the top-level
+ * `SectionCard`'s convention so an isolated sub-heading (no button to
+ * push against) doesn't end up with its icon stranded on the far
+ * right by `justify-between`. Use `actions` instead when the right-
+ * side needs a button or badge.
  */
 export function SubSectionHeading({
   step,
   title,
+  icon,
   actions,
 }: {
   step: string;
   title: string;
+  icon?: ReactNode;
   actions?: ReactNode;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <h3 className="flex items-baseline gap-1.5 text-sm font-semibold">
+      <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+        {icon}
         <span className="tabular-nums text-muted-foreground">{step}</span>
         <span>{title}</span>
       </h3>
