@@ -53,6 +53,8 @@ const BLUE = "bg-[#d9eaf7]";
 const B = "border border-black";
 const DOUBLE_UNDERLINE: React.CSSProperties = { borderBottom: "3px double #000" };
 const TOP_LINE: React.CSSProperties = { borderTop: "1px solid #000" };
+const TOP_DOUBLE: React.CSSProperties = { borderTop: "1px solid #000", borderBottom: "3px double #000" };
+const TOP_LINE_SINGLE: React.CSSProperties = { borderTop: "1px solid #000", borderBottom: "1px solid #000" };
 
 /* ── Legacy template constants ─────────────────────────────────────
  *
@@ -129,6 +131,27 @@ function AmtRow({ label, value, blue, bold, underline, topLine, labelBold }: {
                 {value}
             </span>
         </div>
+    );
+}
+
+function DashRows({ count, incoming = false }: { count: number; incoming?: boolean }) {
+    return (
+        <>
+            {Array.from({ length: count }).map((_, i) => (
+                <tr key={i} className="[&>td]:px-1 [&>td]:py-0.5">
+                    <td />
+                    <td className="text-right tabular-nums">-</td>
+                    {incoming ? (
+                        <td colSpan={2} className="text-center">-</td>
+                    ) : (
+                        <>
+                            <td className="text-right tabular-nums">-</td>
+                            <td />
+                        </>
+                    )}
+                </tr>
+            ))}
+        </>
     );
 }
 
@@ -423,118 +446,129 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                 </div>
                             </div>
 
-                            {/* ── EBI / Buy-Out / Incoming ──
-                                Single fixed grid: both matrices share one colgroup so
-                                their columns stay aligned. The summary stack
-                                (Total Reloan&Buy-out … Maximum Loanable Amount) prints
-                                BELOW the "Total Accounts for Buy-out" row, full width. */}
-                            <table className={cn(B, "w-full table-fixed border-collapse border-t-0")}>
-                                <colgroup>
-                                    <col className="w-[26%]" />
-                                    <col className="w-[10%]" />
-                                    <col className="w-[12%]" />
-                                    <col className="w-[10%]" />
-                                    <col className="w-[16%]" />
-                                    <col className="w-[10%]" />
-                                    <col className="w-[16%]" />
-                                </colgroup>
-                                <tbody>
-                                    <tr>
-                                        <td colSpan={4} className="px-1.5 py-0.5 font-bold">Add: EBI Accounts for reloans</td>
-                                        <td colSpan={3} rowSpan={17} className="border-l border-black px-1.5 py-0.5" />
-                                    </tr>
-                                    <tr>
-                                        <td className="px-1.5 py-0.5 font-bold underline">Name of Financial Institution</td>
-                                        <td className="px-1.5 py-0.5 text-right font-bold underline">Deductions</td>
-                                        <td className="px-1.5 py-0.5 text-right font-bold underline">Old Loan/Buy-Out Balance<br />OB to be paid/closed</td>
-                                        <td className="px-1.5 py-0.5 font-bold underline">PN Number</td>
-                                    </tr>
-                                    {Array.from({ length: RELOAN_TEMPLATE_ROWS }).map((_, i) => {
-                                        const r = ebiReloans[i];
-                                        return (
-                                            <tr key={`reloan-${i}`}>
-                                                <td className="px-1.5 py-0.5">{r ? r.name || r.pn : "-"}</td>
-                                                <td className="px-1.5 py-0.5 text-right tabular-nums">{r ? num(r.existingDeduction) : "-"}</td>
-                                                <td className="px-1.5 py-0.5 text-right tabular-nums">{r ? num(r.outstandingBalance) : "-"}</td>
-                                                <td className="px-1.5 py-0.5">{r ? r.pn : "-"}</td>
+                            {/* ── EBI / Buy-Out / Incoming ─────────────────────
+                                Single full-width block: no inner grid and no
+                                vertical rules. One shared colgroup keeps the
+                                Deductions and OB columns aligned from the EBI
+                                header down to the Maximum Loanable Amount row,
+                                mirroring the legacy spreadsheet layout. */}
+                            <div className={cn(B, "border-t-0 p-2")}>
+                                <table className="w-full table-fixed border-collapse">
+                                    <colgroup>
+                                        <col className="w-[25%]" />
+                                        <col className="w-[14%]" />
+                                        <col className="w-[22%]" />
+                                        <col className="w-[39%]" />
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th colSpan={4} className="px-1 py-0.5 text-left font-bold">
+                                                Add: EBI Accounts for reloans
+                                            </th>
+                                        </tr>
+                                        <tr className="[&>th]:border-b [&>th]:border-black [&>th]:px-1 [&>th]:py-0.5 [&>th]:font-bold [&>th]:underline">
+                                            <th className="text-left">Name of Financial Institution</th>
+                                            <th className="text-right">Deductions</th>
+                                            <th className="text-right">
+                                                Old Loan/Buy-Out Balance<br />OB to be paid/closed
+                                            </th>
+                                            <th className="text-left">PN Number</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {ebiReloans.map((r) => (
+                                            <tr key={r.pn} className="[&>td]:px-1 [&>td]:py-0.5">
+                                                <td>{r.name || r.pn}</td>
+                                                <td className="text-right tabular-nums">{num(r.existingDeduction)}</td>
+                                                <td className="text-right tabular-nums">{num(r.outstandingBalance)}</td>
+                                                <td>{r.pn}</td>
                                             </tr>
-                                        );
-                                    })}
-                                    <tr>
-                                        <td className="px-1.5 py-0.5 font-bold">Total Accounts for reloans</td>
-                                        <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiDeductions)}</td>
-                                        <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
-                                        <td />
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={4} className="px-1.5 py-0.5 font-bold">Add: Buy-Out Accounts from other FI's</td>
-                                    </tr>
-                                    {Array.from({ length: BUYOUT_TEMPLATE_ROWS }).map((_, i) => {
-                                        const b = buyOuts[i];
-                                        return (
-                                            <tr key={`buyout-${i}`}>
-                                                <td className="px-1.5 py-0.5">{b ? b.name || b.pn : "-"}</td>
-                                                <td className="px-1.5 py-0.5 text-right tabular-nums">{b ? num(b.amortization) : "-"}</td>
-                                                <td className="px-1.5 py-0.5 text-right tabular-nums">{b ? num(b.outstandingBalance) : "-"}</td>
-                                                <td className="px-1.5 py-0.5">{b ? b.pn : "-"}</td>
-                                            </tr>
-                                        );
-                                    })}
-                                    <tr>
-                                        <td className="px-1.5 py-0.5 font-bold">Total Accounts for Buy-out</td>
-                                        <td className="px-1.5 py-0.5 text-right tabular-nums" style={DOUBLE_UNDERLINE} />
-                                        <td className="px-1.5 py-0.5 text-right tabular-nums" style={DOUBLE_UNDERLINE} />
-                                        <td />
-                                    </tr>
+                                        ))}
+                                        <DashRows count={Math.max(0, 4 - ebiReloans.length)} />
+                                        <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                            <td className="font-bold">Total Accounts for reloans</td>
+                                            <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiDeductions)}</td>
+                                            <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
+                                            <td />
+                                        </tr>
 
-                                    {/* ── summary stack: prints below the buy-out total ── */}
-                                    <tr>
-                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Total Reloan&Buy-out Accounts</td>
-                                        <td className="border-b border-black px-1.5 py-0.5 text-right tabular-nums">{num(ebiDeductions)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={6} />
-                                        <td className="px-1.5 py-0.5 text-right tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Total Disposabe</td>
-                                        <td className="border-b border-black px-1.5 py-0.5 text-right tabular-nums">{num(totalDisposableGross)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Less: Minimum NTHP</td>
-                                        <td className="px-1.5 py-0.5 text-right tabular-nums">{num(nthp)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={3} className="px-1.5 py-0.5 font-bold">Incoming/undeducted Loans:</td>
-                                        <td colSpan={4} className="px-1.5 py-0.5 font-bold underline">Remarks on Incominng/Unlled Loans</td>
-                                    </tr>
-                                    {Array.from({ length: INCOMING_TEMPLATE_ROWS }).map((_, i) => {
-                                        const inc = incomingLoans[i];
-                                        return (
-                                            <tr key={`incoming-${i}`}>
-                                                <td colSpan={3} className="px-1.5 py-0.5 text-center">{inc ? `${inc.name}  ${num(inc.deductions)}` : "-"}</td>
-                                                <td colSpan={4} className="px-1.5 py-0.5 text-center">{inc ? inc.remarks : "-"}</td>
+                                        <tr>
+                                            <td colSpan={4} className="px-1 pt-2 font-bold">
+                                                Add: Buy-Out Accounts from other FI's
+                                            </td>
+                                        </tr>
+                                        {buyOuts.map((b) => (
+                                            <tr key={b.pn} className="[&>td]:px-1 [&>td]:py-0.5">
+                                                <td>{b.name || b.pn}</td>
+                                                <td className="text-right tabular-nums">{num(b.amortization)}</td>
+                                                <td className="text-right tabular-nums">{num(b.outstandingBalance)}</td>
+                                                <td>{b.pn}</td>
                                             </tr>
-                                        );
-                                    })}
-                                    <tr>
-                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Total Deductions</td>
-                                        <td className="border-b border-black px-1.5 py-0.5 text-right tabular-nums">{num(totalDeductionsFinal)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Total Disposabe</td>
-                                        <td className={cn(BLUE, "border-b border-black px-1.5 py-0.5 text-right font-bold tabular-nums")}>{num(totalDisposableNet)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={6} className="px-1.5 py-0.5 font-bold">Maximum Loanable Amount</td>
-                                        <td className={cn(BLUE, "border-b border-black px-1.5 py-0.5 text-right font-bold tabular-nums")}>
-                                            {maximumLoanableAmount < 0
-                                                ? `(PHP${num(Math.abs(maximumLoanableAmount))})`
-                                                : `PHP${num(maximumLoanableAmount)}`}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                        ))}
+                                        <DashRows count={Math.max(0, 4 - buyOuts.length)} />
+                                        <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                            <td className="font-bold">Total Accounts for Buy-out</td>
+                                            <td className="text-right tabular-nums" style={DOUBLE_UNDERLINE}>-</td>
+                                            <td className="text-right tabular-nums" style={DOUBLE_UNDERLINE}>-</td>
+                                            <td />
+                                        </tr>
+
+                                        <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                            <td className="font-bold">Total Reloan&Buy-out Accounts</td>
+                                            <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiDeductions)}</td>
+                                            <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(ebiOb)}</td>
+                                            <td />
+                                        </tr>
+                                        <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                            <td className="font-bold">Total Disposable</td>
+                                            <td className="border-b border-black text-right font-bold tabular-nums">{num(totalDisposableGross)}</td>
+                                            <td />
+                                            <td />
+                                        </tr>
+                                        <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                            <td className="font-bold">Less: Minimum NTHP</td>
+                                            <td className="text-right font-bold tabular-nums">{num(nthp)}</td>
+                                            <td />
+                                            <td />
+                                        </tr>
+
+                                        <tr className="[&>td]:px-1 [&>td]:pt-2 [&>td]:font-bold">
+                                            <td colSpan={2}>Incoming/undeducted Loans:</td>
+                                            <td colSpan={2} className="underline">Remarks on Incoming/Unded Loans</td>
+                                        </tr>
+                                        {incomingLoans.map((i, idx) => (
+                                            <tr key={idx} className="[&>td]:px-1 [&>td]:py-0.5">
+                                                <td>{i.name}</td>
+                                                <td className="text-right tabular-nums">{num(i.deductions)}</td>
+                                                <td colSpan={2}>{i.remarks}</td>
+                                            </tr>
+                                        ))}
+                                        <DashRows count={Math.max(0, 5 - incomingLoans.length)} incoming />
+                                        <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                            <td className="font-bold">Total Deductions</td>
+                                            <td className="border-b border-black text-right font-bold tabular-nums">{num(totalDeductionsFinal)}</td>
+                                            <td />
+                                            <td />
+                                        </tr>
+                                        <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                            <td className="font-bold">Total Disposable</td>
+                                            <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(totalDisposableNet)}</td>
+                                            <td />
+                                            <td />
+                                        </tr>
+                                        <tr className="[&>td]:px-1 [&>td]:py-0.5">
+                                            <td className="font-bold">Maximum Loanable Amount</td>
+                                            <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>
+                                                {maximumLoanableAmount < 0
+                                                    ? `(PhP${num(Math.abs(maximumLoanableAmount))})`
+                                                    : `PhP${num(maximumLoanableAmount)}`}
+                                            </td>
+                                            <td />
+                                            <td />
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
                             {/* ══ DEVIATIONS / VERIFICATIONS ══ */}
                             <div className={BAND_FOOT}>
