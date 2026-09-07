@@ -199,6 +199,84 @@ export function computeMonthlyAmortization(
 }
 
 /**
+ * Denomination the legacy LAM template quotes the Maximum Loanable
+ * Amount in. The Excel FLOORs the PV to the nearest 100.
+ */
+export const LOAN_AMOUNT_DENOMINATION = 100;
+
+/**
+ * Hard-coded MLA caps for specific ATM products, mirroring the nested
+ * IF chain in the legacy LAM template:
+ *   C34 → 200,000
+ *   C21 → 135,000
+ *   C27 → 120,000
+ *   C29 → 100,000
+ *   C25 → 200,000
+ * These bypass the PV(capacity) calculation entirely, even if the
+ * borrower's capacity is negative.
+ */
+const ATM_HARD_CAPS: Readonly<Record<string, number>> = {
+    C34: 200_000,
+    C21: 135_000,
+    C27: 120_000,
+    C29: 100_000,
+    C25: 200_000,
+};
+
+/**
+ * Computes the Maximum Loanable Amount (MLA) exactly as the legacy LAM
+ * Excel template does.
+ *
+ * 1. If the product code is one of the hard-capped ATM products (C34,
+ *    C21, C27, C29, C25), the MLA is that fixed cap.
+ * 2. Otherwise, the MLA is the present value of the net disposable
+ *    capacity (NTHP + EBI reloan deductions - minimum NTHP - incoming
+ *    deductions) treated as the monthly amortization, at the loan's
+ *    own rate and term.
+ * 3. The result is FLOORed to the nearest 100.
+ *
+ * Sign handling: if the capacity is negative (borrower cannot afford
+ * the minimum NTHP), the PV is mathematically negative. We preserve
+ * the sign so the UI can render it in parentheses (e.g. "(PhP187,900.00)"),
+ * matching the legacy template's negative MLA display.
+ */
+export function computeMaximumLoanableAmount(
+    monthlyCapacity: number,
+    annualRatePercent: number,
+    termDays: number,
+    productCode?: string | null
+): number {
+    // 1. Hard caps for specific ATM products
+    const code = (productCode ?? "").trim().toUpperCase();
+    if (code in ATM_HARD_CAPS) {
+        return ATM_HARD_CAPS[code];
+    }
+
+    // 2. PV calculation for all other products (APDS, BONUS, AUX, etc.)
+    if (!Number.isFinite(monthlyCapacity) || monthlyCapacity === 0) return 0;
+    if (!Number.isFinite(annualRatePercent) || !Number.isFinite(termDays)) return 0;
+
+    const termMonths = Math.floor(termDays / 30);
+    if (termMonths <= 0) return 0;
+
+    // Mirror the legacy Excel ROUND(N9/12, 6) to prevent floating-point
+    // drift from accumulating across the term's exponentiation.
+    const r = Math.round((annualRatePercent / 100 / 12) * 1_000_000) / 1_000_000;
+
+    // Use Math.abs for the PV magnitude, then re-apply the capacity sign
+    const absCapacity = Math.abs(monthlyCapacity);
+    const pvMagnitude = r === 0
+        ? absCapacity * termMonths
+        : (absCapacity * (1 - Math.pow(1 + r, -termMonths))) / r;
+
+    // 3. FLOOR to nearest 100 (towards zero for negative numbers to match
+    // the legacy template's absolute-value formatting)
+    const flooredMagnitude = Math.floor(pvMagnitude / LOAN_AMOUNT_DENOMINATION) * LOAN_AMOUNT_DENOMINATION;
+
+    return Math.sign(monthlyCapacity) * flooredMagnitude;
+}
+
+/**
  * Tiered minimum-payment table (mirrors the Excel's "Min Amort" lookup
  * column). Loan amounts below 100k have no minimum.
  *

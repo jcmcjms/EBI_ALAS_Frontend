@@ -15,6 +15,7 @@ import {
     parseProductCode,
     resolveLoanProductDisplayName,
 } from "@/src/lib/loan-product-display";
+import { computeMaximumLoanableAmount } from "@/src/lib/loan-computations";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
 
@@ -222,6 +223,17 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
         const totalDeductionsFinal = nthp + incomingTotal;
         const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
 
+        // Legacy LAM: the MLA is the capacity-to-pay ceiling derived from
+        // the net disposable line (NTHP + EBI reloan deductions − minimum
+        // NTHP − incoming deductions), NOT the proposed amount. Floored to
+        // ₱100 so the quoted MLA's amortization always fits the capacity.
+        const maximumLoanableAmount = computeMaximumLoanableAmount(
+            totalDisposableNet,
+            loan.interestRate || 0,
+            termDays,
+            productCode
+        );
+
         const productLine = loan.product
             ? `[ ${loan.product} ] ${loan.term || 0} days @ ${loan.interestRate || 0}% per Annum`
             : "-";
@@ -341,7 +353,7 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                             <div className="grid grid-cols-2">
                                 {/* ── LEFT column ── */}
                                 <div className={cn(B, "border-r-0 p-2")}>
-                                    <AmtRow label={<span className="font-bold">Maximum Loanable Amount **</span>} value={num(loan.proposedAmount)} blue underline />
+                                    <AmtRow label={<span className="font-bold">Maximum Loanable Amount **</span>} value={num(maximumLoanableAmount)} blue underline />
                                     <AmtRow label={<span className="font-bold">Proposed Loan for Approval</span>} value={<span className="font-bold">{num(loan.proposedAmount)}</span>} blue />
                                     <div className="pt-1 font-bold">Less:</div>
                                     <div className="pl-3">
@@ -532,7 +544,12 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
 
                                     <AmtRow label={<span className="font-bold">Total Deductions</span>} value={num(totalDeductionsFinal)} underline />
                                     <AmtRow label={<span className="font-bold">Total Disposable</span>} value={num(totalDisposableNet)} blue underline />
-                                    <AmtRow label={<span className="font-bold">Maximum Loanable Amount</span>} value={<span className="font-bold">PhP{num(loan.proposedAmount)}</span>} blue underline />
+                                    {(() => {
+                                        const mlaDisplayRight = maximumLoanableAmount < 0
+                                            ? `(PhP${num(Math.abs(maximumLoanableAmount))})`
+                                            : `PhP${num(maximumLoanableAmount)}`;
+                                        return <AmtRow label={<span className="font-bold">Maximum Loanable Amount</span>} value={<span className="font-bold">{mlaDisplayRight}</span>} blue underline />;
+                                    })()}
                                 </div>
                             </div>
 

@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { cn } from "@/src/lib/utils";
-import { resolveLoanProductDisplayName } from "@/src/lib/loan-product-display";
+import { parseProductCode, resolveLoanProductDisplayName } from "@/src/lib/loan-product-display";
+import { computeMaximumLoanableAmount } from "@/src/lib/loan-computations";
 import type { ClientFormData, LoanApplicationFormData } from "../../create/schema";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
@@ -87,6 +88,15 @@ export function computeLoanMetrics(data: LoanApplicationFormData) {
     const totalDeductionsFinal = nthp + incomingTotal;
     const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
 
+    // Capacity-to-pay ceiling — see computeMaximumLoanableAmount docs.
+    const productCode = parseProductCode(loan.product);
+    const maximumLoanableAmount = computeMaximumLoanableAmount(
+        totalDisposableNet,
+        loan.interestRate || 0,
+        termDays,
+        productCode
+    );
+
     return {
         termDays,
         amortization,
@@ -111,6 +121,7 @@ export function computeLoanMetrics(data: LoanApplicationFormData) {
         totalDisposableGross,
         totalDeductionsFinal,
         totalDisposableNet,
+        maximumLoanableAmount,
     };
 }
 
@@ -287,7 +298,7 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
                 <div className="grid grid-cols-2">
                     {/* ── LEFT column ── */}
                     <div className={cn(B, "border-r-0 p-2")}>
-                        <AmtRow label={<span className="font-bold">Maximum Loanable Amount **</span>} value={num(loan.proposedAmount)} blue underline />
+                        <AmtRow label={<span className="font-bold">Maximum Loanable Amount **</span>} value={num(c.maximumLoanableAmount)} blue underline />
                         <AmtRow label={<span className="font-bold">Proposed Loan for Approval</span>} value={<span className="font-bold">{num(loan.proposedAmount)}</span>} blue />
                         <div className="pt-1 font-bold" style={DOUBLE_UNDERLINE}>Less:</div>
                         <div className="pl-3">
@@ -472,7 +483,12 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
 
                         <AmtRow label={<span className="font-bold">Total Deductions</span>} value={num(c.totalDeductionsFinal)} underline />
                         <AmtRow label={<span className="font-bold">Total Disposable</span>} value={num(c.totalDisposableNet)} blue underline />
-                        <AmtRow label={<span className="font-bold">Maximum Loanable Amount</span>} value={<span className="font-bold">PhP{num(loan.proposedAmount)}</span>} blue underline />
+                        {(() => {
+                            const mlaDisplayRight = c.maximumLoanableAmount < 0
+                                ? `(PhP${num(Math.abs(c.maximumLoanableAmount))})`
+                                : `PhP${num(c.maximumLoanableAmount)}`;
+                            return <AmtRow label={<span className="font-bold">Maximum Loanable Amount</span>} value={<span className="font-bold">{mlaDisplayRight}</span>} blue underline />;
+                        })()}
                     </div>
                 </div>
 
