@@ -544,25 +544,30 @@ export function ActiveLoansTable({
 
                                     return (
                                         <Tooltip key={l.loanNo}>
-                                            <TooltipTrigger asChild>
-                                                <div>
-                                                    <button
-                                                        type="button"
-                                                        role="checkbox"
-                                                        aria-checked={isSelected}
-                                                        disabled={isDisabled}
-                                                        onClick={() =>
-                                                            handleLoanToggle(l)
+                                            <TooltipTrigger>
+                                                <div
+                                                    role="checkbox"
+                                                    aria-checked={isSelected}
+                                                    aria-disabled={isDisabled || undefined}
+                                                    tabIndex={isDisabled ? -1 : 0}
+                                                    onClick={() =>
+                                                        !isDisabled && handleLoanToggle(l)
+                                                    }
+                                                    onKeyDown={(e) => {
+                                                        if (!isDisabled && (e.key === " " || e.key === "Enter")) {
+                                                            e.preventDefault();
+                                                            handleLoanToggle(l);
                                                         }
-                                                        className={cn(
-                                                            "group relative flex w-full items-start gap-3 rounded-md border bg-background p-3 text-left transition-all",
-                                                            isSelected
-                                                                ? "border-primary bg-primary/5 ring-1 ring-primary/40"
-                                                                : "border-border",
-                                                            isDisabled &&
-                                                                "cursor-not-allowed opacity-50"
-                                                        )}
-                                                    >
+                                                    }}
+                                                    className={cn(
+                                                        "group relative flex w-full items-start gap-3 rounded-md border bg-background p-3 text-left transition-all",
+                                                        isSelected
+                                                            ? "border-primary bg-primary/5 ring-1 ring-primary/40"
+                                                            : "border-border",
+                                                        isDisabled &&
+                                                            "cursor-not-allowed opacity-50"
+                                                    )}
+                                                >
                                                         {/* Checkbox indicator */}
                                                         <div
                                                             className={cn(
@@ -647,7 +652,6 @@ export function ActiveLoansTable({
                                                                 )}
                                                             </p>
                                                         </div>
-                                                    </button>
                                                 </div>
                                             </TooltipTrigger>
                                             {isDisabled && (
