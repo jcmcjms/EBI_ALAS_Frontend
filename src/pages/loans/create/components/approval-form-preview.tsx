@@ -4,6 +4,7 @@ import { FilePdf, Printer, Warning, CaretLeft, CaretRight } from "@phosphor-icon
 
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
+import { FormTabStrip } from "@/src/components/ui/form-tab-strip";
 import { cn } from "@/src/lib/utils";
 
 import { SectionCard } from "./section-card";
@@ -657,43 +658,38 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                     {/* Master-detail: Toolbar + single active form on screen, all forms on print */}
                     {watchedLoans.length > 0 && (
                         <>
-                            {/* Toolbar — screen only. Same chip grammar as Step 3 = one mental model. */}
-                            <div className="flex flex-wrap items-center gap-2 border-b bg-muted/30 px-4 py-2 print:hidden">
-                                <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto [scrollbar-width:thin]" role="tablist" aria-label="Approval forms">
-                                    {watchedLoans.map((loan) => (
-                                        <button
-                                            key={loan.loanNo}
-                                            type="button"
-                                            role="tab"
-                                            aria-selected={loan.loanNo === activeLoanNo}
-                                            onClick={() => setActiveLoanNo(loan.loanNo)}
-                                            title={`${loan.loanNo} · ${loan.productDescription}`}
-                                            className={cn(
-                                                "flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors",
-                                                loan.loanNo === activeLoanNo
-                                                    ? "border-primary bg-primary text-primary-foreground"
-                                                    : "border-border bg-background hover:bg-muted"
-                                            )}
-                                        >
-                                            <span className="font-semibold">{loan.productCode}</span>
-                                            <span className="font-mono tabular-nums opacity-80">…{loan.loanNo.slice(-4)}</span>
-                                            <span className="tabular-nums opacity-80">{num(loan.parameters.proposedAmount)}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <Button type="button" variant="outline" size="icon" className="h-7 w-7" aria-label="Previous approval form"
-                                        disabled={activeIndex === 0} onClick={() => setActiveLoanNo(watchedLoans[activeIndex - 1].loanNo)}>
-                                        <CaretLeft size={14} weight="bold" />
-                                    </Button>
-                                    <span className="min-w-12 text-center text-xs tabular-nums text-muted-foreground" aria-live="polite">
-                                        {activeIndex + 1} / {watchedLoans.length}
-                                    </span>
-                                    <Button type="button" variant="outline" size="icon" className="h-7 w-7" aria-label="Next approval form"
-                                        disabled={activeIndex === watchedLoans.length - 1} onClick={() => setActiveLoanNo(watchedLoans[activeIndex + 1].loanNo)}>
-                                        <CaretRight size={14} weight="bold" />
-                                    </Button>
-                                </div>
+                            {/* Muted band ends exactly at the seam; active tab merges into the sheet */}
+                            <div className="bg-muted/30 px-3 pt-2">
+                                <FormTabStrip
+                                    ariaLabel="Approval forms"
+                                    activeSurface="sheet"
+                                    items={watchedLoans.map((l) => ({
+                                        value: l.loanNo,
+                                        label: l.productCode,
+                                        hint: `…${l.loanNo.slice(-4)}`,
+                                        metric: num(l.parameters.proposedAmount),
+                                        title: `${l.loanNo} · ${l.productDescription}`,
+                                    }))}
+                                    value={activeLoanNo}
+                                    onValueChange={setActiveLoanNo}
+                                    trailing={
+                                        <>
+                                            <Button type="button" variant="outline" size="icon" className="h-7 w-7"
+                                                aria-label="Previous approval form" disabled={activeIndex === 0}
+                                                onClick={() => setActiveLoanNo(watchedLoans[activeIndex - 1].loanNo)}>
+                                                <CaretLeft size={14} weight="bold" />
+                                            </Button>
+                                            <span className="min-w-12 text-center text-xs tabular-nums text-muted-foreground" aria-live="polite">
+                                                {activeIndex + 1} / {watchedLoans.length}
+                                            </span>
+                                            <Button type="button" variant="outline" size="icon" className="h-7 w-7"
+                                                aria-label="Next approval form" disabled={activeIndex === watchedLoans.length - 1}
+                                                onClick={() => setActiveLoanNo(watchedLoans[activeIndex + 1].loanNo)}>
+                                                <CaretRight size={14} weight="bold" />
+                                            </Button>
+                                        </>
+                                    }
+                                />
                             </div>
 
                             {/* Sheets: screen shows the active one; print emits the whole package,
@@ -702,6 +698,9 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                 {watchedLoans.map((loan, index) => (
                                     <div
                                         key={loan.loanNo}
+                                        id={`form-panel-${loan.loanNo}`}
+                                        role="tabpanel"
+                                        aria-labelledby={`form-tab-${loan.loanNo}`}
                                         className={cn(
                                             "p-5 text-[10px] leading-[1.4]",
                                             loan.loanNo !== activeLoanNo && !captureAll && "hidden print:block",
