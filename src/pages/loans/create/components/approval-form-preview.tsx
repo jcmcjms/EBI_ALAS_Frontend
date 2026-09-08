@@ -1,6 +1,6 @@
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { FilePdf, Printer, Warning } from "@phosphor-icons/react";
+import { FilePdf, Printer, Warning, CaretLeft, CaretRight } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
@@ -55,30 +55,6 @@ const DOUBLE_UNDERLINE: React.CSSProperties = { borderBottom: "3px double #000" 
 const TOP_LINE: React.CSSProperties = { borderTop: "1px solid #000" };
 const TOP_DOUBLE: React.CSSProperties = { borderTop: "1px solid #000", borderBottom: "3px double #000" };
 const TOP_LINE_SINGLE: React.CSSProperties = { borderTop: "1px solid #000", borderBottom: "1px solid #000" };
-
-/* ── Legacy template constants ─────────────────────────────────────
- *
- * The A16 product historically hard-codes the upfront deduction rates
- * and the fixed grid geometry of the printed Approval Form. These are
- * **template/formatting** values (they don't affect the bank's
- * capacity-to-pay gate) and are kept inline so the PDF export matches
- * the legacy spreadsheet line-for-line.
- */
-const LEGACY_APPLICATION_CHARGE_RATE = 0.0504;
-const LEGACY_DOC_STAMP_RATE = 0.0075;
-const LEGACY_NOTARIAL_FEE = 500;
-
-/* Fixed row counts of the legacy Excel grid: the reloan and buy-out
- * matrices always print 6 rows, the incoming-loan matrix 5, with "-"
- * placeholders padding unused rows. */
-const RELOAN_TEMPLATE_ROWS = 6;
-const BUYOUT_TEMPLATE_ROWS = 6;
-const INCOMING_TEMPLATE_ROWS = 5;
-
-/* Column bands of the legacy sheet: computations and the reloan band
- * split 58/42; the deviations band splits 62/38. */
-const BAND_MAIN = "grid grid-cols-[58%_42%]";
-const BAND_FOOT = "grid grid-cols-[62%_38%]";
 
 /* ── Capacity-to-pay badge ───────────────────────────────────────── */
 // Now accepts parameters so each loan form shows its own result.
@@ -408,7 +384,7 @@ function SingleLoanApprovalForm({ loan, client, branchType, form, index }: Singl
 
                             <div className="pt-2 font-bold">This loan availment:</div>
                             <div className="flex justify-between px-1 py-[1px]">
-                                <span>&lt;{loan.loanNo}&gt;</span>
+                                <span>{loan.loanNo}</span>
                                 <span className="tabular-nums">{num(parameters.proposedAmount)}</span>
                                 <span className="tabular-nums">{num(parameters.proposedAmount)}</span>
                             </div>
@@ -584,6 +560,30 @@ function SingleLoanApprovalForm({ loan, client, branchType, form, index }: Singl
     );
 }
 
+/* ── Legacy template constants ─────────────────────────────────────
+ *
+ * The A16 product historically hard-codes the upfront deduction rates
+ * and the fixed grid geometry of the printed Approval Form. These are
+ * **template/formatting** values (they don't affect the bank's
+ * capacity-to-pay gate) and are kept inline so the PDF export matches
+ * the legacy spreadsheet line-for-line.
+ */
+const LEGACY_APPLICATION_CHARGE_RATE = 0.0504;
+const LEGACY_DOC_STAMP_RATE = 0.0075;
+const LEGACY_NOTARIAL_FEE = 500;
+
+/* Fixed row counts of the legacy Excel grid: the reloan and buy-out
+ * matrices always print 6 rows, the incoming-loan matrix 5, with "-"
+ * placeholders padding unused rows. */
+const RELOAN_TEMPLATE_ROWS = 6;
+const BUYOUT_TEMPLATE_ROWS = 6;
+const INCOMING_TEMPLATE_ROWS = 5;
+
+/* Column bands of the legacy sheet: computations and the reloan band
+ * split 58/42; the deviations band splits 62/38. */
+const BAND_MAIN = "grid grid-cols-[58%_42%]";
+const BAND_FOOT = "grid grid-cols-[62%_38%]";
+
 /* ── main component ── */
 
 export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: () => void }>(
@@ -601,6 +601,23 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
 
         const section = getSection("approval-form");
 
+        const [activeLoanNo, setActiveLoanNo] = useState("");
+        const [captureAll, setCaptureAll] = useState(false); // PDF capture needs every sheet visible
+
+        useEffect(() => {
+            if (watchedLoans.length === 0) return setActiveLoanNo("");
+            if (!watchedLoans.some((l) => l?.loanNo === activeLoanNo)) setActiveLoanNo(watchedLoans[0].loanNo);
+        }, [watchedLoans, activeLoanNo]);
+
+        const activeIndex = Math.max(0, watchedLoans.findIndex((l) => l?.loanNo === activeLoanNo));
+
+        const handleGeneratePdf = async () => {
+            // html2canvas skips display:none — reveal every sheet for the capture pass.
+            setCaptureAll(true);
+            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+            try { await onGeneratePdf?.(); } finally { setCaptureAll(false); }
+        };
+
         return (
             <SectionCard
                 step={section.step}
@@ -610,15 +627,13 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                 icon={<FilePdf size={20} weight="bold" className="text-primary" />}
                 badge={
                     <div className="flex items-center gap-2">
-                        <CapacityToPayBadge />
+                        <CapacityToPayBadge params={watchedLoans[activeIndex]?.parameters} />
                         <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => window.print()}>
-                            <Printer size={14} weight="bold" />
-                            Print
+                            <Printer size={14} weight="bold" /> Print all ({watchedLoans.length})
                         </Button>
                         {onGeneratePdf && (
-                            <Button type="button" size="sm" className="gap-1.5" onClick={onGeneratePdf}>
-                                <FilePdf size={14} weight="bold" />
-                                Generate PDF
+                            <Button type="button" size="sm" className="gap-1.5" onClick={handleGeneratePdf}>
+                                <FilePdf size={14} weight="bold" /> Generate PDF
                             </Button>
                         )}
                     </div>
@@ -639,21 +654,71 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                         </div>
                     )}
 
-                    {/* Map over loans array to render each approval form */}
-                    {watchedLoans.map((loan, index) => {
-                        if (!loan) return null;
+                    {/* Master-detail: Toolbar + single active form on screen, all forms on print */}
+                    {watchedLoans.length > 0 && (
+                        <>
+                            {/* Toolbar — screen only. Same chip grammar as Step 3 = one mental model. */}
+                            <div className="flex flex-wrap items-center gap-2 border-b bg-muted/30 px-4 py-2 print:hidden">
+                                <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto [scrollbar-width:thin]" role="tablist" aria-label="Approval forms">
+                                    {watchedLoans.map((loan) => (
+                                        <button
+                                            key={loan.loanNo}
+                                            type="button"
+                                            role="tab"
+                                            aria-selected={loan.loanNo === activeLoanNo}
+                                            onClick={() => setActiveLoanNo(loan.loanNo)}
+                                            title={`${loan.loanNo} · ${loan.productDescription}`}
+                                            className={cn(
+                                                "flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                                                loan.loanNo === activeLoanNo
+                                                    ? "border-primary bg-primary text-primary-foreground"
+                                                    : "border-border bg-background hover:bg-muted"
+                                            )}
+                                        >
+                                            <span className="font-semibold">{loan.productCode}</span>
+                                            <span className="font-mono tabular-nums opacity-80">…{loan.loanNo.slice(-4)}</span>
+                                            <span className="tabular-nums opacity-80">{num(loan.parameters.proposedAmount)}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button type="button" variant="outline" size="icon" className="h-7 w-7" aria-label="Previous approval form"
+                                        disabled={activeIndex === 0} onClick={() => setActiveLoanNo(watchedLoans[activeIndex - 1].loanNo)}>
+                                        <CaretLeft size={14} weight="bold" />
+                                    </Button>
+                                    <span className="min-w-12 text-center text-xs tabular-nums text-muted-foreground" aria-live="polite">
+                                        {activeIndex + 1} / {watchedLoans.length}
+                                    </span>
+                                    <Button type="button" variant="outline" size="icon" className="h-7 w-7" aria-label="Next approval form"
+                                        disabled={activeIndex === watchedLoans.length - 1} onClick={() => setActiveLoanNo(watchedLoans[activeIndex + 1].loanNo)}>
+                                        <CaretRight size={14} weight="bold" />
+                                    </Button>
+                                </div>
+                            </div>
 
-                        return (
-                            <SingleLoanApprovalForm
-                                key={loan.loanNo}
-                                loan={loan}
-                                client={client}
-                                branchType={branchType}
-                                form={watchedForm}
-                                index={index}
-                            />
-                        );
-                    })}
+                            {/* Sheets: screen shows the active one; print emits the whole package,
+                                one form per physical page (the bank's assembly requirement). */}
+                            <div ref={ref} id="approval-form-preview" className="bg-white text-black">
+                                {watchedLoans.map((loan, index) => (
+                                    <div
+                                        key={loan.loanNo}
+                                        className={cn(
+                                            "p-5 text-[10px] leading-[1.4]",
+                                            loan.loanNo !== activeLoanNo && !captureAll && "hidden print:block",
+                                            index > 0 && "print:break-before-page"
+                                        )}
+                                    >
+                                        {index > 0 && (
+                                            <div className="mb-2 hidden text-center text-[9px] font-bold print:block">
+                                                — Loan {index + 1} of {watchedLoans.length} —
+                                            </div>
+                                        )}
+                                        <SingleLoanApprovalForm loan={loan} client={client} branchType={branchType} form={watchedForm} index={index} />
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             </SectionCard>
         );

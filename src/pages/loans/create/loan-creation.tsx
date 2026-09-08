@@ -19,7 +19,6 @@ import { toast } from "sonner";
 
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store/authStore";
 import { WEBLOAN_BRANCHES } from "@/src/lib/api/types";
@@ -33,7 +32,7 @@ import {
 import { LoanTransfersProvider } from "./loan-transfers-provider";
 import { CISLookup } from "./components/cis-lookup";
 import { PersonalInfoSection } from "./components/personal-info-section";
-import { LoanParametersSection } from "./components/loan-parameters-section";
+import { LoanParametersTabsSection } from "./components/loan-parameters-tabs-section";
 import { ObligationsSection } from "./components/obligations-section";
 import { OtherObligationsSection } from "./components/other-obligations";
 import { VerificationSection } from "./components/verification-section";
@@ -667,17 +666,6 @@ export function LoanCreationPage() {
   const watchedLoans = useWatch({ control, name: "loans" }) ?? [];
   const hasSelectedLoans = watchedLoans.length > 0;
 
-  // Controlled tab state: uncontrolled `defaultValue` + key-remount is what
-  // forced the hacky `key={firstLoanNo}` before. Now we use a controlled value
-  // so the visible tab always points at an existing loan without remounting.
-  const [activeLoanTab, setActiveLoanTab] = useState<string>("");
-  useEffect(() => {
-    if (watchedLoans.length === 0) return setActiveLoanTab("");
-    if (!watchedLoans.some((l) => l?.loanNo === activeLoanTab)) {
-      setActiveLoanTab(watchedLoans[0].loanNo);
-    }
-  }, [watchedLoans, activeLoanTab]);
-
   return (
     <FormProvider {...methods}>
       {/* ── LoanTransfersProvider ─────────────────────────────────────
@@ -793,39 +781,14 @@ export function LoanCreationPage() {
                   <PersonalInfoSection />
                 </section>
 
-                {/* 2. Loan Parameters - Tabbed interface for multi-loan support */}
+                {/* 2. Loan Parameters - Segmented selector inside SectionCard */}
                 <section
                   id="loan-params"
                   ref={(el) => {
                     sectionRefs.current["loan-params"] = el;
                   }}
                 >
-                {hasSelectedLoans ? (
-                    <Tabs value={activeLoanTab} onValueChange={setActiveLoanTab} className="w-full">
-                      <TabsList className="mb-4 flex h-auto flex-wrap gap-2 bg-muted/50 p-2">
-                        {watchedLoans.map((loan) => (
-                          <TabsTrigger key={loan.loanNo} value={loan.loanNo} className="text-xs md:text-sm">
-                            {loan.loanNo}
-                            <span className="ml-1.5 text-muted-foreground">({loan.productCode})</span>
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-
-                      {watchedLoans.map((loan, i) => (
-                        <TabsContent key={loan.loanNo} value={loan.loanNo} className="space-y-6">
-                          <LoanParametersSection
-                            fieldPrefix={`loans.${i}.parameters`}
-                            loanIndex={i}
-                          />
-                        </TabsContent>
-                      ))}
-                    </Tabs>
-                  ) : (
-                    // Empty state - no loans selected yet
-                    <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                      Select loan numbers in Step 1.3 to configure loan parameters.
-                    </div>
-                  )}
+                  <LoanParametersTabsSection />
                 </section>
 
                 {!hideOutstandingSection && (
