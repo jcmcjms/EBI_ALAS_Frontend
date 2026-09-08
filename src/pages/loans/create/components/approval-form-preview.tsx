@@ -145,9 +145,22 @@ interface SingleLoanApprovalFormProps {
     branchType: LoanApplicationFormData["branchType"];
     form: LoanApplicationFormData;
     index: number;
+    /**
+     * Server-minted LAM ID for each loan (keyed by PN). Pre-submit this is
+     * `undefined` and the sheet shows "Auto-generated on submit"; post-
+     * submit each sheet prints its own LAM ID.
+     */
+    lamIdByLoanNo?: Record<string, string>;
 }
 
-function SingleLoanApprovalForm({ loan, client, branchType, form, index }: SingleLoanApprovalFormProps) {
+function SingleLoanApprovalForm({
+    loan,
+    client,
+    branchType,
+    form,
+    index,
+    lamIdByLoanNo,
+}: SingleLoanApprovalFormProps) {
     const { parameters } = loan;
 
     // ── Loan product display name ─────────────────────────────────
@@ -265,7 +278,9 @@ function SingleLoanApprovalForm({ loan, client, branchType, form, index }: Singl
                                 <L>Loan Application Type:</L>
                                 <V blue colSpan={3}>{dash(branchType.creationTypeLabel)}</V>
                                 <L>LAM ID:</L>
-                                <V blue colSpan={3}>{dash(branchType.lai)}</V>
+                                <V blue colSpan={3}>
+                                    {lamIdByLoanNo?.[loan.loanNo] ?? "Auto-generated on submit"}
+                                </V>
                             </tr>
                             <tr>
                                 <L>Region Code :</L>
@@ -587,8 +602,14 @@ const BAND_FOOT = "grid grid-cols-[62%_38%]";
 
 /* ── main component ── */
 
-export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: () => void }>(
-    ({ onGeneratePdf }, ref) => {
+export const ApprovalFormPreview = forwardRef<
+    HTMLDivElement,
+    {
+        onGeneratePdf?: () => void;
+        /** Server-minted LAM ID keyed by PN; `undefined` pre-submit. */
+        lamIdByLoanNo?: Record<string, string>;
+    }
+>(({ onGeneratePdf, lamIdByLoanNo }, ref) => {
         const { control } = useFormContext<LoanApplicationFormData>();
 
         // useWatch subscribes to live form values — no desync risk from
@@ -712,7 +733,14 @@ export const ApprovalFormPreview = forwardRef<HTMLDivElement, { onGeneratePdf?: 
                                                 — Loan {index + 1} of {watchedLoans.length} —
                                             </div>
                                         )}
-                                        <SingleLoanApprovalForm loan={loan} client={client} branchType={branchType} form={watchedForm} index={index} />
+                                        <SingleLoanApprovalForm
+                                                loan={loan}
+                                                client={client}
+                                                branchType={branchType}
+                                                form={watchedForm}
+                                                index={index}
+                                                lamIdByLoanNo={lamIdByLoanNo}
+                                            />
                                     </div>
                                 ))}
                             </div>

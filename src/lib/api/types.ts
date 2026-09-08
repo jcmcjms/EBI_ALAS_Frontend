@@ -816,3 +816,70 @@ export interface LoanProductsQuery {
     /** Optional filter by code (e.g. "PL"). */
     code?: string;
 }
+
+// ─── Loan submission (POST /api/loans) ───────────────────────────
+// Mirrors EBI.ALAS.Api/Features/Loans/LoanSubmissionDtos.cs.
+// branchType.requestingOfficer is sent for shape-compat only; the server
+// overwrites officer + branch from the JWT.
+
+export interface LoanSubmissionPayload {
+    branchType: {
+        creationTypeCode: number | null;
+        creationTypeLabel: string;
+        branch: string;
+        requestingOfficer: string;
+        lai?: string;
+    };
+    client: {
+        cisId: string; firstName: string; middleName?: string; lastName: string;
+        suffix?: string; birthdate?: string; address?: string; agency?: string;
+        position?: string; employeeId?: string; netTakeHomePay?: number;
+        lengthOfService?: string; region?: string; divisionCode?: string;
+        stationCode?: string; misAgency?: string; school?: string; referrer?: string;
+    };
+    loans: Array<{
+        loanNo: string;
+        productCode: string;
+        productDescription: string;
+        creationTypeCode: number | null;
+        creationTypeLabel: string;
+        branchCode: string;
+        parameters: {
+            product: string; purpose: string; proposedAmount: number; term: number;
+            interestRate?: number; nthpDate?: string;
+            notarialFee: number; docStamps: number; insurance: number;
+            standardFeesSnapshot: { notarialFee: number; docStamps: number; insurance: number };
+        };
+    }>;
+    outstandingLoans: Array<{
+        pn: string; principalBalance: number; amortization: number;
+        outstandingBalance: number; dateGranted?: string; dateMaturity?: string;
+        status: string; productWithDescription?: string;
+    }>;
+    ebiReloans: Array<{ pn: string; name: string; existingDeduction: number; outstandingBalance: number; payToClose: number }>;
+    buyOuts: Array<{ pn: string; name: string; amortization: number; outstandingBalance: number }>;
+    incomingLoans: Array<{ name: string; deductions: number; remarks: string }>;
+    preLoan?: { id: number; accountNo: string; bch: string; formNumber?: string; productDescription?: string };
+    verification: { findings: string };
+    deviations: {
+        hasDeviations: boolean;
+        deviationDetails: string[];
+        deviationJustifications: Record<string, string>;
+        remarks?: string; aoRecommendation?: string;
+        otherRemarks: string; feeDeviationJustification?: string;
+    };
+}
+
+export interface CreatedLoanSummary {
+    id: number;
+    lamId: string;          // server-generated LAM ID (FormNumber)
+    loanNo: string;
+    productCode: string;
+    proposedAmount: number;
+    status: string;
+}
+
+export interface LoanSubmissionResponse {
+    applicationGroupNo: string;
+    loans: CreatedLoanSummary[];
+}

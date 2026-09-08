@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, useFormContext } from "react-hook-form";
 import type { FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,9 +20,10 @@ import { toast } from "sonner";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils";
+import { getErrorMessage } from "@/src/lib/apiClient";
 import { useAuthStore } from "@/src/store/authStore";
 import { WEBLOAN_BRANCHES } from "@/src/lib/api/types";
-import type { PreLoanItem } from "@/src/lib/api/types";
+import type { PreLoanItem, LoanSubmissionResponse } from "@/src/lib/api/types";
 
 import {
   loanApplicationSchema,
@@ -38,6 +39,8 @@ import { OtherObligationsSection } from "./components/other-obligations";
 import { VerificationSection } from "./components/verification-section";
 import { DeviationsSection } from "./components/deviations-section";
 import { ApprovalFormPreview } from "./components/approval-form-preview";
+import { useLoanSubmission } from "./hooks/use-loan-submission";
+import { mapFormToSubmissionPayload } from "./utils/map-form-to-request";
 
 // ── Section definitions ─────────────────────────────────────────
 // Sourced from ./sections so the stepper, mobile nav and every
@@ -540,6 +543,26 @@ export function LoanCreationPage() {
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const approvalFormRef = useRef<HTMLDivElement | null>(null);
 
+  // ── Submission ────────────────────────────────────────────────────
+  // The mutation owns its own key lifecycle (useLoanSubmission): the same
+  // key is reused across every retry of a logical submission so the
+  // server's idempotency guard dedupes, and rotated after success so the
+  // next application gets a fresh key.
+  const submission = useLoanSubmission();
+  const [submittedGroup, setSubmittedGroup] = useState<LoanSubmissionResponse | null>(null);
+
+  // LAM IDs keyed by PN so each approval sheet can print its own
+  // server-minted identifier. Pre-submit this is `undefined` and every
+  // sheet shows the placeholder; post-submit the matching sheet prints
+  // its own LAM ID.
+  const lamIdByLoanNo = useMemo(
+    () =>
+      submittedGroup
+        ? Object.fromEntries(submittedGroup.loans.map((l) => [l.loanNo, l.lamId]))
+        : undefined,
+    [submittedGroup]
+  );
+
   // Intersection Observer tracks the active section while scrolling.
   useEffect(() => {
     if (!isClientLoaded) return;
@@ -588,11 +611,21 @@ export function LoanCreationPage() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const onSubmit = (data: LoanApplicationFormData) => {
-    // TODO: POST to the .NET 8 API with an Idempotency-Key header.
-    // The backend must re-validate and derive officer/branch/LAI from the JWT,
-    // not from this payload.
-    console.info("Submit to .NET API", data);
-    toast.success("Application submitted for recommendation.");
+    if (submittedGroup || submission.isPending) return; // form is locked post-submit
+    setSubmitAttempted(true);
+
+    submission.mutate(mapFormToSubmissionPayload(data), {
+      onSuccess: (res) => {
+        setSubmittedGroup(res);
+        submission.rotateIdempotencyKey(); // next application = fresh key
+        toast.success(
+          `Application ${res.applicationGroupNo} submitted — LAM IDs: ${res.loans
+            .map((l) => l.lamId)
+            .join(", ")}`
+        );
+      },
+      onError: (err) => toast.error(getErrorMessage(err)),
+    });
   };
 
   const onInvalid = (fieldErrors: FieldErrors<LoanApplicationFormData>) => {
@@ -771,7 +804,10 @@ export function LoanCreationPage() {
             </section>
 
             {isClientLoaded ? (
-              <>
+              <fieldset
+                disabled={!!submittedGroup}
+                className="contents space-y-8"
+              >
                 <section
                   id="personal-info"
                   ref={(el) => {
@@ -833,9 +869,12 @@ export function LoanCreationPage() {
                     sectionRefs.current["approval-form"] = el;
                   }}
                 >
-                  <ApprovalFormPreview ref={approvalFormRef} />
+                  <ApprovalFormPreview
+                    ref={approvalFormRef}
+                    lamIdByLoanNo={lamIdByLoanNo}
+                  />
                 </section>
-              </>
+              </fieldset>
             ) : (
               <section
                 aria-label="How the application works"
@@ -910,11 +949,15 @@ export function LoanCreationPage() {
                 type="submit"
                 size="lg"
                 className="gap-2 px-6"
-                disabled={!canSubmit}
+                disabled={!canSubmit || submission.isPending || !!submittedGroup}
                 aria-describedby={canSubmit ? undefined : "submit-hint"}
               >
                 <PaperPlaneTilt size={16} weight="bold" />
-                Submit for Recommendation
+                {submission.isPending
+                  ? "Submitting…"
+                  : submittedGroup
+                    ? `Submitted · ${submittedGroup.applicationGroupNo}`
+                    : "Submit for Recommendation"}
               </Button>
             </div>
           </div>
