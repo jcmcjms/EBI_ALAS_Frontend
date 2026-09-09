@@ -31,7 +31,7 @@ export function MonitoringToolbar({ filters, onFiltersChange }: ToolbarProps) {
             <div className="relative flex-1 max-w-sm">
                 <MagnifyingGlass size={16} className="absolute left-3 top-2.5 text-muted-foreground" weight="bold" />
                 <Input
-                    placeholder="Search Form #, Name, or Product..."
+                    placeholder="Search LAM ID, Name, or Product..."
                     value={localSearch}
                     onChange={(e) => setLocalSearch(e.target.value)}
                     className="pl-9 h-9 bg-background"
