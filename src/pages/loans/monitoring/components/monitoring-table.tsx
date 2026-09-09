@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     FlexRender,
     createCoreRowModel,
@@ -56,20 +56,51 @@ interface MonitoringTableProps {
     onRowClick: (record: LoanMonitoringRecord) => void;
 }
 
-// Helper component for Time Lapsed SLA
-function TimeLapsedIndicator({ hours }: { hours: number }) {
-    const days = Math.floor(hours / 24);
-    const remHours = hours % 24;
-    const label = days > 0 ? `${days}d ${remHours}h` : `${remHours}h`;
+// Helper component for Time Lapsed SLA.
+//
+// Computes elapsed time LIVE from `lastActionDate` (instead of reading the
+// server-rounded `timeLapsedHours` snapshot) and re-renders every second
+// so the indicator visibly ticks and shows minutes + seconds alongside
+// hours. Server `timeLapsedHours` is still on the record for consumers
+// that need a stable snapshot (sorting, exports) — this indicator just
+// bypasses it for display accuracy.
+function TimeLapsedIndicator({ lastActionDate }: { lastActionDate: string }) {
+    // `now` is ticked once per second; the formatted label is derived from
+    // `now - lastActionDate` so the display runs instead of looking frozen.
+    const [now, setNow] = useState(() => Date.now());
 
+    useEffect(() => {
+        const interval = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const elapsedMs = Math.max(0, now - new Date(lastActionDate).getTime());
+    const totalSeconds = Math.floor(elapsedMs / 1000);
+    const days = Math.floor(totalSeconds / 86_400);
+    const remSecondsAfterDays = totalSeconds % 86_400;
+    const hours = Math.floor(remSecondsAfterDays / 3_600);
+    const minutes = Math.floor((remSecondsAfterDays % 3_600) / 60);
+    const seconds = remSecondsAfterDays % 60;
+
+    // SLA thresholds stay keyed on total elapsed hours so the color
+    // semantics don't change with the new live format.
     let colorClass = "text-emerald-600 bg-emerald-500/10"; // < 24h
-    if (hours >= 48) colorClass = "text-red-600 bg-red-500/10"; // > 48h (SLA Breach)
-    else if (hours >= 24) colorClass = "text-amber-600 bg-amber-500/10"; // 24-48h
+    if (elapsedMs >= 48 * 3_600_000) colorClass = "text-red-600 bg-red-500/10"; // > 48h (SLA Breach)
+    else if (elapsedMs >= 24 * 3_600_000) colorClass = "text-amber-600 bg-amber-500/10"; // 24-48h
+
+    // Padded (and `tabular-nums` on the span) so the digit widths stay
+    // stable as seconds tick — prevents the surrounding cell from
+    // jittering left/right every second.
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const label =
+        days > 0
+            ? `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`
+            : `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
 
     return (
-        <span className={cn("px-2 py-0.5 rounded-md text-xs font-semibold", colorClass)}>
-      {label}
-    </span>
+        <span className={cn("px-2 py-0.5 rounded-md text-xs font-semibold tabular-nums", colorClass)}>
+            {label}
+        </span>
     );
 }
 
@@ -143,9 +174,9 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
                 return <Badge variant={variant as any} className="text-xs">{status}</Badge>;
             }
         }),
-        columnHelper.accessor("timeLapsedHours", {
+        columnHelper.accessor("lastActionDate", {
             header: "Time Lapsed",
-            cell: (info) => <TimeLapsedIndicator hours={info.getValue()} />
+            cell: (info) => <TimeLapsedIndicator lastActionDate={info.getValue()} />
         }),
         columnHelper.accessor("lastApprover", { header: "Last Approver", cell: (info) => <span className="text-xs">{info.getValue()}</span> }),
     ]);
