@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, useFormContext } from "react-hook-form";
 import type { FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,10 +20,9 @@ import { toast } from "sonner";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils";
-import { getErrorMessage } from "@/src/lib/apiClient";
 import { useAuthStore } from "@/src/store/authStore";
 import { WEBLOAN_BRANCHES } from "@/src/lib/api/types";
-import type { PreLoanItem, LoanSubmissionResponse } from "@/src/lib/api/types";
+import type { PreLoanItem } from "@/src/lib/api/types";
 
 import {
   loanApplicationSchema,
@@ -39,7 +38,7 @@ import { OtherObligationsSection } from "./components/other-obligations";
 import { VerificationSection } from "./components/verification-section";
 import { DeviationsSection } from "./components/deviations-section";
 import { ApprovalFormPreview } from "./components/approval-form-preview";
-import { useLoanSubmission } from "./hooks/use-loan-submission";
+import { useCreateLoan } from "@/src/hooks/use-create-loan";
 import { mapFormToSubmissionPayload } from "./utils/map-form-to-request";
 
 // ── Section definitions ─────────────────────────────────────────
@@ -544,24 +543,15 @@ export function LoanCreationPage() {
   const approvalFormRef = useRef<HTMLDivElement | null>(null);
 
   // ── Submission ────────────────────────────────────────────────────
-  // The mutation owns its own key lifecycle (useLoanSubmission): the same
-  // key is reused across every retry of a logical submission so the
-  // server's idempotency guard dedupes, and rotated after success so the
-  // next application gets a fresh key.
-  const submission = useLoanSubmission();
-  const [submittedGroup, setSubmittedGroup] = useState<LoanSubmissionResponse | null>(null);
-
-  // LAM IDs keyed by PN so each approval sheet can print its own
-  // server-minted identifier. Pre-submit this is `undefined` and every
-  // sheet shows the placeholder; post-submit the matching sheet prints
-  // its own LAM ID.
-  const lamIdByLoanNo = useMemo(
-    () =>
-      submittedGroup
-        ? Object.fromEntries(submittedGroup.loans.map((l) => [l.loanNo, l.lamId]))
-        : undefined,
-    [submittedGroup]
-  );
+  // The mutation owns its own concerns (idempotency key, cache
+  // invalidation, redirect, toast). The form just calls `createLoan(...)`
+  // and lets React Query manage loading/error states.
+  //
+  // Flow on success (inside useCreateLoan):
+  //   1. invalidate queryKeys.loans.all  → monitoring table refetches
+  //   2. toast "Application ... submitted"
+  //   3. navigate('/loans/monitoring')   → user lands on the new row
+  const { mutate: createLoan, isPending: isSubmitting } = useCreateLoan();
 
   // Intersection Observer tracks the active section while scrolling.
   useEffect(() => {
@@ -611,21 +601,13 @@ export function LoanCreationPage() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const onSubmit = (data: LoanApplicationFormData) => {
-    if (submittedGroup || submission.isPending) return; // form is locked post-submit
+    if (isSubmitting) return; // re-entry guard for the duration of the in-flight POST
     setSubmitAttempted(true);
 
-    submission.mutate(mapFormToSubmissionPayload(data), {
-      onSuccess: (res) => {
-        setSubmittedGroup(res);
-        submission.rotateIdempotencyKey(); // next application = fresh key
-        toast.success(
-          `Application ${res.applicationGroupNo} submitted — LAM IDs: ${res.loans
-            .map((l) => l.lamId)
-            .join(", ")}`
-        );
-      },
-      onError: (err) => toast.error(getErrorMessage(err)),
-    });
+    // The mutation owns: idempotency-key mint + rotation, cache
+    // invalidation, success/error toasts, and the post-submit redirect
+    // to /loans/monitoring. Nothing for the page to do beyond dispatch.
+    createLoan(mapFormToSubmissionPayload(data));
   };
 
   const onInvalid = (fieldErrors: FieldErrors<LoanApplicationFormData>) => {
@@ -805,7 +787,7 @@ export function LoanCreationPage() {
 
             {isClientLoaded ? (
               <fieldset
-                disabled={!!submittedGroup}
+                disabled={isSubmitting}
                 className="contents space-y-8"
               >
                 <section
@@ -871,7 +853,6 @@ export function LoanCreationPage() {
                 >
                   <ApprovalFormPreview
                     ref={approvalFormRef}
-                    lamIdByLoanNo={lamIdByLoanNo}
                   />
                 </section>
               </fieldset>
@@ -949,15 +930,11 @@ export function LoanCreationPage() {
                 type="submit"
                 size="lg"
                 className="gap-2 px-6"
-                disabled={!canSubmit || submission.isPending || !!submittedGroup}
+                disabled={!canSubmit || isSubmitting}
                 aria-describedby={canSubmit ? undefined : "submit-hint"}
               >
                 <PaperPlaneTilt size={16} weight="bold" />
-                {submission.isPending
-                  ? "Submitting…"
-                  : submittedGroup
-                    ? `Submitted · ${submittedGroup.applicationGroupNo}`
-                    : "Submit for Recommendation"}
+                {isSubmitting ? "Submitting…" : "Submit for Recommendation"}
               </Button>
             </div>
           </div>

@@ -879,6 +879,22 @@ export interface CreatedLoanSummary {
     status: string;
 }
 
+/**
+ * Alias for {@link LoanSubmissionPayload} used by mutation hooks
+ * (e.g. `useCreateLoan`) that frame the action as "create one new
+ * loan application" rather than "submit a payload". Same shape on the
+ * wire — the alias exists so call sites read naturally:
+ *
+ * ```ts
+ *   mutate: (payload: CreateLoanPayload) => loanApi.createLoan(payload, key)
+ * ```
+ *
+ * Keep this as a `type` alias (not an interface) so the contract stays
+ * structurally identical to `LoanSubmissionPayload` — adding a field to
+ * one automatically propagates to the other.
+ */
+export type CreateLoanPayload = LoanSubmissionPayload;
+
 export interface LoanSubmissionResponse {
     applicationGroupNo: string;
     loans: CreatedLoanSummary[];

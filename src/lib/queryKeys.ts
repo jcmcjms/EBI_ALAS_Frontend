@@ -55,6 +55,15 @@ export const queryKeys = {
 
     // ── Loans (transactional — always fresh by default) ─────────────────────
     loans: {
+        // Broadest prefix — invalidating this clears every loan query
+        // (monitoring, admin lists, future detail views). Use from any
+        // mutation that creates / updates / deletes a loan row.
+        all: ["loans"] as const,
+        // Generic params shape: accepts any structurally-shaped filter
+        // object (MonitoringFilters, future filter variants) without
+        // coupling the key layer to the type module.
+        lists: <T extends object>(params?: T) =>
+            ["loans", "list", params ?? {}] as const,
         monitoring: <F, P, S>(filters: F, pagination: P, sorting: S) =>
             ["loans", "monitoring", filters, pagination, sorting] as const,
     },

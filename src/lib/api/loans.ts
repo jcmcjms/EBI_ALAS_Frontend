@@ -12,7 +12,7 @@ import {
  *
  * `idempotencyKey` makes retries safe: the same key replays the stored
  * response (200) instead of creating a second application group. The caller
- * owns the key lifecycle (see useLoanSubmission).
+ * owns the key lifecycle (see useCreateLoan).
  */
 export async function submitLoanApplication(
     payload: LoanSubmissionPayload,
@@ -25,6 +25,33 @@ export async function submitLoanApplication(
     );
     return unwrapApiData(res.data);
 }
+
+/**
+ * Loan API surface — re-exported as a namespaced object so call sites
+ * read like `loanApi.createLoan(payload)` rather than reaching into a
+ * flat module. Today it just wraps the underlying submission call, but
+ * keeping the indirection leaves room for read-side methods (e.g.
+ * `loanApi.getMonitoring()`) to land here later without churning every
+ * caller.
+ */
+export const loanApi = {
+    /**
+     * Create a new loan application group. Same on-the-wire contract as
+     * {@link submitLoanApplication} — the namespaced form is preferred in
+     * feature code (e.g. `useCreateLoan`) because it reads like a domain
+     * API rather than a free function.
+     *
+     * @param payload      Full wizard payload.
+     * @param idempotencyKey  GUID that dedupes retries. The hook caller
+     *                        owns the lifecycle — mint once per logical
+     *                        submission, rotate after success.
+     */
+    createLoan: (
+        payload: LoanSubmissionPayload,
+        idempotencyKey: string
+    ): Promise<LoanSubmissionResponse> =>
+        submitLoanApplication(payload, idempotencyKey),
+};
 
 /**
  * One entry on a loan's vertical audit timeline. Mirrors
