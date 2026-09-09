@@ -59,15 +59,33 @@ export interface CreateUserPayload {
     lastName: string;
     branchId: string;
     role: string;
+    /** Free-text role label (e.g. "Senior Credit Analyst"). Complements
+     *  the workflow `role` field. Validated server-side, max 100 chars. */
+    jobTitle?: string | null;
+    /** Base64-encoded PNG of the user's signature. Optional at create
+     *  time; admin typically captures this later via the edit drawer. */
+    eSignature?: string | null;
 }
 
-/** PUT /api/users/{id} body (UpdateUserRequest). */
+/** PUT /api/users/{id} body (UpdateUserRequest).
+ *
+ *  `eSignature` has three states that map directly onto the backend's
+ *  "no-change" semantics:
+ *   - `undefined` (key omitted)  → keep the existing signature
+ *   - `null`                     → clear the signature
+ *   - `string`                   → replace with this base64 PNG
+ *
+ *  The frontend only sets the key when the user actually edited or
+ *  cleared the signature — minor profile edits never round-trip the
+ *  ~100KB PNG through the API. */
 export interface UpdateUserPayload {
     firstName: string;
     middleName?: string | null;
     lastName: string;
     branchId: string;
     role: string;
+    jobTitle?: string | null;
+    eSignature?: string | null;
 }
 
 /** PATCH /api/users/{id}/status body (UserStatusRequest). */
@@ -86,6 +104,10 @@ export interface UserResponse {
     role: string;
     isActive: boolean;
     createdAt: string;
+    /** Free-text role label (e.g. "Branch Manager"). */
+    jobTitle?: string | null;
+    /** Base64-encoded PNG of the user's e-signature. Null when none. */
+    eSignature?: string | null;
 }
 
 /** Audit log record for a specific user (UserAuditLogResponse). */

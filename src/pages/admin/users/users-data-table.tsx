@@ -487,6 +487,10 @@ export function UsersDataTable() {
 
     async function handleUpdateUser(userId: number, changes: UserProfileChanges): Promise<boolean> {
         try {
+            // Spread the optional fields through. `eSignature` is only
+            // present when the user actually edited the signature pad —
+            // for routine profile edits it's omitted and the backend's
+            // "no-change" semantics preserve the existing PNG.
             await updateUserMutation.mutateAsync({
                 id: userId,
                 payload: {
@@ -495,6 +499,8 @@ export function UsersDataTable() {
                     lastName: changes.lastName,
                     branchId: changes.branchId,
                     role: changes.role,
+                    jobTitle: changes.jobTitle ?? null,
+                    eSignature: changes.eSignature,
                 } satisfies UpdateUserPayload,
             });
             toast.success(`${changes.firstName} ${changes.lastName} updated successfully`);

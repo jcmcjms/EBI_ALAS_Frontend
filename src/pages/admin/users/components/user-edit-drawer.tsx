@@ -5,17 +5,29 @@ import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
+import { SignaturePad } from "@/src/components/ui/signature-pad";
 import { toast } from "sonner";
 import { BRANCHES, type UserResponse } from "@/src/lib/api/types";
 import { useRoles } from "@/src/hooks/use-roles";
 
-/** Editable fields — mirrors PUT /api/users/{id} (UpdateUserRequest). */
+/**
+ * Editable fields — mirrors PUT /api/users/{id} (UpdateUserRequest).
+ *
+ * `eSignature` is intentionally OPTIONAL on the wire. The parent only
+ * sets it when the user actually edited or cleared the signature —
+ * a minor profile edit (e.g. correcting a typo in the last name)
+ * never round-trips the ~100KB PNG through the API. The backend's
+ * "no-change" logic (`request.ESignature is not null`) treats the
+ * omitted key the same as `undefined` and preserves the existing value.
+ */
 export interface UserProfileChanges {
     firstName: string;
     middleName: string;
     lastName: string;
     branchId: string;
     role: string;
+    jobTitle?: string | null;
+    eSignature?: string | null;
 }
 
 interface UserEditDrawerProps {
@@ -32,7 +44,22 @@ interface UserEditDrawerProps {
     onRevokeSessions: (user: UserResponse) => void;
 }
 
-type EditableProfile = UserProfileChanges;
+/** Text inputs in the drawer. The signature lives in its own state slot
+ *  because it never round-trips through `<input>` events.
+ *
+ *  The fields are typed as plain `string` (not `string | null`) because
+ *  `<input value=...>` requires a string — we hydrate `null`/`undefined`
+ *  from the API into `""` in `profileFrom` and convert back to `null`
+ *  in `handleSave`. The `UserProfileChanges` shape keeps the nullable
+ *  wire form because the save payload is what travels to the server. */
+type EditableProfile = {
+    firstName: string;
+    middleName: string;
+    lastName: string;
+    branchId: string;
+    role: string;
+    jobTitle: string;
+};
 
 function profileFrom(user: UserResponse): EditableProfile {
     return {
@@ -41,10 +68,18 @@ function profileFrom(user: UserResponse): EditableProfile {
         lastName: user.lastName,
         branchId: user.branchId,
         role: user.role,
+        jobTitle: user.jobTitle ?? "",
     };
 }
 
-const emptyProfile: EditableProfile = { firstName: "", middleName: "", lastName: "", branchId: "", role: "" };
+const emptyProfile: EditableProfile = {
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    branchId: "",
+    role: "",
+    jobTitle: "",
+};
 
 export function UserEditDrawer({
     user,
@@ -58,6 +93,13 @@ export function UserEditDrawer({
 }: UserEditDrawerProps) {
     const { data: roles } = useRoles();
     const [profile, setProfile] = useState<EditableProfile>(emptyProfile);
+    /** Mirrors the latest base64 PNG drawn on the canvas. `null` means
+     *  the user has cleared the pad. */
+    const [eSignature, setESignature] = useState<string | null>(null);
+    /** Distinguishes "user touched the signature" from "the initial value
+     *  we hydrated from the server". Without this, every minor profile
+     *  edit would push the existing ~100KB PNG back to the server. */
+    const [isSignatureDirty, setIsSignatureDirty] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSyncedUser, setLastSyncedUser] = useState<UserResponse | null>(null);
@@ -68,11 +110,19 @@ export function UserEditDrawer({
     if (user !== lastSyncedUser) {
         setLastSyncedUser(user);
         setProfile(user ? profileFrom(user) : emptyProfile);
+        setESignature(user?.eSignature ?? null);
+        setIsSignatureDirty(false);
         setIsDirty(false);
     }
 
     const handleFieldChange = <K extends keyof EditableProfile>(field: K, value: EditableProfile[K]) => {
         setProfile(prev => ({ ...prev, [field]: value }));
+        setIsDirty(true);
+    };
+
+    const handleSignatureChange = (base64: string | null) => {
+        setESignature(base64);
+        setIsSignatureDirty(true);
         setIsDirty(true);
     };
 
@@ -87,18 +137,32 @@ export function UserEditDrawer({
             toast.error("Last name is required");
             return;
         }
+        if (profile.jobTitle.length > 100) {
+            toast.error("Job title must not exceed 100 characters");
+            return;
+        }
 
         setIsSaving(true);
         try {
-            const success = await onSave(user.id, {
+            // Always send jobTitle (even when empty → null) so a clearing
+            // action persists. Only forward the signature when the user
+            // actually touched it — see isSignatureDirty above.
+            const changes: UserProfileChanges = {
                 firstName: profile.firstName.trim(),
                 middleName: profile.middleName.trim(),
                 lastName: profile.lastName.trim(),
                 branchId: profile.branchId,
                 role: profile.role,
-            });
+                jobTitle: profile.jobTitle.trim() || null,
+            };
+            if (isSignatureDirty) {
+                changes.eSignature = eSignature;
+            }
+
+            const success = await onSave(user.id, changes);
             if (success) {
                 setIsDirty(false);
+                setIsSignatureDirty(false);
                 onClose();
             }
         } finally {
@@ -118,8 +182,9 @@ export function UserEditDrawer({
 
                 <Tabs defaultValue="profile" className="flex flex-1 flex-col overflow-hidden">
                     <div className="px-6 pt-4">
-                        <TabsList className="grid w-full grid-cols-3">
+                        <TabsList className="grid w-full grid-cols-4">
                             <TabsTrigger value="profile">Profile</TabsTrigger>
+                            <TabsTrigger value="signature">Signature</TabsTrigger>
                             <TabsTrigger value="roles">Roles</TabsTrigger>
                             <TabsTrigger value="security">Security</TabsTrigger>
                         </TabsList>
@@ -154,6 +219,20 @@ export function UserEditDrawer({
                                 onChange={(e) => handleFieldChange("lastName", e.target.value)}
                                 className="h-9"
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-jobTitle">Job Title</Label>
+                            <Input
+                                id="edit-jobTitle"
+                                value={profile.jobTitle}
+                                onChange={(e) => handleFieldChange("jobTitle", e.target.value)}
+                                placeholder="e.g. Senior Credit Evaluator"
+                                maxLength={100}
+                                className="h-9"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Complements the workflow role and shows up on audit trails.
+                            </p>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -193,6 +272,27 @@ export function UserEditDrawer({
                             </Select>
                         </div>
                     </TabsContent>
+
+                    <TabsContent value="signature" className="mt-0 flex-1 space-y-4 overflow-y-auto p-6">
+                        <div className="space-y-2">
+                            <Label>E-Signature</Label>
+                            <SignaturePad
+                                value={eSignature}
+                                onChange={handleSignatureChange}
+                                disabled={!canEdit}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Captured as a small PNG and stamped on generated documents
+                                (approvals, recommendation sheets, etc.).
+                            </p>
+                            {isSignatureDirty && (
+                                <p className="text-xs font-medium text-amber-600">
+                                    Unsaved signature changes will be applied on Save.
+                                </p>
+                            )}
+                        </div>
+                    </TabsContent>
+
                     <TabsContent value="roles" className="mt-0 flex-1 space-y-4 overflow-y-auto p-6">
                         <div className="space-y-2">
                             <Label htmlFor="edit-role">Primary Role</Label>
