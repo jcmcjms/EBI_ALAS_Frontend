@@ -22,6 +22,7 @@ export interface UserCreatePayload {
     lastName: string;
     branchId: string;
     role: string;
+    jobTitle: string;
 }
 
 interface UserCreateDrawerProps {
@@ -36,6 +37,7 @@ const emptyForm = {
     firstName: "",
     middleName: "",
     lastName: "",
+    jobTitle: "",
     branchId: "",
     role: "",
 };
@@ -109,6 +111,10 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
             toast.error("Last name is required");
             return;
         }
+        if (form.jobTitle.length > 100) {
+            toast.error("Job title must not exceed 100 characters");
+            return;
+        }
         if (!form.branchId) {
             toast.error("Branch is required");
             return;
@@ -129,6 +135,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                 firstName: form.firstName.trim(),
                 middleName: form.middleName.trim(),
                 lastName: form.lastName.trim(),
+                jobTitle: form.jobTitle.trim(),
                 branchId: form.branchId,
                 role: form.role,
             });
@@ -265,6 +272,20 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                                     placeholder="Dela Cruz"
                                     className="h-9"
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="create-jobTitle">Job Title</Label>
+                                <Input
+                                    id="create-jobTitle"
+                                    value={form.jobTitle}
+                                    onChange={(e) => handleFieldChange("jobTitle", e.target.value)}
+                                    placeholder="e.g. Senior Credit Evaluator"
+                                    maxLength={100}
+                                    className="h-9"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Complements the workflow role and shows up on audit trails.
+                                </p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="create-branch">Assigned Branch *</Label>

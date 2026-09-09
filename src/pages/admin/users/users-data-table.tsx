@@ -474,6 +474,7 @@ export function UsersDataTable() {
                 lastName: payload.lastName,
                 branchId: payload.branchId,
                 role: payload.role,
+                jobTitle: payload.jobTitle.trim() || null,
             } satisfies CreateUserPayload);
             toast.success(`User @${payload.username} created successfully`);
             return true;
