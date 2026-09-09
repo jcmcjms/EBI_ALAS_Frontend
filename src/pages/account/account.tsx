@@ -36,6 +36,7 @@ import {
     useRevokeSession,
 } from "@/src/hooks/useAccount";
 import type { Activity, RecentClient, Session } from "@/src/lib/api/account";
+import { BRANCHES } from "@/src/lib/api/types";
 import { formatRelativeTime, initialsOf } from "@/src/lib/notifications";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store/authStore";
@@ -236,7 +237,12 @@ export function AccountPage() {
     const branchLabel = useMemo(() => {
         const code = profile?.branchId ?? user?.branchId;
         if (!code) return null;
-        return `Branch ${code}`;
+        // Resolve the branch code (e.g. "011") to its human-readable name
+        // (e.g. "Head Office Branch") via the static BRANCHES directory —
+        // same lookup used by dashboard.tsx and the admin users tables.
+        // Falls back to "Branch <code>" when the code isn't in the
+        // directory (e.g. a newly added branch not yet mirrored on the FE).
+        return BRANCHES.find((b) => b.code === code)?.name ?? `Branch ${code}`;
     }, [profile, user]);
 
     const completeness = useMemo(() => {
