@@ -17,7 +17,29 @@ import { Button } from "@/src/components/ui/button";
 import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise } from "@phosphor-icons/react";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
+import { BRANCHES } from "@/src/lib/api/types";
 import { cn } from "@/src/lib/utils";
+
+/**
+ * Resolve a branch code (e.g. "011") to its human-readable name
+ * (e.g. "Head Office Branch") using the static `BRANCHES` directory.
+ *
+ * The monitoring record carries `branchCode` as the canonical wire value —
+ * the table sends it back to `GET /api/loans?branchCode=…` for filtering
+ * and the server sorts on it. We only swap in the name for the rendered
+ * cell; the underlying field stays the code so filter / sort / API
+ * contracts remain untouched.
+ *
+ * Falls back to the raw code when:
+ *   - the value is the sentinel `"—"` (no branch on the loan),
+ *   - the code is not present in the static directory (e.g. a new branch
+ *     added server-side that hasn't been mirrored yet — same fallback
+ *     behaviour as `dashboard.tsx` and `cis-lookup.tsx`).
+ */
+function resolveBranchName(code: string): string {
+    if (!code || code === "—") return code || "—";
+    return BRANCHES.find((b) => b.code === code)?.name ?? code;
+}
 
 // Declare features for this table (v9 API)
 const features = tableFeatures({
@@ -93,7 +115,15 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
             cell: (info) => <span className="text-xs font-semibold">{info.getValue()}</span>,
             meta: { className: "sticky left-0 bg-background z-10 border-r" }
         }),
-        columnHelper.accessor("branchCode", { header: "Branch", cell: (info) => <span className="text-xs">{info.getValue()}</span> }),
+        columnHelper.accessor("branchCode", {
+            header: "Branch",
+            // Display the resolved branch name (e.g. "Head Office Branch")
+            // rather than the raw code (e.g. "011"). The accessor value is
+            // still the code, so default sort still orders by code — swap
+            // to `sortingFn` keyed on the name if alphabetical-by-name
+            // sorting is needed later.
+            cell: (info) => <span className="text-xs">{resolveBranchName(info.getValue())}</span>,
+        }),
         columnHelper.accessor("customerName", { header: "Customer Name", cell: (info) => <span className="font-medium text-sm">{info.getValue()}</span> }),
         columnHelper.accessor("loanType", { header: "Loan Type", cell: (info) => <Badge variant="outline" className="text-xs font-normal">{info.getValue()}</Badge> }),
         columnHelper.accessor("product", { header: "Product", cell: (info) => <span className="text-xs text-muted-foreground">{info.getValue()}</span> }),

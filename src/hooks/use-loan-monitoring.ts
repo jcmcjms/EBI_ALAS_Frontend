@@ -119,9 +119,9 @@ export function useLoanMonitoring(
     pagination: PaginationState,
     sorting: SortingState[]
 ) {
-    return useQuery({
+    const query = useQuery({
         queryKey: queryKeys.loans.monitoring(filters, pagination, sorting),
-        queryFn: async () => {
+        queryFn: async (): Promise<{ records: LoanMonitoringRecord[]; rowCount: number }> => {
             const params: Record<string, string> = {
                 page: String(pagination.pageIndex + 1),
                 pageSize: String(pagination.pageSize),
@@ -170,9 +170,20 @@ export function useLoanMonitoring(
                 (group.loans ?? []).map(toMonitoringRecord),
             );
 
-            return { data: records, rowCount: page.totalCount };
+            return { records, rowCount: page.totalCount };
         },
         placeholderData: keepPreviousData,
         staleTime: 1000 * 60 * 2,
     });
+
+    // ── View-model contract for MonitoringTable ─────────────────────────
+    // The table destructures `data` as the row ARRAY and `rowCount` as a
+    // top-level number. Returning the queryFn payload nested (as earlier
+    // iterations did) made rowCount fall back to 0 ("0 entries") and handed
+    // react-table a non-array, which silently rendered zero rows.
+    return {
+        ...query,
+        data: query.data?.records ?? [],
+        rowCount: query.data?.rowCount ?? 0,
+    };
 }
