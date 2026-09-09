@@ -110,4 +110,11 @@ export const queryKeys = {
         loans: (limit: number) => ["account-loans", limit] as const,
         clients: (limit: number) => ["account-clients", limit] as const,
     },
+
+    // ── Notifications (header bell) ───────────────────────────────────
+    // Single key — the bell always wants the same "most-recent N"
+    // payload. Polling is enabled by the hook (refetchInterval), no
+    // caller-specific params. Invalidating this key refreshes the bell
+    // everywhere in the app that reads the store.
+    notifications: ["notifications"] as const,
 } as const;

@@ -1,6 +1,8 @@
-// Domain types + seed data for notifications.
+// Domain types + mapper + seed data for notifications.
 // TODO(api): move types into src/lib/api/types.ts and hydrate via
 // GET /api/notifications once the .NET endpoint exists.
+
+import type { NotificationResponse } from "@/src/lib/api/notifications";
 
 export type NotificationType = "application" | "action" | "message" | "system";
 
@@ -43,6 +45,50 @@ export function initialsOf(name: string): string {
         .slice(0, 2)
         .map((part) => part[0]!.toUpperCase())
         .join("");
+}
+
+/**
+ * Classify a backend notification title into the UI's `NotificationType`
+ * bucket. Backend titles are free-form English ("Ready for Evaluation",
+ * "Application Returned", "New Loan Application Submitted") — these
+ * matches map them to the icon family the UI renders in the bell dropdown.
+ */
+function classifyNotification(title: string): NotificationType {
+    const t = title.toLowerCase();
+    if (t.includes("ready for") || t.includes("recommendation") || t.includes("approval")) {
+        return "action";
+    }
+    if (t.includes("submitted") || t.includes("application") || t.includes("returned")) {
+        return "application";
+    }
+    if (t.includes("status update")) {
+        return "message";
+    }
+    return "system";
+}
+
+/**
+ * Map one wire-format notification row to the FE's `AppNotification`
+ * shape (used by the Zustand store + bell UI).
+ */
+export function mapApiNotification(n: NotificationResponse): AppNotification {
+    return {
+        id: String(n.id),
+        type: classifyNotification(n.title),
+        title: n.title,
+        description: n.description,
+        createdAt: n.createdAt,
+        read: n.isRead,
+        link: n.link ?? undefined,
+    };
+}
+
+/**
+ * Batch variant — used by the `useNotifications` hook to push the
+ * whole poll result into the store in one update.
+ */
+export function mapApiNotifications(rows: NotificationResponse[]): AppNotification[] {
+    return rows.map(mapApiNotification);
 }
 
 export const DUMMY_NOTIFICATIONS: AppNotification[] = [

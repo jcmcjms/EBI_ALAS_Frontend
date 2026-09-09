@@ -39,7 +39,14 @@ export interface PagedSessionsResponse extends PagedResult<Session> {}
 
 export interface Activity {
     id: number;
-    loanFormNumber: string;
+    /**
+     * The backend returns `LoanApplication.LamId` (the Loan Application
+     * Management number, e.g. "LA-2026-08-9942"). The camelCased wire
+     * field is `lamId`; the legacy FE field name `loanFormNumber` would
+     * render as `undefined` in the timeline title — fix is to mirror the
+     * backend property name exactly.
+     */
+    lamId: string;
     action: string;
     fromStatus?: string;
     toStatus?: string;

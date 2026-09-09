@@ -95,7 +95,7 @@ function toTimelineItem(a: Activity): TimelineItem {
     return {
         id: String(a.id),
         kind,
-        title: `${a.loanFormNumber} — ${a.action}`,
+        title: `${a.lamId} — ${a.action}`,
         description,
         createdAt: a.actionDate,
         link: "/loans/monitoring",
