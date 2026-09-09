@@ -282,9 +282,17 @@ export function getErrorMessage(error: unknown): string {
     if (axios.isAxiosError(error)) {
         // Server responded with an error status
         if (error.response) {
+            const status = error.response.status;
             const data = error.response.data;
-            // Try common error message shapes from the API
-            if (typeof data === "string") return data;
+
+            // Proxy / infrastructure errors — the response is usually HTML or empty,
+            // not JSON, so we map the status code to a readable message.
+            if (status === 502) return "Server is temporarily unavailable. Please try again later.";
+            if (status === 503) return "Service is currently unavailable. Please try again later.";
+            if (status === 504) return "Server timed out. Please try again later.";
+
+            // Try common error message shapes from the API (only for JSON responses)
+            if (typeof data === "string" && !data.startsWith("<")) return data;
             if (data?.message) return data.message;
             if (data?.error) return data.error;
             if (data?.detail) return data.detail;
