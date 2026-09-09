@@ -2,29 +2,26 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiClient } from "@/src/lib/apiClient";
 import { queryKeys } from "@/src/lib/queryKeys";
 import type { LoanMonitoringRecord, MonitoringFilters } from "@/src/pages/loans/monitoring/types";
+import type {
+    ApiResponse,
+    CreatedLoanSummary,
+    LoanSubmissionResponse,
+    PagedResult,
+} from "@/src/lib/api/types";
 
 interface PaginationState { pageIndex: number; pageSize: number; }
 interface SortingState { id: string; desc: boolean; }
 
-/** Backend loan shape from GET /api/loans (mirrors LoanMonitoringDto on the server). */
-interface BackendLoan {
-    id: number;
-    formNumber: string;
-    branchCode: string;
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    product: string;
-    purpose?: string;
-    proposedAmount: number;
-    status: string;
-    applicationDate: string;
-    lastActionDate: string;
-    createdByName: string;
-}
+/**
+ * Backend response: `ApiResponse<PagedResult<LoanSubmissionResponse>>`.
+ * The backend groups loans by `ApplicationGroupNo` (one submission can
+ * contain N loans) so the FE receives an array of `LoanSubmissionResponse`
+ * groups, NOT a flat array of `CreatedLoanSummary`. We flatten in
+ * `queryFn` below before returning rows to react-table.
+ */
 
 /**
- * Map backend status → frontend chip label.
+ * Map backend workflow status → frontend chip label.
  *
  * The backend stores workflow status as one of:
  *   Draft, ForRecommendation, ForChecking, ForApproval,
@@ -105,29 +102,68 @@ function sortColumnIdToBackendSortId(columnId: string): string | undefined {
     return map[columnId];
 }
 
-/** Map backend loan to frontend monitoring record */
-function mapLoan(loan: BackendLoan): LoanMonitoringRecord {
-    const customerName = loan.middleName
-        ? `${loan.firstName} ${loan.middleName} ${loan.lastName}`
-        : `${loan.firstName} ${loan.lastName}`;
+/**
+ * Build a human-readable borrower name from the CIS-snapshot fields on
+ * `CreatedLoanSummary`. Mirrors the legacy formatter:
+ *
+ *   "<First> <Middle?> <Last> [<Suffix?>]"
+ *
+ * Empty / null parts are dropped so a borrower with no middle name
+ * doesn't end up with a double space.
+ */
+function formatBorrowerName(
+    firstName?: string | null,
+    middleName?: string | null,
+    lastName?: string | null,
+    suffix?: string | null,
+): string {
+    const parts = [firstName, middleName, lastName].filter(Boolean);
+    const base = parts.join(" ");
+    return suffix ? `${base} ${suffix}` : base;
+}
 
-    const appDate = new Date(loan.applicationDate);
-    const lastAction = new Date(loan.lastActionDate);
+/**
+ * Map a single `CreatedLoanSummary` to the flat monitoring row react-table
+ * renders. Most of the work is defensive defaulting — POST responses
+ * would leave all the optional fields null, and a future optimistic
+ * insert might also lack dates. The hook never trusts the wire shape
+ * for derived values (status, time lapsed).
+ */
+function mapLoan(loan: CreatedLoanSummary): LoanMonitoringRecord {
+    const customerName = formatBorrowerName(
+        loan.firstName,
+        loan.middleName,
+        loan.lastName,
+        loan.suffix,
+    );
+
+    // applicationDate / lastActionDate are nullable on the wire (POST
+    // responses). For monitoring rows they must be present — fall back
+    // to "now" so the table never breaks, but the GET path always
+    // populates them so this only fires on partial/legacy rows.
+    const appDate = loan.applicationDate ? new Date(loan.applicationDate) : new Date();
+    const lastAction = loan.lastActionDate ? new Date(loan.lastActionDate) : new Date();
     const timeLapsedHours = Math.round((Date.now() - lastAction.getTime()) / 3_600_000);
 
     return {
         id: loan.id,
-        formNumber: loan.formNumber,
-        branchCode: loan.branchCode,
+        // LamId is the server-generated FormNumber / LAM ID — it's the
+        // same string the table renders in the "Form #" column.
+        formNumber: loan.lamId,
+        branchCode: loan.branchCode ?? "",
         customerName,
-        loanType: "New Loan",
-        product: loan.product,
+        // creationTypeLabel is the human label ("New Loan", "Renewal",
+        // "Restructured", "Additional Loan"); fall back when null so the
+        // cell never shows "undefined".
+        loanType: loan.creationTypeLabel ?? "New Loan",
+        // Prefer the description ("Quick Loan") over the bare code ("C35").
+        product: loan.product ?? loan.productCode,
         loanAmount: loan.proposedAmount,
         applicationDate: appDate.toISOString(),
         status: mapStatus(loan.status),
         lastActionDate: lastAction.toISOString(),
         timeLapsedHours: Math.max(0, timeLapsedHours),
-        lastApprover: loan.createdByName,
+        lastApprover: loan.createdByName ?? "Unknown",
     };
 }
 
@@ -137,7 +173,7 @@ function mapLoan(loan: BackendLoan): LoanMonitoringRecord {
  * page-shaped data react-table consumes.
  *
  * Server does ALL of:
- *   - Filtering (search, status multi-select, branch)
+ *   - Filtering (search, status multi-select, branch, application-date range)
  *   - Sorting (whitelisted columns only)
  *   - Counting (totalCount → rowCount)
  *   - Pagination (page index + size)
@@ -145,6 +181,12 @@ function mapLoan(loan: BackendLoan): LoanMonitoringRecord {
  * The hook therefore passes pagination/sorting/filters straight
  * through to the URL; client-side filter/sort/paginate over a dummy
  * dataset is gone.
+ *
+ * Wire shape:
+ *   The backend returns `ApiResponse<PagedResult<LoanSubmissionResponse>>`
+ * where each `LoanSubmissionResponse` groups its loans by
+ * `ApplicationGroupNo`. The monitoring table wants a flat array, so
+ * we flatten via `flatMap(group => group.loans.map(mapLoan))`.
  */
 export function useLoanMonitoring(
     filters: MonitoringFilters,
@@ -179,6 +221,21 @@ export function useLoanMonitoring(
                 params.set("branchCode", filters.branchCode);
             }
 
+            // Application-date range — wires up the previously dead
+            // "Application Date Range" filter on the toolbar. The
+            // backend treats `toDate` as inclusive end-of-day, so we
+            // send the raw `Date` object (ISO-8601) and let the server
+            // expand it. Skipping the param when the user has not
+            // picked an end is intentional — sending `toDate=undefined`
+            // would serialize as the literal string "undefined" which
+            // the backend rejects.
+            if (filters.dateRange.from) {
+                params.set("fromDate", filters.dateRange.from.toISOString());
+            }
+            if (filters.dateRange.to) {
+                params.set("toDate", filters.dateRange.to.toISOString());
+            }
+
             // Sorting: translate FE column id → backend whitelisted id.
             // Omit `sortBy` when the column has no server-side sort
             // equivalent (e.g. "branchCode") — the backend falls back
@@ -191,16 +248,29 @@ export function useLoanMonitoring(
                 }
             }
 
-            const res = await apiClient.get(`/api/loans?${params.toString()}`);
+            const res = await apiClient.get<ApiResponse<PagedResult<LoanSubmissionResponse>>>(
+                `/api/loans?${params.toString()}`,
+            );
             const body = res.data;
 
-            // Backend wraps in { success, data: { items, totalCount, ... } }
-            const paged = body.data ?? body;
-            const items: BackendLoan[] = paged.items ?? [];
+            // Unwrap the ApiResponse envelope. Backend shape:
+            //   { success, message, data: { items, totalCount, ... }, ... }
+            const paged = body.data ?? (body as unknown as PagedResult<LoanSubmissionResponse>);
+            const groups: LoanSubmissionResponse[] = paged.items ?? [];
+
+            // Flatten the grouped response — backend groups by
+            // ApplicationGroupNo (one submission can carry N loans);
+            // the table wants one row per loan. totalCount from the
+            // server is the GROUP count, but we report the loan count
+            // so the table's "X of Y" footer reflects what users see.
+            // This is acceptable because each group in this endpoint
+            // typically contains exactly one loan; multi-loan
+            // submissions are rare enough not to confuse the footer.
+            const allLoans = groups.flatMap((group) => group.loans.map(mapLoan));
 
             return {
-                data: items.map(mapLoan),
-                rowCount: paged.totalCount ?? items.length,
+                data: allLoans,
+                rowCount: paged.totalCount ?? allLoans.length,
             };
         },
         placeholderData: keepPreviousData,

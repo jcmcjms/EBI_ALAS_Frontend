@@ -22,7 +22,7 @@ export function LoanMonitoringPage() {
     const [searchParams] = useSearchParams();
     const initialId = Number(searchParams.get("id"));
     const [selectedLoanId, setSelectedLoanId] = useState<number | null>(
-        Number.isFinite(initialId) ? initialId : null
+        Number.isFinite(initialId) && initialId > 0 ? initialId : null
     );
 
     return (

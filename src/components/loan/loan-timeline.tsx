@@ -22,7 +22,7 @@ export function LoanTimeline({ applicationId }: LoanTimelineProps) {
     const { data, isLoading } = useQuery({
         queryKey: ["loan-history", applicationId],
         queryFn: () => getLoanHistory(applicationId),
-        enabled: Number.isFinite(applicationId),
+        enabled: Number.isFinite(applicationId) && applicationId > 0,
     });
 
     if (isLoading) {
