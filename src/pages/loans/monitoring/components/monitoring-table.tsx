@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
     FlexRender,
     createCoreRowModel,
@@ -14,9 +14,9 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { CaretUp, CaretDown, CaretUpDown } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise } from "@phosphor-icons/react";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
-import { loanMonitoringData } from "../data/dummy-data";
+import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import { cn } from "@/src/lib/utils";
 
 // Declare features for this table (v9 API)
@@ -51,59 +51,41 @@ function TimeLapsedIndicator({ hours }: { hours: number }) {
     );
 }
 
+/**
+ * Skeleton row used while the first page is loading (no `keepPreviousData`
+ * cache yet). Matches the column count so the layout doesn't jump when
+ * the real rows arrive.
+ */
+function SkeletonRow({ colSpan }: { colSpan: number }) {
+    return (
+        <TableRow className="border-b">
+            <TableCell colSpan={colSpan} className="py-2 px-4 h-12">
+                <div className="h-3 w-full max-w-[180px] rounded bg-muted animate-pulse" />
+            </TableCell>
+        </TableRow>
+    );
+}
+
 export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState<SortingState>([{ id: "applicationDate", desc: true }]);
 
-    // Filter dummy data based on filters
-    const filteredData = useMemo(() => {
-        return loanMonitoringData.filter((item) => {
-            // Search filter
-            if (filters.search) {
-                const searchLower = filters.search.toLowerCase();
-                const matchesSearch =
-                    item.formNumber.toLowerCase().includes(searchLower) ||
-                    item.customerName.toLowerCase().includes(searchLower) ||
-                    item.branchCode.toLowerCase().includes(searchLower) ||
-                    item.product.toLowerCase().includes(searchLower);
-                if (!matchesSearch) return false;
-            }
-
-            // Status filter
-            if (filters.status.length > 0) {
-                if (!filters.status.includes(item.status)) return false;
-            }
-
-            // Branch filter
-            if (filters.branchCode && filters.branchCode !== "all") {
-                if (item.branchCode !== filters.branchCode) return false;
-            }
-
-            // Date range filter (simplified - would need proper date parsing in production)
-            // Skipping for dummy data
-
-            return true;
-        });
-    }, [filters]);
-
-    // Apply sorting
-    const sortedData = useMemo(() => {
-        if (sorting.length === 0) return filteredData;
-        const { id, desc } = sorting[0];
-        return [...filteredData].sort((a, b) => {
-            const aVal = a[id as keyof LoanMonitoringRecord];
-            const bVal = b[id as keyof LoanMonitoringRecord];
-            if (aVal < bVal) return desc ? 1 : -1;
-            if (aVal > bVal) return desc ? -1 : 1;
-            return 0;
-        });
-    }, [filteredData, sorting]);
-
-    // Apply pagination
-    const paginatedData = useMemo(() => {
-        const start = pagination.pageIndex * pagination.pageSize;
-        return sortedData.slice(start, start + pagination.pageSize);
-    }, [sortedData, pagination]);
+    // Server is the single source of truth for filter / sort / paginate.
+    // The hook returns the already-mapped page of records plus the total
+    // row count so react-table can drive its pagination footer.
+    //
+    // `keepPreviousData` (set inside the hook) keeps the previous page
+    // visible during a refetch so pagination/sort doesn't flash an empty
+    // state — first load still shows the skeleton below.
+    const {
+        data: pageData = [],
+        rowCount = 0,
+        isLoading,
+        isError,
+        error,
+        isFetching,
+        refetch,
+    } = useLoanMonitoring(filters, pagination, sorting);
 
     const columns = columnHelper.columns([
         columnHelper.accessor("formNumber", {
@@ -138,20 +120,50 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
         columnHelper.accessor("lastApprover", { header: "Last Approver", cell: (info) => <span className="text-xs">{info.getValue()}</span> }),
     ]);
 
+    // Server-driven pagination: react-table just renders pageCount and
+    // triggers `setPagination` on prev/next clicks — the actual page
+    // fetch happens inside the hook when `pagination` changes.
+    const pageCount = Math.max(1, Math.ceil(rowCount / pagination.pageSize));
+
     const table = useTable({
         features,
-        data: paginatedData,
+        data: pageData,
         columns,
         state: { pagination, sorting },
         onPaginationChange: setPagination,
         onSortingChange: setSorting,
         manualPagination: true,
         manualSorting: true,
-        pageCount: Math.ceil(sortedData.length / pagination.pageSize),
+        pageCount,
     });
+
+    // ── Render states ────────────────────────────────────────────────────
+    //
+    // Three distinct empty-body cases:
+    //
+    //   (a) `isLoading && !data` — first page ever, no keepPreviousData
+    //       cache yet → show skeleton rows so the layout doesn't jump.
+    //
+    //   (b) `isError` — the GET /api/loans call failed. Surface a
+    //       retryable error banner instead of an empty table.
+    //
+    //   (c) `pageData.length === 0` — server returned zero rows for
+    //       the current filter. Show a contextual empty state with a
+    //       hint to clear filters.
+    const showSkeleton = isLoading && pageData.length === 0;
+    const showError = isError;
+    const showEmpty = !showSkeleton && !showError && pageData.length === 0;
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Refetch banner — subtle indicator that a background refresh
+                is in flight (e.g. after returning from another page). */}
+            {isFetching && !isLoading && (
+                <div className="px-4 py-1 text-[11px] text-muted-foreground bg-muted/40 border-b">
+                    Refreshing…
+                </div>
+            )}
+
             <div className="flex-1 overflow-auto">
                 <Table>
                     <TableHeader className="bg-muted/40 sticky top-0 z-20">
@@ -177,7 +189,42 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {paginatedData.length > 0 ? (
+                        {showSkeleton ? (
+                            // 8 skeleton rows is enough to fill the visible
+                            // viewport on a 1080p screen at the default
+                            // 15-row pageSize — more would just churn DOM.
+                            Array.from({ length: 8 }).map((_, i) => (
+                                <SkeletonRow key={i} colSpan={columns.length} />
+                            ))
+                        ) : showError ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-32 text-center">
+                                    <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+                                        <WarningCircle size={28} weight="bold" className="text-destructive" />
+                                        <div>
+                                            Failed to load loan applications.
+                                            <div className="text-xs mt-0.5">
+                                                {error instanceof Error ? error.message : "Unknown error."}
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => refetch()}
+                                            className="gap-1.5 mt-1"
+                                        >
+                                            <ArrowClockwise size={14} weight="bold" /> Retry
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : showEmpty ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                                    No loan applications match the current filters.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
@@ -191,19 +238,25 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
                                     ))}
                                 </TableRow>
                             ))
-                        ) : (
-                            <TableRow><TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">No loan applications found matching your criteria.</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
             </div>
 
-            {/* Pagination Footer */}
+            {/* Pagination Footer — driven entirely by server rowCount, so
+                the "X to Y of N" labels reflect the backend's filtered
+                total, not the page slice. */}
             <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/10 text-xs text-muted-foreground">
                 <div>
-                    Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
-                    {Math.min((pagination.pageIndex + 1) * pagination.pageSize, sortedData.length)} of{" "}
-                    {sortedData.length} entries
+                    {rowCount === 0 ? (
+                        "0 entries"
+                    ) : (
+                        <>
+                            Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
+                            {Math.min((pagination.pageIndex + 1) * pagination.pageSize, rowCount)} of{" "}
+                            {rowCount} {rowCount === 1 ? "entry" : "entries"}
+                        </>
+                    )}
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Previous</Button>

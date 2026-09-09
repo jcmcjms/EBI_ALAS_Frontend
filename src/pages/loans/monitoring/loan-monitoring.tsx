@@ -32,9 +32,10 @@ export function LoanMonitoringPage() {
                 <MonitoringTable
                     filters={filters}
                     onRowClick={(r) => {
-                        // Dummy-backed rows have no `id`; ignore them so the
-                        // drawer only opens when we have a real id (via
-                        // deep-link or future real data).
+                        // Rows are server-backed now — every `LoanMonitoringRecord`
+                        // carries a numeric `id` from `LoanApplication.Id`. The
+                        // narrow `undefined` check is a defensive guard against
+                        // any future record shape that might omit it.
                         if (r.id !== undefined) {
                             setSelectedLoanId(r.id);
                         }
