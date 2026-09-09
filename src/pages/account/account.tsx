@@ -26,7 +26,6 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Spinner } from "@/src/components/ui/spinner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import {
     useAccountActivity,
@@ -36,10 +35,11 @@ import {
     useAccountSessions,
     useRevokeSession,
 } from "@/src/hooks/useAccount";
-import type { Activity, ProcessedLoan, RecentClient, Session } from "@/src/lib/api/account";
+import type { Activity, RecentClient, Session } from "@/src/lib/api/account";
 import { formatRelativeTime, initialsOf } from "@/src/lib/notifications";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store/authStore";
+import { MyApplicationsTab } from "./components/my-applications-tab";
 
 // ─── Helpers (page-local) ────────────────────────────────────────────────────
 
@@ -52,23 +52,6 @@ const ACTIVITY_META: Record<ActivityKind, { icon: typeof Clock; label: string }>
     draft: { icon: FloppyDisk, label: "Draft" },
     login: { icon: SignIn, label: "Sign-in" },
 };
-
-type ApplicationStatus = "released" | "recommended" | "pending" | "returned";
-
-const STATUS_META: Record<ApplicationStatus, { label: string; className: string }> = {
-    released: { label: "Released", className: "border-green-300 bg-green-50 text-green-700" },
-    recommended: { label: "Recommended", className: "border-blue-300 bg-blue-50 text-blue-700" },
-    pending: { label: "Pending", className: "border-amber-300 bg-amber-50 text-amber-700" },
-    returned: { label: "Returned", className: "border-red-300 bg-red-50 text-red-700" },
-};
-
-function isApplicationStatus(s: string): s is ApplicationStatus {
-    return s in STATUS_META;
-}
-
-function formatPhp(amount: number): string {
-    return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount);
-}
 
 // ─── Activity mapping ────────────────────────────────────────────────────────
 
@@ -355,6 +338,7 @@ export function AccountPage() {
                         <TabsTrigger value="overview">Overview</TabsTrigger>
                         <TabsTrigger value="security">Security</TabsTrigger>
                         <TabsTrigger value="activity">Activity</TabsTrigger>
+                        <TabsTrigger value="my-applications">My Applications</TabsTrigger>
                     </TabsList>
 
                     {/* ── Overview ─────────────────────────────────────── */}
@@ -477,68 +461,30 @@ export function AccountPage() {
 
                                 <div className="grid gap-6 xl:grid-cols-2">
                                     <Card>
-                                        <CardHeader className="border-b bg-muted/30 py-3">
-                                            <CardTitle className="text-sm">Processed Applications</CardTitle>
+                                        <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
+                                            <CardTitle className="text-sm">
+                                                Processed Applications
+                                            </CardTitle>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setTab("my-applications")}
+                                            >
+                                                View all my applications →
+                                            </Button>
                                         </CardHeader>
-                                        <CardContent className="p-0">
+                                        <CardContent className="py-6 text-sm text-muted-foreground">
                                             {loansQuery.isLoading ? (
                                                 <LoadingState label="Loading applications…" />
                                             ) : loans.length === 0 ? (
-                                                <EmptyState message="No processed applications yet." />
+                                                <p>No processed applications yet.</p>
                                             ) : (
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>Application</TableHead>
-                                                            <TableHead>Status</TableHead>
-                                                            <TableHead className="text-right">Amount</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {loans.map((app: ProcessedLoan) => {
-                                                            const status = app.status;
-                                                            const meta = isApplicationStatus(status)
-                                                                ? STATUS_META[status]
-                                                                : {
-                                                                      label: status,
-                                                                      className:
-                                                                          "border-slate-300 bg-slate-50 text-slate-700",
-                                                                  };
-                                                            return (
-                                                                <TableRow key={app.id}>
-                                                                    <TableCell>
-                                                                        <p className="text-xs font-medium">
-                                                                            {app.formNumber}
-                                                                        </p>
-                                                                        <p className="text-xs text-muted-foreground">
-                                                                            {app.clientName} •{" "}
-                                                                            {new Date(
-                                                                                app.applicationDate,
-                                                                            ).toLocaleDateString("en-PH", {
-                                                                                month: "short",
-                                                                                day: "numeric",
-                                                                            })}
-                                                                        </p>
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        <Badge
-                                                                            variant="outline"
-                                                                            className={cn(
-                                                                                "font-normal",
-                                                                                meta.className,
-                                                                            )}
-                                                                        >
-                                                                            {meta.label}
-                                                                        </Badge>
-                                                                    </TableCell>
-                                                                    <TableCell className="text-right text-sm tabular-nums">
-                                                                        {formatPhp(app.proposedAmount)}
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            );
-                                                        })}
-                                                    </TableBody>
-                                                </Table>
+                                                <p>
+                                                    You have {loans.length} recent application
+                                                    {loans.length === 1 ? "" : "s"}. Click{" "}
+                                                    <em>View all my applications</em> above to
+                                                    see the full list and timeline.
+                                                </p>
                                             )}
                                         </CardContent>
                                     </Card>
@@ -694,6 +640,20 @@ export function AccountPage() {
                                 ) : (
                                     <ActivityTimeline items={timelineItems} />
                                 )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* ── My Applications ────────────────────────────── */}
+                    <TabsContent value="my-applications">
+                        <Card>
+                            <CardHeader className="border-b bg-muted/30 py-3">
+                                <CardTitle className="text-sm">
+                                    My Applications
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-6">
+                                <MyApplicationsTab />
                             </CardContent>
                         </Card>
                     </TabsContent>
