@@ -14,10 +14,11 @@ import { Textarea } from "@/src/components/ui/textarea";
 import { Spinner } from "@/src/components/ui/spinner";
 
 import {
-    getDeviationThreads,
+    getLoanDeviations,
     loanReviewKeys,
     postDeviationRemark,
-    type DeviationRemarkMessageDto,
+    type DeviationRemarkDto,
+    type LoanDeviationDto,
 } from "@/src/lib/api/loan-review";
 
 const ROLE_BADGE: Record<string, string> = {
@@ -39,31 +40,22 @@ function RoleBadge({ role }: { role: string }) {
     );
 }
 
-function MessageCard({
-    msg,
-    isRoot,
+function RemarkCard({
+    remark,
     replyToName,
 }: {
-    msg: DeviationRemarkMessageDto;
-    isRoot?: boolean;
+    remark: DeviationRemarkDto;
     replyToName?: string;
 }) {
     return (
-        <div
-            className={`rounded-md border p-3 ${isRoot ? "border-slate-300 bg-slate-50" : "bg-background"}`}
-        >
+        <div className="rounded-md border bg-background p-3">
             <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold">
-                    {msg.authorName}
+                    {remark.authorName}
                 </span>
-                <RoleBadge role={msg.authorRole} />
-                {isRoot && (
-                    <Badge variant="secondary" className="text-[10px]">
-                        Submitted with application
-                    </Badge>
-                )}
+                <RoleBadge role={remark.authorRole} />
                 <span className="ml-auto text-[11px] text-muted-foreground">
-                    {new Date(msg.createdAt).toLocaleString()}
+                    {new Date(remark.createdAt).toLocaleString()}
                 </span>
             </div>
             {replyToName && (
@@ -71,25 +63,23 @@ function MessageCard({
                     in reply to {replyToName}
                 </p>
             )}
-            <p className="mt-1.5 whitespace-pre-wrap text-sm">
-                {msg.body || "—"}
-            </p>
+            <p className="mt-1.5 whitespace-pre-wrap text-sm">{remark.body}</p>
         </div>
     );
 }
 
 function ThreadComposer({
     loanId,
-    deviationKey,
+    deviation,
     canWrite,
     frozen,
-    onDone,
+    onReply,
 }: {
     loanId: number;
-    deviationKey: string;
+    deviation: LoanDeviationDto;
     canWrite: boolean;
     frozen: boolean;
-    onDone?: () => void;
+    onReply?: (remarkId: number) => void;
 }) {
     const qc = useQueryClient();
     const [body, setBody] = useState("");
@@ -97,18 +87,17 @@ function ThreadComposer({
 
     const send = useMutation({
         mutationFn: () =>
-            postDeviationRemark(loanId, {
-                deviationKey,
-                parentRemarkId: parentId,
+            postDeviationRemark(loanId, deviation.id, {
                 body,
+                parentRemarkId: parentId,
             }),
         onSuccess: () => {
             toast.success("Remark added.");
             setBody("");
             setParentId(null);
-            onDone?.();
+            onReply?.(0);
             qc.invalidateQueries({
-                queryKey: loanReviewKeys.deviationRemarks(loanId),
+                queryKey: loanReviewKeys.deviations(loanId),
             });
         },
         onError: (e: Error) => toast.error(e.message),
@@ -122,14 +111,30 @@ function ThreadComposer({
             </p>
         );
 
+    const replyTo = parentId
+        ? deviation.remarks.find((r) => r.id === parentId)?.authorName
+        : undefined;
+
     return (
         <div className="space-y-2">
+            {replyTo && (
+                <p className="text-[11px] text-muted-foreground">
+                    Replying to <strong>{replyTo}</strong>{" "}
+                    <button
+                        type="button"
+                        className="underline"
+                        onClick={() => setParentId(null)}
+                    >
+                        cancel
+                    </button>
+                </p>
+            )}
             <Textarea
                 rows={2}
                 value={body}
+                maxLength={2000}
                 placeholder="Add a remark on this deviation…"
                 onChange={(e) => setBody(e.target.value)}
-                maxLength={2000}
             />
             <div className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">
@@ -149,6 +154,99 @@ function ThreadComposer({
     );
 }
 
+function DeviationThread({
+    loanId,
+    deviation,
+    canWrite,
+    frozen,
+}: {
+    loanId: number;
+    deviation: LoanDeviationDto;
+    canWrite: boolean;
+    frozen: boolean;
+}) {
+    const nameOf = (id: number | null) =>
+        id
+            ? deviation.remarks.find((r) => r.id === id)?.authorName
+            : undefined;
+
+    return (
+        <section className="space-y-2 rounded-lg border p-3">
+            <header className="flex items-start gap-2">
+                {deviation.isFeeOverride ? (
+                    <Receipt
+                        size={16}
+                        weight="fill"
+                        className="mt-0.5 text-amber-600"
+                    />
+                ) : (
+                    <Warning
+                        size={16}
+                        weight="fill"
+                        className="mt-0.5 text-amber-600"
+                    />
+                )}
+                <h3 className="text-sm font-semibold leading-snug">
+                    {deviation.reasonText}
+                </h3>
+                <Badge
+                    variant="outline"
+                    className="ml-auto shrink-0 gap-1 text-[10px]"
+                >
+                    <ChatCenteredText size={11} /> {deviation.remarks.length}
+                </Badge>
+            </header>
+
+            {/* Thread root: the encoder's submission-time justification (immutable). */}
+            <div className="rounded-md border border-slate-300 bg-slate-50 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold">Encoder</span>
+                    <RoleBadge role="Encoder" />
+                    <Badge variant="secondary" className="text-[10px]">
+                        Submitted with application
+                    </Badge>
+                </div>
+                <p className="mt-1.5 whitespace-pre-wrap text-sm">
+                    {deviation.encoderJustification || "\u2014"}
+                </p>
+            </div>
+
+            <div className="ml-4 space-y-2 border-l-2 border-border pl-3">
+                {deviation.remarks.map((r) => (
+                    <div key={r.id} className="space-y-1">
+                        <RemarkCard
+                            remark={r}
+                            replyToName={
+                                r.parentRemarkId
+                                    ? (nameOf(r.parentRemarkId) ?? "Encoder")
+                                    : "Encoder"
+                            }
+                        />
+                        {canWrite && !frozen && (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 gap-1 px-2 text-[11px]"
+                                onClick={() => {
+                                    /* parentId is managed by ThreadComposer */
+                                }}
+                            >
+                                <ArrowBendUpLeft size={11} /> Reply
+                            </Button>
+                        )}
+                    </div>
+                ))}
+                <ThreadComposer
+                    loanId={loanId}
+                    deviation={deviation}
+                    canWrite={canWrite}
+                    frozen={frozen}
+                />
+            </div>
+        </section>
+    );
+}
+
 export function DeviationRemarksPanel({
     loanId,
     canWrite,
@@ -158,13 +256,13 @@ export function DeviationRemarksPanel({
     canWrite: boolean;
     frozen: boolean;
 }) {
-    const threads = useQuery({
-        queryKey: loanReviewKeys.deviationRemarks(loanId),
-        queryFn: () => getDeviationThreads(loanId),
+    const deviations = useQuery({
+        queryKey: loanReviewKeys.deviations(loanId),
+        queryFn: () => getLoanDeviations(loanId),
     });
 
-    if (threads.isLoading) return <Spinner className="size-5" />;
-    const list = threads.data ?? [];
+    if (deviations.isLoading) return <Spinner className="size-5" />;
+    const list = deviations.data ?? [];
     if (list.length === 0)
         return (
             <p className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
@@ -174,60 +272,14 @@ export function DeviationRemarksPanel({
 
     return (
         <div className="space-y-5">
-            {list.map((t) => (
-                <section
-                    key={t.deviationKey}
-                    className="space-y-2 rounded-lg border p-3"
-                >
-                    <header className="flex items-start gap-2">
-                        {t.deviationKey === "FEE_OVERRIDE" ? (
-                            <Receipt
-                                size={16}
-                                weight="fill"
-                                className="mt-0.5 text-amber-600"
-                            />
-                        ) : (
-                            <Warning
-                                size={16}
-                                weight="fill"
-                                className="mt-0.5 text-amber-600"
-                            />
-                        )}
-                        <h3 className="text-sm font-semibold leading-snug">
-                            {t.title}
-                        </h3>
-                        <Badge
-                            variant="outline"
-                            className="ml-auto shrink-0 gap-1 text-[10px]"
-                        >
-                            <ChatCenteredText size={11} /> {t.replies.length}
-                        </Badge>
-                    </header>
-
-                    <MessageCard msg={t.root} isRoot />
-
-                    <div className="ml-4 space-y-2 border-l-2 border-border pl-3">
-                        {t.replies.map((r) => (
-                            <MessageCard
-                                key={r.id}
-                                msg={r}
-                                replyToName={
-                                    r.parentRemarkId && r.parentRemarkId !== 0
-                                        ? (t.replies.find(
-                                              (x) => x.id === r.parentRemarkId
-                                          )?.authorName ?? t.root.authorName)
-                                        : t.root.authorName
-                                }
-                            />
-                        ))}
-                        <ThreadComposer
-                            loanId={loanId}
-                            deviationKey={t.deviationKey}
-                            canWrite={canWrite}
-                            frozen={frozen}
-                        />
-                    </div>
-                </section>
+            {list.map((d) => (
+                <DeviationThread
+                    key={d.id}
+                    loanId={loanId}
+                    deviation={d}
+                    canWrite={canWrite}
+                    frozen={frozen}
+                />
             ))}
         </div>
     );

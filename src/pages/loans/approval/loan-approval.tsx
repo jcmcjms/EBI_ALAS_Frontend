@@ -131,14 +131,43 @@ function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
             school: l.school,
             referrer: l.referrer,
         },
-        loan: {
-            product: l.product,
-            purpose: l.purpose ?? "",
-            proposedAmount: l.proposedAmount,
-            term: l.termDays,
-            interestRate: l.interestRate,
-            nthpDate: l.nthpDate,
-        },
+        // Multi-loan migration: the legacy single `loan` field was removed
+        // from the schema in favour of `loans[]`. The approval page
+        // renders ONE approval form per loan in this array (see
+        // `loanIndex` prop on ApprovalFormDocument).
+        loans: [
+            {
+                loanNo: l.loanNo ?? "",
+                productCode: l.productCode ?? "",
+                productDescription: l.product,
+                creationTypeCode,
+                creationTypeLabel: l.creationTypeLabel ?? "New Loan",
+                branchCode: l.branchCode,
+                parameters: {
+                    product: l.product,
+                    purpose: l.purpose ?? "",
+                    proposedAmount: l.proposedAmount,
+                    term: l.termDays,
+                    // Policy term (months) — not surfaced by the
+                    // approval endpoint's `LoanDetailResponse` yet
+                    // (it carries `termDays` only). Falls through as
+                    // undefined so the form schema's `.optional()`
+                    // accepts it; the field renders blank on the
+                    // approval-page context.
+                    policyTermMonths: undefined,
+                    interestRate: l.interestRate,
+                    nthpDate: l.nthpDate,
+                    notarialFee: l.notarialFee ?? 0,
+                    docStamps: l.docStamps ?? 0,
+                    insurance: l.insurance ?? 0,
+                    standardFeesSnapshot: {
+                        notarialFee: l.standardNotarialFee ?? 0,
+                        docStamps: l.standardDocStamps ?? 0,
+                        insurance: l.standardInsurance ?? 0,
+                    },
+                },
+            },
+        ],
         outstandingLoans: l.outstandingLoans.map((o) => ({
             pn: o.pn,
             principalBalance: o.principalBalance,

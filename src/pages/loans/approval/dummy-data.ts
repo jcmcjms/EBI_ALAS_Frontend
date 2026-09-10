@@ -34,14 +34,39 @@ export const dummyLoanData: LoanApplicationFormData = {
     school: "Tandag National Comprehensive High School",
     referrer: "Employee Referral (Pedro Penduko)",
   },
-  loan: {
-    product: "Multi-Purpose Loan",
-    purpose: "Home Renovation and Tuition Fee",
-    proposedAmount: 150000,
-    term: 1080, // 36 months × 30 days = 1,080 days
-    interestRate: 1.5,
-    nthpDate: "2026-08-30",
-  },
+  // Multi-loan migration: the schema's `loan: loanParametersSchema` was
+  // replaced with `loans: z.array(selectedLoanSchema)`. The dummy data
+  // ships a single seeded loan so the approval-form preview still
+  // renders end-to-end; the parent's `loanIndex` prop selects which
+  // loan's document to print.
+  loans: [
+    {
+      loanNo: "PN-10029",
+      productCode: "C21",
+      productDescription: "Multi-Purpose Loan",
+      creationTypeCode: CREATION_TYPE.RELOAN,
+      creationTypeLabel: "Reloan",
+      branchCode: "007",
+      parameters: {
+        product: "Multi-Purpose Loan",
+        purpose: "Home Renovation and Tuition Fee",
+        proposedAmount: 150000,
+        term: 1080, // 36 months × 30 days = 1,080 days
+        policyTermMonths: 36, // mirrors `term` above; surfaced by the
+                              // consolidated pending-loan SQL
+        interestRate: 1.5,
+        nthpDate: "2026-08-30",
+        notarialFee: 0,
+        docStamps: 0,
+        insurance: 0,
+        standardFeesSnapshot: {
+          notarialFee: 0,
+          docStamps: 0,
+          insurance: 0,
+        },
+      },
+    },
+  ],
   outstandingLoans: [
     {
       pn: "PN-10029",

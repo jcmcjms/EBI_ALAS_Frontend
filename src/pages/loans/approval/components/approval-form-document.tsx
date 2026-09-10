@@ -1,9 +1,12 @@
 import { forwardRef } from "react";
 import { cn } from "@/src/lib/utils";
-import { parseProductCode, resolveLoanProductDisplayName } from "@/src/lib/loan-product-display";
-import { computeMaximumLoanableAmount } from "@/src/lib/loan-computations";
+import { resolveLoanProductDisplayName } from "@/src/lib/loan-product-display";
+import { computeLoanMetrics } from "@/src/lib/loan-approval-utils";
 import { ApprovalFormSheet } from "@/src/components/loan/approval-form-sheet";
-import type { ClientFormData, LoanApplicationFormData } from "../../create/schema";
+import type {
+    ClientFormData,
+    LoanApplicationFormData,
+} from "../../create/schema";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
 
@@ -18,16 +21,6 @@ function dash(value?: string | null): string {
 
 function isoDate(iso?: string): string {
     return iso ? iso.slice(0, 10) : "-";
-}
-
-function longDate(iso?: string): string {
-    if (!iso) return "";
-    return new Date(iso).toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-    });
 }
 
 function fullNameOf(client: Partial<ClientFormData>): string {
@@ -51,84 +44,10 @@ const BLUE = "bg-[#d9eaf7]";
 const B = "border border-black";
 const DOUBLE_UNDERLINE: React.CSSProperties = { borderBottom: "3px double #000" };
 const TOP_DOUBLE: React.CSSProperties = { borderTop: "1px solid #000", borderBottom: "3px double #000" };
-const TOP_LINE_SINGLE: React.CSSProperties = { borderTop: "1px solid #000", borderBottom: "1px solid #000" };
 
-/* ── pure computations (TODO(api): backend is authoritative) ──
- * Exported so the page or tests can run them without rendering. */
-export function computeLoanMetrics(data: LoanApplicationFormData) {
-    const { loan, outstandingLoans, ebiReloans, buyOuts, incomingLoans, client } = data;
-
-    const totalBalance = outstandingLoans.reduce((s, l) => s + (l.outstandingBalance || 0), 0);
-    const totalPrincipal = outstandingLoans.reduce((s, l) => s + (l.principalBalance || 0), 0);
-    const ebiDeductions = ebiReloans.reduce((s, r) => s + (r.existingDeduction || 0), 0);
-    const ebiOb = ebiReloans.reduce((s, r) => s + (r.outstandingBalance || 0), 0);
-    const buyOutBalance = buyOuts.reduce((s, b) => s + (b.outstandingBalance || 0), 0);
-    const incomingTotal = incomingLoans.reduce((s, i) => s + (i.deductions || 0), 0);
-
-    const termDays = loan.term || 0;
-    const termMonths = Math.floor(termDays / 30);
-    const monthlyRate = (loan.interestRate || 0) / 100 / 12;
-    const amortization =
-        termMonths > 0 && monthlyRate > 0
-            ? (loan.proposedAmount * (monthlyRate * (1 + monthlyRate) ** termMonths)) / ((1 + monthlyRate) ** termMonths - 1)
-            : 0;
-
-    const applicationCharge = loan.proposedAmount * 0.0504;
-    const docStamp = loan.proposedAmount * 0.0075;
-    const notarialFee = 500;
-    const deductionsSubtotal = applicationCharge + docStamp + notarialFee;
-    const deductionPct = loan.proposedAmount > 0 ? (deductionsSubtotal / loan.proposedAmount) * 100 : 0;
-
-    const grossProceeds = loan.proposedAmount - deductionsSubtotal;
-    const netProceedsDs = grossProceeds - ebiOb;
-    const netProceedsClient = netProceedsDs - buyOutBalance;
-    const totalExposure = loan.proposedAmount + totalPrincipal;
-
-    const nthp = client.netTakeHomePay || 0;
-    const netPayAfterDeduction = nthp - amortization + ebiDeductions;
-    const totalMonthlyIncome = netPayAfterDeduction;
-    // Incoming loans are added to gross disposable income (more income sources),
-    // while NTHP is the preserved floor/minimum (deducted to get net capacity).
-    const totalDisposableGross = nthp + ebiDeductions + incomingTotal;
-    const totalDeductionsFinal = nthp;
-    const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
-
-    // Capacity-to-pay ceiling — see computeMaximumLoanableAmount docs.
-    const productCode = parseProductCode(loan.product);
-    const maximumLoanableAmount = computeMaximumLoanableAmount(
-        totalDisposableNet,
-        loan.interestRate || 0,
-        termDays,
-        productCode
-    );
-
-    return {
-        termDays,
-        amortization,
-        applicationCharge,
-        docStamp,
-        notarialFee,
-        deductionsSubtotal,
-        deductionPct,
-        grossProceeds,
-        netProceedsDs,
-        netProceedsClient,
-        totalExposure,
-        totalBalance,
-        totalPrincipal,
-        ebiDeductions,
-        ebiOb,
-        buyOutBalance,
-        incomingTotal,
-        nthp,
-        netPayAfterDeduction,
-        totalMonthlyIncome,
-        totalDisposableGross,
-        totalDeductionsFinal,
-        totalDisposableNet,
-        maximumLoanableAmount,
-    };
-}
+/* ── pure computations live in `@/src/lib/loan-approval-utils` ──
+ * Kept out of this file so the component-only-export / HMR contract
+ * (`react-refresh/only-export-components`) stays satisfied. */
 
 /* ── small presentational atoms ── */
 
@@ -168,24 +87,16 @@ function AmtRow({ label, value, blue, bold, underline, topLine, labelBold }: {
     );
 }
 
-function DashRows({ count, cols }: { count: number; cols: number }) {
-    return (
-        <>
-            {Array.from({ length: count }).map((_, i) => (
-                <tr key={i}>
-                    {Array.from({ length: cols }).map((_, j) => (
-                        <td key={j} className="px-1.5 py-0.5 text-center">-</td>
-                    ))}
-                </tr>
-            ))}
-        </>
-    );
-}
-
 /* ── main component (pure, prop-driven) ── */
 
 interface ApprovalFormDocumentProps {
     data: LoanApplicationFormData;
+    /**
+     * Optional: which loan to render. Defaults to the first loan in
+     * `data.loans`. Pass an explicit index when the parent is iterating
+     * one approval form per selected loan.
+     */
+    loanIndex?: number;
     /**
      * `loan_data.cat_loan_class` of the selected preloan, resolved by the
      * page via GET /api/webloans/loan-class. Only class-scoped products
@@ -195,10 +106,13 @@ interface ApprovalFormDocumentProps {
     catLoanClass?: string | null;
 }
 
-export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, catLoanClass }, ref) => {
+export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, loanIndex = 0, catLoanClass }, ref) => {
     const client = data?.client ?? ({} as LoanApplicationFormData["client"]);
     const branchType = data?.branchType ?? ({} as LoanApplicationFormData["branchType"]);
-    const loan = data?.loan ?? ({} as LoanApplicationFormData["loan"]);
+    // Multi-loan: the printed approval form is scoped to one loan. The
+    // parent can pass `loanIndex` to render each selected loan's form.
+    const primaryLoan = data?.loans?.[loanIndex];
+    const params = primaryLoan?.parameters;
     const verification = data?.verification;
     const deviations = data?.deviations;
     const outstandingLoans = data?.outstandingLoans ?? [];
@@ -206,12 +120,35 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
     const buyOuts = data?.buyOuts ?? [];
     const incomingLoans = data?.incomingLoans ?? [];
 
-    const c = computeLoanMetrics(data);
+    // Bail out cleanly when no loan is selected so the parent renders an
+    // empty state instead of an explosion of `undefined.X` reads.
+    if (!primaryLoan || !params) {
+        return (
+            <div
+                ref={ref}
+                id="approval-form-document"
+                className="bg-white p-5 text-black print:bg-white"
+            >
+                <ApprovalFormSheet>
+                    <h1 className="mb-2 text-sm font-bold underline">LOAN APPROVAL FORM</h1>
+                    <p className="text-sm">Select a loan in Step 1.3 to render its approval form.</p>
+                </ApprovalFormSheet>
+            </div>
+        );
+    }
 
-    const productDisplay = resolveLoanProductDisplayName(loan.product, catLoanClass);
+    const c = computeLoanMetrics(primaryLoan, {
+        outstandingLoans,
+        ebiReloans,
+        buyOuts,
+        incomingLoans,
+        client,
+    });
 
-    const productLine = loan.product
-        ? `[ ${loan.product} ] ${loan.term || 0} days @ ${loan.interestRate || 0}% per Annum`
+    const productDisplay = resolveLoanProductDisplayName(params.product, catLoanClass);
+
+    const productLine = params.product
+        ? `[ ${params.product} ] ${params.term || 0} days @ ${params.interestRate || 0}% per Annum`
         : "-";
 
     const remarksLines = [deviations?.remarks, deviations?.aoRecommendation, deviations?.otherRemarks].filter(
@@ -293,7 +230,7 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
                         </tr>
                         <tr>
                             <L>Loan Purpose:</L>
-                            <V blue colSpan={4}>{dash(loan.purpose)}</V>
+                            <V blue colSpan={4}>{dash(params.purpose)}</V>
                         </tr>
                     </tbody>
                 </table>
@@ -305,7 +242,7 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
                     {/* ── LEFT column ── */}
                     <div className={cn(B, "border-r-0 p-2")}>
                         <AmtRow label={<span className="font-bold">Maximum Loanable Amount **</span>} value={num(c.maximumLoanableAmount)} blue underline />
-                        <AmtRow label={<span className="font-bold">Proposed Loan for Approval</span>} value={<span className="font-bold">{num(loan.proposedAmount)}</span>} blue />
+                        <AmtRow label={<span className="font-bold">Proposed Loan for Approval</span>} value={<span className="font-bold">{num(params.proposedAmount)}</span>} blue />
                         <div className="pt-1 font-bold" style={DOUBLE_UNDERLINE}>Less:</div>
                         <div className="pl-3">
                             <AmtRow label="Application Charge" value={num(c.applicationCharge)} />
@@ -333,7 +270,7 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
                         <div className="h-3" />
                         <div className="flex items-end justify-between gap-2 py-[1px]">
                             <span className="font-bold">Net Take Home Pay as of:</span>
-                            <span className={cn(`${BLUE} px-1 font-bold`)}>{isoDate(loan.nthpDate || new Date().toISOString())}</span>
+                            <span className={cn(`${BLUE} px-1 font-bold`)}>{isoDate(params.nthpDate || new Date().toISOString())}</span>
                             <span className="min-w-24 border-b border-black text-right font-bold tabular-nums">{num(c.nthp)}</span>
                         </div>
                     </div>
@@ -378,12 +315,12 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
 
                         <div className="pt-2 font-bold">This loan availment:</div>
                         <div className="flex justify-between px-1 py-[1px]">
-                            <span>{"<this PN>"}</span>
-                            <span className="tabular-nums">{num(loan.proposedAmount)}</span>
-                            <span className="tabular-nums">{num(loan.proposedAmount)}</span>
+                            <span>{dash(primaryLoan.loanNo)}</span>
+                            <span className="tabular-nums">{num(params.proposedAmount)}</span>
+                            <span className="tabular-nums">{num(params.proposedAmount)}</span>
                         </div>
                         <div className="flex justify-end px-1 py-[1px]">
-                            <span className="min-w-24 border-b border-black text-right tabular-nums">{num(loan.proposedAmount)}</span>
+                            <span className="min-w-24 border-b border-black text-right tabular-nums">{num(params.proposedAmount)}</span>
                         </div>
                         <div className="flex items-end justify-between px-1 py-[1px]">
                             <span className="font-bold">Total Exposure</span>
@@ -506,7 +443,7 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
                         })}
                         <tr>
                             <td className="px-1.5 py-0.5 font-bold">Total Deductions</td>
-                            <td className="px-1.5 py-0.5 text-right tabular-nums" style={TOP_LINE_SINGLE}>{num(c.totalDeductionsFinal)}</td>
+                            <td className="px-1.5 py-0.5 text-right tabular-nums" style={TOP_DOUBLE}>{num(c.totalDeductionsFinal)}</td>
                             <td />
                             <td />
                             <td rowSpan={3} className="border-l border-black px-1.5 py-0.5" />
