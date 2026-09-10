@@ -113,28 +113,30 @@ export interface LoanAttachmentDto {
     uploadedAt: string;
 }
 
-export interface DeviationRemarkMessageDto {
+export interface DeviationRemarkDto {
     id: number;
+    loanDeviationId: number;
     parentRemarkId: number | null;
     authorName: string;
     authorRole: string;
     body: string;
     createdAt: string;
-    source: "submission" | "remark";
 }
 
-export interface DeviationThreadDto {
-    deviationKey: string;
-    title: string;
-    root: DeviationRemarkMessageDto;
-    replies: DeviationRemarkMessageDto[];
+export interface LoanDeviationDto {
+    id: number;
+    reasonText: string;
+    encoderJustification: string;
+    isFeeOverride: boolean;
+    sortOrder: number;
+    remarks: DeviationRemarkDto[];
 }
 
 export const loanReviewKeys = {
     detail: (id: number) => ["loans", id, "detail"] as const,
     history: (id: number) => ["loans", id, "history"] as const,
     attachments: (id: number) => ["loans", id, "attachments"] as const,
-    deviationRemarks: (id: number) => ["loans", id, "deviation-remarks"] as const,
+    deviations: (id: number) => ["loans", id, "deviations"] as const,
 };
 
 export async function getLoanDetail(id: number): Promise<LoanDetailResponse> {
@@ -201,19 +203,20 @@ export async function deleteLoanAttachment(attachmentId: number): Promise<void> 
     await apiClient.delete(`/api/loans/attachments/${attachmentId}`);
 }
 
-export async function getDeviationThreads(id: number): Promise<DeviationThreadDto[]> {
-    const res = await apiClient.get<ApiResponse<DeviationThreadDto[]>>(
-        `/api/loans/${id}/deviation-remarks`
+export async function getLoanDeviations(id: number): Promise<LoanDeviationDto[]> {
+    const res = await apiClient.get<ApiResponse<LoanDeviationDto[]>>(
+        `/api/loans/${id}/deviations`
     );
     return unwrapApiData(res.data);
 }
 
 export async function postDeviationRemark(
-    id: number,
-    payload: { deviationKey: string; parentRemarkId?: number | null; body: string }
-): Promise<DeviationRemarkMessageDto> {
-    const res = await apiClient.post<ApiResponse<DeviationRemarkMessageDto>>(
-        `/api/loans/${id}/deviation-remarks`,
+    loanId: number,
+    deviationId: number,
+    payload: { body: string; parentRemarkId?: number | null }
+): Promise<DeviationRemarkDto> {
+    const res = await apiClient.post<ApiResponse<DeviationRemarkDto>>(
+        `/api/loans/${loanId}/deviations/${deviationId}/remarks`,
         payload
     );
     return unwrapApiData(res.data);

@@ -10,7 +10,7 @@ import { Button } from "@/src/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/src/components/ui/field";
 import { Input } from "@/src/components/ui/input";
 import { useAuthStore } from "@/src/store/authStore";
-import { apiClient } from "@/src/lib/apiClient";
+import { apiClient, getErrorMessage } from "@/src/lib/apiClient";
 
 const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, "Current password is required"),
@@ -19,7 +19,7 @@ const changePasswordSchema = z.object({
         .regex(/[A-Z]/, "Must contain uppercase")
         .regex(/[a-z]/, "Must contain lowercase")
         .regex(/[0-9]/, "Must contain digit")
-        .regex(/[!?\*.]/, "Must contain one of !?*."),
+        .regex(/[!?*.]/, "Must contain one of !?*."),
     confirmPassword: z.string()
 }).refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords do not match",
@@ -49,9 +49,10 @@ export default function ChangePassword() {
             toast.success("Password changed successfully. Please log in with your new password.");
             clearSession();
             navigate("/login", { replace: true });
-        } catch (error: any) {
-            const message = error?.response?.data?.message || "Failed to change password.";
-            toast.error(message);
+        } catch (error) {
+            const fallback = "Failed to change password.";
+            const detail = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            toast.error(detail ?? getErrorMessage(error) ?? fallback);
         }
     };
 

@@ -11,6 +11,7 @@ import {
     revokeAccountSession,
     type PagedSessionsResponse,
 } from "@/src/lib/api/account";
+import { getErrorMessage } from "@/src/lib/apiClient";
 
 export function useAccountProfile() {
     return useQuery({
@@ -61,8 +62,8 @@ export function useUpdateProfile() {
             queryClient.invalidateQueries({ queryKey: queryKeys.account.profile });
             toast.success("Profile updated successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to update profile");
+        onError: (error) => {
+            toast.error(getErrorMessage(error) || "Failed to update profile");
         },
     });
 }
@@ -76,8 +77,8 @@ export function useRevokeSession() {
             queryClient.invalidateQueries({ queryKey: ["account-sessions"] });
             toast.success("Session revoked successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to revoke session");
+        onError: (error) => {
+            toast.error(getErrorMessage(error) || "Failed to revoke session");
         },
     });
 }

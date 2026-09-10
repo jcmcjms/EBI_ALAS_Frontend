@@ -56,6 +56,7 @@ export function roundCurrency(value: number): number {
  */
 export function computeStandardFee(
     fee: { notarialFee: number } | { docStampFee: number } | { insuranceFee: number } | number,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _principal: number
 ): number {
     // `fee` may be the raw column number (preferred), or a partial
@@ -86,6 +87,7 @@ export interface ExpectedFeesSnapshot {
 
 export function computeExpectedFees(
     product: LoanProductResponse | null | undefined,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _principal: number
 ): ExpectedFeesSnapshot {
     if (!product) {

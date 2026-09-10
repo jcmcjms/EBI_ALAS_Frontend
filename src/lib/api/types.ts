@@ -613,8 +613,24 @@ export interface PendingLoan {
     principal: number | null;
     /** Interest rate as a number (loan_data.granted_rate). */
     grantedRate: number | null;
-    /** Total term in days (`total_amortization * 30` from the SQL). */
+    /**
+     * Exact term in days — `DATEDIFF(DAY, date_granted, date_maturity)`
+     * from the consolidated SQL. Replaces the legacy
+     * `total_amortization * 30` approximation. NULL when either
+     * loan_data date is missing (LEFT JOIN miss).
+     */
     totalTermDays: number | null;
+    /**
+     * Policy term in months — `loan_data.total_amortization`, surfaced
+     * verbatim from the backend under the more descriptive name
+     * `PolicyTermMonths` (matches the SQL's "policy months" label).
+     * This is the authoritative input to amortization calculations;
+     * distinct from `totalTermDays` (the day-count derived from grant
+     * / maturity dates) which can drift by a day or two for short-term
+     * products. NULL when no loan_data row exists for the (bch,
+     * acct_no, loan_no) tuple.
+     */
+    policyTermMonths: number | null;
     /**
      * "<loan_product> - <description>" display string, pre-joined on the
      * backend (e.g. "PL - Payroll Loan"). Falls back to the bare product

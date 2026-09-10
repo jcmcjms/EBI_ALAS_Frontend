@@ -156,12 +156,13 @@
  * The frontend already attaches all three — see `src/lib/apiClient.ts`.
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import type { LoanProductResponse } from "@/src/lib/api/types";
-
 // `LoanProductResponse` is imported here so the type checker validates
 // the FE mirror of the backend DTO every time this file is compiled.
 // (The actual contract lives in `src/lib/api/types.ts` — the C# spec
 // above is the doc; this is just a typed anchor.)
-export type _LoanProductResponse = LoanProductResponse;
+import type { LoanProductResponse } from "@/src/lib/api/types";
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _LoanProductResponse = LoanProductResponse;
+export type { _LoanProductResponse };
 

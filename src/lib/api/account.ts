@@ -35,7 +35,10 @@ export interface Session {
     isCurrent: boolean;
 }
 
-export interface PagedSessionsResponse extends PagedResult<Session> {}
+// Type alias (not interface): `interface X extends Y {}` is an empty
+// interface that lint flags as "equivalent to its supertype". A type
+// alias is the idiomatic equivalent and keeps the same import surface.
+export type PagedSessionsResponse = PagedResult<Session>;
 
 export interface Activity {
     id: number;

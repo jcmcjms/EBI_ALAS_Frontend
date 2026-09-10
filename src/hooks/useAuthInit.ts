@@ -54,15 +54,18 @@ export function useAuthInit(): void {
                 }
                 // If refresh fails or token is invalid, user stays logged out —
                 // they'll see the login page naturally.
-            } catch (error: any) {
+            } catch (error) {
                 // Refresh cookie expired or backend unreachable.
                 // Show a readable message so the user knows what happened.
-                const status = error?.response?.status;
+                // Axios-shaped errors carry the response on `error.response`;
+                // we narrow at the use-site rather than depending on `any`.
+                const axiosError = error as { response?: { status?: number } };
+                const status = axiosError?.response?.status;
                 if (status === 502) {
                     toast.error("Server is temporarily unavailable. Please try again later.");
                 } else if (status === 401 || status === 403) {
                     // Session expired — no toast needed, user will see login page.
-                } else if (!error?.response) {
+                } else if (!axiosError?.response) {
                     toast.error("Unable to connect to the server. Please check your network connection.");
                 } else {
                     toast.error("Failed to restore session. Please log in again.");
