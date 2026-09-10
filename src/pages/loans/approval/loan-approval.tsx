@@ -250,6 +250,13 @@ export function LoanApprovalPage() {
             kind: "advance" as const,
         },
         {
+            role: "Recommender",
+            from: "ForRecommendation",
+            to: "ForRevision",
+            label: "Push Back to Encoder",
+            kind: "return" as const,
+        },
+        {
             role: "Evaluator",
             from: "ForChecking",
             to: "ForApproval",
