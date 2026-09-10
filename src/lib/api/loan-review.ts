@@ -1,0 +1,228 @@
+import { apiClient } from "@/src/lib/apiClient";
+import { unwrapApiData, type ApiResponse } from "./types";
+
+// ── Envelope types mirroring the backend ────────────────────────────────
+
+export interface LoanDetailResponse {
+    id: number;
+    lamId: string;
+    applicationGroupNo: string;
+    branchCode: string;
+    loanNo: string;
+    productCode: string;
+    product: string;
+    creationTypeCode: number | null;
+    creationTypeLabel: string | null;
+    requestingOfficer: string | null;
+    lai: string | null;
+    cisId: string | null;
+    firstName: string;
+    middleName: string | null;
+    lastName: string;
+    suffix: string | null;
+    birthdate: string | null;
+    address: string | null;
+    agency: string | null;
+    position: string | null;
+    employeeId: string | null;
+    netTakeHomePay: number | null;
+    lengthOfService: string | null;
+    region: string | null;
+    divisionCode: string | null;
+    stationCode: string | null;
+    misAgency: string | null;
+    school: string | null;
+    referrer: string | null;
+    purpose: string | null;
+    proposedAmount: number;
+    termDays: number;
+    interestRate: number;
+    nthpDate: string | null;
+    notarialFee: number;
+    docStamps: number;
+    insurance: number;
+    standardNotarialFee: number;
+    standardDocStamps: number;
+    standardInsurance: number;
+    verificationFindings: string | null;
+    hasDeviations: boolean;
+    deviationDetails: string[];
+    deviationJustifications: Record<string, string>;
+    remarks: string | null;
+    aoRecommendation: string | null;
+    otherRemarks: string | null;
+    feeDeviationJustification: string | null;
+    status: string;
+    applicationDate: string;
+    lastActionDate: string;
+    createdById: number;
+    createdByName: string;
+    actions: {
+        id: number;
+        action: string;
+        fromStatus: string | null;
+        toStatus: string | null;
+        comments: string | null;
+        actionDate: string;
+        actionByUserName: string;
+    }[];
+    outstandingLoans: {
+        id: number;
+        pn: string;
+        principalBalance: number;
+        amortization: number;
+        outstandingBalance: number;
+        dateGranted: string | null;
+        dateMaturity: string | null;
+        status: string;
+        productWithDescription: string | null;
+    }[];
+    buyOuts: {
+        id: number;
+        pn: string;
+        name: string;
+        amortization: number;
+        outstandingBalance: number;
+    }[];
+    ebiReloans: {
+        id: number;
+        pn: string;
+        name: string;
+        existingDeduction: number;
+        outstandingBalance: number;
+        payToClose: number;
+    }[];
+    incomingLoans: {
+        id: number;
+        name: string;
+        deductions: number;
+        remarks: string;
+    }[];
+    preLoanId: number | null;
+    preLoanFormNumber: string | null;
+}
+
+export interface LoanAttachmentDto {
+    id: number;
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+    category: string | null;
+    uploadedById: number;
+    uploadedByName: string;
+    uploadedAt: string;
+}
+
+export interface DeviationRemarkMessageDto {
+    id: number;
+    parentRemarkId: number | null;
+    authorName: string;
+    authorRole: string;
+    body: string;
+    createdAt: string;
+    source: "submission" | "remark";
+}
+
+export interface DeviationThreadDto {
+    deviationKey: string;
+    title: string;
+    root: DeviationRemarkMessageDto;
+    replies: DeviationRemarkMessageDto[];
+}
+
+export const loanReviewKeys = {
+    detail: (id: number) => ["loans", id, "detail"] as const,
+    history: (id: number) => ["loans", id, "history"] as const,
+    attachments: (id: number) => ["loans", id, "attachments"] as const,
+    deviationRemarks: (id: number) => ["loans", id, "deviation-remarks"] as const,
+};
+
+export async function getLoanDetail(id: number): Promise<LoanDetailResponse> {
+    const res = await apiClient.get<ApiResponse<LoanDetailResponse>>(`/api/loans/${id}`);
+    return unwrapApiData(res.data);
+}
+
+export async function getLoanHistory(id: number) {
+    const res = await apiClient.get<
+        ApiResponse<{
+            id: number;
+            actionBy: string;
+            action: string;
+            fromStatus: string | null;
+            toStatus: string | null;
+            comments: string | null;
+            actionDate: string;
+        }[]>
+    >(`/api/loans/${id}/history`);
+    return unwrapApiData(res.data);
+}
+
+export async function getLoanAttachments(id: number): Promise<LoanAttachmentDto[]> {
+    const res = await apiClient.get<ApiResponse<LoanAttachmentDto[]>>(
+        `/api/loans/${id}/attachments`
+    );
+    return unwrapApiData(res.data);
+}
+
+export async function uploadLoanAttachment(
+    id: number,
+    file: File,
+    category: string | null,
+    onProgress?: (pct: number) => void
+): Promise<LoanAttachmentDto> {
+    const form = new FormData();
+    form.append("file", file);
+    if (category) form.append("category", category);
+    const res = await apiClient.post<ApiResponse<LoanAttachmentDto>>(
+        `/api/loans/${id}/attachments`,
+        form,
+        {
+            headers: { "Content-Type": "multipart/form-data" },
+            onUploadProgress: (e) =>
+                onProgress?.(e.total ? Math.round((e.loaded / e.total) * 100) : 0),
+        }
+    );
+    return unwrapApiData(res.data);
+}
+
+export async function downloadLoanAttachment(attachmentId: number, fileName: string) {
+    const res = await apiClient.get(`/api/loans/attachments/${attachmentId}/download`, {
+        responseType: "blob",
+    });
+    const url = URL.createObjectURL(res.data as Blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+export async function deleteLoanAttachment(attachmentId: number): Promise<void> {
+    await apiClient.delete(`/api/loans/attachments/${attachmentId}`);
+}
+
+export async function getDeviationThreads(id: number): Promise<DeviationThreadDto[]> {
+    const res = await apiClient.get<ApiResponse<DeviationThreadDto[]>>(
+        `/api/loans/${id}/deviation-remarks`
+    );
+    return unwrapApiData(res.data);
+}
+
+export async function postDeviationRemark(
+    id: number,
+    payload: { deviationKey: string; parentRemarkId?: number | null; body: string }
+): Promise<DeviationRemarkMessageDto> {
+    const res = await apiClient.post<ApiResponse<DeviationRemarkMessageDto>>(
+        `/api/loans/${id}/deviation-remarks`,
+        payload
+    );
+    return unwrapApiData(res.data);
+}
+
+export async function updateLoanStatus(id: number, status: string, comments: string) {
+    const res = await apiClient.put<ApiResponse<unknown>>(`/api/loans/${id}/status`, {
+        status,
+        comments,
+    });
+    return unwrapApiData(res.data);
+}

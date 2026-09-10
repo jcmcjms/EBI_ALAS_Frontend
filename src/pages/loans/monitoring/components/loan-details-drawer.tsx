@@ -32,8 +32,8 @@ interface LoanDetailsDrawerProps {
  *
  * TASK 11 ADDITION — "Review & Process Application" button:
  * The drawer is the entry point into the approval workflow. We push the
- * user to `/loans/approval?id=<numericId>` and let that page do the real
- * fetch + render. The route guard on `/loans/approval` is intentionally
+ * user to `/loans/approval/<numericId>` and let that page do the real
+ * fetch + render. The route guard on `/loans/approval/:loanId` is intentionally
  * permissive (auth-only — see `App.tsx`); the backend
  * `LoanWorkflowService.IsValidTransition` is the authoritative role gate,
  * so a Recommender / Evaluator / Approver / Admin all land here and only
@@ -73,7 +73,7 @@ export function LoanDetailsDrawer({ applicationId, onClose }: LoanDetailsDrawerP
                     <div className="px-6 py-3 border-b bg-muted/20">
                         <Button
                             className="w-full gap-2"
-                            onClick={() => navigate(`/loans/approval?id=${applicationId}`)}
+                            onClick={() => navigate(`/loans/approval/${applicationId}`)}
                         >
                             <ArrowRight size={16} weight="bold" />
                             Review &amp; Process Application

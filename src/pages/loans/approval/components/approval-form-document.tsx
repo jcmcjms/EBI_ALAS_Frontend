@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { cn } from "@/src/lib/utils";
 import { parseProductCode, resolveLoanProductDisplayName } from "@/src/lib/loan-product-display";
 import { computeMaximumLoanableAmount } from "@/src/lib/loan-computations";
+import { ApprovalFormSheet } from "@/src/components/loan/approval-form-sheet";
 import type { ClientFormData, LoanApplicationFormData } from "../../create/schema";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
@@ -221,11 +222,12 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
         <div
             ref={ref}
             id="approval-form-document"
-            className="bg-white p-5 text-[10px] leading-[1.4] text-black"
+            className="bg-white p-5 text-black print:bg-white"
         >
-            <h1 className="mb-2 text-sm font-bold underline">LOAN APPROVAL FORM</h1>
+            <ApprovalFormSheet>
+                <h1 className="mb-2 text-sm font-bold underline">LOAN APPROVAL FORM</h1>
 
-            <div className="border-2 border-black">
+                <div className="border-2 border-black">
                 {/* ══ CLIENT INFORMATION ══ */}
                 <table className="w-full border-collapse">
                     <tbody>
@@ -560,7 +562,8 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
                         </ol>
                     </div>
                 </div>
-            </div>
+                </div>
+            </ApprovalFormSheet>
         </div>
     );
 });

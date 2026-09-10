@@ -6,6 +6,7 @@ import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { FormTabStrip } from "@/src/components/ui/form-tab-strip";
 import { cn } from "@/src/lib/utils";
+import { ApprovalFormSheet } from "@/src/components/loan/approval-form-sheet";
 
 import { SectionCard } from "./section-card";
 import { getSection } from "../sections";
@@ -231,12 +232,12 @@ function SingleLoanApprovalForm({
     return (
         <div
             className={cn(
-                "p-5 text-[9px] leading-[1.35] [font-family:Arial,Helvetica,sans-serif]",
+                "p-5",
                 // Print optimization: each loan form starts on a new page
                 index > 0 && "break-before-page print:break-before-page"
             )}
         >
-            <div className="mx-auto w-[800px] max-w-full">
+            <ApprovalFormSheet>
                 {/* Header with loan number badge */}
                 {index > 0 && (
                     <div className="mb-2 text-center text-xs font-bold text-muted-foreground">
@@ -571,7 +572,7 @@ function SingleLoanApprovalForm({
                         </div>
                     </div>
                 </div>
-            </div>
+            </ApprovalFormSheet>
         </div>
     );
 }

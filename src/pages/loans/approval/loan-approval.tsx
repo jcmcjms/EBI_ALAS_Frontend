@@ -1,24 +1,35 @@
-import { useState, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card";
-import { Button } from "@/src/components/ui/button";
-import { Textarea } from "@/src/components/ui/textarea";
-import { Label } from "@/src/components/ui/label";
-import { Badge } from "@/src/components/ui/badge";
-import { Spinner } from "@/src/components/ui/spinner";
+import { useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     CheckCircle,
     XCircle,
-    ArrowRight,
     ArrowCounterClockwise,
+    ArrowRight,
     FilePdf,
     Printer,
     Clock,
     UserCircle,
     WarningCircle,
+    MagnifyingGlassMinus,
+    MagnifyingGlassPlus,
     ArrowLeft,
 } from "@phosphor-icons/react";
+import { toast } from "sonner";
+
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
+import { Textarea } from "@/src/components/ui/textarea";
+import { Label } from "@/src/components/ui/label";
+import { Badge } from "@/src/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
+import { Spinner } from "@/src/components/ui/spinner";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -30,75 +41,41 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/src/components/ui/alert-dialog";
-import { toast } from "sonner";
 
 import { useAuthStore } from "@/src/store/authStore";
 import { ApprovalFormDocument } from "./components/approval-form-document";
+import { AttachmentsPanel } from "./components/attachments-panel";
+import { DeviationRemarksPanel } from "./components/deviation-remarks-panel";
+import { ApprovalFormViewport } from "@/src/components/loan/approval-form-sheet";
 import {
-    getLoanById,
+    getLoanDetail,
     getLoanHistory,
+    loanReviewKeys,
     updateLoanStatus,
-    type LoanResponse,
-    type LoanHistoryEntry,
-} from "@/src/lib/api/loans";
+    type LoanDetailResponse,
+} from "@/src/lib/api/loan-review";
 import { queryKeys } from "@/src/lib/queryKeys";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
 
-/**
- * Shape the flattened `LoanResponse` (returned by `GET /api/loans/{id}`) into
- * the nested `LoanApplicationFormData` shape the existing
- * `ApprovalFormDocument` consumes.
- *
- * ## Why a mapping function?
- *
- * The backend returns a SINGLE denormalized object — borrower snapshot +
- * loan core + outstanding obligations + EBI / buy-out / incoming lists +
- * audit actions all joined onto the row. The form, however, was designed
- * before the backend was extended to carry the full loan core; it expects
- * the nested shape the wizard builds during submission. Rather than
- * refactor the printed form to read the flat response directly (a wide
- * blast radius for a print-only component), we adapt at the page edge
- * with this mapper. The component itself remains untouched.
- *
- * ## Null-safety
- *
- * The backend marks every optional field as nullable on the wire. The
- * mapper coerces every `undefined` to its empty-equivalent (`""` / `0` /
- * `[]` / `{}`) so the form never renders `undefined` and the .strictNullChecks
- * schema accepts the result.
- *
- * ## What about `agency`?
- *
- * The `clientSchema` requires `agency: z.string().min(1)`. The backend
- * returns `agency?: string` and we may receive an empty string here; the
- * mapper passes through whatever the backend sent and lets the form render
- * a dash. This mirrors the wizard's behavior for missing agency data and
- * keeps the printout honest rather than fabricating a placeholder.
- */
-function mapLoanToFormData(loan: LoanResponse): LoanApplicationFormData {
-    // `creationTypeCode` arrives as a loose `number` from the backend but the
-    // schema's `creationTypeCodeSchema` is the closed union `0 | 1 | 2 | 6 | null`.
-    // We narrow at the boundary so anything that does not match the four
-    // documented creation-type codes (incl. null/missing) falls back to
-    // `CREATION_TYPE.NEW_LOAN` — the wizard's "no preloan picked yet" default.
-    // Anything outside that set would be a backend bug; falling back keeps
-    // the printout legible instead of failing the page render.
-    const creationTypeCode: 0 | 1 | 2 | 6 =
-        loan.creationTypeCode === CREATION_TYPE.RELOAN
-            ? CREATION_TYPE.RELOAN
-            : loan.creationTypeCode === CREATION_TYPE.RESTRUCTURED
-            ? CREATION_TYPE.RESTRUCTURED
-            : loan.creationTypeCode === CREATION_TYPE.ADDITIONAL_LOAN
-            ? CREATION_TYPE.ADDITIONAL_LOAN
-            : CREATION_TYPE.NEW_LOAN;
+const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing"];
 
-    // `deviationDetails` from the backend is a free `string[]`; the schema's
-    // `deviationDetails` is the closed union of `DEVIATION_REASONS`. We filter
-    // down to known reasons here — anything outside the catalogue is dropped
-    // so the form's enum-typed field stays well-formed. (An empty result is
-    // a valid state when no deviations were selected.)
-    const deviationDetails: DeviationReason[] = (loan.deviationDetails ?? []).filter(
+/**
+ * Map the flattened `LoanDetailResponse` (returned by `GET /api/loans/{id}`)
+ * into the nested `LoanApplicationFormData` shape the existing
+ * `ApprovalFormDocument` consumes.
+ */
+function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
+    const creationTypeCode: 0 | 1 | 2 | 6 =
+        l.creationTypeCode === CREATION_TYPE.RELOAN
+            ? CREATION_TYPE.RELOAN
+            : l.creationTypeCode === CREATION_TYPE.RESTRUCTURED
+              ? CREATION_TYPE.RESTRUCTURED
+              : l.creationTypeCode === CREATION_TYPE.ADDITIONAL_LOAN
+                ? CREATION_TYPE.ADDITIONAL_LOAN
+                : CREATION_TYPE.NEW_LOAN;
+
+    const deviationDetails: DeviationReason[] = (l.deviationDetails ?? []).filter(
         (reason): reason is DeviationReason =>
             typeof reason === "string" &&
             (reason === "Age not within the prescribed parameters" ||
@@ -129,45 +106,40 @@ function mapLoanToFormData(loan: LoanResponse): LoanApplicationFormData {
     return {
         branchType: {
             creationTypeCode,
-            creationTypeLabel: loan.creationTypeLabel ?? "New Loan",
-            branch: loan.branchCode,
-            requestingOfficer: loan.requestingOfficer ?? "",
-            lai: loan.lai ?? loan.lamId,
+            creationTypeLabel: l.creationTypeLabel ?? "New Loan",
+            branch: l.branchCode,
+            requestingOfficer: l.requestingOfficer ?? "",
+            lai: l.lai ?? l.lamId,
         },
         client: {
-            // `agency` is required (`.min(1)`) on the schema. The backend
-            // marks it optional; when it's missing we hand the form an empty
-            // string and let the printed form render "-" via its `dash()`
-            // helper. Same shape as `dummy-data.ts` (which uses an explicit
-            // non-empty placeholder).
-            cisId: loan.cisId ?? "",
-            firstName: loan.firstName,
-            middleName: loan.middleName,
-            lastName: loan.lastName,
-            suffix: loan.suffix,
-            birthdate: loan.birthdate,
-            address: loan.address,
-            agency: loan.agency ?? "",
-            position: loan.position,
-            employeeId: loan.employeeId,
-            netTakeHomePay: loan.netTakeHomePay ?? 0,
-            lengthOfService: loan.lengthOfService,
-            region: loan.region,
-            divisionCode: loan.divisionCode,
-            stationCode: loan.stationCode,
-            misAgency: loan.misAgency,
-            school: loan.school,
-            referrer: loan.referrer,
+            cisId: l.cisId ?? "",
+            firstName: l.firstName,
+            middleName: l.middleName,
+            lastName: l.lastName,
+            suffix: l.suffix,
+            birthdate: l.birthdate,
+            address: l.address,
+            agency: l.agency ?? "",
+            position: l.position,
+            employeeId: l.employeeId,
+            netTakeHomePay: l.netTakeHomePay ?? 0,
+            lengthOfService: l.lengthOfService,
+            region: l.region,
+            divisionCode: l.divisionCode,
+            stationCode: l.stationCode,
+            misAgency: l.misAgency,
+            school: l.school,
+            referrer: l.referrer,
         },
         loan: {
-            product: loan.product,
-            purpose: loan.purpose ?? "",
-            proposedAmount: loan.proposedAmount,
-            term: loan.termDays,
-            interestRate: loan.interestRate,
-            nthpDate: loan.nthpDate,
+            product: l.product,
+            purpose: l.purpose ?? "",
+            proposedAmount: l.proposedAmount,
+            term: l.termDays,
+            interestRate: l.interestRate,
+            nthpDate: l.nthpDate,
         },
-        outstandingLoans: loan.outstandingLoans.map((o) => ({
+        outstandingLoans: l.outstandingLoans.map((o) => ({
             pn: o.pn,
             principalBalance: o.principalBalance,
             amortization: o.amortization,
@@ -176,219 +148,133 @@ function mapLoanToFormData(loan: LoanResponse): LoanApplicationFormData {
             dateMaturity: o.dateMaturity,
             status: o.status,
         })),
-        ebiReloans: loan.ebiReloans.map((e) => ({
+        ebiReloans: l.ebiReloans.map((e) => ({
             pn: e.pn,
             name: e.name,
             existingDeduction: e.existingDeduction,
             outstandingBalance: e.outstandingBalance,
             payToClose: e.payToClose,
         })),
-        buyOuts: loan.buyOuts.map((b) => ({
+        buyOuts: l.buyOuts.map((b) => ({
             pn: b.pn,
             name: b.name,
             amortization: b.amortization,
             outstandingBalance: b.outstandingBalance,
         })),
-        incomingLoans: loan.incomingLoans.map((i) => ({
+        incomingLoans: l.incomingLoans.map((i) => ({
             name: i.name,
             deductions: i.deductions,
             remarks: i.remarks,
         })),
         verification: {
-            findings: loan.verificationFindings ?? "",
+            findings: l.verificationFindings ?? "",
         },
         deviations: {
-            hasDeviations: loan.hasDeviations,
+            hasDeviations: l.hasDeviations,
             deviationDetails,
-            deviationJustifications: loan.deviationJustifications ?? {},
-            remarks: loan.remarks,
-            aoRecommendation: loan.aoRecommendation,
-            // `otherRemarks` is required by the schema (`min(1)`). Same
-            // null-safety pattern as `agency` above: default to empty string
-            // when the backend didn't capture one (older loans / drafts
-            // predating the field).
-            otherRemarks: loan.otherRemarks ?? "",
-            feeDeviationJustification: loan.feeDeviationJustification,
+            deviationJustifications: l.deviationJustifications ?? {},
+            remarks: l.remarks ?? "",
+            aoRecommendation: l.aoRecommendation ?? "",
+            otherRemarks: l.otherRemarks ?? "",
+            feeDeviationJustification: l.feeDeviationJustification ?? "",
         },
-        // ── Schema-cast note ──────────────────────────────────────────────
-        //
-        // The cast below exists because the wizard's schema was reshaped to
-        // carry an ARRAY of selected loans (`loans: z.array(selectedLoanSchema)`)
-        // but the printed form (`ApprovalFormDocument`) still reads the
-        // legacy single-loan shape (`data.loan`). The spec for this task
-        // intentionally keeps the singular `loan` field so the print-only
-        // component doesn't have to change — the mapper translates the
-        // flat backend response into the form's expected nested shape.
-        //
-        // This mirrors the existing pre-change pattern in `dummy-data.ts`
-        // (which also declares `loan: { ... }` on a `LoanApplicationFormData`
-        // and accepts the same TS warning). The runtime payload is correct;
-        // the type-system mismatch is contained to this mapper. A future
-        // task that consolidates the schema + printout would let us drop
-        // the cast.
     } as unknown as LoanApplicationFormData;
 }
 
-/**
- * Loan Review & Approval page (Task 11).
- *
- * ## Entry
- *
- * Users land here from the monitoring page's "Review & Process Application"
- * drawer button (see `LoanDetailsDrawer`). The numeric `LoanApplication.Id`
- * arrives via `?id=` so we read it with `useSearchParams` rather than a
- * route param — that keeps the existing `/loans/approval` route shape and
- * avoids a parent refactor for callers that pass `id=` in the search params.
- *
- * ## Data
- *
- * Two server calls fire in parallel:
- *   1. `GET /api/loans/{id}`           → `LoanResponse` (form document).
- *   2. `GET /api/loans/{id}/history`   → `LoanHistoryEntry[]` (audit trail).
- *
- * Both honor `enabled: Number.isFinite(applicationId) && applicationId > 0`
- * so React Query doesn't fire when the URL is missing `?id=...` (the page's
- * first empty-state branch handles that case with a "Return to Monitoring"
- * button before either hook runs).
- *
- * ## Workflow
- *
- * `PUT /api/loans/{id}/status` carries `{ status, comments }`. The backend's
- * `LoanWorkflowService.IsValidTransition` is the authoritative role gate —
- * it checks BOTH the (current → target) edge AND the actor's role against
- * the workflow matrix. The page UI mirrors that logic so a user never sees
- * a button that 409s, but we trust the backend to refuse anything illegal
- * (e.g. a stale status from a concurrent transition).
- *
- * On success we invalidate `queryKeys.loans.all` so the monitoring table
- * refetches with the new status without a manual reload, then navigate back
- * to `/loans/monitoring` (the natural return point — the user just acted
- * on a row they were looking at).
- */
 export function LoanApprovalPage() {
-    const [searchParams] = useSearchParams();
+    const { loanId } = useParams<{ loanId: string }>();
+    const id = Number(loanId);
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
-    const applicationId = Number(searchParams.get("id"));
+    const qc = useQueryClient();
 
     const [remarks, setRemarks] = useState("");
+    const [zoom, setZoom] = useState(1);
+    const [tab, setTab] = useState("workflow");
 
-    const authUser = useAuthStore((s) => s.user);
-    const userRole = authUser?.role;
-    const fullNameOfUser = authUser
-        ? [authUser.firstName, authUser.middleName, authUser.lastName]
-              .filter(Boolean)
-              .join(" ")
-        : "Unknown Approver";
+    const user = useAuthStore((s) => s.user);
 
-    // ── Data fetching ────────────────────────────────────────────────────────
-    // `Number.isFinite` excludes NaN (when `?id=` is missing or non-numeric)
-    // and Infinity; the positive guard catches id=0 / negative ids that would
-    // otherwise pass `isFinite` but hit a 404 on the backend.
-    const loanQuery = useQuery({
-        queryKey: ["loan", applicationId],
-        queryFn: () => getLoanById(applicationId),
-        enabled: Number.isFinite(applicationId) && applicationId > 0,
+    const loan = useQuery({
+        queryKey: loanReviewKeys.detail(id),
+        queryFn: () => getLoanDetail(id),
+        enabled: Number.isFinite(id) && id > 0,
     });
 
-    const historyQuery = useQuery({
-        queryKey: ["loanHistory", applicationId],
-        queryFn: () => getLoanHistory(applicationId),
-        enabled: Number.isFinite(applicationId) && applicationId > 0,
+    const history = useQuery({
+        queryKey: loanReviewKeys.history(id),
+        queryFn: () => getLoanHistory(id),
+        enabled: Number.isFinite(id) && id > 0,
     });
 
-    // ── Workflow mutation ────────────────────────────────────────────────────
-    // On success: invalidate every loan-related query (broadest prefix =
-    // monitoring list, admin lists, future detail views) and bounce back to
-    // the monitoring page — the user just acted on a row there.
-    //
-    // On error: surface the backend's `ApiResponse.message` if present (this
-    // is what the role/transition-denied endpoints return); fall back to a
-    // generic "Failed to update status" so a network error isn't a dead-end.
-    const statusMutation = useMutation({
-        mutationFn: (payload: { status: string; comments?: string }) =>
-            updateLoanStatus(applicationId, payload),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.loans.all });
-            toast.success("Status updated successfully");
-            navigate("/loans/monitoring");
-        },
-        onError: (err: unknown) => {
-            const e = err as { response?: { data?: { message?: string } } };
-            const message = e?.response?.data?.message || "Failed to update status";
-            toast.error(message);
-        },
-    });
-
-    // `useMemo` keeps the mapper's allocation off React Query's render path —
-    // we only re-build the form payload when the loan row actually changes
-    // (status transitions, polling refresh, etc.), not on every keystroke in
-    // the remarks textarea.
-    const loanData = useMemo(
-        () => (loanQuery.data ? mapLoanToFormData(loanQuery.data) : null),
-        [loanQuery.data]
+    const detail = loan.data;
+    const frozen = detail ? TERMINAL.includes(detail.status) : false;
+    const formData = useMemo(
+        () => (detail ? mapLoanToFormData(detail) : null),
+        [detail]
     );
-    const currentStatus = loanQuery.data?.status;
-    const lai = loanData?.branchType.lai || "Pending...";
 
-    // ── Role-based UI gating ─────────────────────────────────────────────────
-    // Mirrors the backend's workflow matrix:
-    //   ForRecommendation  → Recommender (or Admin) → "Recommend for Evaluation"
-    //   ForChecking        → Evaluator   (or Admin) → "Evaluate for Approval"
-    //   ForApproval        → Approver    (or Admin) → "Approve" / "Reject" / "Return"
-    //
-    // The backend re-validates these checks; the UI mirroring is purely a UX
-    // optimization so the user never sees a button they can't press.
-    const canRecommend =
-        currentStatus === "ForRecommendation" &&
-        (userRole === "Recommender" || userRole === "Admin");
-    const canEvaluate =
-        currentStatus === "ForChecking" &&
-        (userRole === "Evaluator" || userRole === "Admin");
-    const canApprove =
-        currentStatus === "ForApproval" &&
-        (userRole === "Approver" || userRole === "Admin");
+    const actions = [
+        {
+            role: "Recommender",
+            from: "ForRecommendation",
+            to: "ForChecking",
+            label: "Recommend for Checking",
+            kind: "advance" as const,
+        },
+        {
+            role: "Evaluator",
+            from: "ForChecking",
+            to: "ForApproval",
+            label: "Endorse for Approval",
+            kind: "advance" as const,
+        },
+        {
+            role: "Evaluator",
+            from: "ForChecking",
+            to: "ForRevision",
+            label: "Return to Encoder",
+            kind: "return" as const,
+        },
+        {
+            role: "Approver",
+            from: "ForApproval",
+            to: "Approved",
+            label: "Approve Loan",
+            kind: "advance" as const,
+        },
+        {
+            role: "Approver",
+            from: "ForApproval",
+            to: "ForRevision",
+            label: "Return to Encoder",
+            kind: "return" as const,
+        },
+        {
+            role: "Approver",
+            from: "ForApproval",
+            to: "Rejected",
+            label: "Reject",
+            kind: "reject" as const,
+        },
+    ].filter((a) => a.role === user?.role && a.from === detail?.status);
 
-    const canAct =
-        (canRecommend || canEvaluate || canApprove) &&
-        remarks.trim().length > 0 &&
-        !statusMutation.isPending;
+    const act = useMutation({
+        mutationFn: (to: string) => updateLoanStatus(id, to, remarks.trim()),
+        onSuccess: (_d, to) => {
+            toast.success(`Application moved to ${to}.`);
+            setRemarks("");
+            qc.invalidateQueries({ queryKey: loanReviewKeys.detail(id) });
+            qc.invalidateQueries({ queryKey: loanReviewKeys.history(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+        },
+        onError: (e: Error) => toast.error(e.message),
+    });
 
-    /**
-     * Map a UI action intent ("recommend", "evaluate", "approve", "reject",
-     * "revision") to the backend status string. The backend's
-     * `LoanWorkflowService` re-validates the transition; this table is the
-     * client-side mirror so we don't need to think about target statuses
-     * anywhere else in the file.
-     */
-    const handleAction = (
-        action: "recommend" | "evaluate" | "approve" | "reject" | "revision"
-    ) => {
-        if (!remarks.trim()) {
-            toast.error("Remarks are required.");
-            return;
-        }
-        const statusMap: Record<typeof action, string> = {
-            recommend: "ForChecking",
-            evaluate: "ForApproval",
-            approve: "Approved",
-            reject: "Rejected",
-            revision: "ForRevision",
-        };
-        statusMutation.mutate({ status: statusMap[action], comments: remarks });
-    };
-
-    // ── Empty / error states ─────────────────────────────────────────────────
-    // Guard 1: missing or malformed `?id=`. We bounce back to monitoring —
-    // there's nothing to render without a loan id.
-    if (!Number.isFinite(applicationId) || applicationId <= 0) {
+    // ── Empty / error states ─────────────────────────────────────────
+    if (!Number.isFinite(id) || id <= 0) {
         return (
             <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
                 <div className="text-center space-y-4">
-                    <WarningCircle
-                        size={48}
-                        className="mx-auto text-destructive"
-                    />
+                    <WarningCircle size={48} className="mx-auto text-destructive" />
                     <h2 className="text-xl font-semibold">Invalid Application ID</h2>
                     <Button onClick={() => navigate("/loans/monitoring")}>
                         Return to Monitoring
@@ -398,8 +284,7 @@ export function LoanApprovalPage() {
         );
     }
 
-    // Guard 2: still fetching.
-    if (loanQuery.isLoading) {
+    if (loan.isLoading) {
         return (
             <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
                 <Spinner className="size-8" />
@@ -407,19 +292,12 @@ export function LoanApprovalPage() {
         );
     }
 
-    // Guard 3: load failed (404 not-found, 403 no access, or any other error)
-    // OR succeeded but mapping yielded nothing (defensive — shouldn't happen).
-    if (loanQuery.isError || !loanData) {
+    if (loan.isError || !detail || !formData) {
         return (
             <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
                 <div className="text-center space-y-4">
-                    <WarningCircle
-                        size={48}
-                        className="mx-auto text-destructive"
-                    />
-                    <h2 className="text-xl font-semibold">
-                        Failed to Load Application
-                    </h2>
+                    <WarningCircle size={48} className="mx-auto text-destructive" />
+                    <h2 className="text-xl font-semibold">Failed to Load Application</h2>
                     <Button onClick={() => navigate("/loans/monitoring")}>
                         Return to Monitoring
                     </Button>
@@ -428,12 +306,23 @@ export function LoanApprovalPage() {
         );
     }
 
+    const canWriteRemarks =
+        user?.role === "Recommender" ||
+        user?.role === "Evaluator" ||
+        (user?.role === "Encoder" &&
+            user.userId === String(detail.createdById)) ||
+        user?.role === "Admin";
+    const canUpload = canWriteRemarks || user?.role === "Approver";
+    const deviationCount =
+        detail.deviationDetails.length +
+        (detail.feeDeviationJustification ? 1 : 0);
+
     return (
         <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40">
-            {/* ── Sticky header ──────────────────────────────────────────────── */}
+            {/* ── Sticky header ──────────────────────────────────────────── */}
             <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
-                <div className="container mx-auto flex h-16 items-center justify-between px-6">
-                    <div className="flex flex-wrap items-center gap-4">
+                <div className="container mx-auto flex h-16 flex-wrap items-center justify-between gap-3 px-6">
+                    <div className="flex flex-wrap items-center gap-3">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -447,29 +336,36 @@ export function LoanApprovalPage() {
                             Loan Review &amp; Approval
                         </h1>
                         <Badge variant="outline" className="text-xs">
-                            {lai}
+                            {detail.lamId}
                         </Badge>
                         <Badge
                             variant="secondary"
                             className="gap-1.5 border-blue-200 bg-blue-50 text-blue-700"
                         >
                             <Clock size={12} weight="fill" />
-                            {currentStatus}
+                            {detail.status}
                         </Badge>
+                        {detail.hasDeviations && (
+                            <Badge
+                                variant="secondary"
+                                className="gap-1.5 border-amber-200 bg-amber-50 text-amber-700"
+                            >
+                                <WarningCircle size={12} weight="fill" />{" "}
+                                {deviationCount} deviation
+                                {deviationCount === 1 ? "" : "s"}
+                            </Badge>
+                        )}
                     </div>
-                    <Badge
-                        variant="outline"
-                        className="gap-1.5 font-normal"
-                    >
+                    <Badge variant="outline" className="gap-1.5 font-normal">
                         <UserCircle size={14} />
-                        {fullNameOfUser} ({userRole})
+                        {detail.createdByName} (Encoder)
                     </Badge>
                 </div>
             </header>
 
             <div className="container mx-auto px-6 py-8">
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr,380px]">
-                    {/* ── Main document ──────────────────────────────────────── */}
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
+                    {/* ── Document: fixed 800px sheet inside a zoomable viewport ── */}
                     <div className="space-y-4">
                         <Card className="overflow-hidden">
                             <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 p-4">
@@ -481,343 +377,371 @@ export function LoanApprovalPage() {
                                     />
                                     Approval Form Document
                                 </CardTitle>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-1.5"
-                                    onClick={() => window.print()}
-                                >
-                                    <Printer size={14} weight="bold" />
-                                    Print
-                                </Button>
+                                <div className="flex items-center gap-1.5">
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        aria-label="Zoom out"
+                                        onClick={() =>
+                                            setZoom((z) =>
+                                                Math.max(0.6, +(z - 0.1).toFixed(2))
+                                            )
+                                        }
+                                    >
+                                        <MagnifyingGlassMinus size={15} />
+                                    </Button>
+                                    <span className="w-12 text-center text-xs tabular-nums text-muted-foreground">
+                                        {Math.round(zoom * 100)}%
+                                    </span>
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        aria-label="Zoom in"
+                                        onClick={() =>
+                                            setZoom((z) =>
+                                                Math.min(1.5, +(z + 0.1).toFixed(2))
+                                            )
+                                        }
+                                    >
+                                        <MagnifyingGlassPlus size={15} />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="ml-2 gap-1.5"
+                                        onClick={() => window.print()}
+                                    >
+                                        <Printer size={14} weight="bold" /> Print
+                                    </Button>
+                                </div>
                             </CardHeader>
                             <CardContent className="p-0">
-                                {/* `catLoanClass` is null here — the page-level
-                                 * resolver (`useCatLoanClass`) was tied to the
-                                 * selected preloan's (bch, loanNo, product)
-                                 * tuple. Once the backend's `LoanResponse`
-                                 * carries `loan_data.cat_loan_class` (or a
-                                 * similar product-class field), wire it
-                                 * through here. */}
-                                <ApprovalFormDocument
-                                    data={loanData}
-                                    catLoanClass={null}
-                                />
+                                <ApprovalFormViewport zoom={zoom}>
+                                    <ApprovalFormDocument
+                                        data={formData}
+                                        catLoanClass={null}
+                                    />
+                                </ApprovalFormViewport>
                             </CardContent>
                         </Card>
                     </div>
 
-                    {/* ── Sticky workflow sidebar ─────────────────────────────── */}
+                    {/* ── Right rail: workflow + deviations + files ── */}
                     <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit lg:self-start">
-                        <Card>
-                            <CardHeader className="border-b pb-4">
-                                <CardTitle className="flex items-center gap-2 text-base">
-                                    <CheckCircle
-                                        size={18}
-                                        weight="bold"
-                                        className="text-primary"
-                                    />
-                                    Workflow Actions
-                                </CardTitle>
-                                <CardDescription className="pt-1 text-xs">
-                                    Review details and route to the next step.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 pt-4">
-                                {/* ── Audit Trail ─────────────────────────────────
-                                 * Pulled from `GET /api/loans/{id}/history`.
-                                 * The backend's `LoanHistoryEntry.action` is a
-                                 * free-form verb (e.g. "Created", "Recommended",
-                                 * "Approved"); `toStatus` is the resulting
-                                 * workflow status. We render the most recent
-                                 * row (where `toStatus === currentStatus`) with
-                                 * a blue arrow to show "this is where you are
-                                 * now", and historical rows with a green check
-                                 * to show the trail that got us here.
-                                 */}
-                                <div className="space-y-3">
-                                    <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        <Clock size={12} />
-                                        Audit Trail
-                                    </h3>
-                                    {historyQuery.isLoading ? (
-                                        <div className="flex justify-center py-4">
-                                            <Spinner className="size-5" />
+                        <Tabs value={tab} onValueChange={setTab}>
+                            <TabsList className="w-full">
+                                <TabsTrigger
+                                    value="workflow"
+                                    className="flex-1"
+                                >
+                                    Workflow
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="deviations"
+                                    className="flex-1"
+                                >
+                                    Deviations
+                                    {deviationCount > 0
+                                        ? ` (${deviationCount})`
+                                        : ""}
+                                </TabsTrigger>
+                                <TabsTrigger value="files" className="flex-1">
+                                    Files
+                                </TabsTrigger>
+                            </TabsList>
+
+                            {/* ── Workflow Tab ── */}
+                            <TabsContent value="workflow" className="pt-4">
+                                <Card>
+                                    <CardHeader className="border-b pb-4">
+                                        <CardTitle className="flex items-center gap-2 text-base">
+                                            <CheckCircle
+                                                size={18}
+                                                weight="bold"
+                                                className="text-primary"
+                                            />
+                                            Workflow Actions
+                                        </CardTitle>
+                                        <CardDescription className="pt-1 text-xs">
+                                            Review the sheet, then route the
+                                            application. Remarks are mandatory.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6 pt-4">
+                                        {/* ── Audit Trail ── */}
+                                        <div className="space-y-3">
+                                            <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                <Clock size={12} /> Audit Trail
+                                            </h3>
+                                            {history.isLoading ? (
+                                                <div className="flex justify-center py-4">
+                                                    <Spinner className="size-5" />
+                                                </div>
+                                            ) : (
+                                                <ul className="space-y-3 text-xs">
+                                                    {(history.data ?? []).map(
+                                                        (h) => (
+                                                            <li
+                                                                key={h.id}
+                                                                className="flex gap-3"
+                                                            >
+                                                                {h.toStatus ===
+                                                                "Rejected" ? (
+                                                                    <XCircle
+                                                                        size={16}
+                                                                        weight="fill"
+                                                                        className="mt-0.5 shrink-0 text-destructive"
+                                                                    />
+                                                                ) : h.toStatus ===
+                                                                  "ForRevision" ? (
+                                                                    <ArrowCounterClockwise
+                                                                        size={16}
+                                                                        weight="bold"
+                                                                        className="mt-0.5 shrink-0 text-amber-500"
+                                                                    />
+                                                                ) : (
+                                                                    <ArrowRight
+                                                                        size={16}
+                                                                        weight="bold"
+                                                                        className="mt-0.5 shrink-0 text-blue-500"
+                                                                    />
+                                                                )}
+                                                                <div>
+                                                                    <p className="font-medium">
+                                                                        {
+                                                                            h.actionBy
+                                                                        }
+                                                                    </p>
+                                                                    <p className="text-muted-foreground">
+                                                                        {
+                                                                            h.action
+                                                                        }
+                                                                        {h.toStatus
+            ? ` → ${h.toStatus}`
+            : ""}{" "}
+                                                                        •{" "}
+                                                                        {new Date(
+                                                                            h.actionDate
+                                                                        ).toLocaleString()}
+                                                                    </p>
+                                                                    {h.comments && (
+                                                                        <p className="mt-1 border-l-2 border-border pl-2 italic text-muted-foreground">
+                                                                            &ldquo;
+                                                                            {
+                                                                                h.comments
+                                                                            }
+                                                                            &rdquo;
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </li>
+                                                        )
+                                                    )}
+                                                </ul>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <ul className="space-y-3 text-xs">
-                                            {(historyQuery.data || []).map(
-                                                (action: LoanHistoryEntry) => (
-                                                    <li
-                                                        key={action.id}
-                                                        className="flex gap-3"
+
+                                        <div className="h-px bg-border" />
+
+                                        {/* ── Remarks ── */}
+                                        <div className="space-y-2">
+                                            <Label
+                                                htmlFor="remarks"
+                                                className="flex items-center gap-1.5 text-sm font-semibold"
+                                            >
+                                                Remarks / Conditions{" "}
+                                                <span className="text-destructive">
+                                                    *
+                                                </span>
+                                            </Label>
+                                            <Textarea
+                                                id="remarks"
+                                                rows={4}
+                                                disabled={
+                                                    frozen || act.isPending
+                                                }
+                                                placeholder="Comments, conditions, or reasons — stored with the workflow action…"
+                                                value={remarks}
+                                                onChange={(e) =>
+                                                    setRemarks(e.target.value)
+                                                }
+                                            />
+                                            {remarks.trim().length === 0 &&
+                                                !frozen && (
+                                                    <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                                        <WarningCircle
+                                                            size={12}
+                                                            weight="fill"
+                                                        />{" "}
+                                                        Required to take a
+                                                        workflow action
+                                                    </p>
+                                                )}
+                                        </div>
+
+                                        {/* ── Action buttons ── */}
+                                        <div className="space-y-2">
+                                            {frozen && (
+                                                <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
+                                                    This application is{" "}
+                                                    <strong>
+                                                        {detail.status}
+                                                    </strong>{" "}
+                                                    — no further actions.
+                                                </p>
+                                            )}
+                                            {actions
+                                                .filter(
+                                                    (a) => a.kind !== "reject"
+                                                )
+                                                .map((a) => (
+                                                    <Button
+                                                        key={a.to}
+                                                        className="w-full gap-2"
+                                                        variant={
+                                                            a.kind === "return"
+                                                                ? "outline"
+                                                                : "default"
+                                                        }
+                                                        disabled={
+                                                            remarks.trim()
+                                                                .length === 0 ||
+                                                            act.isPending
+                                                        }
+                                                        onClick={() =>
+                                                            act.mutate(a.to)
+                                                        }
                                                     >
-                                                        {action.toStatus ===
-                                                        currentStatus ? (
-                                                            <ArrowRight
+                                                        {a.kind === "return" ? (
+                                                            <ArrowCounterClockwise
                                                                 size={16}
-                                                                className="mt-0.5 shrink-0 text-blue-500"
-                                                                weight="bold"
                                                             />
                                                         ) : (
                                                             <CheckCircle
                                                                 size={16}
-                                                                className="mt-0.5 shrink-0 text-primary"
-                                                                weight="fill"
+                                                                weight="bold"
                                                             />
                                                         )}
-                                                        <div className="flex-1">
-                                                            <p className="font-medium text-foreground">
-                                                                {action.actionBy}{" "}
-                                                                (
-                                                                {action.action}
-                                                                )
-                                                            </p>
-                                                            <p className="text-muted-foreground">
-                                                                {action.fromStatus &&
-                                                                action.toStatus
-                                                                    ? `${action.fromStatus} → ${action.toStatus}`
-                                                                    : action.action}{" "}
-                                                                •{" "}
-                                                                {new Date(
-                                                                    action.actionDate
-                                                                ).toLocaleString()}
-                                                            </p>
-                                                            {action.comments && (
-                                                                <p className="mt-1 border-l-2 border-border pl-2 italic text-muted-foreground">
-                                                                    &ldquo;
-                                                                    {
-                                                                        action.comments
-                                                                    }
-                                                                    &rdquo;
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </li>
-                                                )
+                                                        {a.label}
+                                                    </Button>
+                                                ))}
+                                            {actions.some(
+                                                (a) => a.kind === "reject"
+                                            ) && (
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger
+                                                        render={
+                                                            <Button
+                                                                variant="destructive"
+                                                                className="w-full gap-2"
+                                                                disabled={
+                                                                    remarks.trim()
+                                                                        .length ===
+                                                                        0 ||
+                                                                    act.isPending
+                                                                }
+                                                            />
+                                                        }
+                                                    >
+                                                        <XCircle size={16} />{" "}
+                                                        Reject
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>
+                                                                Reject this
+                                                                application?
+                                                            </AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This terminates
+                                                                the loan
+                                                                process and
+                                                                notifies the
+                                                                encoder.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>
+                                                                Cancel
+                                                            </AlertDialogCancel>
+                                                            <AlertDialogAction
+                                                                className="bg-destructive text-destructive-foreground"
+                                                                onClick={() =>
+                                                                    act.mutate(
+                                                                        "Rejected"
+                                                                    )
+                                                                }
+                                                            >
+                                                                Confirm
+                                                                Rejection
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
                                             )}
-                                        </ul>
-                                    )}
-                                </div>
-
-                                <div className="h-px bg-border" />
-
-                                {/* ── Remarks ───────────────────────────────────
-                                 * Required: the backend re-validates this and
-                                 * 400s on an empty `comments` for any workflow
-                                 * transition. We also block the mutation
-                                 * client-side so the user gets an instant
-                                 * "Remarks are required" toast instead of
-                                 * waiting on a round-trip. */}
-                                <div className="space-y-2">
-                                    <Label
-                                        htmlFor="remarks"
-                                        className="flex items-center gap-1.5 text-sm font-semibold"
-                                    >
-                                        Remarks / Conditions
-                                        <span className="text-destructive">*</span>
-                                    </Label>
-                                    <Textarea
-                                        id="remarks"
-                                        placeholder="Enter comments..."
-                                        value={remarks}
-                                        onChange={(e) =>
-                                            setRemarks(e.target.value)
-                                        }
-                                        className="min-h-[100px] resize-none text-sm"
-                                        disabled={statusMutation.isPending}
-                                    />
-                                    {remarks.trim().length === 0 && (
-                                        <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                                            <WarningCircle
-                                                size={12}
-                                                weight="fill"
-                                            />
-                                            Required to take workflow action
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* ── Action buttons ────────────────────────────
-                                 * Each button is gated on BOTH:
-                                 *   1. The loan's current status matches the
-                                 *      workflow step the button represents
-                                 *      (so a stale page render doesn't show
-                                 *      "Approve" on a `ForRecommendation`
-                                 *      loan), AND
-                                 *   2. The actor's role is allowed to perform
-                                 *      that step (mirroring the backend
-                                 *      workflow matrix).
-                                 *
-                                 * `canAct` further requires non-empty remarks
-                                 * and an idle mutation — once the user clicks,
-                                 * every button is disabled until the round
-                                 * trip resolves (success → navigate, failure →
-                                 * toast, idle → re-enabled). */}
-                                <div className="space-y-2">
-                                    {canApprove && (
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <Button
-                                                variant="outline"
-                                                className="gap-2"
-                                                onClick={() =>
-                                                    handleAction("revision")
-                                                }
-                                                disabled={!canAct}
-                                            >
-                                                <ArrowCounterClockwise
-                                                    size={16}
-                                                />
-                                                Return
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger
-                                                    render={
-                                                        <Button
-                                                            variant="destructive"
-                                                            className="gap-2"
-                                                            disabled={!canAct}
-                                                        />
-                                                    }
-                                                >
-                                                    <XCircle size={16} />
-                                                    Reject
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>
-                                                            Reject this
-                                                            application?
-                                                        </AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This will terminate
-                                                            the loan process
-                                                            and notify the
-                                                            encoder.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel
-                                                            disabled={
-                                                                statusMutation.isPending
-                                                            }
-                                                        >
-                                                            Cancel
-                                                        </AlertDialogCancel>
-                                                        <AlertDialogAction
-                                                            onClick={() =>
-                                                                handleAction(
-                                                                    "reject"
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                statusMutation.isPending
-                                                            }
-                                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                                        >
-                                                            Confirm Rejection
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
                                         </div>
-                                    )}
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
 
-                                    {canRecommend && (
-                                        <Button
-                                            className="w-full gap-2"
-                                            size="lg"
-                                            onClick={() =>
-                                                handleAction("recommend")
-                                            }
-                                            disabled={!canAct}
-                                        >
-                                            {statusMutation.isPending ? (
-                                                "Processing..."
-                                            ) : (
-                                                <>
-                                                    <ArrowRight
-                                                        size={18}
-                                                        weight="bold"
-                                                    />
-                                                    Recommend for Evaluation
-                                                </>
-                                            )}
-                                        </Button>
-                                    )}
+                            {/* ── Deviations Tab ── */}
+                            <TabsContent value="deviations" className="pt-4">
+                                <Card>
+                                    <CardHeader className="border-b pb-4">
+                                        <CardTitle className="flex items-center gap-2 text-base">
+                                            <WarningCircle
+                                                size={18}
+                                                weight="bold"
+                                                className="text-amber-600"
+                                            />
+                                            Deviations &amp; Remarks
+                                        </CardTitle>
+                                        <CardDescription className="pt-1 text-xs">
+                                            Each deviation carries the
+                                            encoder&apos;s justification; the
+                                            recommender and evaluator reply per
+                                            deviation, and the encoder can answer
+                                            back.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="pt-4">
+                                        <DeviationRemarksPanel
+                                            loanId={id}
+                                            canWrite={!!canWriteRemarks}
+                                            frozen={frozen}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
 
-                                    {canEvaluate && (
-                                        <Button
-                                            className="w-full gap-2"
-                                            size="lg"
-                                            onClick={() =>
-                                                handleAction("evaluate")
-                                            }
-                                            disabled={!canAct}
-                                        >
-                                            {statusMutation.isPending ? (
-                                                "Processing..."
-                                            ) : (
-                                                <>
-                                                    <ArrowRight
-                                                        size={18}
-                                                        weight="bold"
-                                                    />
-                                                    Evaluate for Approval
-                                                </>
-                                            )}
-                                        </Button>
-                                    )}
-
-                                    {canApprove && (
-                                        <Button
-                                            className="w-full gap-2"
-                                            size="lg"
-                                            onClick={() =>
-                                                handleAction("approve")
-                                            }
-                                            disabled={!canAct}
-                                        >
-                                            {statusMutation.isPending ? (
-                                                "Processing..."
-                                            ) : (
-                                                <>
-                                                    <CheckCircle
-                                                        size={18}
-                                                        weight="bold"
-                                                    />
-                                                    Approve Loan
-                                                </>
-                                            )}
-                                        </Button>
-                                    )}
-
-                                    {/* Empty-state — the loan is in a status
-                                     * (Approved, Rejected, ForRevision, etc.)
-                                     * where this role has no actions to take,
-                                     * OR the loan is still at the encoder
-                                     * stage. We render a soft amber panel so
-                                     * the user understands the page is
-                                     * intentionally read-only, not broken. */}
-                                    {!canRecommend &&
-                                        !canEvaluate &&
-                                        !canApprove && (
-                                            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                                                <p className="font-semibold">
-                                                    No actions available
-                                                </p>
-                                                <p>
-                                                    This application is not
-                                                    currently awaiting action
-                                                    from your role ({userRole}
-                                                    ).
-                                                </p>
-                                            </div>
-                                        )}
-                                </div>
-                            </CardContent>
-                        </Card>
+                            {/* ── Files Tab ── */}
+                            <TabsContent value="files" className="pt-4">
+                                <Card>
+                                    <CardHeader className="border-b pb-4">
+                                        <CardTitle className="flex items-center gap-2 text-base">
+                                            <FilePdf
+                                                size={18}
+                                                weight="bold"
+                                                className="text-primary"
+                                            />
+                                            Attached Files
+                                        </CardTitle>
+                                        <CardDescription className="pt-1 text-xs">
+                                            Supporting documents submitted with,
+                                            or added during, review.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="pt-4">
+                                        <AttachmentsPanel
+                                            loanId={id}
+                                            frozen={frozen}
+                                            canUpload={!!canUpload}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
                     </aside>
                 </div>
             </div>
