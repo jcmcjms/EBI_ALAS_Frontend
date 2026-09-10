@@ -120,6 +120,33 @@ export const LOAN_SECTION_LABELS: Record<LoanSection, string> = {
 };
 
 /**
+ * Loose shape for a row passed *into* a `mapTo*` function. The row's
+ * actual schema depends on its source section (Outstanding / EBI /
+ * Buy-Out / Incoming), and each schema has a different shape. We use
+ * a record-with-unknown-values here so the mapping functions stay
+ * agnostic about which schema produced the row — they just read
+ * optional fields and apply their own defaults.
+ *
+ * Each field is explicitly `unknown` so callers can pass anything;
+ * `safeString` / `safeNumber` in this file are the only legal way to
+ * read from one.
+ */
+export type TransferSourceRow = {
+    [key: string]: unknown;
+    pn?: unknown;
+    name?: unknown;
+    status?: unknown;
+    productWithDescription?: unknown;
+    sourceStatus?: unknown;
+    dateGranted?: unknown;
+    dateMaturity?: unknown;
+    amortization?: unknown;
+    existingDeduction?: unknown;
+    deductions?: unknown;
+    outstandingBalance?: unknown;
+};
+
+/**
  * Coerce a possibly-undefined / possibly-string numeric value to a finite
  * number. Used so a transferred row never injects `NaN` into the form
  * state (which would later break the totals calculation).
@@ -140,7 +167,7 @@ function safeString(value: unknown, fallback = ""): string {
 
 // ── Outstanding ──────────────────────────────────────────────────────────
 
-export function mapToOutstanding(row: any, source: LoanSection): OutstandingFormRow {
+export function mapToOutstanding(row: TransferSourceRow, source: LoanSection): OutstandingFormRow {
     const defaults: OutstandingFormRow = {
         pn: "",
         principalBalance: 0,
@@ -219,12 +246,12 @@ export function mapToOutstanding(row: any, source: LoanSection): OutstandingForm
     }
 
     // No-op transfer (source === "outstanding") — preserve the row.
-    return { ...defaults, ...row };
+    return { ...defaults, ...(row as Partial<OutstandingFormRow>) };
 }
 
 // ── EBI Reloans ──────────────────────────────────────────────────────────
 
-export function mapToEbi(row: any, source: LoanSection): EbiReloanFormRow {
+export function mapToEbi(row: TransferSourceRow, source: LoanSection): EbiReloanFormRow {
     const defaults: EbiReloanFormRow = {
         pn: "",
         name: "",
@@ -309,12 +336,12 @@ export function mapToEbi(row: any, source: LoanSection): EbiReloanFormRow {
         };
     }
 
-    return { ...defaults, ...row };
+    return { ...defaults, ...(row as Partial<EbiReloanFormRow>) };
 }
 
 // ── Buy-Outs ─────────────────────────────────────────────────────────────
 
-export function mapToBuyOut(row: any, source: LoanSection): BuyOutFormRow {
+export function mapToBuyOut(row: TransferSourceRow, source: LoanSection): BuyOutFormRow {
     const defaults: BuyOutFormRow = {
         pn: "",
         name: "",
@@ -358,12 +385,12 @@ export function mapToBuyOut(row: any, source: LoanSection): BuyOutFormRow {
         };
     }
 
-    return { ...defaults, ...row };
+    return { ...defaults, ...(row as Partial<BuyOutFormRow>) };
 }
 
 // ── Incoming / Undeducted ────────────────────────────────────────────────
 
-export function mapToIncoming(row: any, source: LoanSection): IncomingFormRow {
+export function mapToIncoming(row: TransferSourceRow, source: LoanSection): IncomingFormRow {
     const defaults: IncomingFormRow = {
         name: "",
         deductions: 0,
@@ -405,5 +432,5 @@ export function mapToIncoming(row: any, source: LoanSection): IncomingFormRow {
         };
     }
 
-    return { ...defaults, ...row };
+    return { ...defaults, ...(row as Partial<IncomingFormRow>) };
 }

@@ -43,8 +43,6 @@ interface LoanParametersFieldsProps {
      * multi-loan application workflow.
      */
     fieldPrefix: string;
-    /** Index of the loan in the loans array (for display purposes). */
-    loanIndex: number;
 }
 
 /**
@@ -54,7 +52,7 @@ interface LoanParametersFieldsProps {
  * This component has NO SectionCard wrapper — it renders only the
  * field grid and smart-default fee block.
  */
-export function LoanParametersFields({ fieldPrefix, loanIndex: _loanIndex }: LoanParametersFieldsProps) {
+export function LoanParametersFields({ fieldPrefix }: LoanParametersFieldsProps) {
     const { register, control, setValue } = useFormContext();
 
     // Build prefixed field names
@@ -62,6 +60,7 @@ export function LoanParametersFields({ fieldPrefix, loanIndex: _loanIndex }: Loa
     const proposedAmountPath = `${fieldPrefix}.proposedAmount` as const;
     const purposePath = `${fieldPrefix}.purpose` as const;
     const termPath = `${fieldPrefix}.term` as const;
+    const policyTermMonthsPath = `${fieldPrefix}.policyTermMonths` as const;
     const interestRatePath = `${fieldPrefix}.interestRate` as const;
     const nthpDatePath = `${fieldPrefix}.nthpDate` as const;
     const notarialFeePath = `${fieldPrefix}.notarialFee` as const;
@@ -144,7 +143,14 @@ export function LoanParametersFields({ fieldPrefix, loanIndex: _loanIndex }: Loa
 
     return (
         <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Outer grid uses 4 columns on md+ so row 2 can carry the
+                new "Policy Term (months)" field alongside the existing
+                Term (days). Loan Product + Purpose of Loan span the
+                full first row (1 + 3 cols); NTHP Date sits alone in
+                row 3 with the remaining columns empty — same rhythm as
+                before, just one extra column available for the loan
+                terms row. */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                 {/* Row 1 — Product & Purpose */}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Loan Product</Label>
@@ -156,7 +162,7 @@ export function LoanParametersFields({ fieldPrefix, loanIndex: _loanIndex }: Loa
                     />
                 </div>
 
-                <div className="space-y-1.5 md:col-span-2">
+                <div className="space-y-1.5 md:col-span-3">
                     <Label className="text-xs text-muted-foreground">Purpose of Loan</Label>
                     <Input
                         {...register(purposePath)}
@@ -166,7 +172,7 @@ export function LoanParametersFields({ fieldPrefix, loanIndex: _loanIndex }: Loa
                     />
                 </div>
 
-                {/* Row 2 — Amount, Term, Rate */}
+                {/* Row 2 — Amount, Term (days), Policy Term (months), Rate */}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Proposed Amount (₱)</Label>
                     <Input
@@ -189,6 +195,29 @@ export function LoanParametersFields({ fieldPrefix, loanIndex: _loanIndex }: Loa
                         placeholder="e.g. 720"
                         min={1}
                         max={2555}
+                        readOnly
+                        className="h-9 bg-muted/50"
+                    />
+                </div>
+
+                {/* Policy term in months — sourced from
+                    `loan_data.total_amortization` via the consolidated
+                    pending-loan SQL. Distinct from Term (days) above:
+                    this is the authoritative input to amortization
+                    calculations and stays stable across calendar-
+                    boundary edge cases. Optional on the schema; this
+                    field renders blank when the form was hydrated from
+                    a flow that didn't surface a pending loan (e.g. the
+                    approval-page mapper). */}
+                <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                        <CalendarBlank size={12} weight="bold" /> Policy Term (months)
+                    </Label>
+                    <Input
+                        {...register(policyTermMonthsPath, { valueAsNumber: true })}
+                        type="number"
+                        placeholder="e.g. 12"
+                        min={1}
                         readOnly
                         className="h-9 bg-muted/50"
                     />

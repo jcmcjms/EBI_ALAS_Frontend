@@ -74,8 +74,9 @@ import {
     mapToEbi,
     mapToOutstanding,
     type LoanSection,
+    type TransferSourceRow,
 } from "../utils/loan-transfer-utils";
-import type { LoanApplicationFormData } from "../schema";
+import type { EbiReloan, LoanApplicationFormData, OutstandingLoan } from "../schema";
 
 type LoanArrays = {
     outstanding: ReturnType<typeof useFieldArray<LoanApplicationFormData, "outstandingLoans">>;
@@ -83,6 +84,15 @@ type LoanArrays = {
     buyOut: ReturnType<typeof useFieldArray<LoanApplicationFormData, "buyOuts">>;
     incoming: ReturnType<typeof useFieldArray<LoanApplicationFormData, "incomingLoans">>;
 };
+
+/**
+ * Discriminated helpers for `useFieldArray.append()` so we don't have
+ * to cast at the call site. The base `useFieldArray` types only allow
+ * appending a row of the matching schema; this union over the four
+ * sections lets the transfer branch pick the right overload.
+ */
+type OutstandingArray = LoanArrays["outstanding"];
+type EbiArray = LoanArrays["ebi"];
 
 export function useLoanTransfers() {
     // The form context is provided by <FormProvider> in loan-creation.tsx.
@@ -173,6 +183,17 @@ export function useLoanTransfers() {
             // value, not whatever the current render's subscription saw.
             const liveValues = (getValues(sourcePath) as unknown[] | undefined) ?? [];
 
+            // The mapping helpers take a `TransferSourceRow` (record of
+            // unknown values), so we normalise the raw RHF value into the
+            // shape the mappers understand. Every section's row has at
+            // least `{ id: string }` set by `useFieldArray`, plus the
+            // section's own schema fields — `unknown` is the safe type
+            // for "could be any of them".
+            const normalize = (v: unknown): TransferSourceRow =>
+                typeof v === "object" && v !== null
+                    ? (v as TransferSourceRow)
+                    : {};
+
             // The row's data should sit at the same index as the field.
             // If the indices somehow desync (e.g. a stale closure during
             // a rapid double-click), we recover by searching for the
@@ -200,16 +221,16 @@ export function useLoanTransfers() {
             // with exhaustiveness checking is the right shape. The
             // `never` branch makes the compiler complain if a future
             // section is ever added without being handled.
-            let mappedRow: unknown;
             // Narrow target to only the valid options to satisfy TypeScript
             // exhaustiveness in the presence of `buyout` / `incoming`.
             const restrictedTarget = target as "ebi" | "outstanding";
+            let mappedRow: EbiReloan | OutstandingLoan;
             switch (restrictedTarget) {
                 case "ebi":
-                    mappedRow = mapToEbi(rowData, source);
+                    mappedRow = mapToEbi(normalize(rowData), source);
                     break;
                 case "outstanding":
-                    mappedRow = mapToOutstanding(rowData, source);
+                    mappedRow = mapToOutstanding(normalize(rowData), source);
                     break;
                 default: {
                     const _exhaustive: never = restrictedTarget;
@@ -226,7 +247,23 @@ export function useLoanTransfers() {
             // the mutation helpers no longer accept `shouldDirty`; the
             // form is considered dirty automatically on commit, which
             // is exactly the behaviour we want.
-            targetArray.append(mappedRow as any, { shouldFocus: false });
+            //
+            // `targetArray` is a union of the four `useFieldArray` return
+            // shapes; `append` is therefore an overloaded function whose
+            // parameter type is `OutstandingLoan | EbiReloan | ...`.
+            // Narrow to the destination-specific overload so the right
+            // schema is accepted without `as any`.
+            if (restrictedTarget === "ebi") {
+                (targetArray as EbiArray).append(
+                    mappedRow as EbiReloan,
+                    { shouldFocus: false }
+                );
+            } else {
+                (targetArray as OutstandingArray).append(
+                    mappedRow as OutstandingLoan,
+                    { shouldFocus: false }
+                );
+            }
             sourceArray.remove(fieldIndex);
 
             toast.success(`Transferred loan to ${LOAN_SECTION_LABELS[restrictedTarget]}`);

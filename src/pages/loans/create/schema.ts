@@ -234,6 +234,18 @@ export const loanParametersSchema = z.object({
         .min(1, "Proposed amount is required")
         .max(5_000_000, "Amount exceeds maximum allowed"),
     term: z.number().min(1, "Term must be at least 1 day").max(2555),
+    // ── Policy term (months) ────────────────────────────────────────
+    // Surfaced from the consolidated pending-loan SQL via the
+    // `policyTermMonths` field on `PendingLoan` (mirrors
+    // `loan_data.total_amortization`). The policy term is the
+    // authoritative input to amortization calculations and stays
+    // stable across calendar-boundary edge cases; distinct from
+    // `term` above which is the exact day count from
+    // `DATEDIFF(DAY, date_granted, date_maturity)`. Optional
+    // because the field is only populated when a pending loan is
+    // the source — legacy approval-page flows without a pending
+    // loan context omit it.
+    policyTermMonths: z.number().min(1).optional(),
     interestRate: z.number().min(0).max(100).optional(),
     nthpDate: z.string().optional(),
 

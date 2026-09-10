@@ -38,17 +38,11 @@ function toDateInput(iso?: string | null): string {
 }
 
 interface CISLookupProps {
-  /** Acting user's branchId — passed down to the preloan picker as a UI label. */
-  userBranchId: string;
-  /** Currently selected preloan id (controlled). */
-  selectedPreLoanId: string;
   /** Callback fired when the AO picks / clears a preloan. */
   onPreLoanChange: (id: string, preloan: PreLoanItem | null) => void;
 }
 
 export function CISLookup({
-  userBranchId,
-  selectedPreLoanId,
   onPreLoanChange,
 }: CISLookupProps) {
   const { control, setValue } = useFormContext<LoanApplicationFormData>();
@@ -121,13 +115,6 @@ export function CISLookup({
     // null → "show" Section 4 even after the AO picked a New Loan).
     setValue("branchType.creationTypeCode", null);
     setValue("branchType.creationTypeLabel", "");
-    // Clear the picked loan number too — a fresh client means any
-    // previously-displayed PN belongs to the prior borrower. Mirrors
-    // the creationType reset above since both are written by the
-    // same pick event in `active-loans-table.tsx#handleLoanPick`.
-    setValue("branchType.selectedLoanNo", "");
-    // Lockstep clear — see schema.ts (selectedLoanBch).
-    setValue("branchType.selectedLoanBch", "");
     setValue("branchType.branch", "");
     setValue("branchType.requestingOfficer", "");
     setValue("branchType.lai", "");
@@ -145,10 +132,9 @@ export function CISLookup({
     setValue("client.divisionCode", "");
     setValue("client.stationCode", "");
     setValue("client.misAgency", "");
-    setValue("loan.purpose", "");
-    setValue("loan.proposedAmount", 0);
-    setValue("loan.term", 0);
-    setValue("loan.interestRate", 0);
+    // The selected-loan array is owned by ActiveLoansTable's
+    // useFieldArray (single-writer rule); a full replace() there
+    // is the canonical "clear picked loans" path.
     setValue("outstandingLoans", []);
     setValue("ebiReloans", []);
     setValue("buyOuts", []);
@@ -248,13 +234,6 @@ export function CISLookup({
       : "";
     setValue("branchType.creationTypeCode", null);
     setValue("branchType.creationTypeLabel", "");
-    // A fresh CIS search over an already-loaded client must not keep
-    // the previous client's picked loan number — the printed PN is
-    // account-scoped, not borrower-scoped, and would otherwise leak
-    // across profiles. Mirrors the creationType reset above.
-    setValue("branchType.selectedLoanNo", "");
-    // Lockstep clear — see schema.ts (selectedLoanBch).
-    setValue("branchType.selectedLoanBch", "");
     setValue("branchType.branch", branchName);
     // Join the combined "<bch>-<acctNo>" identifiers into the form's
     // display string. Mirrors the route parameter so the AO sees the
@@ -496,8 +475,6 @@ export function CISLookup({
               cisNo={client.cisId}
               accounts={laiAccounts}
               totalActiveLoansCount={outstandingCount}
-              userBranchId={userBranchId}
-              selectedPreLoanId={selectedPreLoanId}
               onPreLoanChange={onPreLoanChange}
             />
           </div>

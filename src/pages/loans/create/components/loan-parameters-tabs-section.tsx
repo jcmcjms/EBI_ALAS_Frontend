@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CaretLeft, CaretRight, CurrencyDollar } from "@phosphor-icons/react";
 import { Badge } from "@/src/components/ui/badge";
@@ -22,13 +22,18 @@ export function LoanParametersTabsSection() {
 
     const [activeLoanNo, setActiveLoanNo] = useState("");
 
-    // Deselect-safe: never leave the panel pointing at a removed loan.
-    useEffect(() => {
-        if (loans.length === 0) return setActiveLoanNo("");
-        if (!loans.some((l) => l?.loanNo === activeLoanNo)) setActiveLoanNo(loans[0].loanNo);
-    }, [loans, activeLoanNo]);
+    // Deselect-safe: derived during render so we never cascade a setState
+    // inside an effect. If the user's selection is still in the list, keep it;
+    // otherwise fall back to the first loan (or "" when the list is empty).
+    const effectiveActiveLoanNo =
+        activeLoanNo && loans.some((l) => l?.loanNo === activeLoanNo)
+            ? activeLoanNo
+            : (loans[0]?.loanNo ?? "");
 
-    const activeIndex = Math.max(0, loans.findIndex((l) => l?.loanNo === activeLoanNo));
+    const activeIndex = Math.max(
+        0,
+        loans.findIndex((l) => l?.loanNo === effectiveActiveLoanNo)
+    );
     const section = getSection("loan-params");
 
     if (loans.length === 0) {
@@ -64,7 +69,7 @@ export function LoanParametersTabsSection() {
                     title: `${l.loanNo} · ${l.productDescription}`,
                     hasError: Boolean(loanErrors?.[i]),
                 }))}
-                value={activeLoanNo}
+                value={effectiveActiveLoanNo}
                 onValueChange={setActiveLoanNo}
                 trailing={
                     <>
@@ -90,10 +95,10 @@ export function LoanParametersTabsSection() {
                     id={`form-panel-${loan.loanNo}`}
                     role="tabpanel"
                     aria-labelledby={`form-tab-${loan.loanNo}`}
-                    hidden={loan.loanNo !== activeLoanNo}
+                    hidden={loan.loanNo !== effectiveActiveLoanNo}
                     className="min-h-[22rem] pt-5"
                 >
-                    <LoanParametersFields fieldPrefix={`loans.${i}.parameters`} loanIndex={i} />
+                    <LoanParametersFields fieldPrefix={`loans.${i}.parameters`} />
                 </div>
             ))}
         </SectionCard>

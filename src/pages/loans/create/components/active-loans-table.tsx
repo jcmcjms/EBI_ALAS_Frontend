@@ -34,10 +34,7 @@ import { getOutstandingLoans, getPendingLoan } from "@/src/lib/api/webloans";
 import type { OutstandingLoan, PendingLoan, WebLoanAccount } from "@/src/lib/api/types";
 
 import type { LoanApplicationFormData, CreationTypeCode } from "../schema";
-import {
-    CREATION_TYPE,
-    CREATION_TYPE_LABELS,
-} from "../schema";
+import { CREATION_TYPE } from "../schema";
 import type { PreLoanItem } from "@/src/lib/api/types";
 
 interface ActiveLoansTableProps {
@@ -57,13 +54,6 @@ interface ActiveLoansTableProps {
      * section appear meaningful even before any account is selected.
      */
     totalActiveLoansCount?: number;
-    /** Acting user's branch id — used by the PreLoanPicker scope chip. */
-    userBranchId: string;
-    /**
-     * Currently selected preloan id. Controlled by the parent so the form
-     * state stays in sync across the whole wizard.
-     */
-    selectedPreLoanId: string;
     /** Callback fired when the AO picks / clears a preloan. */
     onPreLoanChange: (id: string, preloan: PreLoanItem | null) => void;
 }
@@ -112,8 +102,6 @@ export function ActiveLoansTable({
     cisNo,
     accounts,
     totalActiveLoansCount,
-    userBranchId,
-    selectedPreLoanId,
     onPreLoanChange,
 }: ActiveLoansTableProps) {
     const { control, setValue } = useFormContext<LoanApplicationFormData>();
@@ -126,7 +114,6 @@ export function ActiveLoansTable({
 
     // Watch loans array for O(1) product code lookup
     const watchedLoans = useWatch({ control, name: "loans" }) ?? [];
-    const selectedLoanNos = fields.map((f) => f.loanNo);
 
     // Captures the CIS-level NTHP date from /pending-loan so it can be
     // stamped onto each loan's parameters when the AO toggles them on.
@@ -147,10 +134,9 @@ export function ActiveLoansTable({
     // Resolve the bare accountNo + display label for the currently
     // selected accountId, so downstream code (PreLoanPicker, error /
     // empty messages) can speak in the term the user is used to seeing.
-    const selectedAccount = accounts.find(
-        (a) => a.accountId === selectedAccountId
-    );
-    const selectedAccountNo = selectedAccount?.accountNo ?? "";
+    // const selectedAccount = accounts.find(
+    //     (a) => a.accountId === selectedAccountId
+    // );
 
     const handleFetch = async (accountId: string) => {
         if (!accountId || !cisNo) return;
@@ -349,6 +335,13 @@ export function ActiveLoansTable({
                 proposedAmount: loan.principal ?? 0,
                 interestRate: loan.grantedRate ?? 0,
                 term: Math.round(loan.totalTermDays ?? 0),
+                // Policy term from the consolidated pending-loan SQL
+                // (`loan_data.total_amortization`). Distinct from `term`
+                // above — see loanParametersSchema in schema.ts for the
+                // policy-vs-exact distinction. Optional on the schema;
+                // omitted when the pending loan had no matching
+                // loan_data row (LEFT JOIN miss on the backend).
+                policyTermMonths: loan.policyTermMonths ?? undefined,
                 nthpDate: pendingNthpDate,
                 notarialFee: 0,
                 docStamps: 0,
@@ -647,6 +640,18 @@ export function ActiveLoansTable({
                                                                                 l.totalTermDays
                                                                             }
                                                                             d
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                                {l.policyTermMonths != null && (
+                                                                    <>
+                                                                        {" · "}
+                                                                        Policy Term:{" "}
+                                                                        <span className="font-medium text-foreground">
+                                                                            {
+                                                                                l.policyTermMonths
+                                                                            }
+                                                                            mo
                                                                         </span>
                                                                     </>
                                                                 )}

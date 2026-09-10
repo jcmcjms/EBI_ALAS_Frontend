@@ -1,11 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { FormProvider, useForm, useWatch, useFormContext } from "react-hook-form";
-import type { FieldErrors } from "react-hook-form";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  FormProvider,
+  useForm,
+  useWatch,
+  useFormContext,
+} from "react-hook-form";
+import type { FieldErrors, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowUp,
   CheckCircle,
-  ClipboardText,
   CloudCheck,
   IdentificationBadge,
   LockSimple,
@@ -72,18 +76,25 @@ function countFieldErrors(node: unknown): number {
   if (!node || typeof node !== "object") return 0;
   const record = node as Record<string, unknown>;
   if (typeof record.message === "string") return 1;
-  return Object.values(record).reduce((sum, child) => sum + countFieldErrors(child), 0);
+  return Object.values(record).reduce<number>(
+    (sum, child) => sum + countFieldErrors(child),
+    0
+  );
 }
 
 function sectionErrorCount(errors: FieldErrors<LoanApplicationFormData>, id: SectionId): number {
   switch (id) {
     case "cis-lookup":
       return countFieldErrors(errors.branchType) + countFieldErrors(errors.client);
-    case "loan-params":
+    case "loan-params": {
       // Count errors across all loans in the array
       const loans = errors.loans;
       if (!loans || !Array.isArray(loans)) return 0;
-      return loans.reduce((sum, loanError) => sum + countFieldErrors(loanError), 0);
+      return loans.reduce<number>(
+        (sum, loanError) => sum + countFieldErrors(loanError),
+        0
+      );
+    }
     case "obligations":
       return countFieldErrors(errors.outstandingLoans);
     case "other-obligations":
@@ -462,7 +473,14 @@ export function LoanCreationPage() {
   }>({ id: "", payload: null });
 
   const methods = useForm<LoanApplicationFormData>({
-    resolver: zodResolver(loanApplicationSchema),
+    // Cast: Zod's `.default()` makes the schema's *input* type diverge from
+    // its *output* type (e.g. `notarialFee: number | undefined` on input,
+    // `number` on output). RHF's resolver generics expect them to align, so
+    // we pin both sides to the *output* shape — the form is fed pre-coerced
+    // defaults from `defaultValues`, so undefined never actually arrives.
+    resolver: zodResolver(
+      loanApplicationSchema
+    ) as Resolver<LoanApplicationFormData>,
     mode: "onBlur",
     defaultValues: {
       branchType: {
@@ -530,11 +548,16 @@ export function LoanCreationPage() {
     },
   });
 
-  const { handleSubmit, watch, formState } = methods;
+  const { handleSubmit, formState } = methods;
   const { isDirty, errors } = formState;
+  const { control } = methods;
 
-  const cisId = watch("client.cisId");
-  const isClientLoaded = !!cisId && cisId.length > 0;
+  // Narrow subscription via useWatch: avoids re-rendering this entire page
+  // on every keystroke. RHF's `watch()` cannot be memoized by React Compiler,
+  // which is exactly what the new lint rule `react-hooks/incompatible-library`
+  // exists to flag.
+  const cisId = useWatch({ control, name: "client.cisId" }) ?? "";
+  const isClientLoaded = cisId.length > 0;
 
   const [activeSection, setActiveSection] = useState<SectionId>("cis-lookup");
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -581,7 +604,7 @@ export function LoanCreationPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToSection = (id: SectionId) => {
+  const scrollToSection = useCallback((id: SectionId) => {
     const element = sectionRefs.current[id];
     if (!element) return;
     setActiveSection(id);
@@ -596,11 +619,14 @@ export function LoanCreationPage() {
     element
       .querySelector<HTMLElement>("[data-section-heading]")
       ?.focus({ preventScroll: true });
-  };
+  }, []);
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToTop = useCallback(
+    () => window.scrollTo({ top: 0, behavior: "smooth" }),
+    []
+  );
 
-  const onSubmit = (data: LoanApplicationFormData) => {
+  const onSubmit = useCallback((data: LoanApplicationFormData) => {
     if (isSubmitting) return; // re-entry guard for the duration of the in-flight POST
     setSubmitAttempted(true);
 
@@ -608,22 +634,35 @@ export function LoanCreationPage() {
     // invalidation, success/error toasts, and the post-submit redirect
     // to /loans/monitoring. Nothing for the page to do beyond dispatch.
     createLoan(mapFormToSubmissionPayload(data));
-  };
+  }, [createLoan, isSubmitting]);
 
-  const onInvalid = (fieldErrors: FieldErrors<LoanApplicationFormData>) => {
-    setSubmitAttempted(true);
-    const total = SECTIONS.reduce(
-      (n, s) => n + sectionErrorCount(fieldErrors, s.id),
-      0
-    );
-    const first = SECTIONS.find(
-      (s) => sectionErrorCount(fieldErrors, s.id) > 0
-    );
-    toast.error(
-      `${total} field${total === 1 ? "" : "s"} need${total === 1 ? "s" : ""} attention before submission.`
-    );
-    if (first) scrollToSection(first.id);
-  };
+  const onInvalid = useCallback(
+    (fieldErrors: FieldErrors<LoanApplicationFormData>) => {
+      setSubmitAttempted(true);
+      const total = SECTIONS.reduce(
+        (n, s) => n + sectionErrorCount(fieldErrors, s.id),
+        0
+      );
+      const first = SECTIONS.find(
+        (s) => sectionErrorCount(fieldErrors, s.id) > 0
+      );
+      toast.error(
+        `${total} field${total === 1 ? "" : "s"} need${total === 1 ? "s" : ""} attention before submission.`
+      );
+      if (first) scrollToSection(first.id);
+    },
+    [scrollToSection]
+  );
+
+  // Wrap the form's onSubmit in `useCallback` so the prop passed to
+  // <form> stays stable across renders. Calling `handleSubmit(...)`
+  // during render would invoke the ref accessor for the underlying
+  // form (`react-hooks/refs` lint), and a stable callback also means
+  // the <form>'s effect / HMR machinery doesn't churn on every render.
+  const handleFormSubmit = useCallback(
+    (e?: React.BaseSyntheticEvent) => handleSubmit(onSubmit, onInvalid)(e),
+    [handleSubmit, onSubmit, onInvalid]
+  );
 
   const totalErrors = submitAttempted
     ? SECTIONS.reduce((n, s) => n + sectionErrorCount(errors, s.id), 0)
@@ -637,17 +676,14 @@ export function LoanCreationPage() {
   // the human label, so a localized label or a future backend label
   // change can't desync the visibility check. `null`/unknown
   // defaults to "show" (conservative — matches the prior behavior).
-  const branchTypeCode = watch("branchType.creationTypeCode");
+  const branchTypeCode = useWatch({ control, name: "branchType.creationTypeCode" });
 
   // CHANGED: preLoanSelected is now based on loans array length
   // The 1.3 loan-number pick writes to `loans` array via useFieldArray
   // (active-loans-table.tsx handleLoanToggle) and clears it on account
   // switch / client change. The stepper gate and submit gate both read it.
-  const loans = watch("loans");
-  const preLoanSelected = Array.isArray(loans) && loans.length > 0;
-
-  // For backwards-compatible UI text, derive creationTypeLabel from first loan
-  const firstLoanCreationTypeLabel = loans?.[0]?.creationTypeLabel ?? "";
+  const loans = useWatch({ control, name: "loans" }) ?? [];
+  const preLoanSelected = loans.length > 0;
 
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode);
 
@@ -677,10 +713,6 @@ export function LoanCreationPage() {
     ? SECTIONS.find((s) => sectionErrorCount(errors, s.id) > 0)
     : undefined;
 
-  const { control } = methods;
-  const watchedLoans = useWatch({ control, name: "loans" }) ?? [];
-  const hasSelectedLoans = watchedLoans.length > 0;
-
   return (
     <FormProvider {...methods}>
       {/* ── LoanTransfersProvider ─────────────────────────────────────
@@ -692,7 +724,7 @@ export function LoanCreationPage() {
        * reflected in the other on the same render. */}
       <LoanTransfersProvider>
         <form
-          onSubmit={handleSubmit(onSubmit, onInvalid)}
+          onSubmit={handleFormSubmit}
           className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40"
         >
         {/* ── Top header ──────────────────────────────── */}
@@ -765,8 +797,6 @@ export function LoanCreationPage() {
               }}
             >
               <CISLookup
-                userBranchId={userBranchId}
-                selectedPreLoanId={selectedPreLoan.id}
                 onPreLoanChange={(id, payload) => {
                   setSelectedPreLoan({ id, payload });
                   if (payload) {

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { FilePdf, Printer, Warning, CaretLeft, CaretRight } from "@phosphor-icons/react";
 
@@ -55,8 +55,6 @@ const BLUE = "bg-[#d9eaf7]";
 const B = "border border-black";
 const DOUBLE_UNDERLINE: React.CSSProperties = { borderBottom: "3px double #000" };
 const TOP_LINE: React.CSSProperties = { borderTop: "1px solid #000" };
-const TOP_DOUBLE: React.CSSProperties = { borderTop: "1px solid #000", borderBottom: "3px double #000" };
-const TOP_LINE_SINGLE: React.CSSProperties = { borderTop: "1px solid #000", borderBottom: "1px solid #000" };
 
 /* ── Capacity-to-pay badge ───────────────────────────────────────── */
 // Now accepts parameters so each loan form shows its own result.
@@ -589,12 +587,10 @@ const LEGACY_APPLICATION_CHARGE_RATE = 0.0504;
 const LEGACY_DOC_STAMP_RATE = 0.0075;
 const LEGACY_NOTARIAL_FEE = 500;
 
-/* Fixed row counts of the legacy Excel grid: the reloan and buy-out
- * matrices always print 6 rows, the incoming-loan matrix 5, with "-"
- * placeholders padding unused rows. */
-const RELOAN_TEMPLATE_ROWS = 6;
-const BUYOUT_TEMPLATE_ROWS = 6;
-const INCOMING_TEMPLATE_ROWS = 5;
+/* Fixed row counts of the legacy Excel grid were removed when the
+ * reloan / buy-out / incoming matrices moved to dynamic rows derived
+ * from the form data — re-add them here only when the printed form
+ * re-introduces a fixed-row layout. */
 
 /* Column bands of the legacy sheet: computations and the reloan band
  * split 58/42; the deviations band splits 62/38. */
@@ -627,12 +623,22 @@ export const ApprovalFormPreview = forwardRef<
         const [activeLoanNo, setActiveLoanNo] = useState("");
         const [captureAll, setCaptureAll] = useState(false); // PDF capture needs every sheet visible
 
-        useEffect(() => {
-            if (watchedLoans.length === 0) return setActiveLoanNo("");
-            if (!watchedLoans.some((l) => l?.loanNo === activeLoanNo)) setActiveLoanNo(watchedLoans[0].loanNo);
-        }, [watchedLoans, activeLoanNo]);
+        // Deselect-safe: derived during render. If the user's selection is
+        // still in the list, keep it; otherwise fall back to the first loan
+        // (or "" when the list is empty). Avoids cascading renders from a
+        // setState-in-effect.
+        const effectiveActiveLoanNo = useMemo(
+            () =>
+                activeLoanNo && watchedLoans.some((l) => l?.loanNo === activeLoanNo)
+                    ? activeLoanNo
+                    : (watchedLoans[0]?.loanNo ?? ""),
+            [activeLoanNo, watchedLoans]
+        );
 
-        const activeIndex = Math.max(0, watchedLoans.findIndex((l) => l?.loanNo === activeLoanNo));
+        const activeIndex = Math.max(
+            0,
+            watchedLoans.findIndex((l) => l?.loanNo === effectiveActiveLoanNo)
+        );
 
         const handleGeneratePdf = async () => {
             // html2canvas skips display:none — reveal every sheet for the capture pass.
@@ -692,7 +698,7 @@ export const ApprovalFormPreview = forwardRef<
                                         metric: num(l.parameters.proposedAmount),
                                         title: `${l.loanNo} · ${l.productDescription}`,
                                     }))}
-                                    value={activeLoanNo}
+                                    value={effectiveActiveLoanNo}
                                     onValueChange={setActiveLoanNo}
                                     trailing={
                                         <>
@@ -725,7 +731,7 @@ export const ApprovalFormPreview = forwardRef<
                                         aria-labelledby={`form-tab-${loan.loanNo}`}
                                         className={cn(
                                             "p-5 text-[10px] leading-[1.4]",
-                                            loan.loanNo !== activeLoanNo && !captureAll && "hidden print:block",
+                                            loan.loanNo !== effectiveActiveLoanNo && !captureAll && "hidden print:block",
                                             index > 0 && "print:break-before-page"
                                         )}
                                     >

@@ -2,12 +2,11 @@ import { useFormContext } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
-import { Badge } from "@/src/components/ui/badge";
 import { LockSimple, Bank, UserCircle } from "@phosphor-icons/react";
 import { useAuthStore } from "@/src/store/authStore";
 
 export function ApplicationDetailsSection() {
-    const { register, setValue } = useFormContext();
+    const { register } = useFormContext();
     const user = useAuthStore((state) => state.user);
 
     // Auto-populate officer and branch on mount

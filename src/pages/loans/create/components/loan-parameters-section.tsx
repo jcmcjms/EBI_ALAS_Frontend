@@ -1,3 +1,4 @@
+import { CurrencyDollar } from "@phosphor-icons/react";
 import { SectionCard } from "./section-card";
 import { getSection } from "../sections";
 import { LoanParametersFields } from "./loan-parameters-fields";
@@ -31,7 +32,7 @@ export function LoanParametersSection({ fieldPrefix, loanIndex }: LoanParameters
             description={section.description}
             icon={<CurrencyDollar size={20} weight="bold" className="text-primary" />}
         >
-            <LoanParametersFields fieldPrefix={fieldPrefix} loanIndex={loanIndex} />
+            <LoanParametersFields fieldPrefix={fieldPrefix} />
         </SectionCard>
     );
 }

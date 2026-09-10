@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ArrowsClockwise, WarningCircle } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
@@ -109,16 +109,14 @@ export function CurrencyInput({
     const [displayValue, setDisplayValue] = useState<string>(() => formatPHP(value));
     const [isFocused, setIsFocused] = useState(false);
 
-    // ── Sync display when the form's value changes externally ─────────────
+    // ── External value tracking while the input is *not* focused ───────────
     //
-    // We only re-format while the input is *not* focused; otherwise we'd
-    // yank the cursor mid-typing. The parent's value drives us on
-    // blur / reset / auto-fill from the product rules.
-    useEffect(() => {
-        if (!isFocused) {
-            setDisplayValue(formatPHP(value));
-        }
-    }, [value, isFocused]);
+    // The parent may change `value` from outside (form reset, smart-default
+    // auto-fill, etc.). We re-format to the locale string during render
+    // when the field is not focused so we don't yank the cursor
+    // mid-typing. While focused, we trust the user's keystrokes — see
+    // `handleChange` — and skip the reformat.
+    const visibleDisplay = !isFocused ? formatPHP(value) : displayValue;
 
     const handleChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,7 +175,7 @@ export function CurrencyInput({
                 <Input
                     type="text"
                     inputMode="decimal"
-                    value={displayValue}
+                    value={visibleDisplay}
                     onChange={handleChange}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
