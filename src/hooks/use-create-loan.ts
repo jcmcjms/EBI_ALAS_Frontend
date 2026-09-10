@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { loanApi } from "@/src/lib/api/loans";
+import { getErrorMessage } from "@/src/lib/apiClient";
 import { queryKeys } from "@/src/lib/queryKeys";
 import type { CreateLoanPayload, LoanSubmissionResponse } from "@/src/lib/api/types";
 
@@ -83,7 +84,7 @@ export function useCreateLoan() {
         },
 
         onError: (error) => {
-            toast.error(`Failed to submit loan: ${error.message}`);
+            toast.error(getErrorMessage(error));
         },
     });
 

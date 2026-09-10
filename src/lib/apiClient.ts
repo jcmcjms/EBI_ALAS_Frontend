@@ -293,7 +293,15 @@ export function getErrorMessage(error: unknown): string {
 
             // Try common error message shapes from the API (only for JSON responses)
             if (typeof data === "string" && !data.startsWith("<")) return data;
-            if (data?.message) return data.message;
+
+            // Combine the top-level message with specific error details
+            // when the backend includes an errors array (e.g. validation failures).
+            if (data?.message) {
+                const details = Array.isArray(data.errors) && data.errors.length > 0
+                    ? data.errors.join(". ")
+                    : null;
+                return details ? `${data.message}: ${details}` : data.message;
+            }
             if (data?.error) return data.error;
             if (data?.detail) return data.detail;
         }
