@@ -57,8 +57,15 @@ function App() {
                             <LoanCreation />
                         </ProtectedRoute>
                     } />
+                    {/* /loans/approval is reachable by every workflow role
+                        (Encoder / Recommender / Evaluator / Approver / Admin).
+                        The frontend route only requires auth; the backend
+                        `LoanWorkflowService.IsValidTransition` is the
+                        authoritative gate — it checks both the loan's
+                        current status AND the actor's role before letting
+                        `PUT /api/loans/{id}/status` through. */}
                     <Route path="/loans/approval" element={
-                        <ProtectedRoute requiredPermission={PERMISSIONS.loansApprove}>
+                        <ProtectedRoute>
                             <LoanApproval />
                         </ProtectedRoute>
                     } />
