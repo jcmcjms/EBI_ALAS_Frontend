@@ -6,8 +6,7 @@ import { Calendar } from "@/src/components/ui/calendar.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { MagnifyingGlass, CalendarBlank, Funnel, Export } from "@phosphor-icons/react";
 import { format } from "date-fns";
-import { cn } from "@/src/lib/utils";
-import type { MonitoringFilters } from "../types";
+import type { LoanStatus, MonitoringFilters } from "../types";
 
 interface ToolbarProps {
     filters: MonitoringFilters;
@@ -56,7 +55,6 @@ export function MonitoringToolbar({ filters, onFiltersChange }: ToolbarProps) {
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                        initialFocus
                         mode="range"
                         defaultMonth={filters.dateRange.from}
                         selected={{ from: filters.dateRange.from, to: filters.dateRange.to }}
@@ -67,7 +65,7 @@ export function MonitoringToolbar({ filters, onFiltersChange }: ToolbarProps) {
             </Popover>
 
             {/* Status Filter */}
-            <Select value={filters.status[0] || "all"} onValueChange={(val) => onFiltersChange({ ...filters, status: val === "all" ? [] : [val as any] })}>
+            <Select value={(filters.status[0] ?? "all") as string} onValueChange={(val) => onFiltersChange({ ...filters, status: val === "all" ? [] : [val as LoanStatus] })}>
                 <SelectTrigger className="h-9 w-[140px] bg-background">
                     <Funnel size={14} className="mr-2 text-muted-foreground" />
                     <SelectValue placeholder="Status" />

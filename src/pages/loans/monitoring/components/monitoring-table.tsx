@@ -4,6 +4,7 @@ import {
     createCoreRowModel,
     createColumnHelper,
     coreFeatures,
+    metaHelper,
     tableFeatures,
     rowSortingFeature,
     rowPaginationFeature,
@@ -19,6 +20,11 @@ import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
 import { cn } from "@/src/lib/utils";
+
+/** Per-column Tailwind classes surfaced through `meta.className`. */
+type MonitoringColumnMeta = {
+    className?: string;
+};
 
 /**
  * Resolve a branch code (e.g. "011") to its human-readable name
@@ -41,11 +47,15 @@ function resolveBranchName(code: string): string {
     return BRANCHES.find((b) => b.code === code)?.name ?? code;
 }
 
-// Declare features for this table (v9 API)
+// Declare features for this table (v9 API).
+// `columnMeta: metaHelper<MonitoringColumnMeta>()` registers the
+// `meta.className` field so per-column Tailwind utilities can be
+// applied at render time from the column definition.
 const features = tableFeatures({
     ...coreFeatures,
     rowSortingFeature,
     rowPaginationFeature,
+    columnMeta: metaHelper<MonitoringColumnMeta>(),
     coreRowModel: createCoreRowModel(),
 });
 
@@ -170,8 +180,16 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
             header: "Status",
             cell: (info) => {
                 const status = info.getValue();
-                const variant = status === "Approved" ? "success" : status === "Rejected" ? "destructive" : "secondary";
-                return <Badge variant={variant as any} className="text-xs">{status}</Badge>;
+                // Map the wire `LoanStatus` to one of the Badge's known
+                // variants. "Approved" → outline (neutral emphasis),
+                // "Rejected" → destructive, everything else → secondary.
+                const variant: "outline" | "destructive" | "secondary" =
+                    status === "Approved"
+                        ? "outline"
+                        : status === "Rejected"
+                            ? "destructive"
+                            : "secondary";
+                return <Badge variant={variant} className="text-xs">{status}</Badge>;
             }
         }),
         columnHelper.accessor("lastActionDate", {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -100,10 +100,11 @@ export function NotificationsPage() {
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }, [notifications, query, status, type]);
 
-    useEffect(() => setPage(1), [query, status, type]);
-
     const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-    const safePage = Math.min(page, pageCount);
+    // Clamp `page` to the filtered list's bounds during render — this is
+    // the `useEffect` + `setState(1)` pattern rewritten to derive the
+    // result inline, avoiding a cascading render on every filter change.
+    const safePage = Math.min(Math.max(1, page), pageCount);
     const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
     const from = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
     const to = Math.min(filtered.length, safePage * PAGE_SIZE);
@@ -120,10 +121,27 @@ export function NotificationsPage() {
         // TODO(api): POST /api/notifications/{id}/resolve with optimistic rollback.
     };
 
+    // Filter setters reset pagination inline so a filter change never
+    // lands the user mid-list with a stale page index. This avoids the
+    // `setState-in-effect` pattern the new lint rule forbids.
+    const setQueryAndReset = (next: string) => {
+        setQuery(next);
+        setPage(1);
+    };
+    const setStatusAndReset = (next: StatusFilter) => {
+        setStatus(next);
+        setPage(1);
+    };
+    const setTypeAndReset = (next: TypeFilter) => {
+        setType(next);
+        setPage(1);
+    };
+
     const clearFilters = () => {
         setQuery("");
         setStatus("all");
         setType("all");
+        setPage(1);
     };
 
     return (
@@ -191,7 +209,7 @@ export function NotificationsPage() {
                         />
                         <Input
                             value={query}
-                            onChange={(e) => setQuery(e.target.value)}
+                            onChange={(e) => setQueryAndReset(e.target.value)}
                             placeholder="Search notifications..."
                             aria-label="Search notifications"
                             className="pl-9"
@@ -200,7 +218,7 @@ export function NotificationsPage() {
                     <FilterMenu<StatusFilter>
                         label="Status"
                         value={status}
-                        onChange={setStatus}
+                        onChange={setStatusAndReset}
                         options={[
                             { value: "all", label: "Status" },
                             { value: "unread", label: "Unread" },
@@ -210,7 +228,7 @@ export function NotificationsPage() {
                     <FilterMenu<TypeFilter>
                         label="Type"
                         value={type}
-                        onChange={setType}
+                        onChange={setTypeAndReset}
                         options={[
                             { value: "all", label: "Type" },
                             { value: "application", label: "Application" },

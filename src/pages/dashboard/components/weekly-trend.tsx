@@ -5,7 +5,16 @@ import type { WeeklyTrendPoint } from "../types";
 
 interface WeeklyTrendProps { data: WeeklyTrendPoint[]; }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+// Recharts' tooltip payload is a heterogeneous array of `{ name, value,
+// dataKey, payload, ... }` objects keyed off the data series. We type
+// the props structurally so the tooltip can stay `any`-free.
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: Array<{ name?: string; value?: number | string; dataKey?: string }>;
+    label?: string | number;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
         return (
             <div className="rounded-lg border bg-background p-2 shadow-sm">

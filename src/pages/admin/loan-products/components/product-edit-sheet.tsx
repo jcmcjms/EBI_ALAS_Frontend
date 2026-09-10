@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -142,7 +142,7 @@ export function ProductEditSheet({
         register,
         handleSubmit,
         reset,
-        watch,
+        control,
         formState: { errors, isDirty, isSubmitting },
     } = useForm<ProductFormValues>({
         resolver: zodResolver(productFormSchema),
@@ -164,7 +164,9 @@ export function ProductEditSheet({
     // Live mirror of the rate so we can show the percentage hint
     // (e.g. "0.1200 = 12% p.a.") next to the field. Picked from
     // the form (not `product`) so the user sees the *pending* value.
-    const watchedRate = watch("advanceInterestRate");
+    // `useWatch` is the Compiler-friendly alternative to `watch()` —
+    // the latter can't be memoized safely.
+    const watchedRate = useWatch({ control, name: "advanceInterestRate" });
 
     const submit = handleSubmit(async (values) => {
         if (!product) return;
