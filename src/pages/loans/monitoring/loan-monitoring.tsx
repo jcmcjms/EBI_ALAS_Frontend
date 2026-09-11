@@ -5,6 +5,7 @@ import { MonitoringTable } from "./components/monitoring-table";
 import { LoanDetailsDrawer } from "./components/loan-details-drawer";
 import { Card } from "@/src/components/ui/card";
 import type { MonitoringFilters } from "./types";
+import { useSlaPolicy } from "@/src/lib/api/loan-review";
 
 export function LoanMonitoringPage() {
     const [filters, setFilters] = useState<MonitoringFilters>({
@@ -13,6 +14,11 @@ export function LoanMonitoringPage() {
         status: [],
         branchCode: "all",
     });
+
+    // SLA policy — fetched once per session (staleTime: Infinity).
+    // Falls back to built-in defaults from LOAN_STATUS_META when the
+    // endpoint is unreachable.
+    const slaPolicy = useSlaPolicy();
 
     // Deep-linking: MyApplicationsTab navigates here with `?id=<numericId>`
     // so the drawer opens immediately on arrival. `Number(...)` coerces the
@@ -40,6 +46,7 @@ export function LoanMonitoringPage() {
                             setSelectedLoanId(r.id);
                         }
                     }}
+                    slaPolicy={slaPolicy.data ?? null}
                 />
             </Card>
 

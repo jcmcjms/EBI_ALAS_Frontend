@@ -8,35 +8,10 @@ import type {
     PagedResult,
 } from "@/src/lib/api/types";
 import type { LoanMonitoringRecord, MonitoringFilters } from "@/src/pages/loans/monitoring/types";
+import type { LoanStatus } from "@/src/lib/loan-status";
 
 interface PaginationState { pageIndex: number; pageSize: number; }
 interface SortingState { id: string; desc: boolean; }
-
-// ─── Status maps ─────────────────────────────────────────────────────────────
-
-/** UI status → backend workflow statuses (GET /api/loans ?status= filter). */
-const BACKEND_STATUSES_BY_UI_STATUS: Record<LoanMonitoringRecord["status"], string[]> = {
-    Draft: ["Draft"],
-    Pending: ["ForRecommendation", "OnGoing"],
-    "Under Review": ["ForChecking", "ForApproval", "ForRevision"],
-    Approved: ["Approved", "ForDisbursement"],
-    Rejected: ["Rejected"],
-    Disbursed: ["Disbursed"],
-};
-
-/** Backend workflow status → UI status badge. */
-const UI_STATUS_BY_BACKEND_STATUS: Record<string, LoanMonitoringRecord["status"]> = {
-    Draft: "Draft",
-    ForRecommendation: "Pending",
-    OnGoing: "Pending",
-    ForChecking: "Under Review",
-    ForApproval: "Under Review",
-    ForRevision: "Under Review",
-    Approved: "Approved",
-    ForDisbursement: "Approved",
-    Rejected: "Rejected",
-    Disbursed: "Disbursed",
-};
 
 // ─── Sort column mapping ─────────────────────────────────────────────────────
 
@@ -71,6 +46,11 @@ function parseDate(value?: string | null): Date | null {
  * One `CreatedLoanSummary` (one row inside an ApplicationGroupNo group) →
  * one monitoring table record. Defensive against the POST-shaped
  * response where list-view enrichment fields are null.
+ *
+ * Status is passed through verbatim from the backend — never collapsed
+ * into generic buckets. The old `UI_STATUS_BY_BACKEND_STATUS` map hid
+ * operationally critical distinctions (e.g. ForRevision vs ForChecking
+ * both read "Under Review", so a returned file looked like progress).
  */
 function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
     const nameParts = [loan.firstName, loan.middleName, loan.lastName, loan.suffix]
@@ -88,7 +68,7 @@ function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
         product: loan.product ?? loan.productCode,
         loanAmount: loan.proposedAmount,
         applicationDate: (appliedAt ?? new Date()).toISOString(),
-        status: UI_STATUS_BY_BACKEND_STATUS[loan.status] ?? "Pending",
+        status: (loan.status as LoanStatus) ?? "Draft",
         lastActionDate: lastActionAt.toISOString(),
         timeLapsedHours: Math.max(0, Math.round((Date.now() - lastActionAt.getTime()) / 3_600_000)),
         // Prefer the server-resolved last handler; fall back to the creator for
@@ -132,10 +112,10 @@ export function useLoanMonitoring(
 
             if (filters.search) params.search = filters.search;
 
+            // Raw statuses go straight through — no collapsing into generic buckets.
+            // The backend's ?status= filter already accepts comma-separated raw statuses.
             if (filters.status.length > 0) {
-                params.status = filters.status
-                    .flatMap((s) => BACKEND_STATUSES_BY_UI_STATUS[s] ?? [s])
-                    .join(",");
+                params.status = filters.status.join(",");
             }
 
             if (filters.branchCode && filters.branchCode !== "all") {

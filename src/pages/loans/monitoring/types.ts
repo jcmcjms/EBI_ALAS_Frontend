@@ -1,4 +1,6 @@
-export type LoanStatus = "Draft" | "Pending" | "Under Review" | "Approved" | "Rejected" | "Disbursed";
+import type { LoanStatus } from "@/src/lib/loan-status";
+
+export type { LoanStatus };
 
 export interface LoanMonitoringRecord {
     /**

@@ -20,6 +20,9 @@ import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
 import { cn } from "@/src/lib/utils";
+import { LOAN_STATUS_META } from "@/src/lib/loan-status";
+import { AGING_BADGE_CLASS, assessAging } from "@/src/lib/loan-aging";
+import type { LoanStatus } from "@/src/lib/loan-status";
 
 /** Per-column Tailwind classes surfaced through `meta.className`. */
 type MonitoringColumnMeta = {
@@ -64,9 +67,13 @@ const columnHelper = createColumnHelper<typeof features, LoanMonitoringRecord>()
 interface MonitoringTableProps {
     filters: MonitoringFilters;
     onRowClick: (record: LoanMonitoringRecord) => void;
+    /** Server-fetched SLA policy (hours per stage). Null when the
+     *  /sla-policy endpoint is unreachable — the indicator falls back
+     *  to built-in defaults from LOAN_STATUS_META. */
+    slaPolicy?: Record<string, number> | null;
 }
 
-// Helper component for Time Lapsed SLA.
+// ─── Time Lapsed indicator (SLA-driven urgency) ─────────────────────────────
 //
 // Computes elapsed time LIVE from `lastActionDate` (instead of reading the
 // server-rounded `timeLapsedHours` snapshot) and re-renders every second
@@ -74,42 +81,58 @@ interface MonitoringTableProps {
 // hours. Server `timeLapsedHours` is still on the record for consumers
 // that need a stable snapshot (sorting, exports) — this indicator just
 // bypasses it for display accuracy.
-function TimeLapsedIndicator({ lastActionDate }: { lastActionDate: string }) {
-    // `now` is ticked once per second; the formatted label is derived from
-    // `now - lastActionDate` so the display runs instead of looking frozen.
-    const [now, setNow] = useState(() => Date.now());
+//
+// Urgency = elapsed-since-last-action vs the stage's handling SLA:
+//   ok      < 60% of SLA consumed   → green
+//   warning 60–99%                  → amber (act soon)
+//   breach  ≥ 100%                  → red   (SLA missed)
+//   none    terminal / no-SLA stage → neutral
+//
+// 60% gives the handler a visible heads-up before the breach, not after.
+// A red "23h" on an Approved loan was noise — now it's slate.
 
-    useEffect(() => {
-        const interval = setInterval(() => setNow(Date.now()), 1000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const elapsedMs = Math.max(0, now - new Date(lastActionDate).getTime());
-    const totalSeconds = Math.floor(elapsedMs / 1000);
-    const days = Math.floor(totalSeconds / 86_400);
-    const remSecondsAfterDays = totalSeconds % 86_400;
+function formatElapsed(ms: number): string {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const days = Math.floor(total / 86_400);
+    const remSecondsAfterDays = total % 86_400;
     const hours = Math.floor(remSecondsAfterDays / 3_600);
     const minutes = Math.floor((remSecondsAfterDays % 3_600) / 60);
     const seconds = remSecondsAfterDays % 60;
-
-    // SLA thresholds stay keyed on total elapsed hours so the color
-    // semantics don't change with the new live format.
-    let colorClass = "text-emerald-600 bg-emerald-500/10"; // < 24h
-    if (elapsedMs >= 48 * 3_600_000) colorClass = "text-red-600 bg-red-500/10"; // > 48h (SLA Breach)
-    else if (elapsedMs >= 24 * 3_600_000) colorClass = "text-amber-600 bg-amber-500/10"; // 24-48h
-
-    // Padded (and `tabular-nums` on the span) so the digit widths stay
-    // stable as seconds tick — prevents the surrounding cell from
-    // jittering left/right every second.
     const pad = (n: number) => String(n).padStart(2, "0");
-    const label =
-        days > 0
-            ? `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`
-            : `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+    return days > 0
+        ? `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`
+        : `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+}
+
+interface TimeLapsedIndicatorProps {
+    lastActionDate: string;
+    status: LoanStatus;
+    slaPolicy?: Record<string, number> | null;
+}
+
+function TimeLapsedIndicator({ lastActionDate, status, slaPolicy }: TimeLapsedIndicatorProps) {
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const t = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(t);
+    }, []);
+
+    const assessment = assessAging(status, lastActionDate, now, slaPolicy);
 
     return (
-        <span className={cn("px-2 py-0.5 rounded-md text-xs font-semibold tabular-nums", colorClass)}>
-            {label}
+        <span
+            title={
+                assessment.slaHours === null
+                    ? "No handling SLA for this stage"
+                    : `${assessment.label} — ${assessment.pctOfSla?.toFixed(0)}% consumed`
+            }
+            aria-label={`Time in stage ${formatElapsed(now - new Date(lastActionDate).getTime())}, ${assessment.label}`}
+            className={cn(
+                "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium tabular-nums",
+                AGING_BADGE_CLASS[assessment.tier],
+            )}
+        >
+            {formatElapsed(now - new Date(lastActionDate).getTime())}
         </span>
     );
 }
@@ -129,7 +152,7 @@ function SkeletonRow({ colSpan }: { colSpan: number }) {
     );
 }
 
-export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
+export function MonitoringTable({ filters, onRowClick, slaPolicy }: MonitoringTableProps) {
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState<SortingState>([{ id: "applicationDate", desc: true }]);
 
@@ -180,21 +203,27 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
             header: "Status",
             cell: (info) => {
                 const status = info.getValue();
-                // Map the wire `LoanStatus` to one of the Badge's known
-                // variants. "Approved" → outline (neutral emphasis),
-                // "Rejected" → destructive, everything else → secondary.
-                const variant: "outline" | "destructive" | "secondary" =
-                    status === "Approved"
-                        ? "outline"
-                        : status === "Rejected"
-                            ? "destructive"
-                            : "secondary";
-                return <Badge variant={variant} className="text-xs">{status}</Badge>;
+                const meta = LOAN_STATUS_META[status];
+                return (
+                    <Badge
+                        variant="outline"
+                        title={meta?.hint}
+                        className={cn("text-xs font-normal", meta?.className)}
+                    >
+                        {meta?.label ?? status}
+                    </Badge>
+                );
             }
         }),
         columnHelper.accessor("lastActionDate", {
             header: "Time Lapsed",
-            cell: (info) => <TimeLapsedIndicator lastActionDate={info.getValue()} />
+            cell: (info) => (
+                <TimeLapsedIndicator
+                    lastActionDate={info.getValue()}
+                    status={info.row.original.status}
+                    slaPolicy={slaPolicy}
+                />
+            )
         }),
         columnHelper.accessor("lastActionBy", {
             header: "Last Action By",

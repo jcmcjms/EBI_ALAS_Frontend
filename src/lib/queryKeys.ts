@@ -66,6 +66,8 @@ export const queryKeys = {
             ["loans", "list", params ?? {}] as const,
         monitoring: <F, P, S>(filters: F, pagination: P, sorting: S) =>
             ["loans", "monitoring", filters, pagination, sorting] as const,
+        /** SLA policy — fetched once per session, staleTime: Infinity. */
+        slaPolicy: ["loans", "sla-policy"] as const,
     },
 
     // ── WebLoans (CIS lookup / outstanding / pending) ──────────────────────

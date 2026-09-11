@@ -1,5 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "./types";
+import { queryKeys } from "@/src/lib/queryKeys";
 
 // ── Envelope types mirroring the backend ────────────────────────────────
 
@@ -237,4 +239,28 @@ export async function updateLoanStatus(
         verdict: verdict ?? null,
     });
     return unwrapApiData(res.data);
+}
+
+// ── SLA Policy ──────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/loans/sla-policy — handling-SLA hours per workflow stage.
+ *
+ * Ops-tunable in appsettings ("WorkflowSlaHours"); fetched once per session.
+ * The frontend ships sane built-in defaults (from LOAN_STATUS_META) so the
+ * UI degrades gracefully when the endpoint is unreachable.
+ */
+export async function getSlaPolicy(): Promise<Record<string, number>> {
+    const res = await apiClient.get<ApiResponse<Record<string, number>>>("/api/loans/sla-policy");
+    return unwrapApiData(res.data);
+}
+
+/** Fetched once per session; the UI falls back to built-in defaults on error. */
+export function useSlaPolicy() {
+    return useQuery({
+        queryKey: queryKeys.loans.slaPolicy,
+        queryFn: getSlaPolicy,
+        staleTime: Infinity,
+        retry: 1,
+    });
 }

@@ -6,7 +6,10 @@ import { Calendar } from "@/src/components/ui/calendar.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { MagnifyingGlass, CalendarBlank, Funnel, Export } from "@phosphor-icons/react";
 import { format } from "date-fns";
-import type { LoanStatus, MonitoringFilters } from "../types";
+import type { MonitoringFilters } from "../types";
+import type { LoanStatus } from "@/src/lib/loan-status";
+import { LOAN_STATUS_META, STATUS_FILTER_ORDER } from "@/src/lib/loan-status";
+import { cn } from "@/src/lib/utils";
 
 interface ToolbarProps {
     filters: MonitoringFilters;
@@ -64,18 +67,28 @@ export function MonitoringToolbar({ filters, onFiltersChange }: ToolbarProps) {
                 </PopoverContent>
             </Popover>
 
-            {/* Status Filter */}
+            {/* Status Filter — renders the real workflow stages, not the
+                old collapsed buckets (Pending / Under Review / …). */}
             <Select value={(filters.status[0] ?? "all") as string} onValueChange={(val) => onFiltersChange({ ...filters, status: val === "all" ? [] : [val as LoanStatus] })}>
-                <SelectTrigger className="h-9 w-[140px] bg-background">
+                <SelectTrigger className="h-9 w-[180px] bg-background">
                     <Funnel size={14} className="mr-2 text-muted-foreground" />
                     <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Under Review">Under Review</SelectItem>
-                    <SelectItem value="Approved">Approved</SelectItem>
-                    <SelectItem value="Rejected">Rejected</SelectItem>
+                    {STATUS_FILTER_ORDER.map((s) => (
+                        <SelectItem key={s} value={s}>
+                            <span className="flex items-center gap-2">
+                                <span
+                                    className={cn(
+                                        "inline-block h-2 w-2 rounded-full border",
+                                        LOAN_STATUS_META[s].className,
+                                    )}
+                                />
+                                {LOAN_STATUS_META[s].label}
+                            </span>
+                        </SelectItem>
+                    ))}
                 </SelectContent>
             </Select>
 
