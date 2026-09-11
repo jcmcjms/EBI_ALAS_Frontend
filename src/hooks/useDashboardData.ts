@@ -1,12 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/src/lib/queryKeys";
+import { getDashboardOverview, type DashboardOverviewDto } from "@/src/lib/api/dashboard";
+import { BRANCHES } from "@/src/lib/api/types";
 import type {
-    DashboardSummary,
-    PendingQueueItem,
-    NowServingItem,
-    PushBackItem,
-    ApprovedLoanItem,
-    WeeklyTrendPoint,
+    DashboardSummary, LoanStatus, PendingQueueItem, NowServingItem,
+    PushBackItem, ApprovedLoanItem, WeeklyTrendPoint,
 } from "@/src/pages/dashboard/types";
 
 export interface DashboardData {
@@ -19,63 +17,68 @@ export interface DashboardData {
     fetchedAt: string;
 }
 
-// Import dummy data
-import {
-    dashboardSummary,
-    pendingQueueData,
-    nowServingData,
-    pushBackData,
-    approvedLoansData,
-    weeklyTrend,
-} from "@/src/pages/dashboard/data/dummy-data";
+/** Backend status keys → the display union the widgets' badge styles key off. */
+const STATUS_LABELS: Record<string, LoanStatus> = {
+    ForRecommendation: "For Recommendation",
+    ForChecking: "For Checking",
+    ForApproval: "For Approval",
+    ForRevision: "For Revision",
+    ForDisbursement: "For Disbursement",
+    Disbursed: "Disbursed",
+    OnGoing: "On Going",
+    Approved: "Approved",
+    Rejected: "Rejected",
+};
 
-/**
- * Mock fetch function that returns dummy data.
- * Replace with real API call when backend is ready:
- *
- * async function fetchDashboardData(): Promise<DashboardData> {
- *     const { data } = await apiClient.get("/api/dashboard");
- *     return data.data;
- * }
- */
-async function fetchDashboardData(): Promise<DashboardData> {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
+const branchNameOf = (code: string) =>
+    BRANCHES.find((b) => b.code === code)?.name ?? `Branch ${code}`;
 
-    // Generate fresh relative timestamps on each fetch
-    const minutesAgo = (n: number) => new Date(Date.now() - n * 60_000).toISOString();
-
+/** DTO → existing view-models so the five widgets stay untouched. */
+function mapOverview(o: DashboardOverviewDto): DashboardData {
     return {
-        summary: dashboardSummary,
-        pendingQueue: pendingQueueData.map((item) => ({
-            ...item,
-            date: minutesAgo(
-                item.position === 1 ? 195 : item.position === 2 ? 160 : item.position === 3 ? 130 : item.position === 4 ? 95 : item.position === 5 ? 50 : 25
-            ),
+        summary: {
+            totalPending: o.kpis.totalPending,
+            pendingDeltaFromYesterday: o.kpis.pendingDeltaFromYesterday,
+            nowServing: o.kpis.nowServing,
+            pushBacksToday: o.kpis.pushBacksToday,
+            approvedToday: o.kpis.approvedToday,
+            approvedVsAvgPercent: o.kpis.approvedVsAvgPercent,
+        },
+        pendingQueue: o.pendingQueue.map((p) => ({
+            position: p.position,
+            lamId: p.lamId,
+            branch: branchNameOf(p.branchCode),
+            status: STATUS_LABELS[p.status] ?? "On Going",
+            date: p.waitingSinceUtc,
         })),
-        nowServing: nowServingData,
-        pushBacks: pushBackData.map((item, idx) => ({
-            ...item,
-            date: minutesAgo([210, 175, 140, 85, 30][idx]),
+        nowServing: o.nowServing.map((n) => ({
+            number: n.number, checker: n.checker, lamId: n.lamId, isActive: n.isActive,
         })),
-        approvedLoans: approvedLoansData.map((item, idx) => ({
-            ...item,
-            date: minutesAgo([200, 155, 125, 90, 40][idx]),
+        pushBacks: o.pushBacks.map((p) => ({
+            number: p.number, lamId: p.lamId, branch: branchNameOf(p.branchCode),
+            reason: p.reason, date: p.pushedBackAtUtc,
         })),
-        weeklyTrend,
-        fetchedAt: new Date().toISOString(),
+        approvedLoans: o.approvedLoans.map((a) => ({
+            fullName: a.fullName, lamId: a.lamId, branch: branchNameOf(a.branchCode),
+            date: a.approvedAtUtc,
+        })),
+        weeklyTrend: o.weeklyTrend.map((t) => ({
+            day: t.day, approved: t.approved, pushBacks: t.pushBacks,
+        })),
+        fetchedAt: o.generatedAtUtc,
     };
 }
 
 export function useDashboardData() {
     return useQuery({
         queryKey: queryKeys.dashboard.full,
-        queryFn: fetchDashboardData,
-        refetchInterval: 30_000, // Auto-refetch every 30 seconds (dashboard is monitoring UI)
-        refetchIntervalInBackground: false, // Don't refetch when tab is hidden
-        // refetchOnWindowFocus inherits the global default (false). The dashboard
-        // is a polling page; user-driven refresh happens via the explicit
-        // interval above. Banking app — no heuristic focus refetches.
-        staleTime: 10_000, // Consider data fresh for 10 seconds (longer than the 30s poll would suggest, but harmless: staleTime gates deduping, not the interval)
+        queryFn: async () => mapOverview(await getDashboardOverview()),
+        // Monitoring UI: keep it live while the page is open.
+        refetchInterval: 30_000,
+        // Hidden tabs don't need live data; on return, focus-refetch catches up
+        // instantly — cheaper and kinder than background polling.
+        refetchIntervalInBackground: false,
+        refetchOnWindowFocus: true,
+        staleTime: 10_000,
     });
 }

@@ -28,7 +28,7 @@ export function NowServing({ data }: NowServingProps) {
                                     <p className="truncate text-sm font-medium">{item.checker}</p>
                                     <p className="truncate text-xs text-muted-foreground">{item.lamId}</p>
                                 </div>
-                                {item.number === 1 && (
+                                {item.isActive && (
                                     <Badge variant="outline" className="gap-1.5 border-emerald-300 bg-emerald-50 font-normal text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
                                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 dark:bg-emerald-400" aria-hidden />
                                         Serving

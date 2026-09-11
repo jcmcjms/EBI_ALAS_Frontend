@@ -2,9 +2,10 @@ import { AppShell } from "@/src/components/layout/AppShell";
 import { useAuthStore } from "@/src/store/authStore";
 import { useNavigate } from "react-router-dom";
 import { BRANCHES } from "@/src/lib/api/types";
-import { Plus } from "@phosphor-icons/react";
+import { ArrowClockwise, Plus } from "@phosphor-icons/react";
 import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
+import { cn } from "@/src/lib/utils";
 
 import { ApprovedLoans } from "@/src/pages/dashboard/components/approved-loans";
 import { DashboardSummary } from "@/src/pages/dashboard/components/dashboard-summary";
@@ -24,7 +25,7 @@ function greeting(): string {
 export function Dashboard() {
     const user = useAuthStore((state) => state.user);
     const navigate = useNavigate();
-    const { data, isLoading, dataUpdatedAt } = useDashboardData();
+    const { data, isLoading, isError, isFetching, dataUpdatedAt, refetch } = useDashboardData();
 
     const asOf = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date();
 
@@ -42,9 +43,20 @@ export function Dashboard() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
+                        {isFetching && !isLoading && (
+                            <span className="flex items-center gap-1 text-[11px] text-muted-foreground" aria-live="polite">
+                                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" aria-hidden />
+                                Updating…
+                            </span>
+                        )}
                         <span className="text-xs tabular-nums text-muted-foreground mr-2">
                             As of {asOf.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
+                            <span className="ml-1 opacity-70">· auto-refresh 30s</span>
                         </span>
+                        <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}
+                            aria-label="Refresh dashboard now">
+                            <ArrowClockwise size={14} weight="bold" className={cn(isFetching && "animate-spin")} />
+                        </Button>
                         <Button size="sm" onClick={() => navigate("/loans/create")}>
                             <Plus size={16} weight="bold" className="mr-1" />
                             New Loan
@@ -52,7 +64,12 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {isLoading ? (
+                {isError ? (
+                    <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+                        <p className="text-sm text-muted-foreground">Failed to load dashboard data.</p>
+                        <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+                    </div>
+                ) : isLoading ? (
                     <DashboardSkeleton />
                 ) : data ? (
                     <>
@@ -73,11 +90,7 @@ export function Dashboard() {
                             <ApprovedLoans data={data.approvedLoans} />
                         </div>
                     </>
-                ) : (
-                    <div className="flex items-center justify-center h-64 text-center">
-                        <p className="text-sm text-muted-foreground">Failed to load dashboard data.</p>
-                    </div>
-                )}
+                ) : null}
             </div>
         </AppShell>
     );

@@ -12,6 +12,7 @@ export interface NowServingItem {
     number: number;
     checker: string;
     lamId: string;
+    isActive: boolean;
 }
 
 export interface PushBackItem {
@@ -31,9 +32,11 @@ export interface ApprovedLoanItem {
 
 export interface DashboardSummary {
     totalPending: number;
+    pendingDeltaFromYesterday: number;
     nowServing: number;
     pushBacksToday: number;
     approvedToday: number;
+    approvedVsAvgPercent: number;
 }
 
 export interface WeeklyTrendPoint {

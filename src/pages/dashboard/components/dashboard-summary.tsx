@@ -1,4 +1,4 @@
-import { ArrowArcLeft, ArrowUpRight, CheckCircle, ClipboardText, TrendUp, UserCircleCheck, WarningCircle } from "@phosphor-icons/react";
+import { ArrowArcLeft, ArrowUpRight, CheckCircle, ClipboardText, TrendDown, TrendUp, UserCircleCheck, WarningCircle } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { cn } from "@/src/lib/utils";
 import type { DashboardSummary as DashboardSummaryType } from "../types";
@@ -21,22 +21,38 @@ export function DashboardSummary({ data }: DashboardSummaryProps) {
         {
             title: "Total Pending", value: data.totalPending, icon: ClipboardText,
             iconWrap: "bg-blue-500/10 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400",
-            trend: "+4 from yesterday", trendIcon: TrendUp, trendClass: "text-amber-600 dark:text-amber-400", target: "pending-queue",
+            trend: `${data.pendingDeltaFromYesterday >= 0 ? "+" : ""}${data.pendingDeltaFromYesterday} from yesterday`,
+            trendIcon: data.pendingDeltaFromYesterday >= 0 ? TrendUp : TrendDown,
+            trendClass: data.pendingDeltaFromYesterday >= 0
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-emerald-600 dark:text-emerald-400",
+            target: "pending-queue",
         },
         {
             title: "Now Serving", value: data.nowServing, icon: UserCircleCheck,
             iconWrap: "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-400",
-            trend: "Active checkers", trendIcon: null, trendClass: "text-muted-foreground", target: "now-serving",
+            trend: "Active checkers (last 60 min)", trendIcon: null,
+            trendClass: "text-muted-foreground", target: "now-serving",
         },
         {
             title: "Push Backs Today", value: data.pushBacksToday, icon: ArrowArcLeft,
             iconWrap: "bg-red-500/10 text-red-500 dark:bg-red-500/20 dark:text-red-400",
-            trend: "Needs attention", trendIcon: WarningCircle, trendClass: "text-red-600 dark:text-red-400", target: "push-back",
+            trend: data.pushBacksToday > 0 ? "Needs attention" : "All clear",
+            trendIcon: data.pushBacksToday > 0 ? WarningCircle : CheckCircle,
+            trendClass: data.pushBacksToday > 0
+                ? "text-red-600 dark:text-red-400"
+                : "text-emerald-600 dark:text-emerald-400",
+            target: "push-back",
         },
         {
             title: "Approved Today", value: data.approvedToday, icon: CheckCircle,
             iconWrap: "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-400",
-            trend: "+12% vs avg", trendIcon: TrendUp, trendClass: "text-emerald-600 dark:text-emerald-400", target: "approved-loans",
+            trend: `${data.approvedVsAvgPercent >= 0 ? "+" : ""}${data.approvedVsAvgPercent}% vs 7-day avg`,
+            trendIcon: data.approvedVsAvgPercent >= 0 ? TrendUp : TrendDown,
+            trendClass: data.approvedVsAvgPercent >= 0
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-amber-600 dark:text-amber-400",
+            target: "approved-loans",
         },
     ];
 
