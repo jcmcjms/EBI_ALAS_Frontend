@@ -120,6 +120,20 @@ export interface LoanAttachmentDto {
     uploadedAt: string;
 }
 
+export interface LoanChecklistDocumentDto {
+    loanNo: string;
+    loanProduct: string;
+    idCode: string;
+    checklistDescription: string | null;
+    docId: number | null;
+    docStr: string | null;
+    miniStr: string | null;
+    contentType: string | null;
+    created: string | null;
+    uploadedBy: string | null;
+    uploadStatus: string;
+}
+
 export interface DeviationRemarkDto {
     id: number;
     loanDeviationId: number;
@@ -143,6 +157,7 @@ export const loanReviewKeys = {
     detail: (id: number) => ["loans", id, "detail"] as const,
     history: (id: number) => ["loans", id, "history"] as const,
     attachments: (id: number) => ["loans", id, "attachments"] as const,
+    checklistDocuments: (id: number) => ["loans", id, "checklist-documents"] as const,
     deviations: (id: number) => ["loans", id, "deviations"] as const,
 };
 
@@ -171,6 +186,25 @@ export async function getLoanAttachments(id: number): Promise<LoanAttachmentDto[
         `/api/loans/${id}/attachments`
     );
     return unwrapApiData(res.data);
+}
+
+export async function getChecklistDocuments(id: number): Promise<LoanChecklistDocumentDto[]> {
+    const res = await apiClient.get<ApiResponse<LoanChecklistDocumentDto[]>>(
+        `/api/loans/${id}/checklist-documents`
+    );
+    return unwrapApiData(res.data);
+}
+
+export async function viewChecklistDocument(docId: number, fileName: string) {
+    const res = await apiClient.get(`/api/loans/checklist-documents/${docId}/view`, {
+        responseType: "blob",
+    });
+    const url = URL.createObjectURL(res.data as Blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 export async function uploadLoanAttachment(
