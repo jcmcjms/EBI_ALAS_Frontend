@@ -15,7 +15,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle } from "@phosphor-icons/react";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
@@ -23,6 +23,7 @@ import { cn } from "@/src/lib/utils";
 import { LOAN_STATUS_META } from "@/src/lib/loan-status";
 import { AGING_BADGE_CLASS, assessAging } from "@/src/lib/loan-aging";
 import type { LoanStatus } from "@/src/lib/loan-status";
+import { CANCELLABLE_STATUSES } from "@/src/lib/api/loan-review";
 
 /** Per-column Tailwind classes surfaced through `meta.className`. */
 type MonitoringColumnMeta = {
@@ -71,6 +72,10 @@ interface MonitoringTableProps {
      *  /sla-policy endpoint is unreachable — the indicator falls back
      *  to built-in defaults from LOAN_STATUS_META. */
     slaPolicy?: Record<string, number> | null;
+    /** Current authenticated user — used to gate the cancel action. */
+    currentUser?: { id: number; role: string } | null;
+    /** Called when the user clicks the cancel button on a row. */
+    onCancel?: (record: LoanMonitoringRecord) => void;
 }
 
 // ─── Time Lapsed indicator (SLA-driven urgency) ─────────────────────────────
@@ -152,7 +157,7 @@ function SkeletonRow({ colSpan }: { colSpan: number }) {
     );
 }
 
-export function MonitoringTable({ filters, onRowClick, slaPolicy }: MonitoringTableProps) {
+export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, onCancel }: MonitoringTableProps) {
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState<SortingState>([{ id: "applicationDate", desc: true }]);
 
@@ -235,6 +240,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy }: MonitoringTa
                     PushedBack: "Pushed back",
                     EvaluatedRecommended: "Recommended",
                     EvaluatedNotRecommended: "Not recommended",
+                    ApplicationCancelled: "Cancelled",
                 };
                 return (
                     <div className="flex flex-col">
@@ -245,6 +251,28 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy }: MonitoringTa
                             </span>
                         )}
                     </div>
+                );
+            },
+        }),
+        columnHelper.display({
+            id: "actions",
+            header: "",
+            cell: (info) => {
+                const row = info.row.original;
+                const isEncoder = currentUser?.role === "Encoder";
+                const isOwner = currentUser?.id === row.createdById;
+                const cancellable = isEncoder && isOwner && CANCELLABLE_STATUSES.includes(row.status);
+                if (!cancellable || !onCancel) return null;
+                return (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        aria-label={`Cancel application ${row.formNumber}`}
+                        onClick={(e) => { e.stopPropagation(); onCancel(row); }}
+                    >
+                        <XCircle size={15} className="text-destructive" />
+                    </Button>
                 );
             },
         }),

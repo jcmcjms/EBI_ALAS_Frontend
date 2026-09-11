@@ -960,6 +960,8 @@ export interface CreatedLoanSummary {
     lastActionByName?: string | null;
     /** Verb of the latest workflow action (Created, PushedBack, EvaluatedRecommended, …). */
     lastAction?: string | null;
+    /** User ID of the encoder who created this application. */
+    createdById?: number | null;
 }
 
 /**

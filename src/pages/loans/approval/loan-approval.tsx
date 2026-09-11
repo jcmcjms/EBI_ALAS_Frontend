@@ -54,15 +54,18 @@ import {
     getLoanHistory,
     loanReviewKeys,
     updateLoanStatus,
+    cancelLoanApplication,
+    CANCELLABLE_STATUSES,
     type LoanDetailResponse,
     type EvaluationVerdict,
 } from "@/src/lib/api/loan-review";
 import { queryKeys } from "@/src/lib/queryKeys";
 import { cn } from "@/src/lib/utils";
+import type { LoanStatus } from "@/src/lib/loan-status";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
 
-const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing"];
+const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing", "Cancelled"];
 const MIN_REMARKS = 10; // mirrors UpdateLoanStatusValidator
 
 type WorkflowAction = {
@@ -246,6 +249,11 @@ export function LoanApprovalPage() {
     const [zoom, setZoom] = useState(1);
     const [tab, setTab] = useState("workflow");
 
+    // ── Cancel dialog state ────────────────────────────────────────────────
+    const [cancelOpen, setCancelOpen] = useState(false);
+    const [cancelReason, setCancelReason] = useState("");
+    const [cancelPending, setCancelPending] = useState(false);
+
     const user = useAuthStore((s) => s.user);
 
     const loan = useQuery({
@@ -335,6 +343,11 @@ export function LoanApprovalPage() {
         detail.deviationDetails.length +
         (detail.feeDeviationJustification ? 1 : 0);
 
+    const canCancel = user?.role === "Encoder"
+        && Number(user.userId) === detail.createdById
+        && CANCELLABLE_STATUSES.includes(detail.status as LoanStatus)
+        && !frozen;
+
     return (
         <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40">
             {/* ── Sticky header ──────────────────────────────────────────── */}
@@ -381,6 +394,14 @@ export function LoanApprovalPage() {
                         {detail.evaluationVerdict === "EvaluatedRecommended" && (
                             <Badge variant="secondary" className="gap-1.5 border-emerald-200 bg-emerald-50 text-emerald-700">
                                 <ThumbsUp size={12} weight="fill" /> Evaluator: Recommended
+                            </Badge>
+                        )}
+                        {detail.status === "Cancelled" && (
+                            <Badge
+                                variant="secondary"
+                                className="gap-1.5 border-slate-400 bg-slate-100 text-slate-700 line-through"
+                            >
+                                <XCircle size={12} weight="fill" /> Cancelled by client
                             </Badge>
                         )}
                     </div>
@@ -606,6 +627,16 @@ export function LoanApprovalPage() {
 
                                         {/* ── Action buttons ── */}
                                         <div className="space-y-2">
+                                            {canCancel && (
+                                                <Button
+                                                    variant="destructive"
+                                                    className="w-full gap-2"
+                                                    disabled={cancelOpen}
+                                                    onClick={() => setCancelOpen(true)}
+                                                >
+                                                    <XCircle size={16} /> Cancel Application
+                                                </Button>
+                                            )}
                                             {frozen && (
                                                 <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
                                                     This application is{" "}
@@ -745,6 +776,65 @@ export function LoanApprovalPage() {
                     </aside>
                 </div>
             </div>
+
+            {/* ── Cancel confirmation dialog ──────────────────────────────── */}
+            <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Cancel this application?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            The client has withdrawn their application for{" "}
+                            <strong>{detail.firstName} {detail.lastName}</strong>{" "}
+                            (<code>{detail.lamId}</code>). The application will be
+                            closed and the reviewer currently handling it will be notified.
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="cancel-reason">Reason for cancellation *</Label>
+                        <Textarea
+                            id="cancel-reason"
+                            rows={3}
+                            placeholder="e.g. Client found financing elsewhere…"
+                            value={cancelReason}
+                            onChange={(e) => setCancelReason(e.target.value)}
+                            maxLength={2000}
+                        />
+                        <p className="text-[11px] text-muted-foreground tabular-nums">
+                            {cancelReason.trim().length}/2000 — minimum 10
+                        </p>
+                    </div>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => { setCancelOpen(false); setCancelReason(""); }}>
+                            Keep application
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={cancelPending || cancelReason.trim().length < 10}
+                            onClick={async () => {
+                                setCancelPending(true);
+                                try {
+                                    await cancelLoanApplication(id, cancelReason.trim());
+                                    toast.success("Application cancelled.");
+                                    setCancelOpen(false);
+                                    setCancelReason("");
+                                    setCancelPending(false);
+                                    qc.invalidateQueries({ queryKey: loanReviewKeys.detail(id) });
+                                    qc.invalidateQueries({ queryKey: loanReviewKeys.history(id) });
+                                    qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+                                } catch (e) {
+                                    toast.error(e instanceof Error ? e.message : "Could not cancel.");
+                                    setCancelPending(false);
+                                }
+                            }}
+                        >
+                            {cancelPending ? "Cancelling…" : "Cancel application"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -27,6 +27,9 @@ export interface LoanMonitoringRecord {
     /** Verb of the last workflow action (Created, PushedBack,
      *  EvaluatedRecommended, …). Rendered as muted subtext. */
     lastActionVerb: string | null;
+    /** User ID of the encoder who created this application.
+     *  Used for ownership gating (cancel button). */
+    createdById?: number | null;
 }
 
 export interface MonitoringFilters {

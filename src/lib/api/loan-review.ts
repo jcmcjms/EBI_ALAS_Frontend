@@ -243,6 +243,25 @@ export async function updateLoanStatus(
     return unwrapApiData(res.data);
 }
 
+// ── Cancel Loan Application ─────────────────────────────────────────────────
+
+/**
+ * POST /api/loans/{id}/cancel — client-withdrawn by the owning Encoder.
+ *
+ * Encoder-only; the backend enforces ownership and status eligibility server-side.
+ */
+export async function cancelLoanApplication(
+    loanId: number,
+    reason: string,
+): Promise<void> {
+    await apiClient.post<ApiResponse<unknown>>(`/api/loans/${loanId}/cancel`, { reason });
+}
+
+/** Statuses from which an Encoder may cancel their own application. */
+export const CANCELLABLE_STATUSES: LoanStatus[] = [
+    "Draft", "ForRecommendation", "ForChecking", "ForApproval", "ForRevision",
+];
+
 // ── SLA Policy ──────────────────────────────────────────────────────────────
 
 /**

@@ -23,7 +23,8 @@ export type LoanStatus =
     | "ForDisbursement"
     | "Disbursed"
     | "OnGoing"
-    | "Rejected";
+    | "Rejected"
+    | "Cancelled";
 
 export interface LoanStatusMeta {
     label: string;
@@ -106,6 +107,13 @@ export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
         className:
             "border-red-300 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400",
     },
+    Cancelled: {
+        label: "Cancelled",
+        defaultSlaHours: null,
+        hint: "Client withdrew — terminal",
+        className:
+            "border-slate-400 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-400 line-through",
+    },
 };
 
 /** Filter dropdown order: active stages first, then terminal. */
@@ -120,4 +128,5 @@ export const STATUS_FILTER_ORDER: LoanStatus[] = [
     "Approved",
     "Disbursed",
     "Rejected",
+    "Cancelled",
 ];

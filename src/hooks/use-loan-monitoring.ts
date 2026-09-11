@@ -75,6 +75,7 @@ function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
         // POST-shaped responses / legacy rows with no audit actions yet.
         lastActionBy: loan.lastActionByName ?? loan.createdByName ?? "—",
         lastActionVerb: loan.lastAction ?? null,
+        createdById: loan.createdById ?? null,
     };
 }
 
