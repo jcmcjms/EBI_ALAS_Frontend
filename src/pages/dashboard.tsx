@@ -2,10 +2,9 @@ import { AppShell } from "@/src/components/layout/AppShell";
 import { useAuthStore } from "@/src/store/authStore";
 import { useNavigate } from "react-router-dom";
 import { BRANCHES } from "@/src/lib/api/types";
-import { ArrowClockwise, Plus } from "@phosphor-icons/react";
+import { Plus } from "@phosphor-icons/react";
 import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
-import { cn } from "@/src/lib/utils";
 
 import { ApprovedLoans } from "@/src/pages/dashboard/components/approved-loans";
 import { DashboardSummary } from "@/src/pages/dashboard/components/dashboard-summary";
@@ -51,12 +50,7 @@ export function Dashboard() {
                         )}
                         <span className="text-xs tabular-nums text-muted-foreground mr-2">
                             As of {asOf.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
-                            <span className="ml-1 opacity-70">· auto-refresh 30s</span>
                         </span>
-                        <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}
-                            aria-label="Refresh dashboard now">
-                            <ArrowClockwise size={14} weight="bold" className={cn(isFetching && "animate-spin")} />
-                        </Button>
                         <Button size="sm" onClick={() => navigate("/loans/create")}>
                             <Plus size={16} weight="bold" className="mr-1" />
                             New Loan
