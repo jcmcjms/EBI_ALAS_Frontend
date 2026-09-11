@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, memo } from "react";
 import { cn } from "@/src/lib/utils";
 import { resolveLoanProductDisplayName } from "@/src/lib/loan-product-display";
 import { computeLoanMetrics } from "@/src/lib/loan-approval-utils";
@@ -106,7 +106,7 @@ interface ApprovalFormDocumentProps {
     catLoanClass?: string | null;
 }
 
-export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, loanIndex = 0, catLoanClass }, ref) => {
+const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, loanIndex = 0, catLoanClass }, ref) => {
     const client = data?.client ?? ({} as LoanApplicationFormData["client"]);
     const branchType = data?.branchType ?? ({} as LoanApplicationFormData["branchType"]);
     // Multi-loan: the printed approval form is scoped to one loan. The
@@ -504,5 +504,12 @@ export const ApprovalFormDocument = forwardRef<HTMLDivElement, ApprovalFormDocum
         </div>
     );
 });
+ApprovalFormDocumentBase.displayName = "ApprovalFormDocument";
 
-ApprovalFormDocument.displayName = "ApprovalFormDocument";
+/**
+ * Memoized on purpose: the sheet is ~600 DOM nodes and recomputes loan
+ * metrics per render. The page hands it referentially stable props
+ * (`formData` via useMemo, `catLoanClass` a primitive), so sidebar query
+ * resolutions (history / remarks / files) no longer re-render the document.
+ */
+export const ApprovalFormDocument = memo(ApprovalFormDocumentBase);

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData } from "@tanstack/react-query";
 import {
     CheckCircle,
     XCircle,
@@ -260,12 +261,16 @@ export function LoanApprovalPage() {
         queryKey: loanReviewKeys.detail(id),
         queryFn: () => getLoanDetail(id),
         enabled: Number.isFinite(id) && id > 0,
+        staleTime: 30_000,        // back-nav / tab-return / mutation refetch: instant
+        gcTime: 5 * 60_000,
+        placeholderData: keepPreviousData,  // same-id refetches keep the sheet painted
     });
 
     const history = useQuery({
         queryKey: loanReviewKeys.history(id),
         queryFn: () => getLoanHistory(id),
         enabled: Number.isFinite(id) && id > 0,
+        staleTime: 30_000,
     });
 
     const detail = loan.data;

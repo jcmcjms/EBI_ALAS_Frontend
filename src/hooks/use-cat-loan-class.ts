@@ -28,11 +28,11 @@ export function useCatLoanClass(
             : ["webloans", "loan-class", "disabled"],
         queryFn: () => getCatLoanClass(branchCode, loanNoTrimmed, productCode),
         enabled,
-        // cat_loan_class is written once at loan preparation; it does not
-        // change while an application is in review. Five minutes keeps the
-        // wizard from re-fetching on every scroll/render without letting a
-        // stale class survive a working session.
-        staleTime: 5 * 60 * 1000,
+        // cat_loan_class is immutable for a prepared preloan and is now also
+        // cached 12h server-side; five minutes was re-paying the legacy
+        // round-trip several times per working session.
+        staleTime: 60 * 60_000,
+        gcTime: 24 * 60 * 60_000,
         // 400 (missing param) and 404 (no row for the triple) are
         // deterministic — retrying only delays the fallback display.
         retry: (failureCount, error) => {
