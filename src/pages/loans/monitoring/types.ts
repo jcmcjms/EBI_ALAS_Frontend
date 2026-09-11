@@ -19,7 +19,12 @@ export interface LoanMonitoringRecord {
     status: LoanStatus;
     lastActionDate: string;  // ISO Date
     timeLapsedHours: number; // Calculated by backend or frontend
-    lastApprover: string;
+    /** Officer the application last flowed through: Encoder → Recommender →
+     *  Evaluator → Approver. Resolved server-side from the audit trail. */
+    lastActionBy: string;
+    /** Verb of the last workflow action (Created, PushedBack,
+     *  EvaluatedRecommended, …). Rendered as muted subtext. */
+    lastActionVerb: string | null;
 }
 
 export interface MonitoringFilters {

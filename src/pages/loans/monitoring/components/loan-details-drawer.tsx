@@ -15,7 +15,7 @@ interface LoanDetailsDrawerProps {
  * SHAPE CHANGE (Task 10): Previously this took a fully-populated
  * `LoanMonitoringRecord` and rendered its dummy fields (formNumber,
  * customerName, loanType, product, loanAmount, applicationDate,
- * lastActionDate, lastApprover, timeLapsedHours, status). It now takes
+ * lastActionDate, lastActionBy, timeLapsedHours, status). It now takes
  * just `applicationId: number | null` and renders the server-backed audit
  * timeline for that loan.
  *

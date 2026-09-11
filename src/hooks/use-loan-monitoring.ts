@@ -91,7 +91,10 @@ function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
         status: UI_STATUS_BY_BACKEND_STATUS[loan.status] ?? "Pending",
         lastActionDate: lastActionAt.toISOString(),
         timeLapsedHours: Math.max(0, Math.round((Date.now() - lastActionAt.getTime()) / 3_600_000)),
-        lastApprover: loan.createdByName ?? "—",
+        // Prefer the server-resolved last handler; fall back to the creator for
+        // POST-shaped responses / legacy rows with no audit actions yet.
+        lastActionBy: loan.lastActionByName ?? loan.createdByName ?? "—",
+        lastActionVerb: loan.lastAction ?? null,
     };
 }
 

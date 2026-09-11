@@ -196,7 +196,29 @@ export function MonitoringTable({ filters, onRowClick }: MonitoringTableProps) {
             header: "Time Lapsed",
             cell: (info) => <TimeLapsedIndicator lastActionDate={info.getValue()} />
         }),
-        columnHelper.accessor("lastApprover", { header: "Last Approver", cell: (info) => <span className="text-xs">{info.getValue()}</span> }),
+        columnHelper.accessor("lastActionBy", {
+            header: "Last Action By",
+            cell: (info) => {
+                const verb = info.row.original.lastActionVerb;
+                const ACTION_LABELS: Record<string, string> = {
+                    Created: "Encoded",
+                    StatusChanged: "Status updated",
+                    PushedBack: "Pushed back",
+                    EvaluatedRecommended: "Recommended",
+                    EvaluatedNotRecommended: "Not recommended",
+                };
+                return (
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium">{info.getValue()}</span>
+                        {verb && (
+                            <span className="text-[10px] text-muted-foreground">
+                                {ACTION_LABELS[verb] ?? verb}
+                            </span>
+                        )}
+                    </div>
+                );
+            },
+        }),
     ]);
 
     // Server-driven pagination: react-table just renders pageCount and

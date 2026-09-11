@@ -920,9 +920,10 @@ export interface LoanSubmissionPayload {
  *
  * The monitoring table hook (`use-loan-monitoring`) relies on the
  * optional list-view fields (branchCode, product, customer name parts,
- * creationTypeLabel, applicationDate, lastActionDate, createdByName) to
- * populate every column. Without them the "App. Date", "Time Lapsed"
- * and "Last Approver" columns render empty.
+ * creationTypeLabel, applicationDate, lastActionDate, createdByName,
+ * lastActionByName, lastAction) to populate every column. Without them
+ * the "App. Date", "Time Lapsed" and "Last Action By" columns render
+ * empty.
  */
 export interface CreatedLoanSummary {
     id: number;
@@ -953,8 +954,12 @@ export interface CreatedLoanSummary {
     applicationDate?: string | null;
     /** ISO-8601 datetime — drives the "Time Lapsed" calc. */
     lastActionDate?: string | null;
-    /** Resolved officer full name — drives the "Last Approver" column. */
+    /** Resolved officer full name — used as fallback when no audit actions exist yet. */
     createdByName?: string | null;
+    /** Officer the application last flowed through (server-resolved from audit trail). */
+    lastActionByName?: string | null;
+    /** Verb of the latest workflow action (Created, PushedBack, EvaluatedRecommended, …). */
+    lastAction?: string | null;
 }
 
 /**

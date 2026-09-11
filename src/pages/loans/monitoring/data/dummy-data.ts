@@ -12,7 +12,8 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Under Review",
         lastActionDate: "2026-08-26T10:30:00.000Z",
         timeLapsedHours: 6,
-        lastApprover: "Maria Santos",
+        lastActionBy: "Maria Santos",
+        lastActionVerb: "StatusChanged",
     },
     {
         formNumber: "LAM-849305",
@@ -25,7 +26,8 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Pending",
         lastActionDate: "2026-08-26T09:15:00.000Z",
         timeLapsedHours: 12,
-        lastApprover: "Pedro Reyes",
+        lastActionBy: "Pedro Reyes",
+        lastActionVerb: "PushedBack",
     },
     {
         formNumber: "LAM-849310",
@@ -38,7 +40,8 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Approved",
         lastActionDate: "2026-08-26T08:00:00.000Z",
         timeLapsedHours: 2,
-        lastApprover: "Ana Lim",
+        lastActionBy: "Ana Lim",
+        lastActionVerb: "StatusChanged",
     },
     {
         formNumber: "LAM-849312",
@@ -51,7 +54,8 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Under Review",
         lastActionDate: "2026-08-25T14:20:00.000Z",
         timeLapsedHours: 28,
-        lastApprover: "Carlos Garcia",
+        lastActionBy: "Carlos Garcia",
+        lastActionVerb: "EvaluatedRecommended",
     },
     {
         formNumber: "LAM-849315",
@@ -64,7 +68,8 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Pending",
         lastActionDate: "2026-08-24T10:00:00.000Z",
         timeLapsedHours: 48,
-        lastApprover: "Lisa Tan",
+        lastActionBy: "Lisa Tan",
+        lastActionVerb: "Created",
     },
     {
         formNumber: "LAM-849318",
@@ -77,7 +82,8 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Approved",
         lastActionDate: "2026-08-26T07:45:00.000Z",
         timeLapsedHours: 1,
-        lastApprover: "Mark Fernandez",
+        lastActionBy: "Mark Fernandez",
+        lastActionVerb: "StatusChanged",
     },
     {
         formNumber: "LAM-849320",
@@ -90,7 +96,8 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Rejected",
         lastActionDate: "2026-08-25T16:00:00.000Z",
         timeLapsedHours: 24,
-        lastApprover: "Susan Lee",
+        lastActionBy: "Susan Lee",
+        lastActionVerb: "StatusChanged",
     },
     {
         formNumber: "LAM-849325",
@@ -103,7 +110,8 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Disbursed",
         lastActionDate: "2026-08-26T06:30:00.000Z",
         timeLapsedHours: 0,
-        lastApprover: "Kevin Morales",
+        lastActionBy: "Kevin Morales",
+        lastActionVerb: "StatusChanged",
     },
     {
         formNumber: "LAM-849330",
@@ -116,7 +124,8 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Under Review",
         lastActionDate: "2026-08-26T11:00:00.000Z",
         timeLapsedHours: 4,
-        lastApprover: "Jennifer Ong",
+        lastActionBy: "Jennifer Ong",
+        lastActionVerb: "EvaluatedNotRecommended",
     },
     {
         formNumber: "LAM-849335",
@@ -129,6 +138,7 @@ export const loanMonitoringData: LoanMonitoringRecord[] = [
         status: "Pending",
         lastActionDate: "2026-08-25T13:20:00.000Z",
         timeLapsedHours: 22,
-        lastApprover: "Daniel Chua",
+        lastActionBy: "Daniel Chua",
+        lastActionVerb: "Created",
     },
 ];
