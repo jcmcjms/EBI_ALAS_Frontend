@@ -6,6 +6,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/comp
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { cn } from "@/src/lib/utils";
 import type { PendingQueueItem, LoanStatus } from "../types";
+import type { LoanStatus as LoanStatusKey } from "@/src/lib/loan-status";
+import { assessAging, AGING_BADGE_CLASS } from "@/src/lib/loan-aging";
+import { useSlaPolicy } from "@/src/lib/api/loan-review";
 
 const statusStyles: Record<LoanStatus, string> = {
     "On Going": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
@@ -36,6 +39,11 @@ export function PendingQueue({ data }: PendingQueueProps) {
     const navigate = useNavigate();
     const displayData = useMemo(() => data.slice(0, 5), [data]);
 
+    // SLA policy — fetched once per session (staleTime: Infinity).
+    // Falls back to built-in defaults from LOAN_STATUS_META when the
+    // endpoint is unreachable.
+    const slaPolicy = useSlaPolicy();
+
     return (
         <Card id="pending-queue" className="scroll-mt-24 flex flex-col">
             <CardHeader className="flex-row items-center justify-between">
@@ -54,6 +62,15 @@ export function PendingQueue({ data }: PendingQueueProps) {
                     <ul className="divide-y">
                         {displayData.map((item) => {
                             const mins = waitingMinutes(item.date);
+                            // SLA-driven urgency: green → amber → red as the
+                            // elapsed time consumes the stage's handling SLA.
+                            // Terminal stages get a neutral pill.
+                            const assessment = assessAging(
+                                item.statusKey as LoanStatusKey,
+                                item.date,
+                                Date.now(),
+                                slaPolicy.data ?? null,
+                            );
                             return (
                                 <li
                                     key={item.lamId}
@@ -74,7 +91,22 @@ export function PendingQueue({ data }: PendingQueueProps) {
                                     </div>
                                     <div className="text-right shrink-0">
                                         <span className="text-sm font-medium tabular-nums">{formatWaiting(mins)}</span>
-                                        {mins >= 120 && <Badge variant="outline" className="ml-2 border-red-300 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30 text-[10px] h-4 px-1.5">Aging</Badge>}
+                                        {assessment.tier === "warning" && (
+                                            <Badge
+                                                variant="outline"
+                                                className={cn("ml-2 text-[10px] h-4 px-1.5", AGING_BADGE_CLASS.warning)}
+                                            >
+                                                Watch
+                                            </Badge>
+                                        )}
+                                        {assessment.tier === "breach" && (
+                                            <Badge
+                                                variant="outline"
+                                                className={cn("ml-2 text-[10px] h-4 px-1.5", AGING_BADGE_CLASS.breach)}
+                                            >
+                                                Aging
+                                            </Badge>
+                                        )}
                                     </div>
                                 </li>
                             );

@@ -49,6 +49,7 @@ function mapOverview(o: DashboardOverviewDto): DashboardData {
             lamId: p.lamId,
             branch: branchNameOf(p.branchCode),
             status: STATUS_LABELS[p.status] ?? "On Going",
+            statusKey: p.status,
             date: p.waitingSinceUtc,
         })),
         nowServing: o.nowServing.map((n) => ({

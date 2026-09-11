@@ -5,6 +5,9 @@ export interface PendingQueueItem {
     lamId: string;
     branch: string;
     status: LoanStatus;
+    /** Raw backend workflow status (e.g. "ForRecommendation") for SLA lookup.
+     *  The `status` field above is the human-readable label for the badge. */
+    statusKey: string;
     date: string;
 }
 
