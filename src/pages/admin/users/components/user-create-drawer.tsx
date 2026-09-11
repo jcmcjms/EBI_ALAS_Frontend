@@ -4,6 +4,7 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
+import { SignaturePad } from "@/src/components/ui/signature-pad";
 import { toast } from "sonner";
 import { CheckCircle, Copy } from "@phosphor-icons/react";
 import { BRANCHES } from "@/src/lib/api/types";
@@ -23,6 +24,7 @@ export interface UserCreatePayload {
     branchId: string;
     role: string;
     jobTitle: string;
+    eSignature: string | null;
 }
 
 interface UserCreateDrawerProps {
@@ -40,6 +42,7 @@ const emptyForm = {
     jobTitle: "",
     branchId: "",
     role: "",
+    eSignature: null as string | null,
 };
 
 // Mirrors backend CreateUserValidator: ^[a-zA-Z0-9_]+$, max 50 chars.
@@ -86,7 +89,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
     const [tempPassword, setTempPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleFieldChange = <K extends keyof typeof emptyForm>(field: K, value: string) => {
+    const handleFieldChange = <K extends keyof typeof emptyForm>(field: K, value: typeof emptyForm[K]) => {
         setForm(prev => ({ ...prev, [field]: value }));
     };
 
@@ -123,6 +126,10 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
             toast.error("Role is required");
             return;
         }
+        if (!form.eSignature) {
+            toast.error("Signature is required. Please sign the pad.");
+            return;
+        }
 
         setIsSubmitting(true);
         try {
@@ -138,6 +145,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                 jobTitle: form.jobTitle.trim(),
                 branchId: form.branchId,
                 role: form.role,
+                eSignature: form.eSignature,
             });
             if (!success) return;
 
@@ -309,6 +317,19 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                                     </SelectContent>
                                 </Select>
                                 <p className="text-xs text-muted-foreground">A temporary password will be generated for this account.</p>
+                            </div>
+
+                            {/* ── Signature Pad ── */}
+                            <div className="space-y-2">
+                                <Label htmlFor="create-signature">E-Signature *</Label>
+                                <SignaturePad
+                                    value={form.eSignature}
+                                    onChange={(base64) => handleFieldChange("eSignature", base64)}
+                                    heightClassName="h-40"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Required for audit compliance. The signature will appear on loan approval forms.
+                                </p>
                             </div>
                         </div>
 
