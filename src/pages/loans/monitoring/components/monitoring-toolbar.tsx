@@ -3,20 +3,23 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/src/components/ui/popover.tsx";
 import { Calendar } from "@/src/components/ui/calendar.tsx";
+import { Badge } from "@/src/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
-import { MagnifyingGlass, CalendarBlank, Funnel, Export } from "@phosphor-icons/react";
+import { MagnifyingGlass, CalendarBlank, Funnel, Export, X } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import type { MonitoringFilters } from "../types";
 import type { LoanStatus } from "@/src/lib/loan-status";
 import { LOAN_STATUS_META, STATUS_FILTER_ORDER } from "@/src/lib/loan-status";
+import { sameStatusSet } from "@/src/lib/role-queues";
 import { cn } from "@/src/lib/utils";
 
 interface ToolbarProps {
     filters: MonitoringFilters;
     onFiltersChange: (filters: MonitoringFilters) => void;
+    roleQueue: LoanStatus[];
 }
 
-export function MonitoringToolbar({ filters, onFiltersChange }: ToolbarProps) {
+export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: ToolbarProps) {
     const [localSearch, setLocalSearch] = useState(filters.search);
 
     // Debounce search input
@@ -26,6 +29,8 @@ export function MonitoringToolbar({ filters, onFiltersChange }: ToolbarProps) {
         }, 300);
         return () => clearTimeout(timer);
     }, [localSearch]);
+
+    const isRoleQueue = roleQueue.length > 0 && sameStatusSet(filters.status, roleQueue);
 
     return (
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 p-4 border-b bg-muted/20">
@@ -86,11 +91,42 @@ export function MonitoringToolbar({ filters, onFiltersChange }: ToolbarProps) {
                                     )}
                                 />
                                 {LOAN_STATUS_META[s].label}
+                                {roleQueue.includes(s) && (
+                                    <span className="text-[10px] text-muted-foreground">(your queue)</span>
+                                )}
                             </span>
                         </SelectItem>
                     ))}
                 </SelectContent>
             </Select>
+
+            {/* "My queue" affordance — visible, removable default filter */}
+            {roleQueue.length > 0 && (
+                isRoleQueue ? (
+                    <Badge variant="secondary" className="h-9 gap-1.5 px-3 text-xs font-normal">
+                        <Funnel size={12} weight="bold" />
+                        My queue
+                        <button
+                            type="button"
+                            aria-label="Clear my-queue filter and show all statuses"
+                            className="ml-0.5 rounded-sm hover:text-destructive focus-visible:ring-1 focus-visible:ring-ring"
+                            onClick={() => onFiltersChange({ ...filters, status: [] })}
+                        >
+                            <X size={12} weight="bold" />
+                        </button>
+                    </Badge>
+                ) : (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 gap-1.5 text-xs text-muted-foreground"
+                        onClick={() => onFiltersChange({ ...filters, status: roleQueue })}
+                        title={`Show only ${roleQueue.map((s) => LOAN_STATUS_META[s].label).join(", ")}`}
+                    >
+                        <Funnel size={12} weight="bold" /> My queue
+                    </Button>
+                )
+            )}
 
             <Button variant="outline" size="sm" className="h-9 ml-auto gap-1.5 text-xs">
                 <Export size={14} weight="bold" /> Export CSV

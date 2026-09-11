@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "./types";
 import { queryKeys } from "@/src/lib/queryKeys";
+import type { LoanStatus } from "@/src/lib/loan-status";
+import { LOAN_STATUS_META } from "@/src/lib/loan-status";
 
 // ── Envelope types mirroring the backend ────────────────────────────────
 
@@ -260,6 +262,31 @@ export function useSlaPolicy() {
     return useQuery({
         queryKey: queryKeys.loans.slaPolicy,
         queryFn: getSlaPolicy,
+        staleTime: Infinity,
+        retry: 1,
+    });
+}
+
+// ── Queue Default (role-based) ───────────────────────────────────────────────
+
+/**
+ * GET /api/loans/queue-default — the caller's role-based default status filter.
+ *
+ * Pure claims-lookup on the backend (zero DB cost). Cached forever
+ * client-side; the local mirror in role-queues.ts covers the synchronous
+ * first paint and degrades gracefully when the endpoint is unreachable.
+ */
+export async function getQueueDefault(): Promise<LoanStatus[]> {
+    const res = await apiClient.get<ApiResponse<string[]>>("/api/loans/queue-default");
+    // Defensive: ignore any status the FE doesn't know how to render.
+    return unwrapApiData(res.data).filter((s): s is LoanStatus => s in LOAN_STATUS_META);
+}
+
+/** Once per session; the mirror in role-queues.ts covers failures. */
+export function useQueueDefault() {
+    return useQuery({
+        queryKey: queryKeys.loans.queueDefault,
+        queryFn: getQueueDefault,
         staleTime: Infinity,
         retry: 1,
     });

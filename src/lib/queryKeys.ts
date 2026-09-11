@@ -68,6 +68,8 @@ export const queryKeys = {
             ["loans", "monitoring", filters, pagination, sorting] as const,
         /** SLA policy — fetched once per session, staleTime: Infinity. */
         slaPolicy: ["loans", "sla-policy"] as const,
+        /** Role-based queue default — fetched once per session, staleTime: Infinity. */
+        queueDefault: ["loans", "queue-default"] as const,
     },
 
     // ── WebLoans (CIS lookup / outstanding / pending) ──────────────────────

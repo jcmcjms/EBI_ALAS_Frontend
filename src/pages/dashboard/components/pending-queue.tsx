@@ -39,6 +39,13 @@ export function PendingQueue({ data }: PendingQueueProps) {
     const navigate = useNavigate();
     const displayData = useMemo(() => data.slice(0, 5), [data]);
 
+    // Collect the unique raw status keys across all pending items so the
+    // "View all" deep-link can jump straight into a filtered monitoring view.
+    const pendingStatuses = useMemo(
+        () => [...new Set(data.map((d) => d.statusKey))].join(","),
+        [data],
+    );
+
     // SLA policy — fetched once per session (staleTime: Infinity).
     // Falls back to built-in defaults from LOAN_STATUS_META when the
     // endpoint is unreachable.
@@ -74,8 +81,8 @@ export function PendingQueue({ data }: PendingQueueProps) {
                             return (
                                 <li
                                     key={item.lamId}
-                                    onClick={() => navigate("/loans/monitoring")}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate("/loans/monitoring"); } }}
+                                    onClick={() => navigate(`/loans/monitoring?status=${pendingStatuses}`)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/loans/monitoring?status=${pendingStatuses}`); } }}
                                     tabIndex={0}
                                     role="link"
                                     className={cn("flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", item.position === 1 && "bg-primary/[0.04]")}
@@ -116,7 +123,7 @@ export function PendingQueue({ data }: PendingQueueProps) {
             </CardContent>
             {data.length > 5 && (
                 <CardFooter className="border-t p-3 justify-center">
-                    <Button variant="ghost" size="sm" onClick={() => navigate("/loans/monitoring")} className="w-full text-sm">View all {data.length} pending loans</Button>
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/loans/monitoring?status=${pendingStatuses}`)} className="w-full text-sm">View all {data.length} pending loans</Button>
                 </CardFooter>
             )}
         </Card>
