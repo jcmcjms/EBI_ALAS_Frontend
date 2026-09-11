@@ -194,7 +194,7 @@ export function LoanParametersFields({ fieldPrefix }: LoanParametersFieldsProps)
                         type="number"
                         placeholder="e.g. 720"
                         min={1}
-                        max={2555}
+                        max={2617}
                         readOnly
                         className="h-9 bg-muted/50"
                     />

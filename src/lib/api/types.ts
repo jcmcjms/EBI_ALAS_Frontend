@@ -785,7 +785,7 @@ export interface LoanProductResponse {
     maxAmount: number;
     /** Shortest term an AO can request (whole days). */
     minTermDays: number;
-    /** Longest term (days). Capped at 2555 by the validator (7-year bank rule). */
+    /** Longest term (days). Capped at 2617 by the validator (7-year + 2-month grace-period bank rule). */
     maxTermDays: number;
     /** Flat notarial fee (PHP). */
     notarialFee: number;

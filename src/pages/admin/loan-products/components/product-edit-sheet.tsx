@@ -55,8 +55,8 @@ import type { LoanProductResponse } from "@/src/lib/api/types";
  *   - maxAmount >= minAmount
  *   - minTermDays, maxTermDays >= 0
  *   - maxTermDays >= minTermDays
- *   - maxTermDays <= 2555 (the absolute 7-year bank ceiling, mirrored
- *     from `LoanProductService.AbsoluteMaxTermDays`)
+ *   - maxTermDays <= 2617 (the absolute 7-year + 2-month grace-period
+ *     bank ceiling, mirrored from `LoanProductService.AbsoluteMaxTermDays`)
  *   - advanceInterestRate between 0 and 1 (decimal fraction;
  *     0.12 = 12% p.a.)
  */
@@ -78,7 +78,7 @@ const productFormSchema = z
             .number({ message: "Max term is required." })
             .int("Max term must be a whole number of days.")
             .min(0, "Max term cannot be negative.")
-            .max(2555, "Max term cannot exceed 2555 days (7 years)."),
+            .max(2617, "Max term cannot exceed 2617 days (7 years + 2 months grace period)."),
         // Bank fees (flat PHP) ──────────────────────────────────────
         notarialFee: z.coerce
             .number({ message: "Notarial fee is required." })
@@ -309,7 +309,7 @@ export function ProductEditSheet({
                                     id="maxTermDays"
                                     label="Max Term (days)"
                                     error={errors.maxTermDays?.message}
-                                    hint="Hard ceiling: 2555 days (7 years)."
+                                    hint="Hard ceiling: 2617 days (7 years + 2 months grace period)."
                                     disabled={!canEdit}
                                     step="1"
                                     {...register("maxTermDays")}
