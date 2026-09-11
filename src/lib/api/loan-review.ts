@@ -3,6 +3,8 @@ import { unwrapApiData, type ApiResponse } from "./types";
 
 // ── Envelope types mirroring the backend ────────────────────────────────
 
+export type EvaluationVerdict = "Recommended" | "NotRecommended";
+
 export interface LoanDetailResponse {
     id: number;
     lamId: string;
@@ -66,6 +68,7 @@ export interface LoanDetailResponse {
         actionDate: string;
         actionByUserName: string;
     }[];
+    evaluationVerdict: string | null;
     outstandingLoans: {
         id: number;
         pn: string;
@@ -222,10 +225,16 @@ export async function postDeviationRemark(
     return unwrapApiData(res.data);
 }
 
-export async function updateLoanStatus(id: number, status: string, comments: string) {
+export async function updateLoanStatus(
+    id: number,
+    status: string,
+    comments: string,
+    verdict?: EvaluationVerdict,
+) {
     const res = await apiClient.put<ApiResponse<unknown>>(`/api/loans/${id}/status`, {
         status,
         comments,
+        verdict: verdict ?? null,
     });
     return unwrapApiData(res.data);
 }

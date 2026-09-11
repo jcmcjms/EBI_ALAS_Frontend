@@ -14,6 +14,8 @@ import {
     MagnifyingGlassMinus,
     MagnifyingGlassPlus,
     ArrowLeft,
+    ThumbsUp,
+    ThumbsDown,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -53,12 +55,36 @@ import {
     loanReviewKeys,
     updateLoanStatus,
     type LoanDetailResponse,
+    type EvaluationVerdict,
 } from "@/src/lib/api/loan-review";
 import { queryKeys } from "@/src/lib/queryKeys";
+import { cn } from "@/src/lib/utils";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
 
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing"];
+const MIN_REMARKS = 10; // mirrors UpdateLoanStatusValidator
+
+type WorkflowAction = {
+    role: string; from: string; to: string; label: string;
+    kind: "advance" | "return" | "reject";
+    verdict?: EvaluationVerdict;
+    remarksRequired: boolean;
+    confirm?: boolean;
+};
+
+const WORKFLOW_ACTIONS: WorkflowAction[] = [
+    { role: "Recommender", from: "ForRecommendation", to: "ForChecking", label: "Recommend for Checking", kind: "advance", remarksRequired: false },
+    { role: "Recommender", from: "ForRecommendation", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
+    // ── Evaluator: three distinct decisions ──────────────────────────
+    { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Recommended", kind: "advance", verdict: "Recommended", remarksRequired: false },
+    { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Not Recommended", kind: "advance", verdict: "NotRecommended", remarksRequired: true, confirm: true },
+    { role: "Evaluator", from: "ForChecking", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
+    // ── Approver ─────────────────────────────────────────────────────
+    { role: "Approver", from: "ForApproval", to: "Approved", label: "Approve Loan", kind: "advance", remarksRequired: false },
+    { role: "Approver", from: "ForApproval", to: "ForRevision", label: "Return to Encoder", kind: "return", remarksRequired: true, confirm: true },
+    { role: "Approver", from: "ForApproval", to: "Rejected", label: "Reject", kind: "reject", remarksRequired: true, confirm: true },
+];
 
 /**
  * Map the flattened `LoanDetailResponse` (returned by `GET /api/loans/{id}`)
@@ -241,62 +267,18 @@ export function LoanApprovalPage() {
         [detail]
     );
 
-    const actions = [
-        {
-            role: "Recommender",
-            from: "ForRecommendation",
-            to: "ForChecking",
-            label: "Recommend for Checking",
-            kind: "advance" as const,
-        },
-        {
-            role: "Recommender",
-            from: "ForRecommendation",
-            to: "ForRevision",
-            label: "Push Back to Encoder",
-            kind: "return" as const,
-        },
-        {
-            role: "Evaluator",
-            from: "ForChecking",
-            to: "ForApproval",
-            label: "Endorse for Approval",
-            kind: "advance" as const,
-        },
-        {
-            role: "Evaluator",
-            from: "ForChecking",
-            to: "ForRevision",
-            label: "Return to Encoder",
-            kind: "return" as const,
-        },
-        {
-            role: "Approver",
-            from: "ForApproval",
-            to: "Approved",
-            label: "Approve Loan",
-            kind: "advance" as const,
-        },
-        {
-            role: "Approver",
-            from: "ForApproval",
-            to: "ForRevision",
-            label: "Return to Encoder",
-            kind: "return" as const,
-        },
-        {
-            role: "Approver",
-            from: "ForApproval",
-            to: "Rejected",
-            label: "Reject",
-            kind: "reject" as const,
-        },
-    ].filter((a) => a.role === user?.role && a.from === detail?.status);
+    const actions = WORKFLOW_ACTIONS.filter((a) => a.role === user?.role && a.from === detail?.status);
 
     const act = useMutation({
-        mutationFn: (to: string) => updateLoanStatus(id, to, remarks.trim()),
-        onSuccess: (_d, to) => {
-            toast.success(`Application moved to ${to}.`);
+        mutationFn: (a: WorkflowAction) =>
+            updateLoanStatus(id, a.to, remarks.trim(), a.verdict),
+        onSuccess: (_d, a) => {
+            toast.success(
+                a.verdict === "NotRecommended"
+                    ? "Evaluation recorded as Not Recommended — forwarded to Approver."
+                    : a.kind === "return"
+                        ? "Application pushed back to the encoder."
+                        : `Application moved to ${a.to}.`);
             setRemarks("");
             qc.invalidateQueries({ queryKey: loanReviewKeys.detail(id) });
             qc.invalidateQueries({ queryKey: loanReviewKeys.history(id) });
@@ -389,6 +371,16 @@ export function LoanApprovalPage() {
                                 <WarningCircle size={12} weight="fill" />{" "}
                                 {deviationCount} deviation
                                 {deviationCount === 1 ? "" : "s"}
+                            </Badge>
+                        )}
+                        {detail.evaluationVerdict === "EvaluatedNotRecommended" && (
+                            <Badge variant="secondary" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800">
+                                <ThumbsDown size={12} weight="fill" /> Evaluator: Not Recommended
+                            </Badge>
+                        )}
+                        {detail.evaluationVerdict === "EvaluatedRecommended" && (
+                            <Badge variant="secondary" className="gap-1.5 border-emerald-200 bg-emerald-50 text-emerald-700">
+                                <ThumbsUp size={12} weight="fill" /> Evaluator: Recommended
                             </Badge>
                         )}
                     </div>
@@ -586,10 +578,8 @@ export function LoanApprovalPage() {
                                                 htmlFor="remarks"
                                                 className="flex items-center gap-1.5 text-sm font-semibold"
                                             >
-                                                Remarks / Conditions{" "}
-                                                <span className="text-destructive">
-                                                    *
-                                                </span>
+                                                Remarks / Conditions
+                                                {actions.some((a) => a.remarksRequired) && <span className="text-destructive">*</span>}
                                             </Label>
                                             <Textarea
                                                 id="remarks"
@@ -603,17 +593,15 @@ export function LoanApprovalPage() {
                                                     setRemarks(e.target.value)
                                                 }
                                             />
-                                            {remarks.trim().length === 0 &&
-                                                !frozen && (
-                                                    <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                                                        <WarningCircle
-                                                            size={12}
-                                                            weight="fill"
-                                                        />{" "}
-                                                        Required to take a
-                                                        workflow action
-                                                    </p>
-                                                )}
+                                            {remarks.trim().length < MIN_REMARKS && !frozen && (
+                                                <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                                    <WarningCircle
+                                                        size={12}
+                                                        weight="fill"
+                                                    />{" "}
+                                                    Required (min {MIN_REMARKS} chars) for pushback, rejection, and a Not Recommended evaluation.
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* ── Action buttons ── */}
@@ -627,95 +615,71 @@ export function LoanApprovalPage() {
                                                     — no further actions.
                                                 </p>
                                             )}
-                                            {actions
-                                                .filter(
-                                                    (a) => a.kind !== "reject"
-                                                )
-                                                .map((a) => (
+                                            {actions.map((a) => {
+                                                const blocked = act.isPending || (a.remarksRequired && remarks.trim().length < MIN_REMARKS);
+                                                const icon =
+                                                    a.kind === "reject" ? <XCircle size={16} /> :
+                                                    a.kind === "return" ? <ArrowCounterClockwise size={16} /> :
+                                                    a.verdict === "NotRecommended" ? <ThumbsDown size={16} weight="fill" /> :
+                                                    a.verdict === "Recommended" ? <ThumbsUp size={16} weight="fill" /> :
+                                                    <CheckCircle size={16} weight="bold" />;
+
+                                                const button = (
                                                     <Button
-                                                        key={a.to}
-                                                        className="w-full gap-2"
-                                                        variant={
-                                                            a.kind === "return"
-                                                                ? "outline"
-                                                                : "default"
-                                                        }
-                                                        disabled={
-                                                            remarks.trim()
-                                                                .length === 0 ||
-                                                            act.isPending
-                                                        }
-                                                        onClick={() =>
-                                                            act.mutate(a.to)
-                                                        }
-                                                    >
-                                                        {a.kind === "return" ? (
-                                                            <ArrowCounterClockwise
-                                                                size={16}
-                                                            />
-                                                        ) : (
-                                                            <CheckCircle
-                                                                size={16}
-                                                                weight="bold"
-                                                            />
+                                                        key={`${a.to}-${a.verdict ?? a.kind}`}
+                                                        className={cn(
+                                                            "w-full gap-2",
+                                                            a.verdict === "NotRecommended" &&
+                                                                "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900",
+                                                            a.kind === "return" &&
+                                                                "border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive",
                                                         )}
-                                                        {a.label}
-                                                    </Button>
-                                                ))}
-                                            {actions.some(
-                                                (a) => a.kind === "reject"
-                                            ) && (
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger
-                                                        render={
-                                                            <Button
-                                                                variant="destructive"
-                                                                className="w-full gap-2"
-                                                                disabled={
-                                                                    remarks.trim()
-                                                                        .length ===
-                                                                        0 ||
-                                                                    act.isPending
-                                                                }
-                                                            />
-                                                        }
+                                                        variant={a.kind === "reject" ? "destructive"
+                                                            : a.kind === "return" || a.verdict === "NotRecommended" ? "outline"
+                                                            : "default"}
+                                                        disabled={blocked}
+                                                        onClick={() => !a.confirm && act.mutate(a)}
                                                     >
-                                                        <XCircle size={16} />{" "}
-                                                        Reject
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>
-                                                                Reject this
-                                                                application?
-                                                            </AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                This terminates
-                                                                the loan
-                                                                process and
-                                                                notifies the
-                                                                encoder.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>
-                                                                Cancel
-                                                            </AlertDialogCancel>
-                                                            <AlertDialogAction
-                                                                className="bg-destructive text-destructive-foreground"
-                                                                onClick={() =>
-                                                                    act.mutate(
-                                                                        "Rejected"
-                                                                    )
-                                                                }
-                                                            >
-                                                                Confirm
-                                                                Rejection
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            )}
+                                                        {icon} {a.label}
+                                                    </Button>
+                                                );
+
+                                                if (!a.confirm) return <div key={`${a.to}-${a.verdict ?? a.kind}`}>{button}</div>;
+
+                                                return (
+                                                    <AlertDialog key={`${a.to}-${a.verdict ?? a.kind}`}>
+                                                        <AlertDialogTrigger render={button} />
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Confirm: {a.label}</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    {a.kind === "return"
+                                                                        ? "The application returns to the ENCODER (not the recommender) for revision. They will be notified with your remarks."
+                                                                        : a.verdict === "NotRecommended"
+                                                                            ? "The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached."
+                                                                            : "This terminates the loan process and notifies the encoder."}
+                                                                    {remarks.trim() && (
+                                                                        <span className="mt-2 block border-l-2 border-border pl-2 italic">
+                                                                            &ldquo;{remarks.trim()}&rdquo;
+                                                                        </span>
+                                                                    )}
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    className={a.kind === "return" || a.kind === "reject"
+                                                                        ? "bg-destructive text-destructive-foreground"
+                                                                        : "bg-amber-600 text-white hover:bg-amber-700"}
+                                                                    onClick={() => act.mutate(a)}
+                                                                >
+                                                                    Confirm
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                );
+                                            })}
                                         </div>
                                     </CardContent>
                                 </Card>
