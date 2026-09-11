@@ -24,7 +24,7 @@ function greeting(): string {
 export function Dashboard() {
     const user = useAuthStore((state) => state.user);
     const navigate = useNavigate();
-    const { data, isLoading, isError, isFetching, dataUpdatedAt, refetch } = useDashboardData();
+    const { data, isLoading, isError, dataUpdatedAt, refetch } = useDashboardData();
 
     const asOf = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date();
 
@@ -42,12 +42,6 @@ export function Dashboard() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        {isFetching && !isLoading && (
-                            <span className="flex items-center gap-1 text-[11px] text-muted-foreground" aria-live="polite">
-                                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" aria-hidden />
-                                Updating…
-                            </span>
-                        )}
                         <span className="text-xs tabular-nums text-muted-foreground mr-2">
                             As of {asOf.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
                         </span>
