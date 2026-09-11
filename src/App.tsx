@@ -12,6 +12,7 @@ const LoanProductsPage = lazy(() => import("./pages/admin/loan-products/index").
 const LoanCreation = lazy(() => import("./pages/loans/create/index"));
 const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
 const LoanApproval = lazy(() => import("./pages/loans/approval/index"));
+const LoanEvaluation = lazy(() => import("./pages/loans/evaluation/index"));
 const AuditLogs = lazy(() => import("./pages/audit-logs/index").then(m => ({ default: m.default })));
 const Notifications = lazy(() => import("./pages/notifications/index"));
 const Account = lazy(() => import("./pages/account/index"));
@@ -67,6 +68,11 @@ function App() {
                     <Route path="/loans/approval/:loanId" element={
                         <ProtectedRoute>
                             <LoanApproval />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/loans/evaluation/:loanId" element={
+                        <ProtectedRoute>
+                            <LoanEvaluation />
                         </ProtectedRoute>
                     } />
                     <Route path="/notifications" element={

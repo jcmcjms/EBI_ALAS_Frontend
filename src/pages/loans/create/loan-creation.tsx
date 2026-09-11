@@ -153,13 +153,7 @@ function useSectionProgress(
       case "loan-params":
         // All selected loans must have valid parameters
         if (!Array.isArray(loans) || loans.length === 0) return false;
-        return loans.every(
-          (loan) =>
-            loan?.parameters?.product &&
-            loan?.parameters?.purpose &&
-            (loan?.parameters?.proposedAmount ?? 0) > 0 &&
-            (loan?.parameters?.term ?? 0) > 0
-        );
+        return true;
       case "verification":
         // `findings` is a required, non-empty string in the schema.
         return !!verification?.findings?.trim();

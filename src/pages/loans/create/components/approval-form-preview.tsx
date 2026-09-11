@@ -1,9 +1,8 @@
 import { forwardRef, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { FilePdf, Printer, Warning, CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { FilePdf, Printer, CaretLeft, CaretRight } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
-import { Badge } from "@/src/components/ui/badge";
 import { FormTabStrip } from "@/src/components/ui/form-tab-strip";
 import { cn } from "@/src/lib/utils";
 import { ApprovalFormSheet } from "@/src/components/loan/approval-form-sheet";
@@ -55,23 +54,6 @@ const BLUE = "bg-[#d9eaf7]";
 const B = "border border-black";
 const DOUBLE_UNDERLINE: React.CSSProperties = { borderBottom: "3px double #000" };
 const TOP_LINE: React.CSSProperties = { borderTop: "1px solid #000" };
-
-/* ── Capacity-to-pay badge ───────────────────────────────────────── */
-// Now accepts parameters so each loan form shows its own result.
-function CapacityToPayBadge({ params }: { params: LoanApplicationFormData["loans"][number]["parameters"] | undefined }) {
-    const m = useLoanComputations(params);
-    const hasPrincipal = m.monthlyAmortization > 0;
-
-    if (!hasPrincipal) return null;
-    if (!m.isAmortizationExceedingDisposable) return null;
-
-    return (
-        <Badge variant="destructive" className="gap-1.5 py-1 text-xs">
-            <Warning size={12} weight="fill" />
-            Exceeds disposable income
-        </Badge>
-    );
-}
 
 /* ── small presentational atoms ── */
 
@@ -656,7 +638,6 @@ export const ApprovalFormPreview = forwardRef<
                 icon={<FilePdf size={20} weight="bold" className="text-primary" />}
                 badge={
                     <div className="flex items-center gap-2">
-                        <CapacityToPayBadge params={watchedLoans[activeIndex]?.parameters} />
                         <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => window.print()}>
                             <Printer size={14} weight="bold" /> Print all ({watchedLoans.length})
                         </Button>

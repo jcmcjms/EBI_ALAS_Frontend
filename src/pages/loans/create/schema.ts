@@ -227,53 +227,20 @@ export const incomingLoanSchema = z.object({
 //     The backend stores both numbers so Compliance can run "AO
 //     override frequency" reports.
 export const loanParametersSchema = z.object({
-    product: z.string().min(1, "Loan product is required"),
-    purpose: z.string().min(1, "Loan purpose is required"),
-    proposedAmount: z
-        .number()
-        .min(1, "Proposed amount is required")
-        .max(5_000_000, "Amount exceeds maximum allowed"),
-    term: z.number().min(1, "Term must be at least 1 day").max(2555),
-    // ── Policy term (months) ────────────────────────────────────────
-    // Surfaced from the consolidated pending-loan SQL via the
-    // `policyTermMonths` field on `PendingLoan` (mirrors
-    // `loan_data.total_amortization`). The policy term is the
-    // authoritative input to amortization calculations and stays
-    // stable across calendar-boundary edge cases; distinct from
-    // `term` above which is the exact day count from
-    // `DATEDIFF(DAY, date_granted, date_maturity)`. Optional
-    // because the field is only populated when a pending loan is
-    // the source — legacy approval-page flows without a pending
-    // loan context omit it.
-    policyTermMonths: z.number().min(1).optional(),
-    interestRate: z.number().min(0).max(100).optional(),
+    product: z.string(),
+    purpose: z.string(),
+    proposedAmount: z.number().default(0),
+    term: z.number().default(0),
+    policyTermMonths: z.number().optional(),
+    interestRate: z.number().optional(),
     nthpDate: z.string().optional(),
 
     // ── Bank-fee fields (Smart Default + Editable Override) ─────
-    // `.default(0)` matches the legacy form behavior — fees start at
-    // zero and are auto-populated the moment a product is picked.
-    notarialFee: z
-        .number()
-        .min(0, "Notarial fee cannot be negative")
-        .max(50_000, "Notarial fee exceeds maximum allowable threshold")
-        .default(0),
-    docStamps: z
-        .number()
-        .min(0, "Doc stamps cannot be negative")
-        .max(50_000, "Doc stamps exceeds maximum allowable threshold")
-        .default(0),
-    insurance: z
-        .number()
-        .min(0, "Insurance cannot be negative")
-        .max(50_000, "Insurance exceeds maximum allowable threshold")
-        .default(0),
+    notarialFee: z.number().default(0),
+    docStamps: z.number().default(0),
+    insurance: z.number().default(0),
 
     // ── Audit snapshot — what the bank policy expected ──────────
-    // The wizard writes these on every (product, principal) change so
-    // the backend stores *both* the AO's actual entry and the system's
-    // expected value. Compliance uses the delta to detect training
-    // gaps (one AO consistently types ₱500 for notarial on every loan
-    // — probably a copy/paste error) and fraud patterns.
     standardFeesSnapshot: z
         .object({
             notarialFee: z.number().default(0),
