@@ -70,6 +70,8 @@ export interface LoanHistoryEntry {
     comments?: string;
     /** ISO-8601 UTC (e.g. `"2026-09-09T08:00:00Z"`). */
     actionDate: string;
+    /** Resolved server-side role of the actor (e.g. "Recommender", "Approver"). */
+    actionByRole: string;
 }
 
 /**

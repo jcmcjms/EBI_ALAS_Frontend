@@ -1,8 +1,19 @@
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "@phosphor-icons/react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/src/components/ui/sheet";
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+} from "@/src/components/ui/sheet";
+import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { LoanTimeline } from "@/src/components/loan/loan-timeline";
+import { cn } from "@/src/lib/utils";
+import { getLoanById } from "@/src/lib/api/loans";
+import { LOAN_STATUS_META, type LoanStatus } from "@/src/lib/loan-status";
 
 interface LoanDetailsDrawerProps {
     applicationId: number | null;
@@ -12,54 +23,67 @@ interface LoanDetailsDrawerProps {
 /**
  * Loan Details drawer for the monitoring page.
  *
- * SHAPE CHANGE (Task 10): Previously this took a fully-populated
- * `LoanMonitoringRecord` and rendered its dummy fields (formNumber,
- * customerName, loanType, product, loanAmount, applicationDate,
- * lastActionDate, lastActionBy, timeLapsedHours, status). It now takes
- * just `applicationId: number | null` and renders the server-backed audit
- * timeline for that loan.
- *
- * WHY NO LOAN-DETAIL BODY: per the developer task instructions, we do not
- * introduce a new endpoint call to fetch the loan. `getLoanById` does not
- * exist in `src/lib/api/loans.ts`, `webloans.ts`, or `types.ts`, and the
- * backend `GET /api/loans/{id}` contract is deliberately not consumed here
- * until a typed `LoanResponse` interface is added in a follow-up.
- * The drawer therefore renders ONLY the timeline; the previous info-row
- * body (status, client info, loan details, SLA warning) is dropped — its
- * data came from dummy data with no `id` link and would either be empty
- * or fabricated if we tried to reuse it. The spec does not require the
- * drawer's existing info rows to be preserved.
+ * Enriched header: shows LAM ID, borrower name, and live status badge
+ * so the drawer identifies the file the way the bank does.
  *
  * TASK 11 ADDITION — "Review & Process Application" button:
  * The drawer is the entry point into the approval workflow. We push the
  * user to `/loans/approval/<numericId>` and let that page do the real
- * fetch + render. The route guard on `/loans/approval/:loanId` is intentionally
- * permissive (auth-only — see `App.tsx`); the backend
- * `LoanWorkflowService.IsValidTransition` is the authoritative role gate,
- * so a Recommender / Evaluator / Approver / Admin all land here and only
- * see the workflow buttons their role unlocks.
- *
- * Deep-link contract: the parent page reads `?id=<numericId>` via
- * `useSearchParams` and seeds this prop; row-clicks from the monitoring
- * table also store `record.id` once the table is wired to real data.
+ * fetch + render.
  */
-export function LoanDetailsDrawer({ applicationId, onClose }: LoanDetailsDrawerProps) {
+export function LoanDetailsDrawer({
+    applicationId,
+    onClose,
+}: LoanDetailsDrawerProps) {
     const isOpen = applicationId !== null;
     const navigate = useNavigate();
+
+    const detail = useQuery({
+        queryKey: ["loan-detail", applicationId],
+        queryFn: () => getLoanById(applicationId!),
+        enabled: applicationId !== null && applicationId > 0,
+        staleTime: 30_000,
+    });
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <SheetContent className="sm:max-w-[420px] p-0 flex flex-col overflow-hidden">
                 <SheetHeader className="p-6 pb-4 border-b bg-muted/30">
-                    <SheetTitle className="text-base">
-                        Loan #{applicationId ?? "—"}
+                    <SheetTitle className="text-base font-semibold tracking-tight">
+                        {detail.data?.lamId ??
+                            `Loan #${applicationId ?? "\u2014"}`}
                     </SheetTitle>
-                    <SheetDescription className="text-xs mt-1">
-                        Audit trail &amp; history
+                    <SheetDescription className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                        {detail.data ? (
+                            <>
+                                <span className="truncate font-medium text-foreground">
+                                    {detail.data.firstName}{" "}
+                                    {detail.data.middleName
+                                        ? `${detail.data.middleName[0]}. `
+                                        : ""}
+                                    {detail.data.lastName}
+                                </span>
+                                <Badge
+                                    variant="outline"
+                                    className={cn(
+                                        "text-[10px] font-normal",
+                                        LOAN_STATUS_META[
+                                            detail.data.status as LoanStatus
+                                        ]?.className
+                                    )}
+                                >
+                                    {LOAN_STATUS_META[
+                                        detail.data.status as LoanStatus
+                                    ]?.label ?? detail.data.status}
+                                </Badge>
+                            </>
+                        ) : (
+                            "Audit trail & history"
+                        )}
                     </SheetDescription>
                 </SheetHeader>
 
-                {/* TASK 11 — Entry point into the approval workflow.
+                {/* Entry point into the approval workflow.
                  *
                  * Only shown when an application is actually selected (the
                  * `applicationId &&` guard short-circuits when the drawer is
@@ -73,7 +97,9 @@ export function LoanDetailsDrawer({ applicationId, onClose }: LoanDetailsDrawerP
                     <div className="px-6 py-3 border-b bg-muted/20">
                         <Button
                             className="w-full gap-2"
-                            onClick={() => navigate(`/loans/approval/${applicationId}`)}
+                            onClick={() =>
+                                navigate(`/loans/approval/${applicationId}`)
+                            }
                         >
                             <ArrowRight size={16} weight="bold" />
                             Review &amp; Process Application
