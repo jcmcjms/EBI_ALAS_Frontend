@@ -244,6 +244,35 @@ export async function deleteLoanAttachment(attachmentId: number): Promise<void> 
     await apiClient.delete(`/api/loans/attachments/${attachmentId}`);
 }
 
+/**
+ * Builds the download URL with the desired disposition. The endpoint
+ * serves the same bytes; `disposition=inline` flips Content-Disposition
+ * to `inline` so browsers render instead of download. Only inline-safe
+ * content types (pdf, png, jpg, gif) are honored; everything else stays
+ * as `attachment` regardless — the browser will still download it.
+ */
+export function attachmentUrl(
+    attachmentId: number,
+    disposition: "inline" | "attachment" = "attachment",
+): string {
+    const base = apiClient.defaults.baseURL ?? "";
+    return `${base}/api/loans/attachments/${attachmentId}/download?disposition=${disposition}`;
+}
+
+/** File types the preview surface can actually render inline. Mirrors the
+ *  backend's InlineSafeContentTypes allow-list so the UI never sends the
+ *  user to a preview that will just prompt a download. */
+export function canPreviewInline(contentType: string): boolean {
+    const t = contentType.toLowerCase();
+    return (
+        t === "application/pdf" ||
+        t === "image/png" ||
+        t === "image/jpeg" ||
+        t === "image/jpg" ||
+        t === "image/gif"
+    );
+}
+
 export async function getLoanDeviations(id: number): Promise<LoanDeviationDto[]> {
     const res = await apiClient.get<ApiResponse<LoanDeviationDto[]>>(
         `/api/loans/${id}/deviations`

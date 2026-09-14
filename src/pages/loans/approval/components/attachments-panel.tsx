@@ -12,6 +12,7 @@ import {
     CheckCircle,
     XCircle,
     ListChecks,
+    Eye,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -32,6 +33,7 @@ import {
 
 import { useAuthStore } from "@/src/store/authStore";
 import {
+    canPreviewInline,
     deleteLoanAttachment,
     downloadLoanAttachment,
     getChecklistDocuments,
@@ -42,6 +44,7 @@ import {
     type LoanAttachmentDto,
     type LoanChecklistDocumentDto,
 } from "@/src/lib/api/loan-review";
+import { FilePreviewDialog } from "./file-preview-dialog";
 
 const MAX_MB = 10;
 
@@ -82,6 +85,7 @@ export function AttachmentsPanel({
     const [progress, setProgress] = useState<number | null>(null);
     const userId = useAuthStore((s) => s.user?.userId);
     const role = useAuthStore((s) => s.user?.role);
+    const [preview, setPreview] = useState<LoanAttachmentDto | null>(null);
 
     // Query for checklist documents from BPB_BINARY_SERVER
     const checklistDocs = useQuery({
@@ -342,6 +346,31 @@ export function AttachmentsPanel({
                                     {a.category}
                                 </Badge>
                             )}
+                            {canPreviewInline(a.contentType) ? (
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    aria-label={`View ${a.fileName}`}
+                                    onClick={() => setPreview(a)}
+                                >
+                                    <Eye size={15} />
+                                </Button>
+                            ) : (
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    aria-label={`Download ${a.fileName} (cannot preview)`}
+                                    onClick={() =>
+                                        downloadLoanAttachment(
+                                            a.id,
+                                            a.fileName,
+                                        )
+                                    }
+                                    title="Preview not available — this file type must be downloaded"
+                                >
+                                    <DownloadSimple size={15} />
+                                </Button>
+                            )}
                             <Button
                                 size="icon"
                                 variant="ghost"
@@ -402,6 +431,20 @@ export function AttachmentsPanel({
                     ))}
                 </ul>
             </div>
+
+            <FilePreviewDialog
+                open={preview !== null}
+                onClose={() => setPreview(null)}
+                attachment={
+                    preview
+                        ? {
+                              id: preview.id,
+                              fileName: preview.fileName,
+                              contentType: preview.contentType,
+                          }
+                        : null
+                }
+            />
         </div>
     );
 }
