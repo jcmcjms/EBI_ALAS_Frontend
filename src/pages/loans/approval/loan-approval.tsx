@@ -764,16 +764,11 @@ export function LoanApprovalPage() {
                                             Attached Files
                                         </CardTitle>
                                         <CardDescription className="pt-1 text-xs">
-                                            Supporting documents submitted with,
-                                            or added during, review.
+                                            Required documents for this loan product, sourced from the document server.
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="pt-4">
-                                        <AttachmentsPanel
-                                            loanId={id}
-                                            frozen={frozen}
-                                            canUpload={!!canUpload}
-                                        />
+                                        <AttachmentsPanel loanId={id} />
                                     </CardContent>
                                 </Card>
                             </TabsContent>
