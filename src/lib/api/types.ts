@@ -154,6 +154,7 @@ export const PERMISSIONS = {
     roleManage: "role.manage",
     roleView: "role.view",
     auditLogsView: "auditLogs.view",
+    workflowManage: "workflow.manage",
 } as const;
 
 /**

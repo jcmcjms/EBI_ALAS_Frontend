@@ -14,6 +14,7 @@ const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
 const LoanApproval = lazy(() => import("./pages/loans/approval/index"));
 const LoanEvaluation = lazy(() => import("./pages/loans/evaluation/index"));
 const AuditLogs = lazy(() => import("./pages/audit-logs/index").then(m => ({ default: m.default })));
+const WorkflowSettings = lazy(() => import("./pages/admin/workflow/workflow-settings").then(m => ({ default: m.WorkflowSettingsPage })));
 const Notifications = lazy(() => import("./pages/notifications/index"));
 const Account = lazy(() => import("./pages/account/index"));
 const Forbidden = lazy(() => import("./pages/errors/Forbidden"));
@@ -101,6 +102,11 @@ function App() {
                     <Route path="/admin/audit-logs" element={
                         <ProtectedRoute requiredPermission={PERMISSIONS.auditLogsView}>
                             <AuditLogs />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/workflow" element={
+                        <ProtectedRoute requiredPermission={PERMISSIONS.workflowManage}>
+                            <WorkflowSettings />
                         </ProtectedRoute>
                     } />
 

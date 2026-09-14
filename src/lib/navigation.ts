@@ -1,6 +1,7 @@
 import {
     Bell,
     ChartBar,
+    GitBranch,
     House,
     ListChecks,
     Users,
@@ -75,6 +76,11 @@ export const navMain: NavItem[] = [
                 title: "Audit Logs",
                 url: "/admin/audit-logs",
                 requiredPermission: "auditLogs.view",
+            },
+            {
+                title: "Workflow",
+                url: "/admin/workflow",
+                requiredPermission: "workflow.manage",
             },
         ],
     },
