@@ -52,6 +52,15 @@ const STATUS_PAIR_TITLES: Record<
         title: "Resubmitted for recommendation",
         tone: "info",
     },
+    // Skip-path pairs: when recommender step is bypassed (flag off).
+    "Draft>ForChecking": {
+        title: "Submitted for evaluation",
+        tone: "info",
+    },
+    "ForRevision>ForChecking": {
+        title: "Resubmitted for evaluation",
+        tone: "info",
+    },
     "Approved>ForDisbursement": {
         title: "Released for disbursement",
         tone: "info",

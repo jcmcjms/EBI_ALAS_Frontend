@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { loanApi } from "@/src/lib/api/loans";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { queryKeys } from "@/src/lib/queryKeys";
+import { workflowKeys, type WorkflowConfigurationDto } from "@/src/lib/api/workflow";
 import type { CreateLoanPayload, LoanSubmissionResponse } from "@/src/lib/api/types";
 
 /**
@@ -70,11 +71,16 @@ export function useCreateLoan() {
             //    `["loans", "monitoring", ...]` key.
             queryClient.invalidateQueries({ queryKey: queryKeys.loans.all });
 
-            // 2. Toast — shows the application group number so the AO
-            //    can quote it on the recommendation slip / call the
-            //    recommender with a stable reference.
+            // 2. Toast — shows the application group number and
+            //    reflects the current workflow pipeline shape.
+            const workflow = queryClient.getQueryData<WorkflowConfigurationDto>(
+                workflowKeys.configuration
+            );
+            const destination = workflow?.requireRecommendation
+                ? "recommendation"
+                : "evaluation";
             toast.success(
-                `Loan application ${response.applicationGroupNo} submitted successfully.`
+                `Loan application ${response.applicationGroupNo} submitted for ${destination}.`
             );
 
             // 3. Navigate — monitoring page sorts by ApplicationDate
