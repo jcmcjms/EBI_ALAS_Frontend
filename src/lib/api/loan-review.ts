@@ -176,16 +176,50 @@ export async function getChecklistDocuments(id: number): Promise<LoanChecklistDo
     return unwrapApiData(res.data);
 }
 
-export async function viewChecklistDocument(docId: number, fileName: string) {
-    const res = await apiClient.get(`/api/loans/checklist-documents/${docId}/view`, {
-        responseType: "blob",
-    });
-    const url = URL.createObjectURL(res.data as Blob);
+/**
+ * Session-scoped blob cache: BPB_BINARY_SERVER reads go through OPENQUERY on a
+ * linked server, so re-fetching on every open is the dominant latency. Capped
+ * so a reviewer leafing through the checklist can't pin unbounded memory.
+ */
+const checklistBlobCache = new Map<number, Blob>();
+const CHECKLIST_BLOB_CACHE_MAX = 5;
+
+export async function fetchChecklistDocument(docId: number): Promise<Blob> {
+    const cached = checklistBlobCache.get(docId);
+    if (cached) return cached;
+
+    const res = await apiClient.get(
+        `/api/loans/checklist-documents/${docId}/view`,
+        { responseType: "blob" },
+    );
+    const blob = res.data as Blob;
+
+    if (checklistBlobCache.size >= CHECKLIST_BLOB_CACHE_MAX) {
+        const oldest = checklistBlobCache.keys().next().value;
+        if (oldest !== undefined) checklistBlobCache.delete(oldest);
+    }
+    checklistBlobCache.set(docId, blob);
+    return blob;
+}
+
+/** Explicit download — same bytes, save dialog. */
+export async function downloadChecklistDocument(docId: number, fileName: string): Promise<void> {
+    const blob = await fetchChecklistDocument(docId);
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = fileName;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
     URL.revokeObjectURL(url);
+}
+
+/** Mirrors the backend allow-list: what the preview surface can render. */
+export function canPreviewInline(contentType: string | null): boolean {
+    const t = (contentType ?? "").toLowerCase();
+    return t === "application/pdf" || t === "image/png"
+        || t === "image/jpeg" || t === "image/jpg" || t === "image/gif";
 }
 
 export async function getLoanDeviations(id: number): Promise<LoanDeviationDto[]> {
