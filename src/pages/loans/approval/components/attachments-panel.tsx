@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
     DownloadSimple,
@@ -6,6 +6,7 @@ import {
     CheckCircle,
     XCircle,
     ListChecks,
+    ChatCenteredText,
 } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
@@ -14,12 +15,16 @@ import { Spinner } from "@/src/components/ui/spinner";
 
 import {
     getChecklistDocuments,
+    getDocumentRemarks,
     loanReviewKeys,
     downloadChecklistDocument,
+    DOCUMENT_REMARK_WRITER_ROLES,
     type LoanChecklistDocumentDto,
+    type DocumentRemarkDto,
 } from "@/src/lib/api/loan-review";
 
 import { DocumentPreviewDialog } from "./document-preview-dialog";
+import { DocumentRemarksThread } from "./document-remarks-thread";
 
 /**
  * Required-documents checklist for the loan product, sourced from the
@@ -28,17 +33,51 @@ import { DocumentPreviewDialog } from "./document-preview-dialog";
  * upload was removed so reviewers and the document server never disagree
  * about what is in the file.
  */
-export function AttachmentsPanel({ loanId }: { loanId: number }) {
+export function AttachmentsPanel({
+    loanId,
+    role,
+    frozen,
+}: {
+    loanId: number;
+    role?: string;
+    frozen: boolean;
+}) {
     const [preview, setPreview] = useState<{
         docId: number;
         fileName: string;
         contentType: string;
     } | null>(null);
+    const [openThreads, setOpenThreads] = useState<Set<string>>(new Set());
 
     const checklistDocs = useQuery({
         queryKey: loanReviewKeys.checklistDocuments(loanId),
         queryFn: () => getChecklistDocuments(loanId),
     });
+
+    const remarksQuery = useQuery({
+        queryKey: loanReviewKeys.documentRemarks(loanId),
+        queryFn: () => getDocumentRemarks(loanId),
+        staleTime: 30_000,
+    });
+
+    const remarksByIdCode = useMemo(() => {
+        const map = new Map<string, DocumentRemarkDto[]>();
+        for (const r of remarksQuery.data ?? []) {
+            const list = map.get(r.checklistIdCode);
+            if (list) list.push(r);
+            else map.set(r.checklistIdCode, [r]);
+        }
+        return map;
+    }, [remarksQuery.data]);
+
+    const canWriteRemarks = DOCUMENT_REMARK_WRITER_ROLES.includes(role ?? "");
+
+    const toggleThread = (code: string) =>
+        setOpenThreads((prev) => {
+            const next = new Set(prev);
+            next.has(code) ? next.delete(code) : next.add(code);
+            return next;
+        });
 
     const checklistItems: LoanChecklistDocumentDto[] = checklistDocs.data ?? [];
     const uploadedCount = checklistItems.filter(
@@ -77,91 +116,158 @@ export function AttachmentsPanel({ loanId }: { loanId: number }) {
                         {checklistItems.map((item) => (
                             <li
                                 key={item.idCode}
-                                className="flex items-start gap-3 rounded-md border bg-background p-3"
+                                className="flex-col rounded-md border bg-background p-3"
                             >
-                                {item.uploadStatus === "Uploaded" ? (
-                                    <CheckCircle
-                                        size={20}
-                                        weight="fill"
-                                        className="mt-0.5 shrink-0 text-emerald-500"
-                                    />
-                                ) : (
-                                    <XCircle
-                                        size={20}
-                                        weight="fill"
-                                        className="mt-0.5 shrink-0 text-muted-foreground"
-                                    />
-                                )}
-
-                                <div className="min-w-0 flex-1 space-y-1">
-                                    <p className="text-sm font-medium">
-                                        {item.checklistDescription ?? item.idCode}
-                                    </p>
-
-                                    {item.uploadStatus === "Uploaded" && item.docId && (
-                                        <div className="space-y-0.5">
-                                            {item.docStr && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    Document: {item.docStr}
-                                                </p>
-                                            )}
-                                            <p className="text-xs text-muted-foreground">
-                                                {item.contentType && `${item.contentType} • `}
-                                                {item.uploadedBy && `Uploaded by ${item.uploadedBy}`}
-                                                {item.created &&
-                                                    ` on ${new Date(item.created).toLocaleDateString()}`}
-                                            </p>
-                                        </div>
+                                <div className="flex items-start gap-3">
+                                    {item.uploadStatus === "Uploaded" ? (
+                                        <CheckCircle
+                                            size={20}
+                                            weight="fill"
+                                            className="mt-0.5 shrink-0 text-emerald-500"
+                                        />
+                                    ) : (
+                                        <XCircle
+                                            size={20}
+                                            weight="fill"
+                                            className="mt-0.5 shrink-0 text-muted-foreground"
+                                        />
                                     )}
 
-                                    {item.uploadStatus !== "Uploaded" && (
-                                        <p className="text-xs italic text-muted-foreground">
-                                            No documents uploaded yet
+                                    <div className="min-w-0 flex-1 space-y-1">
+                                        <p className="text-sm font-medium">
+                                            {item.checklistDescription ?? item.idCode}
                                         </p>
-                                    )}
-                                </div>
 
-                                {item.uploadStatus === "Uploaded" && item.docId && (
+                                        {item.uploadStatus === "Uploaded" && item.docId && (
+                                            <div className="space-y-0.5">
+                                                {item.docStr && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Document: {item.docStr}
+                                                    </p>
+                                                )}
+                                                <p className="text-xs text-muted-foreground">
+                                                    {item.contentType && `${item.contentType} • `}
+                                                    {item.uploadedBy && `Uploaded by ${item.uploadedBy}`}
+                                                    {item.created &&
+                                                        ` on ${new Date(item.created).toLocaleDateString()}`}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {item.uploadStatus !== "Uploaded" && (
+                                            <p className="text-xs italic text-muted-foreground">
+                                                No documents uploaded yet
+                                            </p>
+                                        )}
+                                    </div>
+
                                     <div className="flex shrink-0 items-center gap-1">
                                         <Button
                                             size="sm"
-                                            variant="outline"
-                                            className="gap-1.5"
-                                            onClick={() =>
-                                                setPreview({
-                                                    docId: item.docId!,
-                                                    fileName: item.docStr ?? `document-${item.docId}`,
-                                                    contentType: item.contentType ?? "application/octet-stream",
-                                                })
-                                            }
-                                        >
-                                            <Eye size={14} weight="bold" /> View
-                                        </Button>
-                                        <Button
-                                            size="icon"
                                             variant="ghost"
-                                            aria-label={`Download ${item.checklistDescription ?? item.docStr}`}
-                                            title="Download"
-                                            onClick={() =>
-                                                void downloadChecklistDocument(
-                                                    item.docId!,
-                                                    item.docStr ?? `document-${item.docId}`,
-                                                )
-                                            }
+                                            className="shrink-0 gap-1.5"
+                                            aria-expanded={openThreads.has(item.idCode)}
+                                            aria-controls={`doc-remarks-${item.idCode}`}
+                                            onClick={() => toggleThread(item.idCode)}
                                         >
-                                            <DownloadSimple size={15} />
+                                            <ChatCenteredText
+                                                size={14}
+                                                weight={
+                                                    openThreads.has(item.idCode)
+                                                        ? "fill"
+                                                        : "regular"
+                                                }
+                                            />
+                                            Remarks
+                                            {(remarksByIdCode.get(item.idCode)?.length ?? 0) >
+                                                0 && (
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="text-[10px]"
+                                                >
+                                                    {
+                                                        remarksByIdCode.get(item.idCode)!
+                                                            .length
+                                                    }
+                                                </Badge>
+                                            )}
                                         </Button>
+
+                                        {item.uploadStatus === "Uploaded" && item.docId && (
+                                            <>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="gap-1.5"
+                                                    onClick={() =>
+                                                        setPreview({
+                                                            docId: item.docId!,
+                                                            fileName:
+                                                                item.docStr ??
+                                                                `document-${item.docId}`,
+                                                            contentType:
+                                                                item.contentType ??
+                                                                "application/octet-stream",
+                                                        })
+                                                    }
+                                                >
+                                                    <Eye size={14} weight="bold" />{" "}
+                                                    View
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    aria-label={`Download ${item.checklistDescription ?? item.docStr}`}
+                                                    title="Download"
+                                                    onClick={() =>
+                                                        void downloadChecklistDocument(
+                                                            item.docId!,
+                                                            item.docStr ??
+                                                                `document-${item.docId}`,
+                                                        )
+                                                    }
+                                                >
+                                                    <DownloadSimple size={15} />
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <Badge
+                                        variant={
+                                            item.uploadStatus === "Uploaded"
+                                                ? "default"
+                                                : "outline"
+                                        }
+                                        className="shrink-0 text-[10px]"
+                                    >
+                                        {item.uploadStatus === "Uploaded"
+                                            ? "Uploaded"
+                                            : "Pending"}
+                                    </Badge>
+                                </div>
+
+                                {/* Collapsible remarks thread */}
+                                {openThreads.has(item.idCode) && (
+                                    <div
+                                        id={`doc-remarks-${item.idCode}`}
+                                        role="region"
+                                        aria-label={`Remarks for ${item.checklistDescription ?? item.idCode}`}
+                                        className="mt-2 space-y-2 rounded-md border bg-muted/30 p-3"
+                                    >
+                                        <DocumentRemarksThread
+                                            loanId={loanId}
+                                            checklistIdCode={item.idCode}
+                                            docId={item.docId ?? null}
+                                            remarks={
+                                                remarksByIdCode.get(item.idCode) ??
+                                                []
+                                            }
+                                            canWrite={canWriteRemarks}
+                                            frozen={frozen}
+                                        />
                                     </div>
                                 )}
-
-                                <Badge
-                                    variant={
-                                        item.uploadStatus === "Uploaded" ? "default" : "outline"
-                                    }
-                                    className="shrink-0 text-[10px]"
-                                >
-                                    {item.uploadStatus === "Uploaded" ? "Uploaded" : "Pending"}
-                                </Badge>
                             </li>
                         ))}
                     </ul>

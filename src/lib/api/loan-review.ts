@@ -133,6 +133,17 @@ export interface DeviationRemarkDto {
     createdAt: string;
 }
 
+export interface DocumentRemarkDto {
+    id: number;
+    checklistIdCode: string;
+    docId: number | null;
+    parentRemarkId: number | null;
+    authorName: string;
+    authorRole: string;
+    body: string;
+    createdAt: string;
+}
+
 export interface LoanDeviationDto {
     id: number;
     reasonText: string;
@@ -147,6 +158,7 @@ export const loanReviewKeys = {
     history: (id: number) => ["loans", id, "history"] as const,
     checklistDocuments: (id: number) => ["loans", id, "checklist-documents"] as const,
     deviations: (id: number) => ["loans", id, "deviations"] as const,
+    documentRemarks: (id: number) => ["loans", id, "document-remarks"] as const,
 };
 
 export async function getLoanDetail(id: number): Promise<LoanDetailResponse> {
@@ -240,6 +252,37 @@ export async function postDeviationRemark(
     );
     return unwrapApiData(res.data);
 }
+
+export async function getDocumentRemarks(id: number): Promise<DocumentRemarkDto[]> {
+    const res = await apiClient.get<ApiResponse<DocumentRemarkDto[]>>(
+        `/api/loans/${id}/document-remarks`
+    );
+    return unwrapApiData(res.data);
+}
+
+export async function postDocumentRemark(
+    id: number,
+    payload: {
+        checklistIdCode: string;
+        docId?: number | null;
+        parentRemarkId?: number | null;
+        body: string;
+    }
+): Promise<DocumentRemarkDto> {
+    const res = await apiClient.post<ApiResponse<DocumentRemarkDto>>(
+        `/api/loans/${id}/document-remarks`,
+        payload
+    );
+    return unwrapApiData(res.data);
+}
+
+/** Roles allowed to write document remarks — mirrors the backend WriterRoles. */
+export const DOCUMENT_REMARK_WRITER_ROLES = [
+    "Recommender",
+    "Evaluator",
+    "Approver",
+    "Admin",
+];
 
 export async function updateLoanStatus(
     id: number,

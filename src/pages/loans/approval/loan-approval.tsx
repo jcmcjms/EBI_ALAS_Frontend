@@ -768,7 +768,7 @@ export function LoanApprovalPage() {
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="pt-4">
-                                        <AttachmentsPanel loanId={id} />
+                                        <AttachmentsPanel loanId={id} role={user?.role} frozen={frozen} />
                                     </CardContent>
                                 </Card>
                             </TabsContent>
