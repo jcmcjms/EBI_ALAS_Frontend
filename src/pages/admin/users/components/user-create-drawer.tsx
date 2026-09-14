@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/src/components/ui/sheet";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -49,6 +49,18 @@ const emptyForm = {
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 
 /**
+ * Value→label lookup for the branch <Select> trigger. Base UI's
+ * <Select.Value> renders the raw value (the branch code, e.g. "000")
+ * unless the Root receives an `items` map — without it the closed
+ * trigger shows the code instead of "Lianga Branch". Module-level so
+ * the array identity is stable across renders.
+ */
+const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
+    value: branch.code,
+    label: branch.name,
+}));
+
+/**
  * Generates a readable temporary password using cryptographically secure
  * randomness that satisfies the backend policy: at least one uppercase, one
  * lowercase, one digit, and one special character (!?*.). Ambiguous
@@ -84,6 +96,12 @@ function generateTempPassword(length = 12): string {
 
 export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerProps) {
     const { data: roles } = useRoles();
+    // Same lookup semantics as BRANCH_SELECT_ITEMS; roles arrive async,
+    // so memoize on the fetched list.
+    const roleSelectItems = useMemo(
+        () => roles.map((role) => ({ value: role.name, label: role.displayName })),
+        [roles],
+    );
     const [form, setForm] = useState(emptyForm);
     const [createdUser, setCreatedUser] = useState<{ name: string; username: string } | null>(null);
     const [tempPassword, setTempPassword] = useState("");
@@ -297,7 +315,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="create-branch">Assigned Branch *</Label>
-                                <Select value={form.branchId} onValueChange={(value) => handleFieldChange("branchId", value ?? "")}>
+                                <Select value={form.branchId} onValueChange={(value) => handleFieldChange("branchId", value ?? "")} items={BRANCH_SELECT_ITEMS}>
                                     <SelectTrigger className="h-9 w-full">
                                         <SelectValue placeholder="Select branch" />
                                     </SelectTrigger>
@@ -308,7 +326,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="create-role">Primary Role *</Label>
-                                <Select value={form.role} onValueChange={(value) => handleFieldChange("role", value ?? "")}>
+                                <Select value={form.role} onValueChange={(value) => handleFieldChange("role", value ?? "")} items={roleSelectItems}>
                                     <SelectTrigger className="h-9 w-full">
                                         <SelectValue placeholder="Select role" />
                                     </SelectTrigger>

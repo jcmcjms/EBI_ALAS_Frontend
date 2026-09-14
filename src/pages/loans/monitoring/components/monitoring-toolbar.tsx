@@ -13,6 +13,14 @@ import { LOAN_STATUS_META, STATUS_FILTER_ORDER } from "@/src/lib/loan-status";
 import { sameStatusSet } from "@/src/lib/role-queues";
 import { cn } from "@/src/lib/utils";
 
+/** Value→label lookup for the status filter trigger. Without this,
+ *  <Select.Value> renders the raw enum (e.g. "ForRecommendation")
+ *  instead of the human-readable label. */
+const STATUS_SELECT_ITEMS = [
+    { value: "all", label: "All Statuses" },
+    ...STATUS_FILTER_ORDER.map((s) => ({ value: s as string, label: LOAN_STATUS_META[s].label })),
+];
+
 interface ToolbarProps {
     filters: MonitoringFilters;
     onFiltersChange: (filters: MonitoringFilters) => void;
@@ -74,7 +82,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
 
             {/* Status Filter — renders the real workflow stages, not the
                 old collapsed buckets (Pending / Under Review / …). */}
-            <Select value={(filters.status[0] ?? "all") as string} onValueChange={(val) => onFiltersChange({ ...filters, status: val === "all" ? [] : [val as LoanStatus] })}>
+            <Select value={(filters.status[0] ?? "all") as string} onValueChange={(val) => onFiltersChange({ ...filters, status: val === "all" ? [] : [val as LoanStatus] })} items={STATUS_SELECT_ITEMS}>
                 <SelectTrigger className="h-9 w-[180px] bg-background">
                     <Funnel size={14} className="mr-2 text-muted-foreground" />
                     <SelectValue placeholder="Status" />

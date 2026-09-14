@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/src/components/ui/sheet";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -9,6 +9,17 @@ import { SignaturePad } from "@/src/components/ui/signature-pad";
 import { toast } from "sonner";
 import { BRANCHES, type UserResponse } from "@/src/lib/api/types";
 import { useRoles } from "@/src/hooks/use-roles";
+
+/**
+ * Value→label lookup for the branch <Select> trigger. Base UI's
+ * <Select.Value> renders the raw value (the branch code) unless the
+ * Root receives an `items` map — without it the closed trigger shows
+ * the code instead of the branch name.
+ */
+const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
+    value: branch.code,
+    label: branch.name,
+}));
 
 /**
  * Editable fields — mirrors PUT /api/users/{id} (UpdateUserRequest).
@@ -92,6 +103,12 @@ export function UserEditDrawer({
     onRevokeSessions,
 }: UserEditDrawerProps) {
     const { data: roles } = useRoles();
+    // Same lookup semantics as BRANCH_SELECT_ITEMS; roles arrive async,
+    // so memoize on the fetched list.
+    const roleSelectItems = useMemo(
+        () => roles.map((role) => ({ value: role.name, label: role.displayName })),
+        [roles],
+    );
     const [profile, setProfile] = useState<EditableProfile>(emptyProfile);
     /** Mirrors the latest base64 PNG drawn on the canvas. `null` means
      *  the user has cleared the pad. */
@@ -262,6 +279,7 @@ export function UserEditDrawer({
                             <Select
                                 value={profile.branchId}
                                 onValueChange={(value) => handleFieldChange("branchId", value ?? "")}
+                                items={BRANCH_SELECT_ITEMS}
                             >
                                 <SelectTrigger className="h-9 w-full">
                                     <SelectValue placeholder="Select branch" />
@@ -299,6 +317,7 @@ export function UserEditDrawer({
                             <Select
                                 value={profile.role}
                                 onValueChange={(value) => handleFieldChange("role", value ?? "")}
+                                items={roleSelectItems}
                             >
                                 <SelectTrigger className="h-9 w-full">
                                     <SelectValue placeholder="Select role" />
