@@ -21,7 +21,7 @@ export function NowServing({ data }: NowServingProps) {
                 ) : (
                     <ul className="divide-y">
                         {data.map((item) => (
-                            <li key={item.lamId} className="flex items-center gap-3 px-4 py-3">
+                            <li key={`${item.lamId}-${item.checker}`} className="flex items-center gap-3 px-4 py-3">
                                 <span className="w-7 shrink-0 text-sm font-medium tabular-nums text-muted-foreground">#{item.number}</span>
                                 <Avatar size="sm" className="border"><AvatarFallback>{initialsOf(item.checker)}</AvatarFallback></Avatar>
                                 <div className="min-w-0 flex-1">
