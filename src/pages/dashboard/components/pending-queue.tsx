@@ -9,6 +9,7 @@ import type { PendingQueueItem, LoanStatus } from "../types";
 import type { LoanStatus as LoanStatusKey } from "@/src/lib/loan-status";
 import { assessAging, AGING_BADGE_CLASS } from "@/src/lib/loan-aging";
 import { useSlaPolicy } from "@/src/lib/api/loan-review";
+import { useAuthStore } from "@/src/store/authStore";
 
 const statusStyles: Record<LoanStatus, string> = {
     "On Going": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
@@ -37,6 +38,7 @@ interface PendingQueueProps { data: PendingQueueItem[]; }
 
 export function PendingQueue({ data }: PendingQueueProps) {
     const navigate = useNavigate();
+    const user = useAuthStore((state) => state.user);
     const displayData = useMemo(() => data.slice(0, 5), [data]);
 
     // Collect the unique raw status keys across all pending items so the
@@ -63,7 +65,9 @@ export function PendingQueue({ data }: PendingQueueProps) {
                 {data.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center">
                         <p className="text-sm text-muted-foreground mb-4">Queue is clear — no pending applications.</p>
-                        <Button variant="outline" size="sm" onClick={() => navigate("/loans/create")}>Create New Loan</Button>
+                        {user?.role === "Encoder" && (
+                            <Button variant="outline" size="sm" onClick={() => navigate("/loans/create")}>Create New Loan</Button>
+                        )}
                     </div>
                 ) : (
                     <ul className="divide-y">

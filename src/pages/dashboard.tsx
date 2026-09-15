@@ -45,10 +45,12 @@ export function Dashboard() {
                         <span className="text-xs tabular-nums text-muted-foreground mr-2">
                             As of {asOf.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
                         </span>
-                        <Button size="sm" onClick={() => navigate("/loans/create")}>
-                            <Plus size={16} weight="bold" className="mr-1" />
-                            New Loan
-                        </Button>
+                        {user?.role === "Encoder" && (
+                            <Button size="sm" onClick={() => navigate("/loans/create")}>
+                                <Plus size={16} weight="bold" className="mr-1" />
+                                New Loan
+                            </Button>
+                        )}
                     </div>
                 </div>
 
