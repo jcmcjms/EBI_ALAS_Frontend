@@ -179,17 +179,24 @@ function SingleLoanApprovalForm({
     );
 
     // ── Term & rate normalization (approval-form boundary only) ────
-    // The feed carries two term representations: `parameters.term` is the
-    // calendar day-count to maturity (2,587 — includes the +2 months the
-    // core system adds past the amortization schedule);
-    // `parameters.policyTermMonths` is the amortization term (84), which
-    // is what the LAM template quotes and what the PMT/PV math uses.
-    // The form prints and computes with policy term × 30-day months; the
-    // Loan Parameters section's Term (days) / Policy Term stay as-is.
-    const policyTermMonths =
-        parameters.policyTermMonths ??
-        Math.floor((parameters.term || 0) / DAYS_PER_MONTH);
-    const approvalTermDays = policyTermMonths * DAYS_PER_MONTH;
+    // The feed carries two term representations:
+    //   • `parameters.term` — the calendar day-count to maturity. For
+    //     most loans this equals policyTermMonths × 30, but for loans
+    //     with a grace period the core system adds +2 months, so e.g.
+    //     an 84-month loan arrives as 2,587 days instead of 2,520.
+    //   • `parameters.policyTermMonths` — the amortization term (e.g.
+    //     84), which is what the LAM template quotes and what the
+    //     PMT/PV math uses.
+    //
+    // When policyTermMonths is present we derive the approval-form
+    // term as policyTermMonths × 30 (the legacy "1 month = 30 days"
+    // convention). When it is absent (LEFT JOIN miss), we fall back
+    // to the raw term directly — it is already in days and does not
+    // need to be re-derived from a month conversion.
+    const policyTermMonths = parameters.policyTermMonths;
+    const approvalTermDays = policyTermMonths != null
+        ? policyTermMonths * DAYS_PER_MONTH
+        : (parameters.term || 0);
     const annualRatePercent = toAnnualRatePercent(parameters.interestRate);
 
     const principal = parameters.proposedAmount || 0;
@@ -249,7 +256,9 @@ function SingleLoanApprovalForm({
     );
 
     const productLine = parameters.product
-        ? `[ ${parameters.product} ] ${policyTermMonths} months @ ${formatRatePercent(annualRatePercent)}% per Annum`
+        ? policyTermMonths != null
+            ? `[ ${parameters.product} ] ${policyTermMonths} months @ ${formatRatePercent(annualRatePercent)}% per Annum`
+            : `[ ${parameters.product} ] ${approvalTermDays} days @ ${formatRatePercent(annualRatePercent)}% per Annum`
         : "-";
 
     const deviations = form?.deviations;
