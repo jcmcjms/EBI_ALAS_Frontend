@@ -57,6 +57,7 @@ import {
     updateLoanStatus,
     cancelLoanApplication,
     CANCELLABLE_STATUSES,
+    canWriteDocumentRemarks,
     type LoanDetailResponse,
     type EvaluationVerdict,
 } from "@/src/lib/api/loan-review";
@@ -338,12 +339,8 @@ export function LoanApprovalPage() {
         );
     }
 
-    const canWriteRemarks =
-        user?.role === "Recommender" ||
-        user?.role === "Evaluator" ||
-        (user?.role === "Encoder" &&
-            user.userId === String(detail.createdById)) ||
-        user?.role === "Admin";
+    const isLoanOwner = Number(user.userId) === detail.createdById;
+    const canWriteRemarks = canWriteDocumentRemarks(user?.role, isLoanOwner);
     const canUpload = canWriteRemarks || user?.role === "Approver";
     const deviationCount =
         detail.deviationDetails.length +
@@ -712,7 +709,7 @@ export function LoanApprovalPage() {
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="pt-4">
-                                        <AttachmentsPanel loanId={id} role={user?.role} frozen={frozen} />
+                                        <AttachmentsPanel loanId={id} role={user?.role} frozen={frozen} isLoanOwner={isLoanOwner} />
                                     </CardContent>
                                 </Card>
                             </TabsContent>

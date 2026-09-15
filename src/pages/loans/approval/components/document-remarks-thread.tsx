@@ -22,6 +22,8 @@ const ROLE_BADGE: Record<string, string> = {
         "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400",
     Admin:
         "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400",
+    Encoder:
+        "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-400",
 };
 
 function RemarkCard({
@@ -218,8 +220,7 @@ export function DocumentRemarksThread({
                 </div>
             ) : (
                 <p className="text-[11px] text-muted-foreground">
-                    Only the Recommender, Evaluator, or Approver can add
-                    remarks.
+                    Only reviewers and the submitting Encoder can add remarks.
                 </p>
             )}
         </div>

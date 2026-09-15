@@ -18,7 +18,7 @@ import {
     getDocumentRemarks,
     loanReviewKeys,
     downloadChecklistDocument,
-    DOCUMENT_REMARK_WRITER_ROLES,
+    canWriteDocumentRemarks,
     type LoanChecklistDocumentDto,
     type DocumentRemarkDto,
 } from "@/src/lib/api/loan-review";
@@ -37,10 +37,13 @@ export function AttachmentsPanel({
     loanId,
     role,
     frozen,
+    isLoanOwner,
 }: {
     loanId: number;
     role?: string;
     frozen: boolean;
+    /** True when the signed-in user submitted this application (Encoder write scope). */
+    isLoanOwner: boolean;
 }) {
     const [preview, setPreview] = useState<{
         docId: number;
@@ -70,7 +73,7 @@ export function AttachmentsPanel({
         return map;
     }, [remarksQuery.data]);
 
-    const canWriteRemarks = DOCUMENT_REMARK_WRITER_ROLES.includes(role ?? "");
+    const canWriteRemarks = canWriteDocumentRemarks(role, isLoanOwner);
 
     const toggleThread = (code: string) =>
         setOpenThreads((prev) => {

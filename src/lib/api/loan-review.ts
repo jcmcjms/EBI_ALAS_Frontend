@@ -284,6 +284,20 @@ export const DOCUMENT_REMARK_WRITER_ROLES = [
     "Admin",
 ];
 
+/**
+ * Write-access rule for document remark threads.
+ * Reviewers (+Admin) may remark on any loan they can read; Encoders may
+ * add/reply only on applications they submitted. Mirrors the ownership guard
+ * in DocumentRemarkEndpoints.cs — the backend remains the authority.
+ */
+export function canWriteDocumentRemarks(
+    role: string | undefined,
+    isLoanOwner: boolean,
+): boolean {
+    if (role === "Encoder") return isLoanOwner;
+    return (DOCUMENT_REMARK_WRITER_ROLES as readonly string[]).includes(role ?? "");
+}
+
 export async function updateLoanStatus(
     id: number,
     status: string,
