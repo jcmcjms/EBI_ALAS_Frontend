@@ -10,13 +10,15 @@ import { ApprovalFormSheet } from "@/src/components/loan/approval-form-sheet";
 import { SectionCard } from "./section-card";
 import { getSection } from "../sections";
 import type { ClientFormData, LoanApplicationFormData, SelectedLoan } from "../schema";
-import { useLoanComputations } from "@/src/hooks/use-loan-computations";
 import { useCatLoanClass } from "@/src/hooks/use-cat-loan-class";
 import {
     parseProductCode,
     resolveLoanProductDisplayName,
 } from "@/src/lib/loan-product-display";
-import { computeMaximumLoanableAmount } from "@/src/lib/loan-computations";
+import {
+    computeMaximumLoanableAmount,
+    computeMonthlyAmortization,
+} from "@/src/lib/loan-computations";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
 
@@ -27,6 +29,23 @@ function num(value?: number | null): string {
 
 function dash(value?: string | null): string {
     return value && value.trim().length > 0 ? value : "-";
+}
+
+/**
+ * WebLoan ships `grantedRate` as a decimal fraction (0.0966) while the
+ * computation engine is parameterized in percent (9.66). Normalize at
+ * this boundary only — the Loan Parameters section keeps the raw feed
+ * value untouched. No consumer product in the catalog prices at ≤ 1%
+ * p.a., so "≤ 1 means fraction" is unambiguous here.
+ */
+function toAnnualRatePercent(rate?: number): number {
+    if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) return 0;
+    return rate <= 1 ? rate * 100 : rate;
+}
+
+/** Trims float artefacts (9.660000000000001 → "9.66") for printed lines. */
+function formatRatePercent(rate: number): string {
+    return String(Number(rate.toFixed(4)));
 }
 
 function isoDate(iso?: string): string {
@@ -159,15 +178,30 @@ function SingleLoanApprovalForm({
         loanClass?.catLoanClass
     );
 
-    // ── Shared engine results — now per-loan via explicit params ────
-    const metrics = useLoanComputations(parameters);
+    // ── Term & rate normalization (approval-form boundary only) ────
+    // The feed carries two term representations: `parameters.term` is the
+    // calendar day-count to maturity (2,587 — includes the +2 months the
+    // core system adds past the amortization schedule);
+    // `parameters.policyTermMonths` is the amortization term (84), which
+    // is what the LAM template quotes and what the PMT/PV math uses.
+    // The form prints and computes with policy term × 30-day months; the
+    // Loan Parameters section's Term (days) / Policy Term stay as-is.
+    const policyTermMonths =
+        parameters.policyTermMonths ??
+        Math.floor((parameters.term || 0) / DAYS_PER_MONTH);
+    const approvalTermDays = policyTermMonths * DAYS_PER_MONTH;
+    const annualRatePercent = toAnnualRatePercent(parameters.interestRate);
 
-    const termDays = parameters.term || 0;
-    const applicationChargeLegacy = (parameters.proposedAmount || 0) * LEGACY_APPLICATION_CHARGE_RATE;
-    const docStamp = (parameters.proposedAmount || 0) * LEGACY_DOC_STAMP_RATE;
+    const principal = parameters.proposedAmount || 0;
+
+    // ── Upfront deductions ──────────────────────────────────────────
+    // Total Deductions is policy-fixed at 6%; Application Charge is the
+    // residual so the block foots to the printed 6.00% line.
+    const docStamp = principal * LEGACY_DOC_STAMP_RATE;
     const notarialFee = LEGACY_NOTARIAL_FEE;
-    const deductionsSubtotal = applicationChargeLegacy + docStamp + notarialFee;
-    const deductionPct = parameters.proposedAmount > 0 ? (deductionsSubtotal / parameters.proposedAmount) * 100 : 0;
+    const deductionsSubtotal = principal * LEGACY_TOTAL_DEDUCTION_RATE;
+    const applicationCharge = deductionsSubtotal - docStamp - notarialFee;
+    const deductionPct = principal > 0 ? (deductionsSubtotal / principal) * 100 : 0;
 
     const outstandingLoans = form?.outstandingLoans ?? [];
     const ebiReloans = form?.ebiReloans ?? [];
@@ -180,27 +214,42 @@ function SingleLoanApprovalForm({
     const buyOutBalance = buyOuts.reduce((s, b) => s + (b.outstandingBalance || 0), 0);
     const incomingTotal = incomingLoans.reduce((s, i) => s + (i.deductions || 0), 0);
 
-    const grossProceeds = (parameters.proposedAmount || 0) - deductionsSubtotal;
+    const grossProceeds = principal - deductionsSubtotal;
     const netProceedsDs = grossProceeds - ebiOb;
     const netProceedsClient = netProceedsDs - buyOutBalance;
-    const totalExposure = (parameters.proposedAmount || 0) + totalPrincipal;
+    const totalExposure = principal + totalPrincipal;
+
+    // PMT at the policy term (84 periods), not the calendar day-count.
+    const monthlyAmortization = computeMonthlyAmortization(
+        principal,
+        annualRatePercent,
+        approvalTermDays,
+    );
 
     const nthp = client.netTakeHomePay || 0;
-    const netPayAfterDeduction = nthp - metrics.monthlyAmortization + ebiDeductions;
-    const totalMonthlyIncome = netPayAfterDeduction;
-    const totalDisposableGross = nthp + ebiDeductions + incomingTotal;
-    const totalDeductionsFinal = nthp;
+    // NTHP + deductions released by settling the reloan − new amortization.
+    const netPayAfterDeduction = nthp - monthlyAmortization + ebiDeductions;
+    const totalMonthlyIncome = netPayAfterDeduction; // Other Income: NONE
+
+    // Capacity-to-pay block, mirroring the legacy template:
+    //   Total Disposable   = NTHP + reloan deductions released
+    //   Less: Minimum NTHP = policy floor the borrower retains (₱5,000)
+    //   Total Deductions   = that floor + incoming/undeducted deductions
+    //   Total Disposable   = net capacity feeding the MLA PV
+    const totalDisposableGross = nthp + ebiDeductions;
+    const minimumNthp = DEFAULT_MINIMUM_NTHP;
+    const totalDeductionsFinal = minimumNthp + incomingTotal;
     const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
 
     const maximumLoanableAmount = computeMaximumLoanableAmount(
         totalDisposableNet,
-        parameters.interestRate || 0,
-        termDays,
+        annualRatePercent,
+        approvalTermDays,
         productCode
     );
 
     const productLine = parameters.product
-        ? `[ ${parameters.product} ] ${parameters.term || 0} days @ ${parameters.interestRate || 0}% per Annum`
+        ? `[ ${parameters.product} ] ${policyTermMonths} months @ ${formatRatePercent(annualRatePercent)}% per Annum`
         : "-";
 
     const deviations = form?.deviations;
@@ -290,7 +339,7 @@ function SingleLoanApprovalForm({
                                 <V rowSpan={2} className="align-top font-bold">{dash(productDisplay)}</V>
                                 <L rowSpan={2} className="align-top">
                                     TERM (Days):<br />
-                                    <span className="font-bold">{termDays.toLocaleString()}</span>
+                                    <span className="font-bold">{approvalTermDays.toLocaleString()}</span>
                                 </L>
                                 <V blue colSpan={5}>{productLine}</V>
                             </tr>
@@ -311,7 +360,7 @@ function SingleLoanApprovalForm({
                             <AmtRow label={<span className="font-bold">Proposed Loan for Approval</span>} value={<span className="font-bold">{num(parameters.proposedAmount)}</span>} blue />
                             <div className="pt-1 font-bold">Less:</div>
                             <div className="pl-3">
-                                <AmtRow label="Application Charge" value={num(applicationChargeLegacy)} />
+                                <AmtRow label="Application Charge" value={num(applicationCharge)} />
                                 <AmtRow label="Doc. Stamp" value={num(docStamp)} />
                                 <AmtRow label="Notarial Fee" value={num(notarialFee)} />
                                 <AmtRow label="Insurance (MRI)" value="-" />
@@ -330,7 +379,7 @@ function SingleLoanApprovalForm({
                             <AmtRow label={<span className="font-bold">Less: Total Buy-Out Balance</span>} value={num(buyOutBalance)} underline />
                             <AmtRow label={<span className="font-bold">NET PROCEEDS to Client</span>} value={<span className="font-bold">{num(netProceedsClient)}</span>} blue />
                             <div className="h-3" />
-                            <AmtRow label={<span className="font-bold">Monthly Amortization</span>} value={`PHP ${num(metrics.monthlyAmortization)}`} underline />
+                            <AmtRow label={<span className="font-bold">Monthly Amortization</span>} value={`PHP ${num(monthlyAmortization)}`} underline />
                             <div className="h-3" />
                             <AmtRow label={<span className="font-bold">NetPay After Deduction</span>} value={num(netPayAfterDeduction)} underline />
                             <div className="h-3" />
@@ -476,7 +525,7 @@ function SingleLoanApprovalForm({
                                 </tr>
                                 <tr className="[&>td]:px-1 [&>td]:py-0.5">
                                     <td className="font-bold">Less: Minimum NTHP</td>
-                                    <td className="text-right font-bold tabular-nums">{num(nthp)}</td>
+                                    <td className="text-right font-bold tabular-nums">{num(minimumNthp)}</td>
                                     <td />
                                     <td />
                                 </tr>
@@ -510,7 +559,7 @@ function SingleLoanApprovalForm({
                                     <td className="text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>
                                         {maximumLoanableAmount < 0
                                             ? `(PhP${num(Math.abs(maximumLoanableAmount))})`
-                                            : `PhP${num(maximumLoanableAmount)}}`}
+                                            : `PhP${num(maximumLoanableAmount)}`}
                                     </td>
                                     <td />
                                     <td />
@@ -559,15 +608,21 @@ function SingleLoanApprovalForm({
 
 /* ── Legacy template constants ─────────────────────────────────────
  *
- * The A16 product historically hard-codes the upfront deduction rates
- * and the fixed grid geometry of the printed Approval Form. These are
- * **template/formatting** values (they don't affect the bank's
- * capacity-to-pay gate) and are kept inline so the PDF export matches
- * the legacy spreadsheet line-for-line.
+ * The LAM template fixes Total Deductions at 6% of the proposed amount;
+ * the Application Charge line is the *plug* (residual after Doc. Stamp
+ * and Notarial Fee) so the column always foots to the 6% line. Doc.
+ * Stamp (0.75%) and Notarial Fee (₱500) are template values kept inline
+ * so the PDF export matches the legacy spreadsheet line-for-line.
+ *
+ * DEFAULT_MINIMUM_NTHP is the bank-policy take-home-pay floor the
+ * borrower must retain after all deductions ("Less: Minimum NTHP").
+ * DAYS_PER_MONTH is the legacy "1 month = 30 days" convention.
  */
-const LEGACY_APPLICATION_CHARGE_RATE = 0.0504;
+const LEGACY_TOTAL_DEDUCTION_RATE = 0.06;
 const LEGACY_DOC_STAMP_RATE = 0.0075;
 const LEGACY_NOTARIAL_FEE = 500;
+const DEFAULT_MINIMUM_NTHP = 5_000;
+const DAYS_PER_MONTH = 30;
 
 /* Fixed row counts of the legacy Excel grid were removed when the
  * reloan / buy-out / incoming matrices moved to dynamic rows derived
