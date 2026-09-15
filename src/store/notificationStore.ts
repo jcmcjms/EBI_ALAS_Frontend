@@ -11,6 +11,11 @@ interface NotificationState {
      * optimists; the next poll will reconcile them with the server.
      */
     setNotifications: (rows: AppNotification[]) => void;
+    /**
+     * Prepend a single real-time notification pushed via SignalR.
+     * Deduplicates by ID in case a 30s poll overlaps with a push.
+     */
+    addNotification: (notification: AppNotification) => void;
     markRead: (id: string) => void;
     markAllRead: () => void;
     resolveNotification: (id: string, resolution: "approved" | "declined") => void;
@@ -32,6 +37,16 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     notifications: DUMMY_NOTIFICATIONS,
 
     setNotifications: (rows) => set({ notifications: rows }),
+
+    addNotification: (notification) =>
+        set((state) => ({
+            // Prepend so it appears at the top of the bell dropdown.
+            // Deduplicate by ID in case a 30s poll overlaps with a push.
+            notifications: [
+                notification,
+                ...state.notifications.filter((n) => n.id !== notification.id),
+            ],
+        })),
 
     markRead: (id) =>
         set((state) => ({

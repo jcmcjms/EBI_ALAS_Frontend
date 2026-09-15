@@ -53,7 +53,7 @@ export function initialsOf(name: string): string {
  * "Application Returned", "New Loan Application Submitted") — these
  * matches map them to the icon family the UI renders in the bell dropdown.
  */
-function classifyNotification(title: string): NotificationType {
+export function classifyNotification(title: string): NotificationType {
     const t = title.toLowerCase();
     if (t.includes("ready for") || t.includes("recommendation") || t.includes("approval")) {
         return "action";

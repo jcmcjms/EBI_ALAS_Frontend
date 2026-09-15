@@ -4,6 +4,7 @@ import { AppSidebar } from "@/src/components/layout/app-sidebar";
 import { SiteHeader } from "@/src/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
 import { useNotifications } from "@/src/hooks/useNotifications";
+import { useSignalR } from "@/src/hooks/useSignalR";
 import { useAuthStore } from "@/src/store/authStore";
 
 /**
@@ -28,6 +29,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // must still defer polling until the bootstrap completes.
     const user = useAuthStore((s) => s.user);
     useNotifications(Boolean(user));
+
+    // Real-time WebSocket connection — receives instant notification
+    // pushes from the server alongside the 30s poll fallback.
+    useSignalR();
 
     return (
         <SidebarProvider style={APP_SHELL_STYLE}>
