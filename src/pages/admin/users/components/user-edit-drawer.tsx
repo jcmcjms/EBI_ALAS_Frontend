@@ -237,7 +237,11 @@ export function UserEditDrawer({
                 branchId: profile.branchId,
                 role: profile.role,
                 jobTitle: profile.jobTitle.trim() || null,
-                coveredBranches: isBranchScope && profile.coveredBranches.length > 0 ? profile.coveredBranches : null,
+                // Omit the key entirely when not applicable so the backend's
+                // null = "keep existing" semantics work correctly on update.
+                ...(isBranchScope && profile.coveredBranches.length > 0
+                    ? { coveredBranches: profile.coveredBranches }
+                    : {}),
             };
             if (isSignatureDirty) {
                 changes.eSignature = eSignature;

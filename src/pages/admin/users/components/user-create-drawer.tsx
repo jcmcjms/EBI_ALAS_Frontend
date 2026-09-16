@@ -222,7 +222,11 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                 branchId: form.branchId,
                 role: form.role,
                 eSignature: form.eSignature,
-                coveredBranches: isBranchScope && form.coveredBranches.length > 0 ? form.coveredBranches : null,
+                // Omit the key entirely when not applicable so the backend's
+                // null = "keep existing" semantics work correctly on update.
+                ...(isBranchScope && form.coveredBranches.length > 0
+                    ? { coveredBranches: form.coveredBranches }
+                    : {}),
             });
             if (!success) return;
 
