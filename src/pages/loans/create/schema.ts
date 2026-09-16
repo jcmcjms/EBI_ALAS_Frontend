@@ -168,30 +168,18 @@ export const preLoanRefSchema = z.object({
 //
 // `payToClose` is the amount the AO intends to settle / buy-out on
 // the reloan. It is a manually-entered number (not auto-derived
-// from the CIS feed) and is validated against the outstanding
-// balance via `superRefine` so that an entry larger than what is
-// actually owed surfaces as a row-level validation error instead
-// of silently shipping to the back-end.
-export const ebiReloanSchema = z
-    .object({
-        pn: z.string().default(""),
-        name: z.string().default(""),
-        existingDeduction: z.number().default(0),
-        outstandingBalance: z.number().default(0),
-        payToClose: z
-            .number()
-            .min(0, "Pay to close must be a positive amount")
-            .default(0),
-    })
-    .superRefine((row, ctx) => {
-        if (row.payToClose > row.outstandingBalance) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ["payToClose"],
-                message: `Pay to close cannot exceed the outstanding balance of ${row.outstandingBalance.toLocaleString()}.`,
-            });
-        }
-    });
+// from the CIS feed). No upper-bound validation against outstanding
+// balance — the AO may enter any positive amount.
+export const ebiReloanSchema = z.object({
+    pn: z.string().default(""),
+    name: z.string().default(""),
+    existingDeduction: z.number().default(0),
+    outstandingBalance: z.number().default(0),
+    payToClose: z
+        .number()
+        .min(0, "Pay to close must be a positive amount")
+        .default(0),
+});
 
 // ── Buy-Out (from another FI) ──────────────────────────────────
 export const buyOutSchema = z.object({

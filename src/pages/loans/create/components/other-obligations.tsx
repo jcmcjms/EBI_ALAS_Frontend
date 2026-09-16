@@ -45,7 +45,7 @@ type BuyOutRow = { pn?: string; name?: string; amortization?: number; outstandin
 type IncomingRow = { name?: string; deductions?: number; remarks?: string };
 
 export function OtherObligationsSection() {
-    const { control, register, formState: { errors }, getValues } = useFormContext();
+    const { control, register, getValues } = useFormContext();
     // `arrays` is consumed for RHF row ids (React keys) and for the
     // append/remove helpers used by the Add/Delete buttons. The
     // bidirectional transfer hook (`handleTransfer`) is wired up to
@@ -58,13 +58,6 @@ export function OtherObligationsSection() {
     // Loans table would silently disappear here. See
     // loan-transfers-provider.tsx for the full contract.
     const { arrays, handleTransfer } = useLoanTransfersContext();
-
-    // Row-level validation errors raised by `ebiReloanSchema`'s
-    // `superRefine` (e.g. payToClose > outstandingBalance) live at
-    // `errors.ebiReloans[i].payToClose`. We narrow them here so the
-    // table cells can render the message inline without forcing every
-    // caller to redo the type narrowing.
-    const ebiRowErrors = (errors.ebiReloans as Array<{ payToClose?: { message?: string } }> | undefined) ?? [];
 
     // ── Iterate `useFieldArray.fields` (not `useWatch`) ─────────────────
     // Iterating over `arrays.ebi.fields` is the only reliable way to
@@ -199,47 +192,22 @@ export function OtherObligationsSection() {
                                             className="h-8 text-right text-xs bg-muted/50 min-w-0 overflow-hidden text-ellipsis"
                                         />
                                     </TableCell>
-                                    {(() => {
-                                        // ── Manual input: Pay to Close ────────────
-                                        // Unlike the rest of the EBI row (which is
-                                        // read-only and populated via transfers), the
-                                        // pay-to-close amount is hand-keyed by the AO
-                                        // and validated against the row's outstanding
-                                        // balance by `ebiReloanSchema.superRefine`.
-                                        const payToCloseError =
-                                            ebiRowErrors[i]?.payToClose?.message;
-                                        return (
-                                            <TableCell>
-                                                <div className="flex flex-col gap-0.5">
-                                                    <Input
-                                                        type="number"
-                                                        min={0}
-                                                        step="0.01"
-                                                        inputMode="decimal"
-                                                        {...register(
-                                                            `ebiReloans.${i}.payToClose`,
-                                                            { valueAsNumber: true },
-                                                        )}
-                                                        defaultValue={loan?.payToClose ?? 0}
-                                                        placeholder="0.00"
-                                                        aria-invalid={!!payToCloseError}
-                                                        aria-label={`Pay to close for ${loan?.name ?? loan?.pn ?? `row ${i + 1}`}`}
-                                                        className={
-                                                            "h-8 text-right text-xs " +
-                                                            (payToCloseError
-                                                                ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50"
-                                                                : "")
-                                                        }
-                                                    />
-                                                    {payToCloseError && (
-                                                        <span className="text-[10px] leading-tight text-destructive font-medium">
-                                                            {payToCloseError}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                        );
-                                    })()}
+                                    <TableCell>
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            step="0.01"
+                                            inputMode="decimal"
+                                            {...register(
+                                                `ebiReloans.${i}.payToClose`,
+                                                { valueAsNumber: true },
+                                            )}
+                                            defaultValue={loan?.payToClose ?? 0}
+                                            placeholder="0.00"
+                                            aria-label={`Pay to close for ${loan?.name ?? loan?.pn ?? `row ${i + 1}`}`}
+                                            className="h-8 text-right text-xs"
+                                        />
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <TransferActionMenu
                                             currentSection="ebi"
