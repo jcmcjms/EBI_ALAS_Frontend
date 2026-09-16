@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { BRANCHES, type UserResponse } from "@/src/lib/api/types";
 import { stripRoleDisplayName } from "@/src/lib/role-badges";
 import { useRoles } from "@/src/hooks/use-roles";
+import { useApprovalAuthorities } from "@/src/hooks/use-approval-authorities";
 
 /**
  * Value→label lookup for the branch <Select> trigger. Base UI's
@@ -21,6 +22,18 @@ const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
     value: branch.code,
     label: branch.name,
 }));
+
+/**
+ * Formats a number as Philippine Peso currency string.
+ */
+function formatPhp(amount: number): string {
+    return new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(amount);
+}
 
 /**
  * Editable fields — mirrors PUT /api/users/{id} (UpdateUserRequest).
@@ -73,6 +86,11 @@ type EditableProfile = {
     jobTitle: string;
 };
 
+/**
+ * Builds the editable profile from a UserResponse. For Approvers,
+ * jobTitle is seeded with the authority key (not the display name)
+ * so the dropdown can match the selected value.
+ */
 function profileFrom(user: UserResponse): EditableProfile {
     return {
         firstName: user.firstName,
@@ -80,7 +98,9 @@ function profileFrom(user: UserResponse): EditableProfile {
         lastName: user.lastName,
         branchId: user.branchId,
         role: user.role,
-        jobTitle: user.jobTitle ?? "",
+        // For Approvers: use the authority key so the <Select> matches.
+        // For others: use the free-text jobTitle.
+        jobTitle: user.approvalAuthority?.key ?? user.jobTitle ?? "",
     };
 }
 
@@ -133,8 +153,24 @@ export function UserEditDrawer({
         setIsDirty(false);
     }
 
+    // Fetch approval authorities only when current role is Approver.
+    const isApprover = profile.role === "Approver";
+    const { data: authorities, isLoading: authoritiesLoading } = useApprovalAuthorities(isApprover);
+
     const handleFieldChange = <K extends keyof EditableProfile>(field: K, value: EditableProfile[K]) => {
-        setProfile(prev => ({ ...prev, [field]: value }));
+        setProfile(prev => {
+            const next = { ...prev, [field]: value };
+            // When switching away from Approver, clear the authority selection.
+            if (field === "role" && value !== "Approver") {
+                next.jobTitle = "";
+            }
+            // When switching to Approver, clear jobTitle so the user picks
+            // from the authority dropdown (not stale free text).
+            if (field === "role" && value === "Approver") {
+                next.jobTitle = "";
+            }
+            return next;
+        });
         setIsDirty(true);
     };
 
@@ -155,7 +191,11 @@ export function UserEditDrawer({
             toast.error("Last name is required");
             return;
         }
-        if (profile.jobTitle.length > 100) {
+        if (profile.role === "Approver" && !profile.jobTitle) {
+            toast.error("Please select an approval authority for this Approver.");
+            return;
+        }
+        if (profile.role !== "Approver" && profile.jobTitle.length > 100) {
             toast.error("Job title must not exceed 100 characters");
             return;
         }
@@ -238,20 +278,45 @@ export function UserEditDrawer({
                                 className="h-9"
                             />
                         </div>
+
+                        {/* ── Job Title / Approval Authority ── */}
                         <div className="space-y-2">
-                            <Label htmlFor="edit-jobTitle">Job Title</Label>
-                            <Input
-                                id="edit-jobTitle"
-                                value={profile.jobTitle}
-                                onChange={(e) => handleFieldChange("jobTitle", e.target.value)}
-                                placeholder="e.g. Senior Credit Evaluator"
-                                maxLength={100}
-                                className="h-9"
-                            />
+                            <Label htmlFor="edit-jobTitle">
+                                {isApprover ? "Approval Authority" : "Job Title"}
+                            </Label>
+                            {isApprover ? (
+                                <Select
+                                    value={profile.jobTitle}
+                                    onValueChange={(value) => handleFieldChange("jobTitle", value ?? "")}
+                                >
+                                    <SelectTrigger className="h-9 w-full">
+                                        <SelectValue placeholder={authoritiesLoading ? "Loading authorities..." : "Select approval authority"} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {(authorities ?? []).map((auth) => (
+                                            <SelectItem key={auth.key} value={auth.key}>
+                                                {auth.displayName} — Tier {auth.tier}, up to {formatPhp(auth.maxTotalExposure)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <Input
+                                    id="edit-jobTitle"
+                                    value={profile.jobTitle}
+                                    onChange={(e) => handleFieldChange("jobTitle", e.target.value)}
+                                    placeholder="e.g. Senior Credit Evaluator"
+                                    maxLength={100}
+                                    className="h-9"
+                                />
+                            )}
                             <p className="text-xs text-muted-foreground">
-                                Complements the workflow role and shows up on audit trails.
+                                {isApprover
+                                    ? "Determines which loans this approver can authorize (delegation of authority)."
+                                    : "Complements the workflow role and shows up on audit trails."}
                             </p>
                         </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="edit-username">Username</Label>
@@ -331,6 +396,31 @@ export function UserEditDrawer({
                                 Role determines the baseline permissions. The full mapping is visible in the Role Matrix.
                             </p>
                         </div>
+
+                        {/* ── Approval Authority (in Roles tab for Approvers) ── */}
+                        {isApprover && (
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-authority">Approval Authority</Label>
+                                <Select
+                                    value={profile.jobTitle}
+                                    onValueChange={(value) => handleFieldChange("jobTitle", value ?? "")}
+                                >
+                                    <SelectTrigger className="h-9 w-full">
+                                        <SelectValue placeholder={authoritiesLoading ? "Loading..." : "Select authority"} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {(authorities ?? []).map((auth) => (
+                                            <SelectItem key={auth.key} value={auth.key}>
+                                                {auth.displayName} — Tier {auth.tier}, up to {formatPhp(auth.maxTotalExposure)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    Determines which loans this approver can authorize based on exposure and tier.
+                                </p>
+                            </div>
+                        )}
                     </TabsContent>
 
                     <TabsContent value="security" className="mt-0 flex-1 space-y-4 overflow-y-auto p-6">

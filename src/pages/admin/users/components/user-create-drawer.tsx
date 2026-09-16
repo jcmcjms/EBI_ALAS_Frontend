@@ -10,6 +10,7 @@ import { CheckCircle, Copy } from "@phosphor-icons/react";
 import { BRANCHES } from "@/src/lib/api/types";
 import { stripRoleDisplayName } from "@/src/lib/role-badges";
 import { useRoles } from "@/src/hooks/use-roles";
+import { useApprovalAuthorities } from "@/src/hooks/use-approval-authorities";
 
 /**
  * Payload contract for POST /api/users (CreateUserRequest).
@@ -62,6 +63,18 @@ const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
 }));
 
 /**
+ * Formats a number as Philippine Peso currency string.
+ */
+function formatPhp(amount: number): string {
+    return new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(amount);
+}
+
+/**
  * Generates a readable temporary password using cryptographically secure
  * randomness that satisfies the backend policy: at least one uppercase, one
  * lowercase, one digit, and one special character (!?*.). Ambiguous
@@ -108,8 +121,25 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
     const [tempPassword, setTempPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Fetch approval authorities only when role is Approver (for the dropdown).
+    const isApprover = form.role === "Approver";
+    const { data: authorities, isLoading: authoritiesLoading } = useApprovalAuthorities(isApprover);
+
     const handleFieldChange = <K extends keyof typeof emptyForm>(field: K, value: typeof emptyForm[K]) => {
-        setForm(prev => ({ ...prev, [field]: value }));
+        setForm(prev => {
+            const next = { ...prev, [field]: value };
+            // When switching away from Approver, clear the authority selection
+            // so a stale key doesn't leak into the free-text field.
+            if (field === "role" && value !== "Approver") {
+                next.jobTitle = "";
+            }
+            // When switching to Approver, also clear jobTitle since the user
+            // needs to pick from the authority dropdown (not type free text).
+            if (field === "role" && value === "Approver") {
+                next.jobTitle = "";
+            }
+            return next;
+        });
     };
 
     const handleCreate = async () => {
@@ -143,6 +173,11 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
         }
         if (!form.role) {
             toast.error("Role is required");
+            return;
+        }
+        // Approvers must select an authority from the matrix.
+        if (form.role === "Approver" && !form.jobTitle) {
+            toast.error("Please select an approval authority for this Approver.");
             return;
         }
         if (!form.eSignature) {
@@ -301,20 +336,6 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="create-jobTitle">Job Title</Label>
-                                <Input
-                                    id="create-jobTitle"
-                                    value={form.jobTitle}
-                                    onChange={(e) => handleFieldChange("jobTitle", e.target.value)}
-                                    placeholder="e.g. Senior Credit Evaluator"
-                                    maxLength={100}
-                                    className="h-9"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    Complements the workflow role and shows up on audit trails.
-                                </p>
-                            </div>
-                            <div className="space-y-2">
                                 <Label htmlFor="create-branch">Assigned Branch *</Label>
                                 <Select value={form.branchId} onValueChange={(value) => handleFieldChange("branchId", value ?? "")} items={BRANCH_SELECT_ITEMS}>
                                     <SelectTrigger className="h-9 w-full">
@@ -336,6 +357,44 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                                     </SelectContent>
                                 </Select>
                                 <p className="text-xs text-muted-foreground">A temporary password will be generated for this account.</p>
+                            </div>
+
+                            {/* ── Job Title / Approval Authority ── */}
+                            <div className="space-y-2">
+                                <Label htmlFor="create-jobTitle">
+                                    {isApprover ? "Approval Authority *" : "Job Title"}
+                                </Label>
+                                {isApprover ? (
+                                    <Select
+                                        value={form.jobTitle}
+                                        onValueChange={(value) => handleFieldChange("jobTitle", value ?? "")}
+                                    >
+                                        <SelectTrigger className="h-9 w-full">
+                                            <SelectValue placeholder={authoritiesLoading ? "Loading authorities..." : "Select approval authority"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {(authorities ?? []).map((auth) => (
+                                                <SelectItem key={auth.key} value={auth.key}>
+                                                    {auth.displayName} — Tier {auth.tier}, up to {formatPhp(auth.maxTotalExposure)}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Input
+                                        id="create-jobTitle"
+                                        value={form.jobTitle}
+                                        onChange={(e) => handleFieldChange("jobTitle", e.target.value)}
+                                        placeholder="e.g. Senior Credit Evaluator"
+                                        maxLength={100}
+                                        className="h-9"
+                                    />
+                                )}
+                                <p className="text-xs text-muted-foreground">
+                                    {isApprover
+                                        ? "Determines which loans this approver can authorize (delegation of authority)."
+                                        : "Complements the workflow role and shows up on audit trails."}
+                                </p>
                             </div>
 
                             {/* ── Signature Pad ── */}

@@ -93,6 +93,15 @@ export interface UserStatusPayload {
     isActive: boolean;
 }
 
+/** Lightweight approval authority info embedded in UserResponse. */
+export interface ApprovalAuthorityInfo {
+    key: string;
+    displayName: string;
+    tier: number;
+    priority: number;
+    maxTotalExposure: number;
+}
+
 /** User record returned by all user endpoints (UserResponse). */
 export interface UserResponse {
     id: number;
@@ -104,10 +113,12 @@ export interface UserResponse {
     role: string;
     isActive: boolean;
     createdAt: string;
-    /** Free-text role label (e.g. "Branch Manager"). */
+    /** Free-text role label (e.g. "Branch Manager") or authority display name for Approvers. */
     jobTitle?: string | null;
     /** Base64-encoded PNG of the user's e-signature. Null when none. */
     eSignature?: string | null;
+    /** Approval authority info for Approver users. Null for non-approvers. */
+    approvalAuthority?: ApprovalAuthorityInfo | null;
 }
 
 /** Audit log record for a specific user (UserAuditLogResponse). */
