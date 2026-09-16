@@ -77,7 +77,8 @@ function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
         lastActionVerb: loan.lastAction ?? null,
         createdById: loan.createdById ?? null,
         // ── Delegation-of-authority routing fields ──────────────────
-        documentsComplete: loan.documentsComplete ?? false,
+        documentsComplete: loan.documentsComplete ?? null,
+        documentsCompleteAt: loan.documentsCompleteAt ?? null,
         assignedApproverName: loan.assignedApproverName ?? null,
         requiredApprovalTier: loan.requiredApprovalTier ?? null,
     };

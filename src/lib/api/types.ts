@@ -967,12 +967,17 @@ export interface CreatedLoanSummary {
     /** User ID of the encoder who created this application. */
     createdById?: number | null;
     // ── Delegation-of-authority routing fields ──────────────────────
-    /** Whether all required checklist documents are uploaded. */
+    /** Whether all required checklist documents are uploaded.
+     *  null = not yet verified (distinct from false = verified missing). */
     documentsComplete?: boolean | null;
+    /** ISO-8601 datetime when document completeness was last verified. */
+    documentsCompleteAt?: string | null;
     /** Display name of the assigned approver, or null if unassigned. */
     assignedApproverName?: string | null;
     /** Required approval tier (1-5), or null if not yet routed. */
     requiredApprovalTier?: number | null;
+    /** User ID of the assigned approver (active lease). */
+    assignedApproverId?: number | null;
 }
 
 /**

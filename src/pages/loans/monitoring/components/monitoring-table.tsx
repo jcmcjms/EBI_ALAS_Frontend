@@ -15,7 +15,7 @@ import {
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle, CheckCircle, UserCircle } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle, CheckCircle, UserCircle, CircleDashed } from "@phosphor-icons/react";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
@@ -263,10 +263,19 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
             header: "Docs",
             cell: (info) => {
                 const complete = info.getValue();
+                const at = info.row.original.documentsCompleteAt;
+
+                if (complete === null)
+                    return (
+                        <CircleDashed size={16} className="text-muted-foreground"
+                            title="Completeness not verified yet — checks run automatically and on demand" />
+                    );
                 return complete ? (
-                    <CheckCircle size={16} weight="fill" className="text-emerald-500" title="All documents uploaded" />
+                    <CheckCircle size={16} weight="fill" className="text-emerald-500"
+                        title={`All documents uploaded${at ? ` — verified ${new Date(at).toLocaleString()}` : ""}`} />
                 ) : (
-                    <XCircle size={16} weight="fill" className="text-amber-500" title="Missing documents" />
+                    <XCircle size={16} weight="fill" className="text-amber-500"
+                        title="Missing documents — open the Files tab to see which" />
                 );
             },
         }),

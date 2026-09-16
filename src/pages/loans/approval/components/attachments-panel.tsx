@@ -7,6 +7,7 @@ import {
     XCircle,
     ListChecks,
     ChatCenteredText,
+    ArrowClockwise,
 } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
@@ -22,6 +23,8 @@ import {
     type LoanChecklistDocumentDto,
     type DocumentRemarkDto,
 } from "@/src/lib/api/loan-review";
+
+import { useVerifyDocuments } from "@/src/hooks/use-verify-documents";
 
 import { DocumentPreviewDialog } from "./document-preview-dialog";
 import { DocumentRemarksThread } from "./document-remarks-thread";
@@ -74,6 +77,7 @@ export function AttachmentsPanel({
     }, [remarksQuery.data]);
 
     const canWriteRemarks = canWriteDocumentRemarks(role, isLoanOwner);
+    const verify = useVerifyDocuments(loanId);
 
     const toggleThread = (code: string) =>
         setOpenThreads((prev) => {
@@ -98,6 +102,16 @@ export function AttachmentsPanel({
                             {uploadedCount}/{checklistItems.length} uploaded
                         </Badge>
                     )}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5 ml-auto"
+                        disabled={verify.isPending}
+                        onClick={() => verify.mutate()}
+                    >
+                        <ArrowClockwise size={14} weight="bold" className={verify.isPending ? "animate-spin" : ""} />
+                        Re-check documents
+                    </Button>
                 </div>
 
                 {checklistDocs.isLoading && <Spinner className="size-5" />}
