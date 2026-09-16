@@ -18,6 +18,8 @@ import {
 import {
     computeMaximumLoanableAmount,
     computeMonthlyAmortization,
+    resolveApprovalTermDays,
+    DAYS_PER_MONTH,
 } from "@/src/lib/loan-computations";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
@@ -178,25 +180,23 @@ function SingleLoanApprovalForm({
         loanClass?.catLoanClass
     );
 
-    // ── Term & rate normalization (approval-form boundary only) ────
-    // The feed carries two term representations:
-    //   • `parameters.term` — the calendar day-count to maturity. For
-    //     most loans this equals policyTermMonths × 30, but for loans
-    //     with a grace period the core system adds +2 months, so e.g.
-    //     an 84-month loan arrives as 2,587 days instead of 2,520.
-    //   • `parameters.policyTermMonths` — the amortization term (e.g.
-    //     84), which is what the LAM template quotes and what the
-    //     PMT/PV math uses.
+    // ── Term normalization (approval-form boundary only) ────────────
+    // `parameters.term` is the calendar day-count to maturity (2,587 —
+    // includes grace past the amortization schedule);
+    // `parameters.policyTermMonths` is the amortization period count
+    // (84 for monthly products), which is what the LAM template quotes
+    // as TERM (Days) in 30-day months.
     //
-    // When policyTermMonths is present we derive the approval-form
-    // term as policyTermMonths × 30 (the legacy "1 month = 30 days"
-    // convention). When it is absent (LEFT JOIN miss), we fall back
-    // to the raw term directly — it is already in days and does not
-    // need to be re-derived from a month conversion.
-    const policyTermMonths = parameters.policyTermMonths;
-    const approvalTermDays = policyTermMonths != null
-        ? policyTermMonths * DAYS_PER_MONTH
-        : (parameters.term || 0);
+    // Guard: for single-payment products (C02 Lumpsum AdvInt) the
+    // amortization count is 1, so policyTermMonths × 30 (30d) diverges
+    // from the real term (720d) by far more than any grace period —
+    // there the policy term does not describe the term, and the form
+    // must quote the feed's term days verbatim.
+    const approvalTermDays = resolveApprovalTermDays(
+        parameters.term || 0,
+        parameters.policyTermMonths,
+    );
+    const approvalTermMonths = Math.round(approvalTermDays / DAYS_PER_MONTH);
     const annualRatePercent = toAnnualRatePercent(parameters.interestRate);
 
     const principal = parameters.proposedAmount || 0;
@@ -256,9 +256,7 @@ function SingleLoanApprovalForm({
     );
 
     const productLine = parameters.product
-        ? policyTermMonths != null
-            ? `[ ${parameters.product} ] ${policyTermMonths} months @ ${formatRatePercent(annualRatePercent)}% per Annum`
-            : `[ ${parameters.product} ] ${approvalTermDays} days @ ${formatRatePercent(annualRatePercent)}% per Annum`
+        ? `[ ${parameters.product} ] ${approvalTermMonths} months @ ${formatRatePercent(annualRatePercent)}% per Annum`
         : "-";
 
     const deviations = form?.deviations;
@@ -631,7 +629,6 @@ const LEGACY_TOTAL_DEDUCTION_RATE = 0.06;
 const LEGACY_DOC_STAMP_RATE = 0.0075;
 const LEGACY_NOTARIAL_FEE = 500;
 const DEFAULT_MINIMUM_NTHP = 5_000;
-const DAYS_PER_MONTH = 30;
 
 /* Fixed row counts of the legacy Excel grid were removed when the
  * reloan / buy-out / incoming matrices moved to dynamic rows derived

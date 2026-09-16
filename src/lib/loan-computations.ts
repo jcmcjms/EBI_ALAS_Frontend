@@ -464,6 +464,57 @@ export function buildLoanMetricsSnapshot(
     };
 }
 
+// ── Term resolution ────────────────────────────────────────────────────
+
+/**
+ * Maximum grace period (in days) the core system may add between the
+ * amortization schedule and calendar maturity. A16 ships 2,587 calendar
+ * days against an 84-month (2,520d) schedule — a 67-day gap. Anything
+ * larger means `policyTermMonths` does NOT describe the term (e.g.
+ * single-payment Lumpsum products ship total_amortization = 1) and the
+ * feed's term days must be quoted verbatim.
+ */
+export const MAX_GRACE_DAYS = 90;
+
+/**
+ * Resolves the correct term in days for the approval form, handling
+ * both monthly-amortizing products and single-payment products.
+ *
+ * For monthly-amortizing products (e.g. A16: 84 installments),
+ * `policyTermMonths × 30` equals the term in months, so
+ * `84 × 30 = 2,520` is correct. The feed's `term` (2,587) includes
+ * a grace period of 67 days.
+ *
+ * For single-payment products (e.g. C02 – CL Lumpsum AdvInt), the
+ * amortization count is 1, so `1 × 30 = 30` — which is NOT the term
+ * at all; the real term is the feed's 720 days.
+ *
+ * Guard: use the policy term only when it actually describes the term
+ * (i.e. the feed's day-count differs from it by at most a grace
+ * period), otherwise quote the feed's term days verbatim.
+ *
+ * @param termDays The calendar day-count to maturity from the feed
+ *                 (e.g. 2,587 for A16, 720 for C02).
+ * @param policyTermMonths The amortization period count from the feed
+ *                         (e.g. 84 for A16, 1 for C02).
+ * @returns The resolved term in days for the approval form.
+ */
+export function resolveApprovalTermDays(
+    termDays: number,
+    policyTermMonths?: number | null,
+): number {
+    const rawTermDays = termDays || 0;
+    const policyTermDays = (policyTermMonths ?? 0) * DAYS_PER_MONTH;
+    const graceDays = rawTermDays - policyTermDays;
+
+    return policyTermDays > 0 && graceDays >= 0 && graceDays <= MAX_GRACE_DAYS
+        ? policyTermDays
+        : rawTermDays;
+}
+
+/** Days per month in the legacy "1 month = 30 days" convention. */
+export const DAYS_PER_MONTH = 30;
+
 // ── helpers ────────────────────────────────────────────────────────────
 
 /** Round to 2 decimal places using banker-neutral half-away-from-zero. */

@@ -69,8 +69,12 @@ export function resolveLoanProductDisplayName(
     const code = parseProductCode(raw);
     if (!code) return "";
 
+    // Normalize catLoanClass: treat empty string the same as null/undefined
+    // (the backend returns empty string when the loan exists but cat_loan_class IS NULL)
+    const normalizedClass = (catLoanClass ?? "").trim() || undefined;
+
     const displayName = isClassScopedProduct(code)
-        ? CAT_LOAN_CLASS_DISPLAY_NAMES[(catLoanClass ?? "").trim()]
+        ? (normalizedClass ? CAT_LOAN_CLASS_DISPLAY_NAMES[normalizedClass] : undefined)
         : STATIC_PRODUCT_DISPLAY_NAMES[code];
 
     return (displayName ?? raw) || code;
