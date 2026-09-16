@@ -73,6 +73,14 @@ export interface LoanDetailResponse {
         actionByUserName: string;
     }[];
     evaluationVerdict: string | null;
+    // ── Delegation-of-authority routing fields ──────────────────────
+    loanType: string;
+    deviationSeverity: number;
+    requiredApprovalTier: number | null;
+    assignedApproverId: number | null;
+    assignedApproverName: string | null;
+    assignedAt: string | null;
+    documentsCompleteAt: string | null;
     outstandingLoans: {
         id: number;
         pn: string;

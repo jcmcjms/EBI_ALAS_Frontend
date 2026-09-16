@@ -907,6 +907,9 @@ export interface LoanSubmissionPayload {
         remarks?: string; aoRecommendation?: string;
         otherRemarks: string; feeDeviationJustification?: string;
     };
+    // ── Delegation-of-authority routing ──────────────────────────
+    /** "New" or "Renewal" — determines approval tier routing. */
+    loanType?: "New" | "Renewal";
 }
 
 /**
@@ -963,6 +966,13 @@ export interface CreatedLoanSummary {
     lastAction?: string | null;
     /** User ID of the encoder who created this application. */
     createdById?: number | null;
+    // ── Delegation-of-authority routing fields ──────────────────────
+    /** Whether all required checklist documents are uploaded. */
+    documentsComplete?: boolean | null;
+    /** Display name of the assigned approver, or null if unassigned. */
+    assignedApproverName?: string | null;
+    /** Required approval tier (1-5), or null if not yet routed. */
+    requiredApprovalTier?: number | null;
 }
 
 /**

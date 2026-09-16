@@ -61,6 +61,12 @@ import {
     type LoanDetailResponse,
     type EvaluationVerdict,
 } from "@/src/lib/api/loan-review";
+import {
+    getLoanRouting,
+    releaseAssignment,
+    approvalMatrixKeys,
+    type LoanRoutingDto,
+} from "@/src/lib/api/approval-matrix";
 import { queryKeys } from "@/src/lib/queryKeys";
 import { cn } from "@/src/lib/utils";
 import { LOAN_STATUS_META, type LoanStatus } from "@/src/lib/loan-status";
@@ -275,6 +281,16 @@ export function LoanApprovalPage() {
         placeholderData: keepPreviousData,  // same-id refetches keep the sheet painted
     });
 
+    // ── Routing info (approval tier, documents, assignment) ──────────────────
+    const routing = useQuery({
+        queryKey: approvalMatrixKeys.routing(id),
+        queryFn: () => getLoanRouting(id),
+        enabled: Number.isFinite(id) && id > 0 && loan.data?.status === "ForApproval",
+        staleTime: 30_000,
+    });
+
+    const routingData = routing.data;
+
     const detail = loan.data;
     const frozen = detail ? TERMINAL.includes(detail.status) : false;
     const formData = useMemo(
@@ -297,6 +313,18 @@ export function LoanApprovalPage() {
             setRemarks("");
             qc.invalidateQueries({ queryKey: loanReviewKeys.detail(id) });
             qc.invalidateQueries({ queryKey: loanReviewKeys.history(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+            qc.invalidateQueries({ queryKey: approvalMatrixKeys.routing(id) });
+        },
+        onError: (e: Error) => toast.error(e.message),
+    });
+
+    // ── Release assignment mutation ──────────────────────────────────────────
+    const releaseMut = useMutation({
+        mutationFn: () => releaseAssignment(id),
+        onSuccess: () => {
+            toast.success("Assignment released. The loan is now available for other approvers.");
+            qc.invalidateQueries({ queryKey: approvalMatrixKeys.routing(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
         onError: (e: Error) => toast.error(e.message),
@@ -379,6 +407,14 @@ export function LoanApprovalPage() {
                             <Clock size={12} weight="fill" />
                             {detail.status}
                         </Badge>
+                        {routingData?.matchedRule && detail.status === "ForApproval" && (
+                            <Badge
+                                variant="secondary"
+                                className="gap-1.5 border-violet-200 bg-violet-50 text-violet-700"
+                            >
+                                {routingData.matchedRule}
+                            </Badge>
+                        )}
                         {detail.hasDeviations && (
                             <Badge
                                 variant="secondary"
@@ -534,6 +570,45 @@ export function LoanApprovalPage() {
                                                 {LOAN_STATUS_META[detail.status as LoanStatus]?.hint}
                                             </p>
                                         </div>
+
+                                        {/* ── Delegation-of-authority decision gates ── */}
+                                        {routingData && !routingData.documentsComplete && detail.status === "ForApproval" && (
+                                            <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+                                                <WarningCircle size={14} className="mt-0.5 shrink-0 text-amber-600" />
+                                                <p className="text-xs text-amber-800">
+                                                    <span className="font-semibold">Cannot be approved:</span> missing {routingData.missingDocuments.join(", ")}.
+                                                </p>
+                                            </div>
+                                        )}
+                                        {routingData && user?.role === "Approver" && routingData.requiredApprovalTier && detail.status === "ForApproval" && (
+                                            <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2">
+                                                <Info size={14} className="mt-0.5 shrink-0 text-blue-600" />
+                                                <p className="text-xs text-blue-800">
+                                                    Requires <span className="font-semibold">{routingData.matchedRule}</span> approval.
+                                                </p>
+                                            </div>
+                                        )}
+                                        {routingData && routingData.assignedApproverId && routingData.assignedApproverId !== Number(user?.userId) && detail.status === "ForApproval" && (
+                                            <div className="flex items-start gap-2 rounded-md border border-purple-200 bg-purple-50 px-3 py-2">
+                                                <UserCircle size={14} className="mt-0.5 shrink-0 text-purple-600" />
+                                                <p className="text-xs text-purple-800">
+                                                    Currently being reviewed by <span className="font-semibold">{routingData.assignedApproverName}</span>.
+                                                </p>
+                                            </div>
+                                        )}
+                                        {/* ── Release button (when assigned to me) ── */}
+                                        {routingData && routingData.assignedApproverId === Number(user?.userId) && detail.status === "ForApproval" && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full gap-2 border-orange-200 text-orange-700 hover:bg-orange-50"
+                                                disabled={releaseMut.isPending}
+                                                onClick={() => releaseMut.mutate()}
+                                            >
+                                                <ArrowCounterClockwise size={14} />
+                                                {releaseMut.isPending ? "Releasing…" : "Release Assignment"}
+                                            </Button>
+                                        )}
 
                                         {/* ── Activity & Remarks (NOT "audit trail": this is the
                                                application's conversation; the formal audit log lives

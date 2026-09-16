@@ -15,7 +15,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle, CheckCircle, UserCircle } from "@phosphor-icons/react";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
@@ -219,6 +219,40 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                     </Badge>
                 );
             }
+        }),
+        columnHelper.accessor("documentsComplete", {
+            header: "Docs",
+            cell: (info) => {
+                const complete = info.getValue();
+                return complete ? (
+                    <CheckCircle size={16} weight="fill" className="text-emerald-500" title="All documents uploaded" />
+                ) : (
+                    <XCircle size={16} weight="fill" className="text-amber-500" title="Missing documents" />
+                );
+            },
+        }),
+        columnHelper.accessor("assignedApproverName", {
+            header: "Assigned To",
+            cell: (info) => {
+                const name = info.getValue();
+                const tier = info.row.original.requiredApprovalTier;
+                if (!name) {
+                    return tier ? (
+                        <span className="text-xs text-muted-foreground">Tier {tier} queue</span>
+                    ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                    );
+                }
+                return (
+                    <div className="flex items-center gap-1.5">
+                        <div className="relative">
+                            <UserCircle size={16} className="text-muted-foreground" />
+                            <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-background" />
+                        </div>
+                        <span className="text-xs font-medium">{name}</span>
+                    </div>
+                );
+            },
         }),
         columnHelper.accessor("lastActionDate", {
             header: "Time Lapsed",

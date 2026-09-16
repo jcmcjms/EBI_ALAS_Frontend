@@ -30,6 +30,13 @@ export interface LoanMonitoringRecord {
     /** User ID of the encoder who created this application.
      *  Used for ownership gating (cancel button). */
     createdById?: number | null;
+    // ── Delegation-of-authority routing fields ──────────────────────
+    /** Whether all required checklist documents are uploaded. */
+    documentsComplete: boolean;
+    /** Display name of the assigned approver, or null if unassigned. */
+    assignedApproverName: string | null;
+    /** Required approval tier (1-5), or null if not yet routed. */
+    requiredApprovalTier: number | null;
 }
 
 export interface MonitoringFilters {

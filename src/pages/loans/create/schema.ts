@@ -458,6 +458,9 @@ export const deviationsSchema = z
 // 2. Unique products: cannot select multiple loans of the same product
 //    code in a single application (enforced at both UI and schema level).
 //
+// 3. LoanType: "New" or "Renewal" — determines which tier of the
+//    approval matrix the loan is routed to.
+//
 // (The legacy Excel's "Capacity to Pay" checks — monthly amortization
 // vs. disposable income, and computed amortization vs. the tiered
 // minimum table — were previously enforced here. The UI no longer
@@ -483,6 +486,10 @@ export const loanApplicationSchema = z
         // (conditionally) `deviationDetails` are actually evaluated.
         verification: verificationSchema,
         deviations: deviationsSchema,
+        // ── Delegation-of-authority routing ──────────────────────────
+        // "New" or "Renewal" — determines which tier of the approval
+        // matrix the loan is routed to. Default derived from form data.
+        loanType: z.enum(["New", "Renewal"]).default("New"),
     })
     .superRefine((data, ctx) => {
         const { loans, deviations } = data;

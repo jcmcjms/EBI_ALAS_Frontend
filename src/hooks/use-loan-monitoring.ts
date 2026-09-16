@@ -76,6 +76,10 @@ function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
         lastActionBy: loan.lastActionByName ?? loan.createdByName ?? "—",
         lastActionVerb: loan.lastAction ?? null,
         createdById: loan.createdById ?? null,
+        // ── Delegation-of-authority routing fields ──────────────────
+        documentsComplete: loan.documentsComplete ?? false,
+        assignedApproverName: loan.assignedApproverName ?? null,
+        requiredApprovalTier: loan.requiredApprovalTier ?? null,
     };
 }
 

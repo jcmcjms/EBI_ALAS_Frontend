@@ -42,5 +42,7 @@ export function mapFormToSubmissionPayload(
             : undefined,
         verification: { findings: form.verification.findings },
         deviations: { ...form.deviations },
+        // ── Delegation-of-authority routing ──────────────────────────
+        loanType: form.loanType ?? "New",
     };
 }
