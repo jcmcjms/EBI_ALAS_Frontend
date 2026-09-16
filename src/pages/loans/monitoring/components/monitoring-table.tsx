@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     FlexRender,
     createCoreRowModel,
@@ -12,7 +12,7 @@ import {
     type PaginationState,
     type SortingState,
 } from "@tanstack/react-table";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle, CheckCircle, UserCircle } from "@phosphor-icons/react";
@@ -28,6 +28,7 @@ import { CANCELLABLE_STATUSES } from "@/src/lib/api/loan-review";
 /** Per-column Tailwind classes surfaced through `meta.className`. */
 type MonitoringColumnMeta = {
     className?: string;
+    headerClassName?: string;
 };
 
 /**
@@ -62,6 +63,23 @@ const features = tableFeatures({
     columnMeta: metaHelper<MonitoringColumnMeta>(),
     coreRowModel: createCoreRowModel(),
 });
+
+// ── Sticky column classes ────────────────────────────────────────────────────
+// Opaque backgrounds are mandatory on sticky cells — translucent tokens
+// (bg-muted/40, hover:bg-muted/30) let scrolling content ghost through.
+// Z-layering: corner cell z-30 > sticky header z-20 > pinned body z-10.
+// The scroll-shadow appears only when the user has panned right (data-scrolled-x
+// is set on the wrapper), using an arbitrary Tailwind v4 variant off that attr.
+const STICKY_BODY = cn(
+    "sticky left-0 z-10 bg-background group-hover:bg-accent",
+    "[[data-scrolled-x=true]_&]:shadow-[6px_0_12px_-4px_rgb(0_0_0/0.18)]",
+    "dark:[[data-scrolled-x=true]_&]:shadow-[6px_0_12px_-4px_rgb(0_0_0/0.6)]",
+);
+const STICKY_HEAD = cn(
+    "sticky left-0 z-30 bg-muted",
+    "[[data-scrolled-x=true]_&]:shadow-[6px_0_12px_-4px_rgb(0_0_0/0.18)]",
+    "dark:[[data-scrolled-x=true]_&]:shadow-[6px_0_12px_-4px_rgb(0_0_0/0.6)]",
+);
 
 const columnHelper = createColumnHelper<typeof features, LoanMonitoringRecord>();
 
@@ -178,11 +196,32 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
         refetch,
     } = useLoanMonitoring(filters, pagination, sorting);
 
+    // ── Scroll state tracking for sticky-column shadow affordance ───────
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [scrolledX, setScrolledX] = useState(false);
+    const [moreX, setMoreX] = useState(false);
+
+    const updateScrollState = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        setScrolledX(el.scrollLeft > 1);
+        setMoreX(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    }, []);
+
+    useEffect(() => {
+        updateScrollState();
+        const el = scrollRef.current;
+        if (!el) return;
+        const ro = new ResizeObserver(updateScrollState);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [updateScrollState, pageData.length]);
+
     const columns = columnHelper.columns([
         columnHelper.accessor("formNumber", {
             header: "LAM ID",
             cell: (info) => <span className="text-xs font-semibold">{info.getValue()}</span>,
-            meta: { className: "sticky left-0 bg-background z-10 border-r" }
+            meta: { className: STICKY_BODY, headerClassName: STICKY_HEAD },
         }),
         columnHelper.accessor("branchCode", {
             header: "Branch",
@@ -356,83 +395,105 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                 </div>
             )}
 
-            <div className="flex-1 overflow-auto">
-                <Table>
-                    <TableHeader className="bg-muted/40 sticky top-0 z-20">
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id} className="hover:bg-transparent border-b">
-                                {headerGroup.headers.map((header) => (
-                                    <TableHead
-                                        key={header.id}
-                                        className={cn("h-10 px-4 text-xs font-semibold text-muted-foreground", header.column.columnDef.meta?.className)}
-                                    >
-                                        {header.isPlaceholder ? null : (
-                                            <div
-                                                className={cn("flex items-center gap-1", header.column.getCanSort() && "cursor-pointer select-none")}
-                                                onClick={header.column.getToggleSortingHandler()}
+            <div className="relative flex-1 min-w-0">
+                {/* Scroll wrapper — this is the ONLY horizontal scroller.
+                    overscroll-x-contain prevents scroll-chaining to the page. */}
+                <div
+                    ref={scrollRef}
+                    onScroll={updateScrollState}
+                    data-scrolled-x={scrolledX}
+                    className="h-full overflow-auto overscroll-x-contain"
+                >
+                    <table className="w-full caption-bottom text-xs min-w-[1180px]">
+                        <TableHeader className="bg-muted sticky top-0 z-20">
+                                {table.getHeaderGroups().map((headerGroup) => (
+                                    <TableRow key={headerGroup.id} className="hover:bg-transparent border-b">
+                                        {headerGroup.headers.map((header) => (
+                                            <TableHead
+                                                key={header.id}
+                                                className={cn(
+                                                    "h-10 px-4 text-xs font-semibold text-muted-foreground",
+                                                    header.column.columnDef.meta?.headerClassName
+                                                        ?? header.column.columnDef.meta?.className,
+                                                )}
                                             >
-                                                {FlexRender({header})}
-                                                {{ asc: <CaretUp size={14} />, desc: <CaretDown size={14} /> }[header.column.getIsSorted() as string] ?? <CaretUpDown size={14} className="opacity-30" />}
-                                            </div>
-                                        )}
-                                    </TableHead>
+                                                {header.isPlaceholder ? null : (
+                                                    <div
+                                                        className={cn("flex items-center gap-1", header.column.getCanSort() && "cursor-pointer select-none")}
+                                                        onClick={header.column.getToggleSortingHandler()}
+                                                    >
+                                                        {FlexRender({header})}
+                                                        {{ asc: <CaretUp size={14} />, desc: <CaretDown size={14} /> }[header.column.getIsSorted() as string] ?? <CaretUpDown size={14} className="opacity-30" />}
+                                                    </div>
+                                                )}
+                                            </TableHead>
+                                        ))}
+                                    </TableRow>
                                 ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-                    <TableBody>
-                        {showSkeleton ? (
-                            // 8 skeleton rows is enough to fill the visible
-                            // viewport on a 1080p screen at the default
-                            // 15-row pageSize — more would just churn DOM.
-                            Array.from({ length: 8 }).map((_, i) => (
-                                <SkeletonRow key={i} colSpan={columns.length} />
-                            ))
-                        ) : showError ? (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-32 text-center">
-                                    <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
-                                        <WarningCircle size={28} weight="bold" className="text-destructive" />
-                                        <div>
-                                            Failed to load loan applications.
-                                            <div className="text-xs mt-0.5">
-                                                {error instanceof Error ? error.message : "Unknown error."}
+                            </TableHeader>
+                        <TableBody>
+                            {showSkeleton ? (
+                                // 8 skeleton rows is enough to fill the visible
+                                // viewport on a 1080p screen at the default
+                                // 15-row pageSize — more would just churn DOM.
+                                Array.from({ length: 8 }).map((_, i) => (
+                                    <SkeletonRow key={i} colSpan={columns.length} />
+                                ))
+                            ) : showError ? (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-32 text-center">
+                                        <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+                                            <WarningCircle size={28} weight="bold" className="text-destructive" />
+                                            <div>
+                                                Failed to load loan applications.
+                                                <div className="text-xs mt-0.5">
+                                                    {error instanceof Error ? error.message : "Unknown error."}
+                                                </div>
                                             </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => refetch()}
+                                                className="gap-1.5 mt-1"
+                                            >
+                                                <ArrowClockwise size={14} weight="bold" /> Retry
+                                            </Button>
                                         </div>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => refetch()}
-                                            className="gap-1.5 mt-1"
-                                        >
-                                            <ArrowClockwise size={14} weight="bold" /> Retry
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ) : showEmpty ? (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                                    No loan applications match the current filters.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    className="hover:bg-muted/30 transition-colors cursor-pointer"
-                                    onClick={() => onRowClick(row.original)}
-                                >
-                                    {row.getAllCells().map((cell) => (
-                                        <TableCell key={cell.id} className={cn("py-2 px-4 h-12 text-sm", cell.column.columnDef.meta?.className)}>
-                                            {FlexRender({cell})}
-                                        </TableCell>
-                                    ))}
+                                    </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : showEmpty ? (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                                        No loan applications match the current filters.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow
+                                        key={row.id}
+                                        className="group hover:bg-accent transition-colors cursor-pointer"
+                                        onClick={() => onRowClick(row.original)}
+                                    >
+                                        {row.getAllCells().map((cell) => (
+                                            <TableCell key={cell.id} className={cn("py-2 px-4 h-12 text-sm", cell.column.columnDef.meta?.className)}>
+                                                {FlexRender({cell})}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </table>
+                </div>
+
+                {/* Right-edge gradient — tells users more columns exist
+                    before they scroll. Only rendered when content overflows. */}
+                {moreX && (
+                    <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent"
+                    />
+                )}
             </div>
 
             {/* Pagination Footer — driven entirely by server rowCount, so

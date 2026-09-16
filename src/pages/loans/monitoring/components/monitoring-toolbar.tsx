@@ -41,7 +41,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
     const isRoleQueue = roleQueue.length > 0 && sameStatusSet(filters.status, roleQueue);
 
     return (
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 p-4 border-b bg-muted/20">
+        <div className="flex flex-wrap items-center gap-3 gap-y-2 px-4 py-3 border-b bg-muted/20">
             {/* Search */}
             <div className="relative flex-1 max-w-sm">
                 <MagnifyingGlass size={16} className="absolute left-3 top-2.5 text-muted-foreground" weight="bold" />
