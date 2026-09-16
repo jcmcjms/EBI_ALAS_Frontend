@@ -1,5 +1,14 @@
 import { Badge } from "@/src/components/ui/badge";
 
+/**
+ * Strips the parenthetical suffix from backend role display names
+ * (e.g. "Encoder(AO/CAA)" → "Encoder", "Recommender(Branch Head)" → "Recommender").
+ * Used in role-select dropdowns where the short name is preferred.
+ */
+export function stripRoleDisplayName(displayName: string): string {
+    return displayName.replace(/\s*\(.*\)\s*$/, "").trim();
+}
+
 export const ROLE_BADGE_CLASS: Record<string, string> = {
     Encoder:
         "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-400",

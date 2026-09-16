@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SignaturePad } from "@/src/components/ui/signature-pad";
 import { toast } from "sonner";
 import { BRANCHES, type UserResponse } from "@/src/lib/api/types";
+import { stripRoleDisplayName } from "@/src/lib/role-badges";
 import { useRoles } from "@/src/hooks/use-roles";
 
 /**
@@ -106,7 +107,7 @@ export function UserEditDrawer({
     // Same lookup semantics as BRANCH_SELECT_ITEMS; roles arrive async,
     // so memoize on the fetched list.
     const roleSelectItems = useMemo(
-        () => roles.map((role) => ({ value: role.name, label: role.displayName })),
+        () => roles.map((role) => ({ value: role.name, label: stripRoleDisplayName(role.displayName) })),
         [roles],
     );
     const [profile, setProfile] = useState<EditableProfile>(emptyProfile);
@@ -323,7 +324,7 @@ export function UserEditDrawer({
                                     <SelectValue placeholder="Select role" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {roles.map(r => <SelectItem key={r.name} value={r.name}>{r.displayName}</SelectItem>)}
+                                    {roles.map(r => <SelectItem key={r.name} value={r.name}>{stripRoleDisplayName(r.displayName)}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                             <p className="text-xs text-muted-foreground">

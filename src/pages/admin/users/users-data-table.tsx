@@ -36,6 +36,7 @@ import {
     Export,
 } from "@phosphor-icons/react";
 import { cn } from "@/src/lib/utils";
+import { stripRoleDisplayName } from "@/src/lib/role-badges";
 import { BRANCHES, PERMISSIONS, type CreateUserPayload, type UpdateUserPayload, type UserResponse } from "@/src/lib/api/types";
 
 /** Lookup branch display name by branch code. */
@@ -610,7 +611,7 @@ export function UsersDataTable() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">All Roles</SelectItem>
-                                            {roles.map(r => <SelectItem key={r.name} value={r.name}>{r.displayName}</SelectItem>)}
+                                            {roles.map(r => <SelectItem key={r.name} value={r.name}>{stripRoleDisplayName(r.displayName)}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                 </div>
