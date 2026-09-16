@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
@@ -46,6 +46,7 @@ import {
 } from "@/src/components/ui/alert-dialog";
 
 import { useAuthStore } from "@/src/store/authStore";
+import { useEscalationStore } from "@/src/store/escalationStore";
 import { ApprovalFormDocument } from "./components/approval-form-document";
 import { AttachmentsPanel } from "./components/attachments-panel";
 import { DeviationRemarksPanel } from "./components/deviation-remarks-panel";
@@ -271,6 +272,16 @@ export function LoanApprovalPage() {
     const [cancelPending, setCancelPending] = useState(false);
 
     const user = useAuthStore((s) => s.user);
+    const isEscalated = useEscalationStore((s) => s.isEscalated(id));
+    const clearEscalated = useEscalationStore((s) => s.clearEscalated);
+
+    // Clear the escalation badge after 10 seconds so it doesn't persist forever.
+    useEffect(() => {
+        if (isEscalated) {
+            const timer = setTimeout(() => clearEscalated(id), 10_000);
+            return () => clearTimeout(timer);
+        }
+    }, [isEscalated, id, clearEscalated]);
 
     const loan = useQuery({
         queryKey: loanReviewKeys.detail(id),
@@ -435,6 +446,11 @@ export function LoanApprovalPage() {
                                 <ThumbsUp size={12} weight="fill" /> Evaluator: Recommended
                             </Badge>
                         )}
+                        {isEscalated && (
+                            <Badge variant="secondary" className="gap-1.5 border-orange-200 bg-orange-50 text-orange-700">
+                                <ArrowCounterClockwise size={12} weight="fill" /> Escalated
+                            </Badge>
+                        )}
                         {detail.status === "Cancelled" && (
                             <Badge
                                 variant="secondary"
@@ -593,6 +609,11 @@ export function LoanApprovalPage() {
                                                 <UserCircle size={14} className="mt-0.5 shrink-0 text-purple-600" />
                                                 <p className="text-xs text-purple-800">
                                                     Currently being reviewed by <span className="font-semibold">{routingData.assignedApproverName}</span>.
+                                                    {isEscalated && (
+                                                        <span className="ml-1 inline-flex items-center gap-1 font-semibold text-orange-700">
+                                                            (Escalated)
+                                                        </span>
+                                                    )}
                                                 </p>
                                             </div>
                                         )}
