@@ -60,7 +60,9 @@ export function extractUserFromToken(token: string): JwtUserSession | null {
         lastName: String(payload.lastName ?? ''),
         branchId: String(payload.branchId ?? ''),
         role: String(payload.role ?? ''),
-        jobTitle: payload.jobTitle != null ? String(payload.jobTitle) : null,
+        jobTitle: (payload.jobTitle ?? payload.JobTitle) != null
+            ? String(payload.jobTitle ?? payload.JobTitle)
+            : null,
         permissions,
         mustChangePassword,
     };
