@@ -20,6 +20,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const userData = {
         name: user ? `${user.firstName} ${user.lastName}` : "Guest",
         role: user?.role ?? "Unknown",
+        jobTitle: user?.jobTitle ?? null,
         avatar: "/avatars/shadcn.jpg",
     }
 

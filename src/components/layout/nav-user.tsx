@@ -36,6 +36,7 @@ export function NavUser({
     user: {
         name: string
         role: string
+        jobTitle: string | null
         avatar: string
     }
 }) {
@@ -78,7 +79,7 @@ export function NavUser({
                         <div className="grid flex-1 text-left text-sm leading-tight">
                             <span className="truncate font-medium">{user.name}</span>
                             <span className="truncate text-xs text-muted-foreground">
-                                {user.role}
+                                {user.jobTitle ?? user.role}
                             </span>
                         </div>
                         <DotsThreeVertical className="ml-auto size-4" />
@@ -99,7 +100,7 @@ export function NavUser({
                                     <div className="grid flex-1 text-left text-sm leading-tight">
                                         <span className="truncate font-medium">{user.name}</span>
                                         <span className="truncate text-xs text-muted-foreground">
-                                            {user.role}
+                                            {user.jobTitle ?? user.role}
                                         </span>
                                     </div>
                                 </div>

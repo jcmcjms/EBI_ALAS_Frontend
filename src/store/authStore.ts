@@ -7,6 +7,7 @@ interface UserSession {
     lastName: string;
     branchId: string;
     role: string;
+    jobTitle: string | null;
     permissions: string[];
     mustChangePassword: boolean;
 }

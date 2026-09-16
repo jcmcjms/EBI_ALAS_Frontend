@@ -28,6 +28,7 @@ export interface JwtUserSession {
     lastName: string;
     branchId: string;
     role: string;
+    jobTitle: string | null;
     permissions: string[];
     mustChangePassword: boolean;
 }
@@ -59,6 +60,7 @@ export function extractUserFromToken(token: string): JwtUserSession | null {
         lastName: String(payload.lastName ?? ''),
         branchId: String(payload.branchId ?? ''),
         role: String(payload.role ?? ''),
+        jobTitle: payload.jobTitle != null ? String(payload.jobTitle) : null,
         permissions,
         mustChangePassword,
     };
