@@ -28,6 +28,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/src/components/ui/tooltip";
+import axios from "axios";
+
 import { cn } from "@/src/lib/utils";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { getOutstandingLoans, getPendingLoan } from "@/src/lib/api/webloans";
@@ -188,7 +190,19 @@ export function ActiveLoansTable({
             (pendingResult.status === "rejected" ? pendingResult.reason : null);
 
         if (firstRejection) {
-            const message = getErrorMessage(firstRejection);
+            // Distinguish 403 (branch scope violation) from other errors so
+            // the user sees a clear "outside your scope" message instead of
+            // a generic failure or the misleading "no in-flight loans" empty
+            // state that the old silent-empty backend used to produce.
+            const status = axios.isAxiosError(firstRejection)
+                ? firstRejection.response?.status
+                : undefined;
+            const message =
+                status === 403
+                    ? (firstRejection.response?.data?.message as string | undefined)
+                        ?? "This account's branch is outside your scope."
+                    : getErrorMessage(firstRejection);
+
             setLoans([]);
             setHasFetched(true);
             setLoadError(message);
