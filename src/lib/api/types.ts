@@ -65,6 +65,9 @@ export interface CreateUserPayload {
     /** Base64-encoded PNG of the user's signature. Optional at create
      *  time; admin typically captures this later via the edit drawer. */
     eSignature?: string | null;
+    /** Branch codes this approver covers (only for Branch-scope approvers).
+     *  Null/empty for Area/Global scope or non-approvers. */
+    coveredBranches?: string[] | null;
 }
 
 /** PUT /api/users/{id} body (UpdateUserRequest).
@@ -86,6 +89,9 @@ export interface UpdateUserPayload {
     role: string;
     jobTitle?: string | null;
     eSignature?: string | null;
+    /** Branch codes this approver covers (only for Branch-scope approvers).
+     *  Null/empty for Area/Global scope or non-approvers. */
+    coveredBranches?: string[] | null;
 }
 
 /** PATCH /api/users/{id}/status body (UserStatusRequest). */
@@ -119,6 +125,8 @@ export interface UserResponse {
     eSignature?: string | null;
     /** Approval authority info for Approver users. Null for non-approvers. */
     approvalAuthority?: ApprovalAuthorityInfo | null;
+    /** Branch codes this Branch-scope approver covers. Null for non-approvers or Area/Global scope. */
+    coveredBranches?: string[] | null;
 }
 
 /** Audit log record for a specific user (UserAuditLogResponse). */

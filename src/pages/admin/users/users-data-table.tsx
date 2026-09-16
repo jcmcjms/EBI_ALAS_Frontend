@@ -161,6 +161,34 @@ const columns = columnHelper.columns([
         header: "Role",
         cell: (info) => <Badge variant="secondary" className="font-normal text-xs">{info.getValue()}</Badge>,
     }),
+    columnHelper.display({
+        id: "coveredBranches",
+        header: "Covered Branches",
+        cell: (info) => {
+            const user = info.row.original;
+            // Only show for approvers with covered branches
+            if (!user.coveredBranches || user.coveredBranches.length === 0) {
+                return <span className="text-xs text-muted-foreground">—</span>;
+            }
+            const names = user.coveredBranches
+                .map(code => BRANCHES.find(b => b.code === code)?.name ?? code)
+                .filter(Boolean);
+            if (names.length <= 2) {
+                return (
+                    <div className="flex flex-wrap gap-1">
+                        {names.map(name => (
+                            <Badge key={name} variant="outline" className="font-normal text-xs">{name}</Badge>
+                        ))}
+                    </div>
+                );
+            }
+            return (
+                <Badge variant="outline" className="font-normal text-xs">
+                    {names.length} branches
+                </Badge>
+            );
+        },
+    }),
     columnHelper.accessor("isActive", {
         header: "Status",
         cell: (info) => {
@@ -477,6 +505,7 @@ export function UsersDataTable() {
                 role: payload.role,
                 jobTitle: payload.jobTitle.trim() || null,
                 eSignature: payload.eSignature,
+                coveredBranches: payload.coveredBranches,
             } satisfies CreateUserPayload);
             toast.success(`User @${payload.username} created successfully`);
             return true;
@@ -504,6 +533,7 @@ export function UsersDataTable() {
                     role: changes.role,
                     jobTitle: changes.jobTitle ?? null,
                     eSignature: changes.eSignature,
+                    coveredBranches: changes.coveredBranches,
                 } satisfies UpdateUserPayload,
             });
             toast.success(`${changes.firstName} ${changes.lastName} updated successfully`);
@@ -518,7 +548,7 @@ export function UsersDataTable() {
     // ---- Export ----
 
     function handleExportCSV() {
-        const headers = ["ID", "Username", "First Name", "Middle Name", "Last Name", "Branch", "Role", "Status", "Created At"];
+        const headers = ["ID", "Username", "First Name", "Middle Name", "Last Name", "Branch", "Role", "Covered Branches", "Status", "Created At"];
         const escapeCell = (value: string) => `"${value.replace(/"/g, '""')}"`;
         const rows = visibleUsers.map(u =>
             [
@@ -529,6 +559,7 @@ export function UsersDataTable() {
                 u.lastName,
                 getBranchName(u.branchId),
                 u.role,
+                (u.coveredBranches ?? []).map(code => BRANCHES.find(b => b.code === code)?.name ?? code).join(", "),
                 u.isActive ? "Active" : "Suspended",
                 u.createdAt,
             ].map(escapeCell).join(",")

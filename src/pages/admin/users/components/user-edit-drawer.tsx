@@ -6,6 +6,7 @@ import { Label } from "@/src/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { SignaturePad } from "@/src/components/ui/signature-pad";
+import { BranchMultiSelect } from "@/src/components/ui/branch-multi-select";
 import { toast } from "sonner";
 import { BRANCHES, type UserResponse } from "@/src/lib/api/types";
 import { stripRoleDisplayName } from "@/src/lib/role-badges";
@@ -53,6 +54,7 @@ export interface UserProfileChanges {
     role: string;
     jobTitle?: string | null;
     eSignature?: string | null;
+    coveredBranches?: string[] | null;
 }
 
 interface UserEditDrawerProps {
@@ -84,6 +86,7 @@ type EditableProfile = {
     branchId: string;
     role: string;
     jobTitle: string;
+    coveredBranches: string[];
 };
 
 /**
@@ -101,6 +104,7 @@ function profileFrom(user: UserResponse): EditableProfile {
         // For Approvers: use the authority key so the <Select> matches.
         // For others: use the free-text jobTitle.
         jobTitle: user.approvalAuthority?.key ?? user.jobTitle ?? "",
+        coveredBranches: user.coveredBranches ?? [],
     };
 }
 
@@ -111,6 +115,7 @@ const emptyProfile: EditableProfile = {
     branchId: "",
     role: "",
     jobTitle: "",
+    coveredBranches: [],
 };
 
 export function UserEditDrawer({
@@ -157,17 +162,32 @@ export function UserEditDrawer({
     const isApprover = profile.role === "Approver";
     const { data: authorities, isLoading: authoritiesLoading } = useApprovalAuthorities(isApprover);
 
+    // Determine if the selected authority is Branch-scope (scopeType === 0).
+    const selectedAuthority = isApprover ? (authorities ?? []).find(a => a.key === profile.jobTitle) : null;
+    const isBranchScope = isApprover && selectedAuthority?.scopeType === 0;
+
     const handleFieldChange = <K extends keyof EditableProfile>(field: K, value: EditableProfile[K]) => {
         setProfile(prev => {
             const next = { ...prev, [field]: value };
-            // When switching away from Approver, clear the authority selection.
+            // When switching away from Approver, clear the authority selection
+            // and covered branches.
             if (field === "role" && value !== "Approver") {
                 next.jobTitle = "";
+                next.coveredBranches = [];
             }
             // When switching to Approver, clear jobTitle so the user picks
             // from the authority dropdown (not stale free text).
             if (field === "role" && value === "Approver") {
                 next.jobTitle = "";
+                next.coveredBranches = [];
+            }
+            // When the authority changes, clear covered branches if the new
+            // authority is not Branch-scope (scopeType !== 0).
+            if (field === "jobTitle" && prev.role === "Approver") {
+                const selectedAuth = (authorities ?? []).find(a => a.key === value);
+                if (selectedAuth && selectedAuth.scopeType !== 0) {
+                    next.coveredBranches = [];
+                }
             }
             return next;
         });
@@ -195,6 +215,11 @@ export function UserEditDrawer({
             toast.error("Please select an approval authority for this Approver.");
             return;
         }
+        // Branch-scope approvers must select at least one covered branch.
+        if (profile.role === "Approver" && isBranchScope && profile.coveredBranches.length === 0) {
+            toast.error("Please select at least one covered branch for this Branch-scope approver.");
+            return;
+        }
         if (profile.role !== "Approver" && profile.jobTitle.length > 100) {
             toast.error("Job title must not exceed 100 characters");
             return;
@@ -212,6 +237,7 @@ export function UserEditDrawer({
                 branchId: profile.branchId,
                 role: profile.role,
                 jobTitle: profile.jobTitle.trim() || null,
+                coveredBranches: isBranchScope && profile.coveredBranches.length > 0 ? profile.coveredBranches : null,
             };
             if (isSignatureDirty) {
                 changes.eSignature = eSignature;
@@ -317,6 +343,23 @@ export function UserEditDrawer({
                             </p>
                         </div>
 
+                        {/* ── Covered Branches (Branch-scope Approvers only) ── */}
+                        {isBranchScope && (
+                            <div className="space-y-2">
+                                <Label>Covered Branches *</Label>
+                                <BranchMultiSelect
+                                    branches={BRANCHES}
+                                    selected={profile.coveredBranches}
+                                    onChange={(codes) => handleFieldChange("coveredBranches", codes)}
+                                    placeholder="Select branches this approver covers"
+                                    disabled={!canEdit}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    This approver can authorize loans from the selected branches.
+                                </p>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="edit-username">Username</Label>
@@ -418,6 +461,23 @@ export function UserEditDrawer({
                                 </Select>
                                 <p className="text-xs text-muted-foreground">
                                     Determines which loans this approver can authorize based on exposure and tier.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* ── Covered Branches (in Roles tab for Branch-scope Approvers) ── */}
+                        {isBranchScope && (
+                            <div className="space-y-2">
+                                <Label>Covered Branches *</Label>
+                                <BranchMultiSelect
+                                    branches={BRANCHES}
+                                    selected={profile.coveredBranches}
+                                    onChange={(codes) => handleFieldChange("coveredBranches", codes)}
+                                    placeholder="Select branches this approver covers"
+                                    disabled={!canEdit}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    This approver can authorize loans from the selected branches.
                                 </p>
                             </div>
                         )}

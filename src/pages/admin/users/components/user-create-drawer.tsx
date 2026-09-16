@@ -5,6 +5,7 @@ import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { SignaturePad } from "@/src/components/ui/signature-pad";
+import { BranchMultiSelect } from "@/src/components/ui/branch-multi-select";
 import { toast } from "sonner";
 import { CheckCircle, Copy } from "@phosphor-icons/react";
 import { BRANCHES } from "@/src/lib/api/types";
@@ -27,6 +28,7 @@ export interface UserCreatePayload {
     role: string;
     jobTitle: string;
     eSignature: string | null;
+    coveredBranches: string[] | null;
 }
 
 interface UserCreateDrawerProps {
@@ -45,6 +47,7 @@ const emptyForm = {
     branchId: "",
     role: "",
     eSignature: null as string | null,
+    coveredBranches: [] as string[],
 };
 
 // Mirrors backend CreateUserValidator: ^[a-zA-Z0-9_]+$, max 50 chars.
@@ -125,18 +128,32 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
     const isApprover = form.role === "Approver";
     const { data: authorities, isLoading: authoritiesLoading } = useApprovalAuthorities(isApprover);
 
+    // Determine if the selected authority is Branch-scope (scopeType === 0).
+    const selectedAuthority = isApprover ? (authorities ?? []).find(a => a.key === form.jobTitle) : null;
+    const isBranchScope = isApprover && selectedAuthority?.scopeType === 0;
+
     const handleFieldChange = <K extends keyof typeof emptyForm>(field: K, value: typeof emptyForm[K]) => {
         setForm(prev => {
             const next = { ...prev, [field]: value };
             // When switching away from Approver, clear the authority selection
-            // so a stale key doesn't leak into the free-text field.
+            // and covered branches so stale data doesn't leak.
             if (field === "role" && value !== "Approver") {
                 next.jobTitle = "";
+                next.coveredBranches = [];
             }
             // When switching to Approver, also clear jobTitle since the user
             // needs to pick from the authority dropdown (not type free text).
             if (field === "role" && value === "Approver") {
                 next.jobTitle = "";
+                next.coveredBranches = [];
+            }
+            // When the authority changes, clear covered branches if the new
+            // authority is not Branch-scope (scopeType !== 0).
+            if (field === "jobTitle" && prev.role === "Approver") {
+                const selectedAuth = (authorities ?? []).find(a => a.key === value);
+                if (selectedAuth && selectedAuth.scopeType !== 0) {
+                    next.coveredBranches = [];
+                }
             }
             return next;
         });
@@ -180,6 +197,11 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
             toast.error("Please select an approval authority for this Approver.");
             return;
         }
+        // Branch-scope approvers must select at least one covered branch.
+        if (form.role === "Approver" && isBranchScope && form.coveredBranches.length === 0) {
+            toast.error("Please select at least one covered branch for this Branch-scope approver.");
+            return;
+        }
         if (!form.eSignature) {
             toast.error("Signature is required. Please sign the pad.");
             return;
@@ -200,6 +222,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                 branchId: form.branchId,
                 role: form.role,
                 eSignature: form.eSignature,
+                coveredBranches: isBranchScope && form.coveredBranches.length > 0 ? form.coveredBranches : null,
             });
             if (!success) return;
 
@@ -396,6 +419,22 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                                         : "Complements the workflow role and shows up on audit trails."}
                                 </p>
                             </div>
+
+                            {/* ── Covered Branches (Branch-scope Approvers only) ── */}
+                            {isBranchScope && (
+                                <div className="space-y-2">
+                                    <Label>Covered Branches *</Label>
+                                    <BranchMultiSelect
+                                        branches={BRANCHES}
+                                        selected={form.coveredBranches}
+                                        onChange={(codes) => handleFieldChange("coveredBranches", codes)}
+                                        placeholder="Select branches this approver covers"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        This approver can authorize loans from the selected branches.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* ── Signature Pad ── */}
                             <div className="space-y-2">
