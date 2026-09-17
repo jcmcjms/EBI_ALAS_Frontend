@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SignaturePad } from "@/src/components/ui/signature-pad";
 import { BranchMultiSelect } from "@/src/components/ui/branch-multi-select";
 import { toast } from "sonner";
-import { CheckCircle, Copy } from "@phosphor-icons/react";
 import { BRANCHES } from "@/src/lib/api/types";
 import { stripRoleDisplayName } from "@/src/lib/role-badges";
 import { useRoles } from "@/src/hooks/use-roles";
@@ -120,8 +119,6 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
         [roles],
     );
     const [form, setForm] = useState(emptyForm);
-    const [createdUser, setCreatedUser] = useState<{ name: string; username: string } | null>(null);
-    const [tempPassword, setTempPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Fetch approval authorities only when role is Approver (for the dropdown).
@@ -230,238 +227,170 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
             });
             if (!success) return;
 
-            // Capture identity before clearing the form, then reveal the
-            // generated temporary password in the confirmation step.
-            setCreatedUser({
-                name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
-                username: form.username.trim(),
-            });
-            setTempPassword(tempPassword);
+            // Parent handles the secure handoff dialog — just close and reset.
             setForm(emptyForm);
+            onClose();
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleCopyPassword = async () => {
-        try {
-            await navigator.clipboard.writeText(tempPassword);
-            toast.success("Temporary password copied to clipboard");
-        } catch {
-            toast.error("Could not copy — please select and copy manually");
-        }
-    };
-
-    const resetAll = () => {
-        setForm(emptyForm);
-        setCreatedUser(null);
-        setTempPassword("");
-    };
-
     const handleCancel = () => {
-        resetAll();
+        setForm(emptyForm);
         onClose();
     };
-
-    const isCreated = createdUser !== null && tempPassword !== "";
 
     return (
         <Sheet open={open} onOpenChange={(next) => !next && handleCancel()}>
             <SheetContent className="flex flex-col p-0 sm:max-w-[500px]">
-                {isCreated ? (
-                    <>
-                        <SheetHeader className="border-b bg-muted/30 p-6 pb-4">
-                            <SheetTitle>User Created</SheetTitle>
-                            <SheetDescription>
-                                Share this temporary password securely — it will not be shown again.
-                            </SheetDescription>
-                        </SheetHeader>
+                <SheetHeader className="border-b bg-muted/30 p-6 pb-4">
+                    <SheetTitle>Create New User</SheetTitle>
+                    <SheetDescription>Add a new user to the ALAS system.</SheetDescription>
+                </SheetHeader>
 
-                        <div className="flex flex-1 flex-col items-center justify-center gap-5 overflow-y-auto p-6">
-                            <CheckCircle size={40} weight="fill" className="text-emerald-600" />
-
-                            <div className="text-center">
-                                <p className="text-sm font-medium text-foreground">{createdUser.name}</p>
-                                <p className="text-xs text-muted-foreground">@{createdUser.username}</p>
-                            </div>
-
-                            <div className="w-full space-y-2 border bg-muted/30 p-4">
-                                <Label htmlFor="temp-password">Temporary Password</Label>
-                                <div className="flex items-center gap-2">
-                                    <Input
-                                        id="temp-password"
-                                        readOnly
-                                        value={tempPassword}
-                                        onFocus={(e) => e.target.select()}
-                                        className="h-9"
-                                    />
-                                    <Button variant="outline" size="icon" className="shrink-0" onClick={handleCopyPassword}>
-                                        <Copy size={14} />
-                                        <span className="sr-only">Copy password</span>
-                                    </Button>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    The user will be prompted to change this password on first login.
-                                </p>
-                            </div>
+                <div className="flex-1 space-y-4 overflow-y-auto p-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="create-username">Username *</Label>
+                        <Input
+                            id="create-username"
+                            value={form.username}
+                            onChange={(e) => handleFieldChange("username", e.target.value)}
+                            placeholder="jdelacruz"
+                            autoComplete="off"
+                            className="h-9"
+                        />
+                        <p className="text-xs text-muted-foreground">Letters, numbers and underscores only.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="create-firstName">First Name *</Label>
+                            <Input
+                                id="create-firstName"
+                                value={form.firstName}
+                                onChange={(e) => handleFieldChange("firstName", e.target.value)}
+                                placeholder="Juan"
+                                className="h-9"
+                            />
                         </div>
-
-                        <SheetFooter className="flex flex-row gap-2 border-t bg-muted/10 p-4">
-                            <Button className="h-9" onClick={handleCancel}>Done</Button>
-                        </SheetFooter>
-                    </>
-                ) : (
-                    <>
-                        <SheetHeader className="border-b bg-muted/30 p-6 pb-4">
-                            <SheetTitle>Create New User</SheetTitle>
-                            <SheetDescription>Add a new user to the ALAS system.</SheetDescription>
-                        </SheetHeader>
-
-                        <div className="flex-1 space-y-4 overflow-y-auto p-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="create-username">Username *</Label>
-                                <Input
-                                    id="create-username"
-                                    value={form.username}
-                                    onChange={(e) => handleFieldChange("username", e.target.value)}
-                                    placeholder="jdelacruz"
-                                    autoComplete="off"
-                                    className="h-9"
-                                />
-                                <p className="text-xs text-muted-foreground">Letters, numbers and underscores only.</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="create-firstName">First Name *</Label>
-                                    <Input
-                                        id="create-firstName"
-                                        value={form.firstName}
-                                        onChange={(e) => handleFieldChange("firstName", e.target.value)}
-                                        placeholder="Juan"
-                                        className="h-9"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="create-middleName">Middle Name</Label>
-                                    <Input
-                                        id="create-middleName"
-                                        value={form.middleName}
-                                        onChange={(e) => handleFieldChange("middleName", e.target.value)}
-                                        placeholder="Optional"
-                                        className="h-9"
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="create-lastName">Last Name *</Label>
-                                <Input
-                                    id="create-lastName"
-                                    value={form.lastName}
-                                    onChange={(e) => handleFieldChange("lastName", e.target.value)}
-                                    placeholder="Dela Cruz"
-                                    className="h-9"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="create-branch">Assigned Branch *</Label>
-                                <Select value={form.branchId} onValueChange={(value) => handleFieldChange("branchId", value ?? "")} items={BRANCH_SELECT_ITEMS}>
-                                    <SelectTrigger className="h-9 w-full">
-                                        <SelectValue placeholder="Select branch" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {BRANCHES.map(b => <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="create-role">Primary Role *</Label>
-                                <Select value={form.role} onValueChange={(value) => handleFieldChange("role", value ?? "")} items={roleSelectItems}>
-                                    <SelectTrigger className="h-9 w-full">
-                                        <SelectValue placeholder="Select role" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {roles.map(r => <SelectItem key={r.name} value={r.name}>{stripRoleDisplayName(r.displayName)}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                                <p className="text-xs text-muted-foreground">A temporary password will be generated for this account.</p>
-                            </div>
-
-                            {/* ── Job Title / Approval Authority ── */}
-                            <div className="space-y-2">
-                                <Label htmlFor="create-jobTitle">
-                                    {isApprover ? "Approval Authority *" : "Job Title"}
-                                </Label>
-                                {isApprover ? (
-                                    <Select
-                                        value={form.jobTitle}
-                                        onValueChange={(value) => handleFieldChange("jobTitle", value ?? "")}
-                                    >
-                                        <SelectTrigger className="h-9 w-full">
-                                            <SelectValue placeholder={authoritiesLoading ? "Loading authorities..." : "Select approval authority"} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {(authorities ?? []).map((auth) => (
-                                                <SelectItem key={auth.key} value={auth.key}>
-                                                    {auth.displayName} — Tier {auth.tier}, up to {formatPhp(auth.maxTotalExposure)}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                ) : (
-                                    <Input
-                                        id="create-jobTitle"
-                                        value={form.jobTitle}
-                                        onChange={(e) => handleFieldChange("jobTitle", e.target.value)}
-                                        placeholder="e.g. Senior Credit Evaluator"
-                                        maxLength={100}
-                                        className="h-9"
-                                    />
-                                )}
-                                <p className="text-xs text-muted-foreground">
-                                    {isApprover
-                                        ? "Determines which loans this approver can authorize (delegation of authority)."
-                                        : "Complements the workflow role and shows up on audit trails."}
-                                </p>
-                            </div>
-
-                            {/* ── Covered Branches (Branch-scope Approvers only) ── */}
-                            {isBranchScope && (
-                                <div className="space-y-2">
-                                    <Label>Covered Branches *</Label>
-                                    <BranchMultiSelect
-                                        branches={BRANCHES}
-                                        selected={form.coveredBranches}
-                                        onChange={(codes) => handleFieldChange("coveredBranches", codes)}
-                                        placeholder="Select branches this approver covers"
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        This approver can authorize loans from the selected branches.
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* ── Signature Pad ── */}
-                            <div className="space-y-2">
-                                <Label htmlFor="create-signature">E-Signature *</Label>
-                                <SignaturePad
-                                    value={form.eSignature}
-                                    onChange={(base64) => handleFieldChange("eSignature", base64)}
-                                    heightClassName="h-40"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    Required for audit compliance. The signature will appear on loan approval forms.
-                                </p>
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="create-middleName">Middle Name</Label>
+                            <Input
+                                id="create-middleName"
+                                value={form.middleName}
+                                onChange={(e) => handleFieldChange("middleName", e.target.value)}
+                                placeholder="Optional"
+                                className="h-9"
+                            />
                         </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="create-lastName">Last Name *</Label>
+                        <Input
+                            id="create-lastName"
+                            value={form.lastName}
+                            onChange={(e) => handleFieldChange("lastName", e.target.value)}
+                            placeholder="Dela Cruz"
+                            className="h-9"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="create-branch">Assigned Branch *</Label>
+                        <Select value={form.branchId} onValueChange={(value) => handleFieldChange("branchId", value ?? "")} items={BRANCH_SELECT_ITEMS}>
+                            <SelectTrigger className="h-9 w-full">
+                                <SelectValue placeholder="Select branch" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {BRANCHES.map(b => <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="create-role">Primary Role *</Label>
+                        <Select value={form.role} onValueChange={(value) => handleFieldChange("role", value ?? "")} items={roleSelectItems}>
+                            <SelectTrigger className="h-9 w-full">
+                                <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {roles.map(r => <SelectItem key={r.name} value={r.name}>{stripRoleDisplayName(r.displayName)}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">A temporary password will be generated for this account.</p>
+                    </div>
 
-                        <SheetFooter className="flex flex-row gap-2 border-t bg-muted/10 p-4">
-                            <Button variant="outline" className="h-9" onClick={handleCancel}>Cancel</Button>
-                            <Button className="h-9" onClick={handleCreate} disabled={isSubmitting}>
-                                {isSubmitting ? "Creating..." : "Create User"}
-                            </Button>
-                        </SheetFooter>
-                    </>
-                )}
+                    {/* ── Job Title / Approval Authority ── */}
+                    <div className="space-y-2">
+                        <Label htmlFor="create-jobTitle">
+                            {isApprover ? "Approval Authority *" : "Job Title"}
+                        </Label>
+                        {isApprover ? (
+                            <Select
+                                value={form.jobTitle}
+                                onValueChange={(value) => handleFieldChange("jobTitle", value ?? "")}
+                            >
+                                <SelectTrigger className="h-9 w-full">
+                                    <SelectValue placeholder={authoritiesLoading ? "Loading authorities..." : "Select approval authority"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {(authorities ?? []).map((auth) => (
+                                        <SelectItem key={auth.key} value={auth.key}>
+                                            {auth.displayName} — Tier {auth.tier}, up to {formatPhp(auth.maxTotalExposure)}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        ) : (
+                            <Input
+                                id="create-jobTitle"
+                                value={form.jobTitle}
+                                onChange={(e) => handleFieldChange("jobTitle", e.target.value)}
+                                placeholder="e.g. Senior Credit Evaluator"
+                                maxLength={100}
+                                className="h-9"
+                            />
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                            {isApprover
+                                ? "Determines which loans this approver can authorize (delegation of authority)."
+                                : "Complements the workflow role and shows up on audit trails."}
+                        </p>
+                    </div>
+
+                    {/* ── Covered Branches (Branch-scope Approvers only) ── */}
+                    {isBranchScope && (
+                        <div className="space-y-2">
+                            <Label>Covered Branches *</Label>
+                            <BranchMultiSelect
+                                branches={BRANCHES}
+                                selected={form.coveredBranches}
+                                onChange={(codes) => handleFieldChange("coveredBranches", codes)}
+                                placeholder="Select branches this approver covers"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                This approver can authorize loans from the selected branches.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* ── Signature Pad ── */}
+                    <div className="space-y-2">
+                        <Label htmlFor="create-signature">E-Signature *</Label>
+                        <SignaturePad
+                            value={form.eSignature}
+                            onChange={(base64) => handleFieldChange("eSignature", base64)}
+                            heightClassName="h-40"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Required for audit compliance. The signature will appear on loan approval forms.
+                        </p>
+                    </div>
+                </div>
+
+                <SheetFooter className="flex flex-row gap-2 border-t bg-muted/10 p-4">
+                    <Button variant="outline" className="h-9" onClick={handleCancel}>Cancel</Button>
+                    <Button className="h-9" onClick={handleCreate} disabled={isSubmitting}>
+                        {isSubmitting ? "Creating..." : "Create User"}
+                    </Button>
+                </SheetFooter>
             </SheetContent>
         </Sheet>
     );

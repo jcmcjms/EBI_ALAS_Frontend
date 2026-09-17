@@ -11,7 +11,7 @@ import {
     updateUserStatus,
 } from "@/src/lib/api/users";
 import { queryKeys } from "@/src/lib/queryKeys";
-import type { CreateUserPayload, UpdateUserPayload, UserQueryParams, UserResponse } from "@/src/lib/api/types";
+import type { CreateUserPayload, ResetPasswordResponse, UpdateUserPayload, UserQueryParams, UserResponse } from "@/src/lib/api/types";
 
 /** Paged + filtered user directory (server-side search/role/status/pagination). */
 export function useUsers(params: UserQueryParams) {
@@ -93,12 +93,11 @@ export function useUpdateUserStatus() {
     });
 }
 
-/** POST /api/users/{id}/reset-password — requires `user.edit`. Returns new temp password. */
+/** POST /api/users/{id}/reset-password — requires `user.edit`. Server generates the password. */
 export function useResetUserPassword() {
     const invalidate = useInvalidateUsers();
     return useMutation({
-        mutationFn: ({ id, newPassword }: { id: number; newPassword: string }) =>
-            resetUserPassword(id, newPassword),
+        mutationFn: (id: number) => resetUserPassword(id),
         onSuccess: () => invalidate(),
     });
 }

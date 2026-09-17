@@ -4,6 +4,7 @@ import {
     type ApiResponse,
     type CreateUserPayload,
     type PagedResult,
+    type ResetPasswordResponse,
     type UpdateUserPayload,
     type UserAuditLogResponse,
     type UserQueryParams,
@@ -58,9 +59,9 @@ export async function updateUserStatus(id: number, isActive: boolean): Promise<v
     if (!res.data.success) throw new Error(res.data.message || "Failed to update status");
 }
 
-/** POST /api/users/{id}/reset-password. Requires `user.edit`. Returns the new temp password. */
-export async function resetUserPassword(id: number, newPassword: string): Promise<string> {
-    const res = await apiClient.post<ApiResponse<string>>(`/api/users/${id}/reset-password`, { newPassword });
+/** POST /api/users/{id}/reset-password. Requires `user.edit`. Server generates the password. */
+export async function resetUserPassword(id: number): Promise<ResetPasswordResponse> {
+    const res = await apiClient.post<ApiResponse<ResetPasswordResponse>>(`/api/users/${id}/reset-password`, {});
     return unwrapApiData(res.data);
 }
 

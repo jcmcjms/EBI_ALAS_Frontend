@@ -50,6 +50,7 @@ import { UserEditDrawer, type UserProfileChanges } from "./components/user-edit-
 import { UserCreateDrawer, type UserCreatePayload } from "./components/user-create-drawer";
 import { ConfirmActionSheet } from "./components/confirm-action-sheet";
 import { AuditLogModal } from "./components/audit-log-modal";
+import { TemporaryPasswordDialog, type TemporaryCredential } from "./components/temporary-password-dialog";
 
 /** Returns `value` only after it has stayed unchanged for `delayMs`. */
 function useDebouncedValue<T>(value: T, delayMs = 300): T {
@@ -63,37 +64,6 @@ function useDebouncedValue<T>(value: T, delayMs = 300): T {
 
 function formatFullName(user: Pick<UserResponse, "firstName" | "middleName" | "lastName">): string {
     return [user.firstName, user.middleName, user.lastName].filter(Boolean).join(" ");
-}
-
-/**
- * Generates a random temporary password using crypto.getRandomValues.
- * Excludes confusing characters (O/0, I/l/1) so the password survives
- * being read aloud or transcribed by hand.
- */
-function generateTempPassword(length = 12): string {
-    const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-    const lower = "abcdefghijkmnopqrstuvwxyz";
-    const digits = "23456789";
-    const specials = "!?*.";
-    const all = upper + lower + digits + specials;
-
-    const pick = (set: string) => {
-        const buf = new Uint32Array(1);
-        crypto.getRandomValues(buf);
-        return set[buf[0] % set.length];
-    };
-
-    // Guarantee at least one character from each required class.
-    const chars = [pick(upper), pick(lower), pick(digits), pick(specials)];
-    while (chars.length < length) chars.push(pick(all));
-
-    // Fisher-Yates shuffle
-    for (let i = chars.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [chars[i], chars[j]] = [chars[j], chars[i]];
-    }
-
-    return chars.join("");
 }
 
 /**
@@ -318,6 +288,7 @@ export function UsersDataTable() {
     const [selectedUserForAuditLog, setSelectedUserForAuditLog] = useState<UserResponse | null>(null);
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(null);
+    const [tempCred, setTempCred] = useState<TemporaryCredential | null>(null);
 
     const table = useTable({
         features,
@@ -414,19 +385,12 @@ export function UsersDataTable() {
             description: `Generate a new temporary password for @${user.username}? The user will be required to change it on next login.`,
             actionLabel: "Reset Password",
             onConfirm: () => {
-                const tempPassword = generateTempPassword();
-                resetUserPasswordMutation.mutate(
-                    { id: user.id, newPassword: tempPassword },
-                    {
-                        onSuccess: () => {
-                            toast.success(`Password reset for @${user.username}`, {
-                                description: `New temporary password: ${tempPassword}`,
-                                duration: 10000,
-                            });
-                        },
-                        onError: (e) => toast.error(getErrorMessage(e)),
-                    }
-                );
+                resetUserPasswordMutation.mutate(user.id, {
+                    onSuccess: (res) => {
+                        setTempCred({ username: res.username, temporaryPassword: res.temporaryPassword });
+                    },
+                    onError: (e) => toast.error(getErrorMessage(e)),
+                });
                 closeConfirm();
             },
         });
@@ -501,7 +465,8 @@ export function UsersDataTable() {
                 eSignature: payload.eSignature,
                 coveredBranches: payload.coveredBranches,
             } satisfies CreateUserPayload);
-            toast.success(`User @${payload.username} created successfully`);
+            // Show the secure handoff dialog instead of a toast.
+            setTempCred({ username: payload.username, temporaryPassword: payload.password });
             return true;
         } catch (error) {
             toast.error(getErrorMessage(error));
@@ -761,6 +726,10 @@ export function UsersDataTable() {
             <AuditLogModal
                 user={selectedUserForAuditLog}
                 onClose={() => setSelectedUserForAuditLog(null)}
+            />
+            <TemporaryPasswordDialog
+                credential={tempCred}
+                onDismiss={() => setTempCred(null)}
             />
         </>
     );

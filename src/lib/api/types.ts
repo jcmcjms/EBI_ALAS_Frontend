@@ -100,6 +100,13 @@ export interface UserStatusPayload {
     isActive: boolean;
 }
 
+/** Response from POST /api/users/{id}/reset-password (ResetPasswordResponse). */
+export interface ResetPasswordResponse {
+    username: string;
+    temporaryPassword: string;
+    mustChangePassword: boolean;
+}
+
 /** Lightweight approval authority info embedded in UserResponse. */
 export interface ApprovalAuthorityInfo {
     key: string;
