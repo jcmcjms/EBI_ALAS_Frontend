@@ -74,12 +74,13 @@ export function useDashboardData() {
     return useQuery({
         queryKey: queryKeys.dashboard.full,
         queryFn: async () => mapOverview(await getDashboardOverview()),
-        // Monitoring UI: keep it live while the page is open.
-        refetchInterval: 30_000,
-        // Hidden tabs don't need live data; on return, focus-refetch catches up
-        // instantly — cheaper and kinder than background polling.
-        refetchIntervalInBackground: false,
-        refetchOnWindowFocus: true,
-        staleTime: 10_000,
+        // Real-time updates are handled by useDashboardRealtime in
+        // AppShell — when a loan status changes, the server pushes a
+        // DashboardUpdated event via SignalR which invalidates this
+        // query's cache. No polling needed.
+        //
+        // staleTime of 30s prevents redundant re-fetches when the
+        // user navigates away and back within the window.
+        staleTime: 30_000,
     });
 }

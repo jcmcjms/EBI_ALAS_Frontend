@@ -134,11 +134,15 @@ interface TimeLapsedIndicatorProps {
 }
 
 function TimeLapsedIndicator({ lastActionDate, status, slaPolicy }: TimeLapsedIndicatorProps) {
+    // Terminal statuses (Cancelled, Rejected, Approved, Disbursed, OnGoing)
+    // have no SLA — freeze the timer instead of ticking indefinitely.
+    const isTerminal = !LOAN_STATUS_META[status]?.defaultSlaHours;
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => {
+        if (isTerminal) return;
         const t = setInterval(() => setNow(Date.now()), 1000);
         return () => clearInterval(t);
-    }, []);
+    }, [isTerminal]);
 
     const assessment = assessAging(status, lastActionDate, now, slaPolicy);
 

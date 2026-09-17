@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as signalR from "@microsoft/signalr";
 import { toast } from "sonner";
 
@@ -61,11 +61,20 @@ function playChime() {
  * - Plays a short chime and blinks the document title when the
  *   tab is in the background.
  * - Tears down the connection on unmount or token change.
+ *
+ * Returns the current HubConnection instance (or null before
+ * connect) so other hooks (e.g. useApprovalRealtime) can
+ * register their own event listeners on the same connection.
+ *
+ * Also exposes `isConnected` so consumers (e.g. useNotifications)
+ * can gate polling on connection state — poll only as fallback
+ * when the WebSocket is down.
  */
 export function useSignalR() {
     const token = useAuthStore((state) => state.accessToken);
     const addNotification = useNotificationStore((state) => state.addNotification);
     const connectionRef = useRef<signalR.HubConnection | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
         if (!token) return;
@@ -84,6 +93,11 @@ export function useSignalR() {
             .build();
 
         connectionRef.current = connection;
+
+        // Track connection state so consumers can gate polling
+        connection.onclose(() => setIsConnected(false));
+        connection.onreconnecting(() => setIsConnected(false));
+        connection.onreconnected(() => setIsConnected(true));
 
         connection.on("ReceiveNotification", (payload: {
             title: string;
@@ -139,6 +153,8 @@ export function useSignalR() {
             // dangling open socket.
             if (disposed) {
                 connection.stop();
+            } else {
+                setIsConnected(true);
             }
         }).catch((err) => {
             // AbortError is expected when React StrictMode tears down the
@@ -150,9 +166,10 @@ export function useSignalR() {
 
         return () => {
             disposed = true;
+            setIsConnected(false);
             connection.stop();
         };
     }, [token, addNotification]);
 
-    return connectionRef.current;
+    return { connection: connectionRef.current, isConnected };
 }
