@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import * as signalR from "@microsoft/signalr";
 import { toast } from "sonner";
 
 import { useAuthStore } from "@/src/store/authStore";
 import { useNotificationStore } from "@/src/store/notificationStore";
 import { classifyNotification, type AppNotification } from "@/src/lib/notifications";
-
-const HUB_URL = `${import.meta.env.VITE_API_BASE_URL}/hubs/notifications`;
+import { getSharedConnection, getStartingPromise, setStartingPromise } from "@/src/lib/signalr/connection";
 
 /**
  * Plays a short notification chime using the Web Audio API.
@@ -52,7 +51,11 @@ function playChime() {
 }
 
 /**
- * Manages the WebSocket lifecycle to the NotificationHub.
+ * Manages the shared WebSocket lifecycle to the NotificationHub.
+ *
+ * Uses the singleton connection from `getSharedConnection(token)` so
+ * notifications, presence, approvals, and entity-watch all ride ONE
+ * WebSocket instead of each feature creating its own.
  *
  * - Connects on mount when a valid access token exists.
  * - Reconnects automatically with exponential back-off.
@@ -73,33 +76,25 @@ function playChime() {
 export function useSignalR() {
     const token = useAuthStore((state) => state.accessToken);
     const addNotification = useNotificationStore((state) => state.addNotification);
-    const connectionRef = useRef<signalR.HubConnection | null>(null);
     const [isConnected, setIsConnected] = useState(false);
+    const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
 
     useEffect(() => {
-        if (!token) return;
+        if (!token) {
+            setConnection(null);
+            setIsConnected(false);
+            return;
+        }
 
         let disposed = false;
-
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl(HUB_URL, {
-                accessTokenFactory: () => token,
-                // Force WebSockets — bypasses the HTTP long-polling
-                // fallback which is unnecessary for a banking LAN.
-                skipNegotiation: true,
-                transport: signalR.HttpTransportType.WebSockets,
-            })
-            .withAutomaticReconnect([0, 2000, 10000, 30000])
-            .build();
-
-        connectionRef.current = connection;
+        const conn = getSharedConnection(token);
 
         // Track connection state so consumers can gate polling
-        connection.onclose(() => setIsConnected(false));
-        connection.onreconnecting(() => setIsConnected(false));
-        connection.onreconnected(() => setIsConnected(true));
+        conn.onclose(() => { if (!disposed) setIsConnected(false); });
+        conn.onreconnecting(() => { if (!disposed) setIsConnected(false); });
+        conn.onreconnected(() => { if (!disposed) setIsConnected(true); });
 
-        connection.on("ReceiveNotification", (payload: {
+        conn.on("ReceiveNotification", (payload: {
             title: string;
             description: string;
             link?: string;
@@ -147,29 +142,45 @@ export function useSignalR() {
             }
         });
 
-        connection.start().then(() => {
-            // If the effect was cleaned up while start() was in-flight,
-            // tear down the connection immediately instead of leaving a
-            // dangling open socket.
-            if (disposed) {
-                connection.stop();
+        // Start the connection if it's not already running.
+        // Use the shared startingPromise to avoid concurrent start() calls
+        // (e.g. React StrictMode double-mount).
+        if (conn.state === signalR.HubConnectionState.Disconnected) {
+            const existingStart = getStartingPromise();
+            if (existingStart) {
+                // Another caller already started — just await it.
+                existingStart.then(() => {
+                    if (!disposed) {
+                        setIsConnected(true);
+                        setConnection(conn);
+                    }
+                }).catch(() => { /* logged by original caller */ });
             } else {
-                setIsConnected(true);
+                const startPromise = conn.start().then(() => {
+                    if (disposed) return;
+                    setIsConnected(true);
+                    setConnection(conn);
+                }).catch((err) => {
+                    if (!disposed) {
+                        console.error("SignalR Connection Error:", err);
+                    }
+                }).finally(() => {
+                    setStartingPromise(null);
+                });
+                setStartingPromise(startPromise);
             }
-        }).catch((err) => {
-            // AbortError is expected when React StrictMode tears down the
-            // first mount before start() completes — don't spam the console.
-            if (!disposed) {
-                console.error("SignalR Connection Error:", err);
-            }
-        });
+        } else if (conn.state === signalR.HubConnectionState.Connected) {
+            setIsConnected(true);
+            setConnection(conn);
+        }
 
         return () => {
             disposed = true;
             setIsConnected(false);
-            connection.stop();
+            // Don't stop the shared connection — other hooks depend on it.
+            // The connection is stopped on logout via dropSharedConnection().
         };
     }, [token, addNotification]);
 
-    return { connection: connectionRef.current, isConnected };
+    return { connection, isConnected };
 }

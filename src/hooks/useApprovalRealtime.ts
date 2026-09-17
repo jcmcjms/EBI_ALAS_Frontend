@@ -1,19 +1,20 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { approvalMatrixKeys } from "@/src/lib/api/approval-matrix";
 import { useEscalationStore } from "@/src/store/escalationStore";
 
 /**
  * Subscribes to SignalR events from the NotificationHub for real-time
- * approval queue and presence updates.
+ * approval queue updates.
  *
  * Must be used inside a component that has access to the SignalR connection
  * (typically AppShell). Uses the shared connection from useSignalR.
  *
  * Events handled:
- * - `LoanAssigned`: A loan was assigned/released — invalidate queues + presence.
+ * - `LoanAssigned`: A loan was assigned/released — invalidate queues.
  *   Payload includes `{ loanId, escalated: boolean }` for tier escalation.
- * - `PresenceChanged`: An approver came online/offline — invalidate presence.
+ *
+ * Presence is now handled by the Zustand presence store via
+ * `usePresenceSync()` — no need to invalidate presence queries here.
  */
 export function useApprovalRealtime(getConnection: () => import("@microsoft/signalr").HubConnection | null) {
     const qc = useQueryClient();
@@ -30,21 +31,12 @@ export function useApprovalRealtime(getConnection: () => import("@microsoft/sign
             }
             // Invalidate all loan queries (queues, detail, monitoring)
             qc.invalidateQueries({ queryKey: ["loans"] });
-            // Invalidate presence (reviewing state changed)
-            qc.invalidateQueries({ queryKey: approvalMatrixKeys.presence() });
-        };
-
-        const onPresence = () => {
-            // Invalidate presence snapshot
-            qc.invalidateQueries({ queryKey: approvalMatrixKeys.presence() });
         };
 
         conn.on("LoanAssigned", onAssigned);
-        conn.on("PresenceChanged", onPresence);
 
         return () => {
             conn.off("LoanAssigned", onAssigned);
-            conn.off("PresenceChanged", onPresence);
         };
     }, [getConnection, qc, markEscalated]);
 }

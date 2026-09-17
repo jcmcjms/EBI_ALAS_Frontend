@@ -4,6 +4,7 @@ import { Separator } from "@/src/components/ui/separator"
 import { SidebarTrigger } from "@/src/components/ui/sidebar"
 import { getActiveNavTitle } from "@/src/lib/navigation"
 import { useNotificationStore } from "@/src/store/notificationStore"
+import { OnlineUsers } from "@/src/components/layout/online-users"
 
 export function SiteHeader() {
     const { pathname } = useLocation()
@@ -20,18 +21,21 @@ export function SiteHeader() {
                 />
                 {activeTitle && <h1 className="text-base font-medium">{activeTitle}</h1>}
 
-                <Link
-                    to="/notifications"
-                    aria-label={`Notifications (${unreadCount} unread)`}
-                    className="relative ml-auto flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                    <Bell size={18} weight="bold" />
-                    {unreadCount > 0 && (
-                        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold tabular-nums text-primary-foreground">
-                            {unreadCount}
-                        </span>
-                    )}
-                </Link>
+                <div className="ml-auto flex items-center gap-1">
+                    <OnlineUsers />
+                    <Link
+                        to="/notifications"
+                        aria-label={`Notifications (${unreadCount} unread)`}
+                        className="relative flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                        <Bell size={18} weight="bold" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold tabular-nums text-primary-foreground">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </Link>
+                </div>
             </div>
         </header>
     )

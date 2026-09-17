@@ -93,7 +93,7 @@ export function BranchMultiSelect({
             />
             <PopoverContent
                 align="start"
-                className="w-[var(--popover-anchor-width)] p-0"
+                className="w-[var(--anchor-width)] p-0"
             >
                 <ScrollArea className="max-h-60">
                     <div className="p-1">

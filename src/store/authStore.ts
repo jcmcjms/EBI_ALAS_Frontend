@@ -1,4 +1,5 @@
 import { create } from "zustand/react";
+import { dropSharedConnection } from "@/src/lib/signalr/connection";
 
 interface UserSession {
     userId: string;
@@ -43,7 +44,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     setSession: (token, user) => set({ accessToken: token, user }),
 
-    clearSession: () => set({ accessToken: null, user: null }),
+    clearSession: () => {
+        dropSharedConnection();
+        set({ accessToken: null, user: null });
+    },
 
     setInitializing: (value) => set({ isInitializing: value }),
 

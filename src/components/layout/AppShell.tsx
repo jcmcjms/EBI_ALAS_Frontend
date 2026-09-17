@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
 import { useApprovalRealtime } from "@/src/hooks/useApprovalRealtime";
 import { useDashboardRealtime } from "@/src/hooks/useDashboardRealtime";
 import { useNotifications } from "@/src/hooks/useNotifications";
+import { usePresenceSync } from "@/src/hooks/use-presence";
 import { useSignalR } from "@/src/hooks/useSignalR";
 import { useAuthStore } from "@/src/store/authStore";
 
@@ -25,6 +26,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // pushes from the server. Returns { connection, isConnected } so
     // other hooks can gate polling on connection state.
     const { connection, isConnected } = useSignalR();
+
+    // Org-wide presence — hydrates the presence store on mount and
+    // keeps it in sync via PresenceSnapshot / PresenceChanged events.
+    usePresenceSync();
 
     // Bell: when SignalR is connected, polling is DISABLED — the
     // WebSocket pushes new notifications into the Zustand store
