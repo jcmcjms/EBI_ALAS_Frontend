@@ -245,11 +245,14 @@ apiClient.interceptors.response.use(
         }
 
         // ── Non-401 (and not CSRF): reject as-is ────────────────────────────
+        // Skip the refresh-then-retry path for auth endpoints — the user is
+        // logging in (no refresh token yet) or refreshing (already retried).
         if (
             error.response?.status !== 401 ||
             !originalRequest ||
             originalRequest._retry ||
-            originalRequest.url === "/api/auth/refresh"
+            originalRequest.url === "/api/auth/refresh" ||
+            originalRequest.url === "/api/auth/login"
         ) {
             return Promise.reject(error);
         }
@@ -287,6 +290,7 @@ export function getErrorMessage(error: unknown): string {
 
             // Proxy / infrastructure errors — the response is usually HTML or empty,
             // not JSON, so we map the status code to a readable message.
+            if (status === 401) return "Invalid username or password.";
             if (status === 502) return "Server is temporarily unavailable. Please try again later.";
             if (status === 503) return "Service is currently unavailable. Please try again later.";
             if (status === 504) return "Server timed out. Please try again later.";
