@@ -20,7 +20,7 @@ function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
     <ToastPrimitive.Viewport
       data-slot="toast-viewport"
       className={cn(
-        "pointer-events-none fixed bottom-4 right-4 z-50 w-auto max-w-sm outline-none",
+        "pointer-events-none fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-sm outline-none sm:right-4 sm:left-auto sm:mx-0 sm:w-full",
         className
       )}
       {...props}
@@ -33,7 +33,7 @@ function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
     <ToastPrimitive.Root
       data-slot="toast"
       className={cn(
-        "group/toast pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom rounded-lg border bg-popover text-popover-foreground shadow-lg will-change-transform outline-none select-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "group/toast pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom rounded-none border bg-popover text-popover-foreground shadow-lg will-change-transform outline-none select-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
         "[--gap:0.75rem] [--height:var(--toast-frontmost-height,var(--toast-height))] [--offset-y:calc(var(--toast-offset-y)*-1+calc(var(--toast-index)*var(--gap)*-1)+var(--toast-swipe-movement-y))] [--peek:0.75rem] [--scale:calc(max(0,1-(var(--toast-index)*0.1)))] [--shrink:calc(1-var(--scale))]",
         "h-(--height) [transform:translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)-(var(--toast-index)*var(--peek))-(var(--shrink)*var(--height))))_scale(var(--scale))] [transition:transform_500ms_cubic-bezier(0.22,1,0.36,1),opacity_500ms,height_150ms]",
         "after:absolute after:top-full after:left-0 after:h-[calc(var(--gap)+1px)] after:w-full after:content-['']",
@@ -215,35 +215,44 @@ function Toaster({
 const createToastManager = ToastPrimitive.createToastManager
 const useToastManager = ToastPrimitive.useToastManager
 
-// ── Convenience helpers ──────────────────────────────────────────────────
-// Thin wrappers around `toast.add()` that match the call pattern most of
-// the codebase uses: `toastSuccess("Done!")`, `toastError("Failed")`.
-// For richer toasts (title + description + custom timeout), use
-// `toast.add({ title, description, type, timeout })` directly.
+// ── Programmatic toast helpers ───────────────────────────────────────────────
+// Convenience wrappers around `toast.add()` for imperative usage outside of
+// React components (e.g. Axios interceptors, service workers, etc.).
+// The `type` field drives the icon rendered by <ToastIcon>.
+//
+// Base UI default timeout is 5000ms.  We override per type:
+//   success / info  → 2 s   (quick confirmations, no deep reading needed)
+//   warning         → 4 s   (user may need to read)
+//   error           → 5 s   (needs attention)
+//   loading         → 0     (manual dismiss — spinner stays until closed)
+//
+// Callers can pass `{ timeout }` to override the default per-call, e.g.
+//   toastError(<DetailedJSX />, { timeout: 10_000 })
 
-interface ToastHelperOptions {
-  description?: React.ReactNode
+interface ToastOptions {
   timeout?: number
+  description?: string
 }
 
-function toastSuccess(message: React.ReactNode, opts?: ToastHelperOptions) {
-  toast.add({ title: message, type: "success", timeout: opts?.timeout ?? 3_000, ...opts })
+function toastError(title: React.ReactNode, options?: ToastOptions) {
+  toast.add({ type: "error", title, timeout: 5000, ...options })
 }
 
-function toastError(message: React.ReactNode, opts?: ToastHelperOptions) {
-  toast.add({ title: message, type: "error", timeout: opts?.timeout ?? 8_000, ...opts })
+function toastSuccess(title: React.ReactNode, options?: ToastOptions) {
+  toast.add({ type: "success", title, timeout: 2000, ...options })
 }
 
-function toastInfo(message: React.ReactNode, opts?: ToastHelperOptions) {
-  toast.add({ title: message, type: "info", timeout: opts?.timeout ?? 5_000, ...opts })
+function toastWarning(title: React.ReactNode, options?: ToastOptions) {
+  toast.add({ type: "warning", title, timeout: 4000, ...options })
 }
 
-function toastWarning(message: React.ReactNode, opts?: ToastHelperOptions) {
-  toast.add({ title: message, type: "warning", timeout: opts?.timeout ?? 6_000, ...opts })
+function toastInfo(title: React.ReactNode, options?: ToastOptions) {
+  toast.add({ type: "info", title, timeout: 2000, ...options })
 }
 
-function toastLoading(message: React.ReactNode, opts?: ToastHelperOptions) {
-  toast.add({ title: message, type: "loading", timeout: 0, ...opts })
+/** Loading spinner — stays visible until manually dismissed via `toast.close(id)`. */
+function toastLoading(title: React.ReactNode, options?: ToastOptions) {
+  return toast.add({ type: "loading", title, timeout: 0, ...options })
 }
 
 export {
@@ -259,10 +268,10 @@ export {
   ToastViewport,
   createToastManager,
   toast,
-  useToastManager,
-  toastSuccess,
   toastError,
   toastInfo,
-  toastWarning,
   toastLoading,
+  toastSuccess,
+  toastWarning,
+  useToastManager,
 }
