@@ -76,7 +76,7 @@ This is a **production frontend**, not a template. All listed modules are implem
 | 📈 Data tables & charts             | `@tanstack/react-table` for admin tables, `recharts` for trends                                  |
 | 📅 Date pickers                     | `react-day-picker` integrated with `date-fns`                                                     |
 | 🧰 Drag & drop                      | `@dnd-kit/core` + sortable for future re-orderable lists                                         |
-| 🍞 Toast notifications              | `sonner` rich toaster wired at the root                                                          |
+| 🍞 Toast notifications              | `@base-ui/react` toast with shadcn styling, positioned upper-right                              |
 | ⚠️ Global error boundary            | `<ErrorBoundary>` wraps the entire app to surface render-time failures                           |
 
 ---
@@ -154,7 +154,7 @@ This is a **production frontend**, not a template. All listed modules are implem
     └── <ErrorBoundary>
         └── <QueryClientProvider>             ← React Query
             └── <AuthInitProvider>            ← silent refresh-token bootstrap
-                └── <Toaster /> (sonner)
+                └── <Toaster /> (shadcn/Base UI toast)
                     └── <App>
                         └── <BrowserRouter>
                             └── <Suspense>   ← lazy route fallback (Spinner)
@@ -356,7 +356,7 @@ ebi_alas_frontend/
     │       ├── sheet.tsx
     │       ├── sidebar.tsx
     │       ├── skeleton.tsx
-    │       ├── sonner.tsx
+    │       ├── toast.tsx
     │       ├── spinner.tsx
     │       ├── table.tsx
     │       ├── tabs.tsx
@@ -602,7 +602,7 @@ The project uses **shadcn/ui (Base UI variant)** — headless primitives from `@
 | `Sheet`           | `ui/sheet.tsx`                    | Base UI                                |
 | `Sidebar`         | `ui/sidebar.tsx`                  | Used by `AppShell`                     |
 | `Skeleton`        | `ui/skeleton.tsx`                 |                                        |
-| `Sonner`          | `ui/sonner.tsx`                   | Wraps `sonner`                         |
+| `Toast`           | `ui/toast.tsx`                    | Base UI toast + helper functions       |
 | `Spinner`         | `ui/spinner.tsx`                  | Phosphor `CircleNotch`                 |
 | `Table`           | `ui/table.tsx`                    |                                        |
 | `Tabs`            | `ui/tabs.tsx`                     | Base UI                                |
