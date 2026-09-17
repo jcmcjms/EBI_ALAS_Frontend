@@ -44,6 +44,15 @@ export interface LoanDetailResponse {
     termDays: number;
     interestRate: number;
     nthpDate: string | null;
+
+    // ── Approval form convention fields (frozen at submission) ──────
+    /** webloan loan_data.total_amortization: amortization period count (e.g. 84). */
+    policyTermMonths: number | null;
+    /** Frozen TERM (Days) printed on the approval form at submission time. */
+    approvalTermDays: number | null;
+    /** Frozen annual rate in percent (e.g. 21.57) normalized at submission time. */
+    annualRatePercent: number | null;
+
     notarialFee: number;
     docStamps: number;
     insurance: number;

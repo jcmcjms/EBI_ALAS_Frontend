@@ -1,7 +1,12 @@
 import { forwardRef, memo } from "react";
 import { cn } from "@/src/lib/utils";
 import { resolveLoanProductDisplayName } from "@/src/lib/loan-product-display";
-import { computeLoanMetrics } from "@/src/lib/loan-approval-utils";
+import {
+    computeLoanMetrics,
+    resolveApprovalTermDays,
+    toAnnualRatePercent,
+    buildProductLine,
+} from "@/src/lib/loan-approval-utils";
 import { ApprovalFormSheet } from "@/src/components/loan/approval-form-sheet";
 import type {
     ClientFormData,
@@ -147,8 +152,18 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
 
     const productDisplay = resolveLoanProductDisplayName(params.product, catLoanClass);
 
+    // ── Approval-form boundary normalization ───────────────────────
+    // Prefer frozen server values (signed-document integrity); fall
+    // back to re-derivation for legacy rows that predate the freeze.
+    const approvalTermDays =
+        primaryLoan.approvalTermDays                          // frozen at submission
+        ?? resolveApprovalTermDays(params.term || 0, params.policyTermMonths);
+    const annualRatePercent =
+        primaryLoan.annualRatePercent                         // frozen at submission
+        ?? toAnnualRatePercent(params.interestRate);
+
     const productLine = params.product
-        ? `[ ${params.product} ] ${params.term || 0} days @ ${params.interestRate || 0}% per Annum`
+        ? buildProductLine(productDisplay, approvalTermDays, params.policyTermMonths, annualRatePercent)
         : "-";
 
     const remarksLines = [deviations?.remarks, deviations?.aoRecommendation, deviations?.otherRemarks].filter(
@@ -224,7 +239,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                             <V rowSpan={2} className="align-top font-bold">{dash(productDisplay)}</V>
                             <L rowSpan={2} className="align-top">
                                 TERM (Days):<br />
-                                <span className="font-bold">{(c.termDays || 0).toLocaleString()}</span>
+                                <span className="font-bold">{approvalTermDays.toLocaleString()}</span>
                             </L>
                             <V blue colSpan={5}>{productLine}</V>
                         </tr>

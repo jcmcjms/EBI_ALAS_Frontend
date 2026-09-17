@@ -9,6 +9,12 @@
  *
  * The export shape mirrors the values `approval-form-document.tsx`
  * renders inline; if those change, this module must change too.
+ *
+ * IMPORTANT: `resolveApprovalTermDays`, `toAnnualRatePercent`, and
+ * `buildProductLine` are the single source of truth for the approval-
+ * form boundary normalization. The backend mirrors these in
+ * `ApprovalFormConventions.cs` — do not "fix" one side without the
+ * other. The shared case table in both test suites keeps them identical.
  */
 
 import { parseProductCode } from "./loan-product-display";
@@ -17,6 +23,85 @@ import type {
     LoanApplicationFormData,
     SelectedLoan,
 } from "../pages/loans/create/schema";
+
+// ── Approval-form boundary constants ─────────────────────────────────
+// Mirror of ApprovalFormConventions.cs — keep in sync.
+
+/** Days per month in the legacy "1 month = 30 days" convention. */
+export const DAYS_PER_MONTH = 30;
+
+/**
+ * Single-payment products (policy count = 1) diverge from the real term
+ * by far more than any grace period; quote feed days verbatim when the
+ * gap exceeds this tolerance.
+ */
+export const GRACE_TOLERANCE_DAYS = 120;
+
+// ── Approval-form boundary normalization ─────────────────────────────
+// These functions are the single source of truth for how raw webloan
+// feed values are normalized for the printed approval form. Both
+// `approval-form-preview.tsx` (create page) and
+// `approval-form-document.tsx` (review page) MUST import from here.
+
+/**
+ * Resolves the TERM (Days) value printed on the approval form.
+ * When `policyTermMonths` is present and its 30-day equivalent is within
+ * `GRACE_TOLERANCE_DAYS` of the feed term, the policy-derived value wins.
+ * Otherwise the raw feed days are quoted verbatim (single-payment products,
+ * or missing policy data).
+ *
+ * Backend mirror: `ApprovalFormConventions.ResolveApprovalTermDays`
+ */
+export function resolveApprovalTermDays(
+    feedTermDays: number,
+    policyTermMonths?: number | null,
+): number {
+    if (!policyTermMonths || policyTermMonths <= 0) return feedTermDays;
+    const policyDays = policyTermMonths * DAYS_PER_MONTH;
+    return Math.abs(policyDays - feedTermDays) <= GRACE_TOLERANCE_DAYS
+        ? policyDays
+        : feedTermDays;
+}
+
+/**
+ * WebLoan ships `grantedRate` as a decimal fraction (0.2157) while the
+ * approval form is parameterized in percent (21.57). Idempotent for
+ * values already in percent. No consumer product prices at ≤ 1% p.a.
+ *
+ * Backend mirror: `ApprovalFormConventions.ToAnnualRatePercent`
+ */
+export function toAnnualRatePercent(rate?: number | null): number {
+    if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) return 0;
+    return rate <= 1 ? rate * 100 : rate;
+}
+
+/** Trims float artefacts (9.660000000000001 → "9.66") for printed lines. */
+export function formatRatePercent(rate: number): string {
+    return String(Number(rate.toFixed(4)));
+}
+
+/**
+ * Builds the product line string for the approval form header:
+ *   "ATM SAL | 84 months @ 21.57% per Annum"
+ * or "<days> days @ …" when the policy count doesn't describe the term
+ * (single-payment products).
+ *
+ * Backend mirror: (none — display-only)
+ */
+export function buildProductLine(
+    productDisplay: string,
+    approvalTermDays: number,
+    policyTermMonths: number | null | undefined,
+    ratePercent: number,
+): string {
+    const termLabel =
+        policyTermMonths &&
+        policyTermMonths > 0 &&
+        Math.abs(policyTermMonths * DAYS_PER_MONTH - approvalTermDays) <= GRACE_TOLERANCE_DAYS
+            ? `${policyTermMonths} months`
+            : `${approvalTermDays.toLocaleString()} days`;
+    return `${productDisplay} | ${termLabel} @ ${formatRatePercent(ratePercent)}% per Annum`;
+}
 
 /**
  * Compute the financial metrics rendered in the printed Approval Form

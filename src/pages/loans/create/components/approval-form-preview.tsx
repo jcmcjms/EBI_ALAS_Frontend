@@ -18,9 +18,12 @@ import {
 import {
     computeMaximumLoanableAmount,
     computeMonthlyAmortization,
-    resolveApprovalTermDays,
-    DAYS_PER_MONTH,
 } from "@/src/lib/loan-computations";
+import {
+    resolveApprovalTermDays,
+    toAnnualRatePercent,
+    buildProductLine,
+} from "@/src/lib/loan-approval-utils";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
 
@@ -31,23 +34,6 @@ function num(value?: number | null): string {
 
 function dash(value?: string | null): string {
     return value && value.trim().length > 0 ? value : "-";
-}
-
-/**
- * WebLoan ships `grantedRate` as a decimal fraction (0.0966) while the
- * computation engine is parameterized in percent (9.66). Normalize at
- * this boundary only — the Loan Parameters section keeps the raw feed
- * value untouched. No consumer product in the catalog prices at ≤ 1%
- * p.a., so "≤ 1 means fraction" is unambiguous here.
- */
-function toAnnualRatePercent(rate?: number): number {
-    if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) return 0;
-    return rate <= 1 ? rate * 100 : rate;
-}
-
-/** Trims float artefacts (9.660000000000001 → "9.66") for printed lines. */
-function formatRatePercent(rate: number): string {
-    return String(Number(rate.toFixed(4)));
 }
 
 function isoDate(iso?: string): string {
@@ -196,7 +182,6 @@ function SingleLoanApprovalForm({
         parameters.term || 0,
         parameters.policyTermMonths,
     );
-    const approvalTermMonths = Math.round(approvalTermDays / DAYS_PER_MONTH);
     const annualRatePercent = toAnnualRatePercent(parameters.interestRate);
 
     const principal = parameters.proposedAmount || 0;
@@ -256,7 +241,7 @@ function SingleLoanApprovalForm({
     );
 
     const productLine = parameters.product
-        ? `[ ${parameters.product} ] ${approvalTermMonths} months @ ${formatRatePercent(annualRatePercent)}% per Annum`
+        ? buildProductLine(productDisplay, approvalTermDays, parameters.policyTermMonths, annualRatePercent)
         : "-";
 
     const deviations = form?.deviations;

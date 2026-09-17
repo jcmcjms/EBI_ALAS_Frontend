@@ -277,6 +277,18 @@ export const selectedLoanSchema = z.object({
     branchCode: z.string(),
     /** All loan parameters for this specific loan. */
     parameters: loanParametersSchema,
+    /**
+     * Frozen at submission: the TERM (Days) actually printed on the
+     * approval form. Present only on review/approval pages that receive
+     * data from the backend (not on the create page).
+     */
+    approvalTermDays: z.number().optional(),
+    /**
+     * Frozen at submission: annual rate in percent (e.g. 21.57),
+     * normalized from webloan's decimal fraction. Present only on
+     * review/approval pages that receive data from the backend.
+     */
+    annualRatePercent: z.number().optional(),
 });
 
 // ── Verification Conducted ─────────────────────────────────────

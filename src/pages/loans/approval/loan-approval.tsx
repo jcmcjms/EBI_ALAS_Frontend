@@ -194,13 +194,7 @@ function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
                     purpose: l.purpose ?? "",
                     proposedAmount: l.proposedAmount,
                     term: l.termDays,
-                    // Policy term (months) — not surfaced by the
-                    // approval endpoint's `LoanDetailResponse` yet
-                    // (it carries `termDays` only). Falls through as
-                    // undefined so the form schema's `.optional()`
-                    // accepts it; the field renders blank on the
-                    // approval-page context.
-                    policyTermMonths: undefined,
+                    policyTermMonths: l.policyTermMonths ?? undefined,
                     interestRate: l.interestRate,
                     nthpDate: l.nthpDate,
                     notarialFee: l.notarialFee ?? 0,
@@ -212,6 +206,8 @@ function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
                         insurance: l.standardInsurance ?? 0,
                     },
                 },
+                approvalTermDays: l.approvalTermDays ?? undefined,
+                annualRatePercent: l.annualRatePercent ?? undefined,
             },
         ],
         outstandingLoans: l.outstandingLoans.map((o) => ({
