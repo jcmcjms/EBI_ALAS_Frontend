@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 import { MonitoringToolbar } from "./components/monitoring-toolbar";
 import { MonitoringTable } from "./components/monitoring-table";
 import { LoanDetailsDrawer } from "./components/loan-details-drawer";
@@ -176,11 +176,11 @@ export function LoanMonitoringPage() {
                                 setCancelDialog((d) => ({ ...d, pending: true }));
                                 try {
                                     await cancelLoanApplication(cancelDialog.record.id, cancelDialog.reason.trim());
-                                    toast.success("Application cancelled.");
+                                    toastSuccess("Application cancelled.");
                                     setCancelDialog({ open: false, record: null, reason: "", pending: false });
                                     qc.invalidateQueries({ queryKey: queryKeys.loans.all });
                                 } catch (e) {
-                                    toast.error(e instanceof Error ? e.message : "Could not cancel.");
+                                    toastError(e instanceof Error ? e.message : "Could not cancel.");
                                     setCancelDialog((d) => ({ ...d, pending: false }));
                                 }
                             }}

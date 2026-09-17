@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toastSuccess, toastError, toastInfo } from "@/src/components/ui/toast";
 import {
   ArrowCounterClockwise,
   CloudCheck,
@@ -155,7 +155,7 @@ export function CISLookup({
     setConfirmClear(false);
     setSearchQuery("");
     setLookupError(null);
-    toast.info("Client cleared. Search for a new CIS number.");
+    toastInfo("Client cleared. Search for a new CIS number.");
   };
 
   const handleLookup = async () => {
@@ -168,12 +168,12 @@ export function CISLookup({
     try {
       const result = await getWebLoanByCis(query);
       applySearchResult(result, query);
-      toast.success("Client profile loaded successfully.");
+      toastSuccess("Client profile loaded successfully.");
     } catch (error) {
       const message = getErrorMessage(error);
       clearForm();
       setLookupError(message);
-      toast.error(message);
+      toastError(message);
     } finally {
       setIsLoading(false);
     }

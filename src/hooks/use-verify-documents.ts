@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 import { queryKeys } from "@/src/lib/queryKeys";
@@ -35,11 +35,11 @@ export function useVerifyDocuments(loanId: number | null) {
                 qc.invalidateQueries({ queryKey: loanReviewKeys.checklistDocuments(loanId) });
             }
             if (r.complete) {
-                toast.success("Documents verified complete.");
+                toastSuccess("Documents verified complete.");
             } else {
-                toast.error(`${r.missing.length} document(s) still missing.`);
+                toastError(`${r.missing.length} document(s) still missing.`);
             }
         },
-        onError: (e: Error) => toast.error(e.message),
+        onError: (e: Error) => toastError(e.message),
     });
 }

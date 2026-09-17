@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { CircleNotch, Eye, EyeSlash } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 
 import { Button } from "@/src/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/src/components/ui/field";
@@ -46,13 +46,13 @@ export default function ChangePassword() {
                 newPassword: data.newPassword,
             });
 
-            toast.success("Password changed successfully. Please log in with your new password.");
+            toastSuccess("Password changed successfully. Please log in with your new password.");
             clearSession();
             navigate("/login", { replace: true });
         } catch (error) {
             const fallback = "Failed to change password.";
             const detail = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-            toast.error(detail ?? getErrorMessage(error) ?? fallback);
+            toastError(detail ?? getErrorMessage(error) ?? fallback);
         }
     };
 

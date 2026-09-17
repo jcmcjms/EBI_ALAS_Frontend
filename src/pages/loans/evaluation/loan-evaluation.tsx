@@ -16,7 +16,9 @@ import {
     MagnifyingGlassMinus,
     MagnifyingGlassPlus,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
+import axios from "axios";
+import { getErrorMessage } from "@/src/lib/apiClient";
 
 import {
     Card,
@@ -250,7 +252,7 @@ export function LoanEvaluationPage() {
                         ? "Not Recommended (forwarded to Approver)"
                         : "Recommended (forwarded to Approver)"
                     : "Pushed back to Encoder";
-            toast.success(`Application ${actionLabel}.`);
+            toastSuccess(`Application ${actionLabel}.`);
             setComments("");
             setPendingAction(null);
             qc.invalidateQueries({ queryKey: loanReviewKeys.detail(id) });
@@ -258,7 +260,32 @@ export function LoanEvaluationPage() {
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
         onError: (e: Error) => {
-            toast.error(e.message);
+            if (axios.isAxiosError(e) && e.response?.data) {
+                const data = e.response.data as {
+                    message?: string;
+                    errors?: string[];
+                };
+                const msg = data.message || getErrorMessage(e);
+                const details = Array.isArray(data.errors) && data.errors.length > 0
+                    ? data.errors
+                    : null;
+
+                if (details) {
+                    toastError(
+                        <div className="space-y-1.5">
+                            <p className="font-semibold">{msg}</p>
+                            <ul className="list-disc pl-4 text-xs opacity-90">
+                                {details.map((d, i) => <li key={i}>{d}</li>)}
+                            </ul>
+                        </div>,
+                        { timeout: 10_000 },
+                    );
+                } else {
+                    toastError(msg);
+                }
+            } else {
+                toastError(getErrorMessage(e));
+            }
             setPendingAction(null);
         },
     });
@@ -268,7 +295,7 @@ export function LoanEvaluationPage() {
 
         // Validation: pushback and notRecommended require comments
         if ((action === "pushback" || action === "notRecommended") && trimmed.length < 10) {
-            toast.error("Comments are required (minimum 10 characters) for this action.");
+            toastError("Comments are required (minimum 10 characters) for this action.");
             return;
         }
 

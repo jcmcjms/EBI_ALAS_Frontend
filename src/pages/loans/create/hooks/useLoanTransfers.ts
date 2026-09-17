@@ -67,7 +67,7 @@
 
 import { useCallback } from "react";
 import { useFieldArray, useFormContext, type Control } from "react-hook-form";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 
 import {
     LOAN_SECTION_LABELS,
@@ -161,7 +161,7 @@ export function useLoanTransfers() {
                 (source === "ebi" && target === "outstanding");
 
             if (!isValidTransfer) {
-                toast.error(
+                toastError(
                     "Transfers are only allowed between Outstanding Loans and EBI Accounts.",
                 );
                 return;
@@ -211,7 +211,7 @@ export function useLoanTransfers() {
                 // Defensive: this should not be reachable in normal
                 // operation, but if it ever is we want the user to
                 // know rather than silently no-op.
-                toast.error("Could not transfer loan — source row not found.");
+                toastError("Could not transfer loan — source row not found.");
                 return;
             }
 
@@ -234,7 +234,7 @@ export function useLoanTransfers() {
                     break;
                 default: {
                     const _exhaustive: never = restrictedTarget;
-                    toast.error(`Unknown target section: ${String(_exhaustive)}`);
+                    toastError(`Unknown target section: ${String(_exhaustive)}`);
                     return;
                 }
             }
@@ -266,7 +266,7 @@ export function useLoanTransfers() {
             }
             sourceArray.remove(fieldIndex);
 
-            toast.success(`Transferred loan to ${LOAN_SECTION_LABELS[restrictedTarget]}`);
+            toastSuccess(`Transferred loan to ${LOAN_SECTION_LABELS[restrictedTarget]}`);
         },
         // The four `useFieldArray` returns are stable references per
         // render, but we list them anyway to keep the linter honest.

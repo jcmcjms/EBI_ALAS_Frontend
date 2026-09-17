@@ -6,7 +6,7 @@ import {
     Warning,
     Receipt,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
@@ -92,7 +92,7 @@ function ThreadComposer({
                 parentRemarkId: parentId,
             }),
         onSuccess: () => {
-            toast.success("Remark added.");
+            toastSuccess("Remark added.");
             setBody("");
             setParentId(null);
             onReply?.(0);
@@ -100,7 +100,7 @@ function ThreadComposer({
                 queryKey: loanReviewKeys.deviations(loanId),
             });
         },
-        onError: (e: Error) => toast.error(e.message),
+        onError: (e: Error) => toastError(e.message),
     });
 
     if (!canWrite) return null;

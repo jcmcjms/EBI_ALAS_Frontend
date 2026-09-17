@@ -18,7 +18,9 @@ import {
     ThumbsDown,
     Info,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
+import axios from "axios";
+import { getErrorMessage } from "@/src/lib/apiClient";
 
 import {
     Card,
@@ -311,7 +313,7 @@ export function LoanApprovalPage() {
         mutationFn: (a: WorkflowAction) =>
             updateLoanStatus(id, a.to, remarks.trim(), a.verdict),
         onSuccess: (_d, a) => {
-            toast.success(
+            toastSuccess(
                 a.verdict === "NotRecommended"
                     ? "Evaluation recorded as Not Recommended — forwarded to Approver."
                     : a.kind === "return"
@@ -323,18 +325,47 @@ export function LoanApprovalPage() {
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
             qc.invalidateQueries({ queryKey: approvalMatrixKeys.routing(id) });
         },
-        onError: (e: Error) => toast.error(e.message),
+        onError: (e: Error) => {
+            // Extract structured error from Axios 422/400 responses
+            // so we can show the specific missing documents list.
+            if (axios.isAxiosError(e) && e.response?.data) {
+                const data = e.response.data as {
+                    message?: string;
+                    errors?: string[];
+                };
+                const msg = data.message || getErrorMessage(e);
+                const details = Array.isArray(data.errors) && data.errors.length > 0
+                    ? data.errors
+                    : null;
+
+                if (details) {
+                    toastError(
+                        <div className="space-y-1.5">
+                            <p className="font-semibold">{msg}</p>
+                            <ul className="list-disc pl-4 text-xs opacity-90">
+                                {details.map((d, i) => <li key={i}>{d}</li>)}
+                            </ul>
+                        </div>,
+                        { timeout: 10_000 },
+                    );
+                } else {
+                    toastError(msg);
+                }
+            } else {
+                toastError(getErrorMessage(e));
+            }
+        },
     });
 
     // ── Release assignment mutation ──────────────────────────────────────────
     const releaseMut = useMutation({
         mutationFn: () => releaseAssignment(id),
         onSuccess: () => {
-            toast.success("Assignment released. The loan is now available for other approvers.");
+            toastSuccess("Assignment released. The loan is now available for other approvers.");
             qc.invalidateQueries({ queryKey: approvalMatrixKeys.routing(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
-        onError: (e: Error) => toast.error(e.message),
+        onError: (e: Error) => toastError(getErrorMessage(e)),
     });
 
     // ── Empty / error states ─────────────────────────────────────────
@@ -850,7 +881,7 @@ export function LoanApprovalPage() {
                                 setCancelPending(true);
                                 try {
                                     await cancelLoanApplication(id, cancelReason.trim());
-                                    toast.success("Application cancelled.");
+                                    toastSuccess("Application cancelled.");
                                     setCancelOpen(false);
                                     setCancelReason("");
                                     setCancelPending(false);
@@ -858,7 +889,7 @@ export function LoanApprovalPage() {
                                     qc.invalidateQueries({ queryKey: loanReviewKeys.history(id) });
                                     qc.invalidateQueries({ queryKey: queryKeys.loans.all });
                                 } catch (e) {
-                                    toast.error(e instanceof Error ? e.message : "Could not cancel.");
+                                    toastError(e instanceof Error ? getErrorMessage(e) : "Could not cancel.");
                                     setCancelPending(false);
                                 }
                             }}

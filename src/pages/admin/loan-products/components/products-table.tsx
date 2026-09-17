@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 import { format } from "date-fns";
 import {
     columnFilteringFeature,
@@ -382,7 +382,7 @@ export function ProductsTable() {
             onEditProduct: (product) => setEditingCode(product.code),
             onSyncNow: () => {
                 if (!canManageProducts) {
-                    toast.error(
+                    toastError(
                         "You need the loan_product.manage permission to sync."
                     );
                     return;
@@ -395,12 +395,12 @@ export function ProductsTable() {
                     onConfirm: () => {
                         syncMutation.mutate(undefined, {
                             onSuccess: (result) => {
-                                toast.success(
+                                toastSuccess(
                                     `Synced ${result.added + result.updated + result.preserved} products — ` +
                                         `${result.added} added, ${result.updated} updated, ${result.preserved} preserved.`
                                 );
                             },
-                            onError: (e) => toast.error(getErrorMessage(e)),
+                            onError: (e) => toastError(getErrorMessage(e)),
                         });
                         setConfirmAction(null);
                     },
@@ -415,10 +415,10 @@ export function ProductsTable() {
     ): Promise<boolean> => {
         try {
             await updateMutation.mutateAsync({ code: productCode, payload: values });
-            toast.success(`Updated policy for "${productCode}".`);
+            toastSuccess(`Updated policy for "${productCode}".`);
             return true;
         } catch (e) {
-            toast.error(getErrorMessage(e));
+            toastError(getErrorMessage(e));
             return false;
         }
     };

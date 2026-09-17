@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import * as signalR from "@microsoft/signalr";
-import { toast } from "sonner";
+import { toastInfo } from "@/src/components/ui/toast";
 
 import { useAuthStore } from "@/src/store/authStore";
 import { useNotificationStore } from "@/src/store/notificationStore";
@@ -60,7 +60,7 @@ function playChime() {
  * - Connects on mount when a valid access token exists.
  * - Reconnects automatically with exponential back-off.
  * - Pushes incoming events into the Zustand notification store
- *   (instant bell update) and fires a sonner toast.
+ *   (instant bell update) and fires a toast.
  * - Plays a short chime and blinks the document title when the
  *   tab is in the background.
  * - Tears down the connection on unmount or token change.
@@ -113,8 +113,8 @@ export function useSignalR() {
             // 1. Update Zustand store (instant bell badge increment)
             addNotification(appNotification);
 
-            // 2. Fire sonner toast
-            toast.info(payload.title, {
+            // 2. Fire toast
+            toastInfo(payload.title, {
                 description: payload.description,
             });
 

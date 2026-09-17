@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useFormContext, useWatch, useFieldArray } from "react-hook-form";
-import { toast } from "sonner";
+import { toastError } from "@/src/components/ui/toast";
 import {
     CheckCircle,
     CircleNotch,
@@ -206,7 +206,7 @@ export function ActiveLoansTable({
             setLoans([]);
             setHasFetched(true);
             setLoadError(message);
-            toast.error(message);
+            toastError(message);
             setIsLoading(false);
             return;
         }
@@ -309,7 +309,7 @@ export function ActiveLoansTable({
         const productCode = extractProductCode(loan.productWithDescription);
 
         if (productCode && selectedProductCodes.has(productCode)) {
-            toast.error(
+            toastError(
                 `Product ${productCode} is already selected. Cannot select multiple loans of the same product.`
             );
             return;

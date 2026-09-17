@@ -14,7 +14,7 @@ import {useNavigate} from "react-router-dom";
 import {useAuthStore} from "@/src/store/authStore";
 import {apiClient, getErrorMessage} from "@/src/lib/apiClient";
 import {extractUserFromToken} from "@/src/lib/jwt";
-import {toast} from "sonner";
+import {toastSuccess, toastError} from "@/src/components/ui/toast";
 
 const loginSchema = z.object({
     username: z.string()
@@ -46,16 +46,16 @@ export  function LoginForm({className, ...props}: React.ComponentProps<"form">) 
 
                 if (user) {
                     setSession(token, user);
-                    toast.success("Login successful");
+                    toastSuccess("Login successful");
                     navigate("/dashboard", { replace: true });
                 } else {
-                    toast.error("Failed to process login token");
+                    toastError("Failed to process login token");
                 }
             } else {
-                toast.error(apiResponse.message || "Login failed");
+                toastError(apiResponse.message || "Login failed");
             }
         } catch (error) {
-            toast.error(getErrorMessage(error));
+            toastError(getErrorMessage(error));
         }
     };
     return (

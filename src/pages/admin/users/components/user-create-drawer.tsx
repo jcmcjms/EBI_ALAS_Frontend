@@ -6,7 +6,7 @@ import { Label } from "@/src/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { SignaturePad } from "@/src/components/ui/signature-pad";
 import { BranchMultiSelect } from "@/src/components/ui/branch-multi-select";
-import { toast } from "sonner";
+import { toastError } from "@/src/components/ui/toast";
 import { BRANCHES } from "@/src/lib/api/types";
 import { stripRoleDisplayName } from "@/src/lib/role-badges";
 import { useRoles } from "@/src/hooks/use-roles";
@@ -158,49 +158,49 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
 
     const handleCreate = async () => {
         if (!form.username.trim()) {
-            toast.error("Username is required");
+            toastError("Username is required");
             return;
         }
         if (!USERNAME_PATTERN.test(form.username.trim())) {
-            toast.error("Username must be alphanumeric (letters, numbers, underscores)");
+            toastError("Username must be alphanumeric (letters, numbers, underscores)");
             return;
         }
         if (form.username.trim().length > 50) {
-            toast.error("Username must not exceed 50 characters");
+            toastError("Username must not exceed 50 characters");
             return;
         }
         if (!form.firstName.trim()) {
-            toast.error("First name is required");
+            toastError("First name is required");
             return;
         }
         if (!form.lastName.trim()) {
-            toast.error("Last name is required");
+            toastError("Last name is required");
             return;
         }
         if (form.jobTitle.length > 100) {
-            toast.error("Job title must not exceed 100 characters");
+            toastError("Job title must not exceed 100 characters");
             return;
         }
         if (!form.branchId) {
-            toast.error("Branch is required");
+            toastError("Branch is required");
             return;
         }
         if (!form.role) {
-            toast.error("Role is required");
+            toastError("Role is required");
             return;
         }
         // Approvers must select an authority from the matrix.
         if (form.role === "Approver" && !form.jobTitle) {
-            toast.error("Please select an approval authority for this Approver.");
+            toastError("Please select an approval authority for this Approver.");
             return;
         }
         // Branch-scope approvers must select at least one covered branch.
         if (form.role === "Approver" && isBranchScope && form.coveredBranches.length === 0) {
-            toast.error("Please select at least one covered branch for this Branch-scope approver.");
+            toastError("Please select at least one covered branch for this Branch-scope approver.");
             return;
         }
         if (!form.eSignature) {
-            toast.error("Signature is required. Please sign the pad.");
+            toastError("Signature is required. Please sign the pad.");
             return;
         }
 

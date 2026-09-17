@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GitBranch, Warning } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 
 import { AppShell } from "@/src/components/layout/AppShell";
 import {
@@ -86,7 +86,7 @@ export function WorkflowSettingsPage() {
     const save = useMutation({
         mutationFn: updateWorkflowConfiguration,
         onSuccess: (_d, value) => {
-            toast.success(
+            toastSuccess(
                 value
                     ? "Recommendation step enabled for new applications."
                     : "Recommendation step disabled — new applications go straight to evaluation."
@@ -96,7 +96,7 @@ export function WorkflowSettingsPage() {
             qc.invalidateQueries({ queryKey: workflowKeys.configuration });
         },
         onError: (e: Error) => {
-            toast.error(e.message);
+            toastError(e.message);
             setPending(null);
         },
     });

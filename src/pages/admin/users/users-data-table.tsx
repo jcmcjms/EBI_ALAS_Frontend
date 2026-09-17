@@ -10,7 +10,7 @@ import {
     filterFn_includesString,
     FlexRender,
 } from "@tanstack/react-table";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
@@ -334,7 +334,7 @@ export function UsersDataTable() {
 
     function handleToggleStatusRequest(user: UserResponse) {
         if (!canSuspendUsers) {
-            toast.error("You don't have permission to suspend or activate users");
+            toastError("You don't have permission to suspend or activate users");
             return;
         }
         if (user.isActive) {
@@ -347,8 +347,8 @@ export function UsersDataTable() {
                     updateUserStatusMutation.mutate(
                         { id: user.id, isActive: false },
                         {
-                            onSuccess: () => toast.success(`${formatFullName(user)}'s account has been suspended`),
-                            onError: (e) => toast.error(getErrorMessage(e)),
+                            onSuccess: () => toastSuccess(`${formatFullName(user)}'s account has been suspended`),
+                            onError: (e) => toastError(getErrorMessage(e)),
                         }
                     );
                     closeConfirm();
@@ -363,8 +363,8 @@ export function UsersDataTable() {
                     updateUserStatusMutation.mutate(
                         { id: user.id, isActive: true },
                         {
-                            onSuccess: () => toast.success(`${formatFullName(user)}'s account has been activated`),
-                            onError: (e) => toast.error(getErrorMessage(e)),
+                            onSuccess: () => toastSuccess(`${formatFullName(user)}'s account has been activated`),
+                            onError: (e) => toastError(getErrorMessage(e)),
                         }
                     );
                     closeConfirm();
@@ -377,7 +377,7 @@ export function UsersDataTable() {
     // honestly instead of faking success.
     function handleResetPasswordRequest(user: UserResponse) {
         if (!hasPermission(PERMISSIONS.userEdit)) {
-            toast.error("You don't have permission to reset passwords");
+            toastError("You don't have permission to reset passwords");
             return;
         }
         setConfirmAction({
@@ -389,7 +389,7 @@ export function UsersDataTable() {
                     onSuccess: (res) => {
                         setTempCred({ username: res.username, temporaryPassword: res.temporaryPassword });
                     },
-                    onError: (e) => toast.error(getErrorMessage(e)),
+                    onError: (e) => toastError(getErrorMessage(e)),
                 });
                 closeConfirm();
             },
@@ -398,7 +398,7 @@ export function UsersDataTable() {
 
     function handleForcePasswordResetRequest(user: UserResponse) {
         if (!hasPermission(PERMISSIONS.userEdit)) {
-            toast.error("You don't have permission to force password resets");
+            toastError("You don't have permission to force password resets");
             return;
         }
         setConfirmAction({
@@ -408,8 +408,8 @@ export function UsersDataTable() {
             onConfirm: () => {
                 forcePasswordResetMutation.mutate(user.id, {
                     onSuccess: () =>
-                        toast.success(`${formatFullName(user)} will be required to change password on next login`),
-                    onError: (e) => toast.error(getErrorMessage(e)),
+                        toastSuccess(`${formatFullName(user)} will be required to change password on next login`),
+                    onError: (e) => toastError(getErrorMessage(e)),
                 });
                 closeConfirm();
             },
@@ -418,7 +418,7 @@ export function UsersDataTable() {
 
     function handleRevokeSessionsRequest(user: UserResponse) {
         if (!hasPermission(PERMISSIONS.userSuspend)) {
-            toast.error("You don't have permission to revoke sessions");
+            toastError("You don't have permission to revoke sessions");
             return;
         }
         setConfirmAction({
@@ -429,8 +429,8 @@ export function UsersDataTable() {
             onConfirm: () => {
                 revokeSessionsMutation.mutate(user.id, {
                     onSuccess: (count) =>
-                        toast.success(`Revoked ${count} active session(s) for ${formatFullName(user)}`),
-                    onError: (e) => toast.error(getErrorMessage(e)),
+                        toastSuccess(`Revoked ${count} active session(s) for ${formatFullName(user)}`),
+                    onError: (e) => toastError(getErrorMessage(e)),
                 });
                 closeConfirm();
             },
@@ -439,7 +439,7 @@ export function UsersDataTable() {
 
     function handleViewAuditLog(user: UserResponse) {
         if (!hasPermission(PERMISSIONS.userView)) {
-            toast.error("You don't have permission to view audit logs");
+            toastError("You don't have permission to view audit logs");
             return;
         }
         setSelectedUserForAuditLog(user);
@@ -469,7 +469,7 @@ export function UsersDataTable() {
             setTempCred({ username: payload.username, temporaryPassword: payload.password });
             return true;
         } catch (error) {
-            toast.error(getErrorMessage(error));
+            toastError(getErrorMessage(error));
             return false;
         }
     }
@@ -495,11 +495,11 @@ export function UsersDataTable() {
                     coveredBranches: changes.coveredBranches,
                 } satisfies UpdateUserPayload,
             });
-            toast.success(`${changes.firstName} ${changes.lastName} updated successfully`);
+            toastSuccess(`${changes.firstName} ${changes.lastName} updated successfully`);
             setSelectedUser(null);
             return true;
         } catch (error) {
-            toast.error(getErrorMessage(error));
+            toastError(getErrorMessage(error));
             return false;
         }
     }
@@ -536,7 +536,7 @@ export function UsersDataTable() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        toast.success(`Exported ${paged?.items.length ?? 0} users to CSV`);
+        toastSuccess(`Exported ${paged?.items.length ?? 0} users to CSV`);
     }
 
     return (

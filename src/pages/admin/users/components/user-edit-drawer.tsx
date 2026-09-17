@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/ta
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { SignaturePad } from "@/src/components/ui/signature-pad";
 import { BranchMultiSelect } from "@/src/components/ui/branch-multi-select";
-import { toast } from "sonner";
+import { toastError } from "@/src/components/ui/toast";
 import { BRANCHES, type UserResponse } from "@/src/lib/api/types";
 import { stripRoleDisplayName } from "@/src/lib/role-badges";
 import { useRoles } from "@/src/hooks/use-roles";
@@ -204,24 +204,24 @@ export function UserEditDrawer({
         if (!user || !isDirty || isSaving) return;
 
         if (!profile.firstName.trim()) {
-            toast.error("First name is required");
+            toastError("First name is required");
             return;
         }
         if (!profile.lastName.trim()) {
-            toast.error("Last name is required");
+            toastError("Last name is required");
             return;
         }
         if (profile.role === "Approver" && !profile.jobTitle) {
-            toast.error("Please select an approval authority for this Approver.");
+            toastError("Please select an approval authority for this Approver.");
             return;
         }
         // Branch-scope approvers must select at least one covered branch.
         if (profile.role === "Approver" && isBranchScope && profile.coveredBranches.length === 0) {
-            toast.error("Please select at least one covered branch for this Branch-scope approver.");
+            toastError("Please select at least one covered branch for this Branch-scope approver.");
             return;
         }
         if (profile.role !== "Approver" && profile.jobTitle.length > 100) {
-            toast.error("Job title must not exceed 100 characters");
+            toastError("Job title must not exceed 100 characters");
             return;
         }
 

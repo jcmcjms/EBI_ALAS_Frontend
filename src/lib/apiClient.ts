@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
-import { toast } from "sonner";
+import { toastError } from "@/src/components/ui/toast";
 import { useAuthStore } from "../store/authStore.ts";
 import { decodeJwtPayload } from "./jwt.ts";
 
@@ -208,7 +208,7 @@ apiClient.interceptors.response.use(
 
             // Don't loop forever on the refresh endpoint itself.
             if (url === "/api/auth/refresh") {
-                toast.error("Session security token expired — please log in again.");
+                toastError("Session security token expired — please log in again.");
                 return Promise.reject(error);
             }
 
@@ -230,7 +230,7 @@ apiClient.interceptors.response.use(
                         "[CSRF] Refreshed access token still has no XsrfToken claim. " +
                         "Backend must include the claim in issued access JWTs."
                     );
-                    toast.error("Session security token expired — please log in again.");
+                    toastError("Session security token expired — please log in again.");
                     return Promise.reject(error);
                 }
                 headers[CSRF_HEADER] = newXsrf;
@@ -239,7 +239,7 @@ apiClient.interceptors.response.use(
             } catch {
                 // Refresh failed (cookie expired, backend unreachable, etc.).
                 // Fall through to the forced re-auth path below.
-                toast.error("Session security token expired — please log in again.");
+                toastError("Session security token expired — please log in again.");
                 return Promise.reject(error);
             }
         }

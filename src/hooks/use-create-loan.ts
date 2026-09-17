@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toastSuccess, toastError, toastLoading } from "@/src/components/ui/toast";
 
 import { loanApi } from "@/src/lib/api/loans";
 import { getErrorMessage } from "@/src/lib/apiClient";
@@ -79,7 +79,7 @@ export function useCreateLoan() {
             const destination = workflow?.requireRecommendation
                 ? "recommendation"
                 : "evaluation";
-            toast.success(
+            toastSuccess(
                 `Loan application ${response.applicationGroupNo} submitted for ${destination}.`
             );
 
@@ -90,7 +90,7 @@ export function useCreateLoan() {
         },
 
         onError: (error) => {
-            toast.error(getErrorMessage(error));
+            toastError(getErrorMessage(error));
         },
     });
 

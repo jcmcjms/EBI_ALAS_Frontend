@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 import { queryKeys } from "@/src/lib/queryKeys";
 import {
     getAccountProfile,
@@ -60,10 +60,10 @@ export function useUpdateProfile() {
         mutationFn: updateAccountProfile,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.account.profile });
-            toast.success("Profile updated successfully");
+            toastSuccess("Profile updated successfully");
         },
         onError: (error) => {
-            toast.error(getErrorMessage(error) || "Failed to update profile");
+            toastError(getErrorMessage(error) || "Failed to update profile");
         },
     });
 }
@@ -75,10 +75,10 @@ export function useRevokeSession() {
         mutationFn: revokeAccountSession,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["account-sessions"] });
-            toast.success("Session revoked successfully");
+            toastSuccess("Session revoked successfully");
         },
         onError: (error) => {
-            toast.error(getErrorMessage(error) || "Failed to revoke session");
+            toastError(getErrorMessage(error) || "Failed to revoke session");
         },
     });
 }

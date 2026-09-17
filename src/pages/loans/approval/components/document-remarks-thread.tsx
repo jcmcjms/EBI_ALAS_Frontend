@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChatCenteredText, ArrowBendLeftUp } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
@@ -104,14 +104,14 @@ export function DocumentRemarksThread({
                 body,
             }),
         onSuccess: () => {
-            toast.success("Remark added.");
+            toastSuccess("Remark added.");
             setBody("");
             setReplyTo(null);
             qc.invalidateQueries({
                 queryKey: loanReviewKeys.documentRemarks(loanId),
             });
         },
-        onError: (e: Error) => toast.error(e.message),
+        onError: (e: Error) => toastError(e.message),
     });
 
     const roots = remarks.filter((r) => r.parentRemarkId === null);

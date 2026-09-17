@@ -19,7 +19,7 @@ import {
   Stack,
   WarningCircle,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/src/components/ui/toast";
 
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
@@ -640,7 +640,7 @@ export function LoanCreationPage() {
       const first = SECTIONS.find(
         (s) => sectionErrorCount(fieldErrors, s.id) > 0
       );
-      toast.error(
+      toastError(
         `${total} field${total === 1 ? "" : "s"} need${total === 1 ? "s" : ""} attention before submission.`
       );
       if (first) scrollToSection(first.id);
