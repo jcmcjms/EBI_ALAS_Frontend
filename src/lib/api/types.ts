@@ -45,6 +45,7 @@ export function unwrapApiData<T>(body: ApiResponse<T>): T {
 export interface UserQueryParams {
     search?: string;
     role?: string;
+    branchId?: string;
     isActive?: boolean;
     pageNumber?: number;
     pageSize?: number;

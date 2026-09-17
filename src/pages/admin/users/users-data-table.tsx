@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     createColumnHelper,
     tableFeatures,
@@ -6,9 +6,7 @@ import {
     columnFilteringFeature,
     columnVisibilityFeature,
     globalFilteringFeature,
-    rowPaginationFeature,
     createFilteredRowModel,
-    createPaginatedRowModel,
     filterFn_includesString,
     FlexRender,
 } from "@tanstack/react-table";
@@ -116,13 +114,12 @@ type UsersTableMeta = {
 // NOTE: `globalFilteringFeature` is required for `state.globalFilter` to be a
 // valid slice and for the search box to actually filter rows. String filter
 // functions must be registered via `filterFns` to be usable by name.
+// Pagination is server-owned — no rowPaginationFeature / createPaginatedRowModel.
 const features = tableFeatures({
     columnFilteringFeature,
     columnVisibilityFeature,
     globalFilteringFeature,
-    rowPaginationFeature,
     filteredRowModel: createFilteredRowModel(),
-    paginatedRowModel: createPaginatedRowModel(),
     filterFns: { includesString: filterFn_includesString },
     tableMeta: {} as UsersTableMeta,
 });
@@ -286,13 +283,13 @@ export function UsersDataTable() {
     const [searchInput, setSearchInput] = useState("");
     const search = useDebouncedValue(searchInput, 300);
     const [roleFilter, setRoleFilter] = useState<string>("all");
-    // Backend has no branch filter param — applied client-side to the loaded page.
     const [branchFilter, setBranchFilter] = useState<string>("all");
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
 
     const usersQuery = useUsers({
         search,
         role: roleFilter === "all" ? undefined : roleFilter,
+        branchId: branchFilter === "all" ? undefined : branchFilter,
         pageNumber: pagination.pageIndex + 1, // API is 1-based
         pageSize: pagination.pageSize,
     });
@@ -300,11 +297,6 @@ export function UsersDataTable() {
     const stats = useUserStats();
 
     const paged = usersQuery.data;
-    // Client-side branch refinement over the current server page.
-    const visibleUsers = useMemo(() => {
-        const items = paged?.items ?? [];
-        return branchFilter === "all" ? items : items.filter(u => u.branchId === branchFilter);
-    }, [paged, branchFilter]);
 
     // Server-side pagination controls derived from the PagedResult envelope.
     const canPreviousPage = paged?.hasPreviousPage ?? false;
@@ -329,11 +321,10 @@ export function UsersDataTable() {
 
     const table = useTable({
         features,
-        data: visibleUsers,
+        data: paged?.items ?? [],
         columns,
         state: {
             globalFilter: "",
-            pagination,
         },
         globalFilterFn: "includesString",
         meta: {
@@ -347,9 +338,12 @@ export function UsersDataTable() {
     });
 
     // ---- Readouts with empty-list guards ----
+    // Derive from what actually arrived so a short last page or empty
+    // filtered set can never disagree with the body.
     const totalRows = paged?.totalCount ?? 0;
-    const firstRowIndex = totalRows === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
-    const lastRowIndex = Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalRows);
+    const itemCount = paged?.items.length ?? 0;
+    const firstRowIndex = itemCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
+    const lastRowIndex = firstRowIndex === 0 ? 0 : firstRowIndex + itemCount - 1;
 
     // ---- Filter helpers reset pagination when criteria change ----
     const applyRoleFilter = (value: string | null) => {
@@ -550,7 +544,7 @@ export function UsersDataTable() {
     function handleExportCSV() {
         const headers = ["ID", "Username", "First Name", "Middle Name", "Last Name", "Branch", "Role", "Covered Branches", "Status", "Created At"];
         const escapeCell = (value: string) => `"${value.replace(/"/g, '""')}"`;
-        const rows = visibleUsers.map(u =>
+        const rows = (paged?.items ?? []).map(u =>
             [
                 String(u.id),
                 u.username,
@@ -577,7 +571,7 @@ export function UsersDataTable() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        toast.success(`Exported ${visibleUsers.length} users to CSV`);
+        toast.success(`Exported ${paged?.items.length ?? 0} users to CSV`);
     }
 
     return (
@@ -622,8 +616,6 @@ export function UsersDataTable() {
                                 </div>
 
                                 <div className="flex gap-2">
-                                    {/* Branch filtering happens on the loaded page —
-                                        the API has no branch query parameter yet. */}
                                     <Select value={branchFilter} onValueChange={applyBranchFilter}>
                                         <SelectTrigger className="h-9 w-[150px] bg-background">
                                             <Funnel size={14} className="mr-1 text-muted-foreground" />

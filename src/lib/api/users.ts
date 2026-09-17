@@ -21,6 +21,7 @@ export async function listUsers(params: UserQueryParams): Promise<PagedResult<Us
         params: {
             search: params.search || undefined,
             role: params.role || undefined,
+            branchId: params.branchId || undefined,
             isActive: params.isActive ?? undefined,
             pageNumber: params.pageNumber ?? 1,
             pageSize: params.pageSize ?? 20,
