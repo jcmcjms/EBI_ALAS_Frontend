@@ -217,7 +217,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                             <L>Region Code :</L>
                             <V blue>{dash(client.region)}</V>
                             <V blue colSpan={2} rowSpan={3} className="align-middle">
-                                PN: {dash(client.employeeId && (data?.outstandingLoans[0]?.pn ?? "-"))}
+                                PN: {dash(primaryLoan.loanNo)}
                             </V>
                             <L>Branch Code :</L>
                             <V blue colSpan={3}>{dash(branchType.branch)}</V>
