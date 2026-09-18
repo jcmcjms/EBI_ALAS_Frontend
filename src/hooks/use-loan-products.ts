@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
     getLoanProductByCode,
+    importLoanProducts,
     syncLoanProducts,
     updateLoanProduct,
 } from "@/src/lib/api/loan-products";
 import { queryKeys } from "@/src/lib/queryKeys";
 import type {
+    LoanProductImportResult,
     LoanProductResponse,
     UpdateLoanProductPayload,
 } from "@/src/lib/api/types";
@@ -97,5 +99,19 @@ export function useSyncLoanProducts() {
         onSuccess: () => {
             invalidate();
         },
+    });
+}
+
+/**
+ * `POST /api/loan-products/import` — upsert loan products from Excel.
+ *
+ * Invalidates the loan-products list on success so the table re-fetches
+ * with the newly created/updated products.
+ */
+export function useImportLoanProducts() {
+    const invalidate = useInvalidateLoanProducts();
+    return useMutation<LoanProductImportResult, Error, File>({
+        mutationFn: importLoanProducts,
+        onSuccess: () => invalidate(),
     });
 }

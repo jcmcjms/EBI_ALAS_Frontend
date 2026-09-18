@@ -901,6 +901,28 @@ export interface LoanProductsQuery {
     code?: string;
 }
 
+/**
+ * Per-row validation error from the loan product import.
+ * Mirrors `LoanProductImportValidationError` on the backend.
+ */
+export interface LoanProductImportValidationError {
+    rowNumber: number;
+    field: string;
+    error: string;
+}
+
+/**
+ * Result of a batch loan product import.
+ * Mirrors `LoanProductImportResult` on the backend.
+ */
+export interface LoanProductImportResult {
+    totalRows: number;
+    created: number;
+    updated: number;
+    failed: number;
+    errors: LoanProductImportValidationError[];
+}
+
 // ─── Loan submission (POST /api/loans) ───────────────────────────
 // Mirrors EBI.ALAS.Api/Features/Loans/LoanSubmissionDtos.cs.
 // branchType.requestingOfficer is sent for shape-compat only; the server

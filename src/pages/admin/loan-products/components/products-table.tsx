@@ -18,6 +18,8 @@ import {
     ArrowsClockwise,
     CaretDown,
     Database,
+    FileArrowUp,
+    FileXls,
     MagnifyingGlass,
     Package,
     PencilSimple,
@@ -63,7 +65,9 @@ import {
     useSyncLoanProducts,
     useUpdateLoanProduct,
 } from "@/src/hooks/use-loan-products";
+import { exportLoanProducts } from "@/src/lib/api/loan-products";
 import { ProductEditSheet } from "./product-edit-sheet";
+import { ImportProductsSheet } from "./import-products-sheet";
 import { ConfirmActionSheet } from "../../users/components/confirm-action-sheet";
 
 /**
@@ -355,6 +359,7 @@ export function ProductsTable() {
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(
         null
     );
+    const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
 
     // The product being edited. We look it up in the cached list so
     // the form opens with up-to-date values without a second
@@ -527,25 +532,55 @@ export function ProductsTable() {
                                     />
                                 </div>
                                 {canManageProducts && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-9 gap-1.5"
-                                        onClick={() =>
-                                            table.options.meta?.onSyncNow?.()
-                                        }
-                                        disabled={syncMutation.isPending}
-                                    >
-                                        {syncMutation.isPending ? (
-                                            <Spinner className="size-3" />
-                                        ) : (
-                                            <ArrowsClockwise
-                                                size={14}
-                                                weight="bold"
-                                            />
-                                        )}
-                                        Sync now
-                                    </Button>
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-9 gap-1.5"
+                                            onClick={() => {
+                                                exportLoanProducts(true)
+                                                    .then(() =>
+                                                        toastSuccess(
+                                                            "Exported all loan products to Excel"
+                                                        )
+                                                    )
+                                                    .catch((e: unknown) =>
+                                                        toastError(getErrorMessage(e))
+                                                    );
+                                            }}
+                                        >
+                                            <FileXls size={14} weight="bold" />
+                                            Export
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-9 gap-1.5"
+                                            onClick={() => setIsImportSheetOpen(true)}
+                                        >
+                                            <FileArrowUp size={14} weight="bold" />
+                                            Import
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-9 gap-1.5"
+                                            onClick={() =>
+                                                table.options.meta?.onSyncNow?.()
+                                            }
+                                            disabled={syncMutation.isPending}
+                                        >
+                                            {syncMutation.isPending ? (
+                                                <Spinner className="size-3" />
+                                            ) : (
+                                                <ArrowsClockwise
+                                                    size={14}
+                                                    weight="bold"
+                                                />
+                                            )}
+                                            Sync now
+                                        </Button>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -697,6 +732,11 @@ export function ProductsTable() {
                 actionLabel={confirmAction?.actionLabel ?? ""}
                 destructive={confirmAction?.destructive}
                 onConfirm={confirmAction?.onConfirm ?? (() => {})}
+            />
+
+            <ImportProductsSheet
+                open={isImportSheetOpen}
+                onClose={() => setIsImportSheetOpen(false)}
             />
         </>
     );

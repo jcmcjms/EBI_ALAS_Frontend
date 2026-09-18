@@ -5,11 +5,14 @@ import { queryKeys } from "@/src/lib/queryKeys";
 import {
     unwrapApiData,
     type ApiResponse,
+    type LoanProductImportResult,
     type LoanProductResponse,
     type LoanProductSyncResult,
     type LoanProductsQuery,
     type UpdateLoanProductPayload,
 } from "./types";
+
+export type { LoanProductImportResult } from "./types";
 
 /**
  * Loan-product HTTP client + React Query hooks.
@@ -110,6 +113,77 @@ export async function syncLoanProducts(): Promise<LoanProductSyncResult> {
     const res = await apiClient.post<ApiResponse<LoanProductSyncResult>>(
         "/api/loan-products/sync"
     );
+    return unwrapApiData(res.data);
+}
+
+/**
+ * GET /api/loan-products/export — download the full product catalog as .xlsx.
+ *
+ * Returns a blob download; the browser triggers a file save dialog.
+ * `includeRetired` defaults to `true` so ops get the full history.
+ */
+export async function exportLoanProducts(
+    includeRetired = true
+): Promise<void> {
+    const res = await apiClient.get("/api/loan-products/export", {
+        params: { includeRetired },
+        responseType: "blob",
+    });
+
+    const blob = new Blob([res.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `loan-products-${new Date().toISOString().split("T")[0]}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * GET /api/loan-products/import/template — download a blank .xlsx template
+ * with headers, example rows, and an instructions sheet.
+ */
+export async function downloadLoanProductTemplate(): Promise<void> {
+    const res = await apiClient.get("/api/loan-products/import/template", {
+        responseType: "blob",
+    });
+
+    const blob = new Blob([res.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "loan-product-import-template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * POST /api/loan-products/import — upsert loan products from an .xlsx file.
+ *
+ * Existing codes are updated (policy fields + Description + IsRetired);
+ * new codes are created. Returns per-row validation errors so ops can
+ * fix the spreadsheet and re-upload.
+ */
+export async function importLoanProducts(
+    file: File
+): Promise<LoanProductImportResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await apiClient.post<ApiResponse<LoanProductImportResult>>(
+        "/api/loan-products/import",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
     return unwrapApiData(res.data);
 }
 
