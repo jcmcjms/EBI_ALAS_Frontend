@@ -14,6 +14,7 @@ import {
     MagnifyingGlassMinus,
     MagnifyingGlassPlus,
     ArrowLeft,
+    ArrowClockwise,
     ThumbsUp,
     ThumbsDown,
     Info,
@@ -394,12 +395,24 @@ export function LoanApprovalPage() {
     if (loan.isError || !detail || !formData) {
         return (
             <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
-                <div className="text-center space-y-4">
-                    <WarningCircle size={48} className="mx-auto text-destructive" />
-                    <h2 className="text-xl font-semibold">Failed to Load Application</h2>
-                    <Button onClick={() => navigate("/loans/monitoring")}>
-                        Return to Monitoring
-                    </Button>
+                <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+                        <WarningCircle size={28} weight="duotone" className="text-muted-foreground" />
+                    </div>
+                    <div className="space-y-1">
+                        <h2 className="text-lg font-medium">Unable to load this application</h2>
+                        <p className="text-sm text-muted-foreground max-w-[360px]">
+                            {loan.isError ? getErrorMessage(loan.error) : "The application data could not be loaded. It may have been removed or you may not have access."}
+                        </p>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                        <Button variant="outline" onClick={() => loan.refetch()}>
+                            <ArrowClockwise data-icon="inline-start" /> Try again
+                        </Button>
+                        <Button onClick={() => navigate("/loans/monitoring")}>
+                            Back to Monitoring
+                        </Button>
+                    </div>
                 </div>
             </div>
         );

@@ -24,6 +24,7 @@ import { LOAN_STATUS_META } from "@/src/lib/loan-status";
 import { AGING_BADGE_CLASS, assessAging } from "@/src/lib/loan-aging";
 import type { LoanStatus } from "@/src/lib/loan-status";
 import { CANCELLABLE_STATUSES } from "@/src/lib/api/loan-review";
+import { getErrorMessage } from "@/src/lib/apiClient";
 
 /** Per-column Tailwind classes surfaced through `meta.className`. */
 type MonitoringColumnMeta = {
@@ -455,21 +456,25 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                             ) : showError ? (
                                 <TableRow>
                                     <TableCell colSpan={columns.length} className="h-32 text-center">
-                                        <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
-                                            <WarningCircle size={28} weight="bold" className="text-destructive" />
-                                            <div>
-                                                Failed to load loan applications.
-                                                <div className="text-xs mt-0.5">
-                                                    {error instanceof Error ? error.message : "Unknown error."}
-                                                </div>
+                                        <div className="flex flex-col items-center gap-3 py-2">
+                                            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                                                <WarningCircle size={24} weight="duotone" className="text-muted-foreground" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-medium text-foreground">
+                                                    Unable to load applications
+                                                </p>
+                                                <p className="text-xs text-muted-foreground max-w-[320px]">
+                                                    {getErrorMessage(error)}. If this keeps happening, please contact your system administrator.
+                                                </p>
                                             </div>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => refetch()}
-                                                className="gap-1.5 mt-1"
+                                                className="gap-1.5"
                                             >
-                                                <ArrowClockwise size={14} weight="bold" /> Retry
+                                                <ArrowClockwise size={14} weight="bold" /> Try again
                                             </Button>
                                         </div>
                                     </TableCell>

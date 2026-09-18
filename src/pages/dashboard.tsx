@@ -2,9 +2,10 @@ import { AppShell } from "@/src/components/layout/AppShell";
 import { useAuthStore } from "@/src/store/authStore";
 import { useNavigate } from "react-router-dom";
 import { BRANCHES } from "@/src/lib/api/types";
-import { Plus } from "@phosphor-icons/react";
+import { Plus, WarningCircle, ArrowClockwise } from "@phosphor-icons/react";
 import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
+import { getErrorMessage } from "@/src/lib/apiClient";
 
 import { ApprovedLoans } from "@/src/pages/dashboard/components/approved-loans";
 import { DashboardSummary } from "@/src/pages/dashboard/components/dashboard-summary";
@@ -24,7 +25,7 @@ function greeting(): string {
 export function Dashboard() {
     const user = useAuthStore((state) => state.user);
     const navigate = useNavigate();
-    const { data, isLoading, isError, dataUpdatedAt, refetch } = useDashboardData();
+    const { data, isLoading, isError, error, dataUpdatedAt, refetch } = useDashboardData();
 
     const asOf = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date();
 
@@ -56,8 +57,18 @@ export function Dashboard() {
 
                 {isError ? (
                     <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-                        <p className="text-sm text-muted-foreground">Failed to load dashboard data.</p>
-                        <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+                        <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                            <WarningCircle size={24} weight="duotone" className="text-muted-foreground" />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium text-foreground">Unable to load dashboard</p>
+                            <p className="text-xs text-muted-foreground">
+                                {getErrorMessage(error)}. Please try again.
+                            </p>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
+                            <ArrowClockwise size={14} weight="bold" /> Try again
+                        </Button>
                     </div>
                 ) : isLoading ? (
                     <DashboardSkeleton />
