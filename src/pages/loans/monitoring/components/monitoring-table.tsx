@@ -395,9 +395,20 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
     //   (c) `pageData.length === 0` — server returned zero rows for
     //       the current filter. Show a contextual empty state with a
     //       hint to clear filters.
+    //
+    // ── Render states ────────────────────────────────────────────────────
+    //
+    // Loading / error / empty are deliberately NOT table rows. A `colSpan`
+    // row is sized by the table grid: its width follows the min-w-[1180px]
+    // scroll extent (not the visible viewport) and its height pins it to
+    // the top of the body — which made the error block read as off-center.
+    // The body now renders only real rows (or skeletons); a full-area
+    // overlay owns the error / empty messaging, centered in the visible
+    // body region (below the sticky header, above the pagination footer).
     const showSkeleton = isLoading && pageData.length === 0;
     const showError = isError;
     const showEmpty = !showSkeleton && !showError && pageData.length === 0;
+    const showStateOverlay = showError || showEmpty;
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -453,38 +464,6 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                                 Array.from({ length: 8 }).map((_, i) => (
                                     <SkeletonRow key={i} colSpan={columns.length} />
                                 ))
-                            ) : showError ? (
-                                <TableRow>
-                                    <TableCell colSpan={columns.length} className="h-32 text-center">
-                                        <div className="flex flex-col items-center gap-3 py-2">
-                                            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                                                <WarningCircle size={24} weight="duotone" className="text-muted-foreground" />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <p className="text-sm font-medium text-foreground">
-                                                    Unable to load applications
-                                                </p>
-                                                <p className="text-xs text-muted-foreground max-w-[320px]">
-                                                    {getErrorMessage(error)}. If this keeps happening, please contact your system administrator.
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => refetch()}
-                                                className="gap-1.5"
-                                            >
-                                                <ArrowClockwise size={14} weight="bold" /> Try again
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : showEmpty ? (
-                                <TableRow>
-                                    <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                                        No loan applications match the current filters.
-                                    </TableCell>
-                                </TableRow>
                             ) : (
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
@@ -503,6 +482,57 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                         </TableBody>
                     </table>
                 </div>
+
+                {/* Centered error / empty state. Overlays the visible body
+                    area (inset-x-0 = viewport pane, not the table's scroll
+                    extent; top-10 clears the sticky h-10 header) so it stays
+                    optically centered at any width or scroll offset. Opaque
+                    bg so the empty body never ghosts through. */}
+                {showStateOverlay && (
+                    <div
+                        role={showError ? "alert" : undefined}
+                        className="absolute inset-x-0 top-10 bottom-0 z-10 flex items-center justify-center bg-background px-6"
+                    >
+                        {showError ? (
+                            <div className="flex max-w-[420px] flex-col items-center gap-3 text-center">
+                                <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                                    <WarningCircle size={24} weight="duotone" className="text-muted-foreground" />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-foreground">
+                                        Unable to load applications
+                                    </p>
+                                    {/* Sentence-split: getErrorMessage() already
+                                        ends with a period — concatenating produced
+                                        "later.. If this keeps happening…". */}
+                                    <p className="text-xs text-muted-foreground">
+                                        {getErrorMessage(error)}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        If this keeps happening, please contact your system administrator.
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => refetch()}
+                                    className="gap-1.5"
+                                >
+                                    <ArrowClockwise size={14} weight="bold" /> Try again
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center gap-3 text-center">
+                                <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                                    <CircleDashed size={24} weight="duotone" className="text-muted-foreground" />
+                                </div>
+                                <p className="text-xs text-muted-foreground max-w-[320px]">
+                                    No loan applications match the current filters.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Right-edge gradient — tells users more columns exist
                     before they scroll. Only rendered when content overflows. */}
