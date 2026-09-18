@@ -160,7 +160,7 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                                         {result.errors.slice(0, VISIBLE_ERRORS).map((error) => (
                                             <li key={`${error.rowNumber}-${error.field}`} className="space-y-0.5 px-3 py-2">
                                                 <p className="text-xs font-medium">
-                                                    Row {error.rowNumber}{" "}
+                                                    Excel row {error.rowNumber}{" "}
                                                     <span className="font-normal text-muted-foreground">· {error.field}</span>
                                                 </p>
                                                 <p className="break-words text-xs text-destructive">{error.error}</p>
@@ -212,6 +212,8 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                                 <li>Required: username, first name, last name, branch code, role.</li>
                                 <li>Approvers need a valid approval authority as job title.</li>
                                 <li>Rows that fail validation are skipped, not aborted — see the report afterwards.</li>
+                                <li>Empty rows in the file are ignored.</li>
+                                <li>Row numbers in errors match the Excel file (header is row 1).</li>
                             </ul>
                         </div>
                     )}

@@ -168,7 +168,7 @@ export function ImportProductsSheet({ open, onClose }: ImportProductsSheetProps)
                                                     className="space-y-0.5 px-3 py-2"
                                                 >
                                                     <p className="text-xs font-medium">
-                                                        Row {error.rowNumber}{" "}
+                                                        Excel row {error.rowNumber}{" "}
                                                         <span className="font-normal text-muted-foreground">
                                                             · {error.field}
                                                         </span>
@@ -234,6 +234,9 @@ export function ImportProductsSheet({ open, onClose }: ImportProductsSheetProps)
                                     Optional: fees, rates, amortization mode, charge advance interest (default to 0/DIM/No).
                                 </li>
                                 <li>Existing codes are updated; new codes are created.</li>
+                                <li>Updating an existing code: blank cells keep the current value.</li>
+                                <li>Empty rows in the file are ignored.</li>
+                                <li>Row numbers in errors match the Excel file (header is row 1).</li>
                                 <li>
                                     Checklist documents are not imported — configure after import.
                                 </li>
