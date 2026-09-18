@@ -84,3 +84,78 @@ export async function getUserAuditLog(id: number, pageNumber = 1, pageSize = 20)
     });
     return unwrapApiData(res.data);
 }
+
+// ─── Import/Export Functions ────────────────────────────────────────────
+
+export async function exportUsers(params: UserQueryParams = {}): Promise<void> {
+    const res = await apiClient.get("/api/users/export", {
+        params: {
+            search: params.search || undefined,
+            role: params.role || undefined,
+            branchCode: params.branchId || undefined,
+            isActive: params.isActive ?? undefined,
+        },
+        responseType: "blob",
+    });
+
+    const blob = new Blob([res.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `users-export-${new Date().toISOString().split("T")[0]}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+export async function downloadImportTemplate(): Promise<void> {
+    const res = await apiClient.get("/api/users/import/template", {
+        responseType: "blob",
+    });
+
+    const blob = new Blob([res.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "user-import-template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+export interface UserImportValidationError {
+    rowNumber: number;
+    field: string;
+    error: string;
+}
+
+export interface UserImportResult {
+    totalRows: number;
+    successfulImports: number;
+    failedImports: number;
+    errors: UserImportValidationError[];
+    createdUsernames: string[];
+}
+
+export async function importUsers(file: File): Promise<UserImportResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await apiClient.post<ApiResponse<UserImportResult>>(
+        "/api/users/import",
+        formData,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }
+    );
+
+    return unwrapApiData(res.data);
+}

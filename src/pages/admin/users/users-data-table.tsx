@@ -32,6 +32,7 @@ import {
     UserCirclePlus,
     Funnel,
     Export,
+    FileArrowUp,
 } from "@phosphor-icons/react";
 import { cn } from "@/src/lib/utils";
 import { stripRoleDisplayName } from "@/src/lib/role-badges";
@@ -46,11 +47,13 @@ import { getErrorMessage } from "@/src/lib/apiClient";
 import { useAuthStore } from "@/src/store/authStore";
 import { useRoles } from "@/src/hooks/use-roles";
 import { useCreateUser, useForcePasswordReset, useResetUserPassword, useRevokeUserSessions, useUpdateUser, useUpdateUserStatus, useUserStats, useUsers } from "@/src/hooks/use-users";
+import { exportUsers } from "@/src/lib/api/users";
 import { UserEditDrawer, type UserProfileChanges } from "./components/user-edit-drawer";
 import { UserCreateDrawer, type UserCreatePayload } from "./components/user-create-drawer";
 import { ConfirmActionSheet } from "./components/confirm-action-sheet";
 import { AuditLogModal } from "./components/audit-log-modal";
 import { TemporaryPasswordDialog, type TemporaryCredential } from "./components/temporary-password-dialog";
+import { ImportUsersSheet } from "./components/import-users-sheet";
 
 /** Returns `value` only after it has stayed unchanged for `delayMs`. */
 function useDebouncedValue<T>(value: T, delayMs = 300): T {
@@ -287,6 +290,7 @@ export function UsersDataTable() {
     const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
     const [selectedUserForAuditLog, setSelectedUserForAuditLog] = useState<UserResponse | null>(null);
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+    const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(null);
     const [tempCred, setTempCred] = useState<TemporaryCredential | null>(null);
 
@@ -506,37 +510,18 @@ export function UsersDataTable() {
 
     // ---- Export ----
 
-    function handleExportCSV() {
-        const headers = ["ID", "Username", "First Name", "Middle Name", "Last Name", "Branch", "Role", "Covered Branches", "Status", "Created At"];
-        const escapeCell = (value: string) => `"${value.replace(/"/g, '""')}"`;
-        const rows = (paged?.items ?? []).map(u =>
-            [
-                String(u.id),
-                u.username,
-                u.firstName,
-                u.middleName ?? "",
-                u.lastName,
-                getBranchName(u.branchId),
-                u.role,
-                (u.coveredBranches ?? []).map(code => BRANCHES.find(b => b.code === code)?.name ?? code).join(", "),
-                u.isActive ? "Active" : "Suspended",
-                u.createdAt,
-            ].map(escapeCell).join(",")
-        );
-        // Leading BOM keeps Excel happy with UTF-8.
-        const csvContent = "\uFEFF" + [headers.map(escapeCell).join(","), ...rows].join("\r\n");
-
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `users-export-${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        toastSuccess(`Exported ${paged?.items.length ?? 0} users to CSV`);
+    function handleExport() {
+        exportUsers({
+            search,
+            role: roleFilter === "all" ? undefined : roleFilter,
+            branchId: branchFilter === "all" ? undefined : branchFilter,
+        })
+            .then(() => {
+                toastSuccess(`Exported ${totalRows} users to Excel`);
+            })
+            .catch((error) => {
+                toastError(getErrorMessage(error));
+            });
     }
 
     return (
@@ -605,9 +590,20 @@ export function UsersDataTable() {
                                 </div>
 
                                 <div className="flex gap-2 sm:ml-auto">
-                                    <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExportCSV}>
+                                    {canCreateUsers && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5 text-xs"
+                                            onClick={() => setIsImportSheetOpen(true)}
+                                        >
+                                            <FileArrowUp size={14} weight="bold" />
+                                            Import
+                                        </Button>
+                                    )}
+                                    <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExport}>
                                         <Export size={14} weight="bold" data-icon="inline-start" />
-                                        Export CSV
+                                        Export Excel
                                     </Button>
                                     {canCreateUsers && (
                                         <Button size="sm" className="gap-1.5 text-xs" onClick={() => setIsCreateDrawerOpen(true)}>
@@ -730,6 +726,10 @@ export function UsersDataTable() {
             <TemporaryPasswordDialog
                 credential={tempCred}
                 onDismiss={() => setTempCred(null)}
+            />
+            <ImportUsersSheet
+                open={isImportSheetOpen}
+                onClose={() => setIsImportSheetOpen(false)}
             />
         </>
     );

@@ -4,6 +4,7 @@ import {
     forcePasswordReset,
     getUser,
     getUserAuditLog,
+    importUsers,
     listUsers,
     resetUserPassword,
     revokeUserSessions,
@@ -11,7 +12,7 @@ import {
     updateUserStatus,
 } from "@/src/lib/api/users";
 import { queryKeys } from "@/src/lib/queryKeys";
-import type { CreateUserPayload, ResetPasswordResponse, UpdateUserPayload, UserQueryParams, UserResponse } from "@/src/lib/api/types";
+import type { CreateUserPayload, ResetPasswordResponse, UpdateUserPayload, UserImportResult, UserQueryParams, UserResponse } from "@/src/lib/api/types";
 
 /** Paged + filtered user directory (server-side search/role/status/pagination). */
 export function useUsers(params: UserQueryParams) {
@@ -126,5 +127,17 @@ export function useUserAuditLog(id: number | null) {
         queryKey: id !== null ? ["users", id, "audit-log"] : ["users", "audit-log", "disabled"],
         queryFn: () => getUserAuditLog(id!),
         enabled: id !== null,
+    });
+}
+
+/** POST /api/users/import — requires `user.create`. */
+export function useImportUsers() {
+    const queryClient = useQueryClient();
+
+    return useMutation<UserImportResult, Error, File>({
+        mutationFn: importUsers,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+        },
     });
 }

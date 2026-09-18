@@ -148,6 +148,24 @@ export interface UserAuditLogResponse {
     ipAddress: string | null;
 }
 
+// ─── User Import/Export ──────────────────────────────────────────────────────
+
+/** Validation error for a specific row and field during import. */
+export interface UserImportValidationError {
+    rowNumber: number;
+    field: string;
+    error: string;
+}
+
+/** Result of a batch import operation (UserImportResult). */
+export interface UserImportResult {
+    totalRows: number;
+    successfulImports: number;
+    failedImports: number;
+    errors: UserImportValidationError[];
+    createdUsernames: string[];
+}
+
 // ─── Roles & permissions ─────────────────────────────────────────────────────
 
 /** Entry from GET /api/roles ({ name, displayName }). */
