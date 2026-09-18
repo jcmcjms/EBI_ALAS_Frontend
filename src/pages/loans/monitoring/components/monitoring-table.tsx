@@ -92,7 +92,7 @@ interface MonitoringTableProps {
      *  to built-in defaults from LOAN_STATUS_META. */
     slaPolicy?: Record<string, number> | null;
     /** Current authenticated user — used to gate the cancel action. */
-    currentUser?: { id: number; role: string } | null;
+    currentUser?: { id: number; role: string; name?: string } | null;
     /** Called when the user clicks the cancel button on a row. */
     onCancel?: (record: LoanMonitoringRecord) => void;
 }
@@ -287,24 +287,41 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
         columnHelper.accessor("assignedApproverName", {
             header: "Assigned To",
             cell: (info) => {
-                const name = info.getValue();
-                const tier = info.row.original.requiredApprovalTier;
-                if (!name) {
-                    return tier ? (
-                        <span className="text-xs text-muted-foreground">Tier {tier} queue</span>
-                    ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                const row = info.row.original;
+                const mine = row.isQueueHead && row.queueOwnerName === currentUser?.name;
+
+                if (row.isQueueHead) {
+                    return (
+                        <div className="flex items-center gap-1.5">
+                            <div className="relative">
+                                <UserCircle size={16} className="text-muted-foreground" />
+                                <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-background" />
+                            </div>
+                            <span className="text-xs font-medium">
+                                {row.queueOwnerName ?? info.getValue() ?? "Unassigned desk"}
+                            </span>
+                            {mine && (
+                                <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px] font-normal">
+                                    Your turn
+                                </Badge>
+                            )}
+                        </div>
                     );
                 }
-                return (
-                    <div className="flex items-center gap-1.5">
-                        <div className="relative">
-                            <UserCircle size={16} className="text-muted-foreground" />
-                            <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-background" />
-                        </div>
-                        <span className="text-xs font-medium">{name}</span>
-                    </div>
-                );
+
+                if (row.queuePosition != null) {
+                    return (
+                        <Badge
+                            variant="outline"
+                            className="text-xs font-normal text-muted-foreground"
+                            title={`Waiting for ${row.queueStage} — ${row.queueOwnerName ?? "the designated reviewer"} is on the current file`}
+                        >
+                            Queue #{row.queuePosition} of {row.queueLength}
+                        </Badge>
+                    );
+                }
+
+                return <span className="text-xs text-muted-foreground">—</span>;
             },
         }),
         columnHelper.accessor("lastActionDate", {
@@ -468,7 +485,10 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
                                         key={row.id}
-                                        className="group hover:bg-accent transition-colors cursor-pointer"
+                                        className={cn(
+                                            "group hover:bg-accent transition-colors cursor-pointer",
+                                            row.original.isQueueHead && row.original.queueOwnerName === currentUser?.name && "bg-primary/[0.04]",
+                                        )}
                                         onClick={() => onRowClick(row.original)}
                                     >
                                         {row.getAllCells().map((cell) => (

@@ -7,7 +7,7 @@ import type {
     LoanSubmissionResponse,
     PagedResult,
 } from "@/src/lib/api/types";
-import type { LoanMonitoringRecord, MonitoringFilters } from "@/src/pages/loans/monitoring/types";
+import type { LoanMonitoringRecord, MonitoringFilters, QueueStage } from "@/src/pages/loans/monitoring/types";
 import type { LoanStatus } from "@/src/lib/loan-status";
 
 interface PaginationState { pageIndex: number; pageSize: number; }
@@ -81,6 +81,12 @@ function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
         documentsCompleteAt: loan.documentsCompleteAt ?? null,
         assignedApproverName: loan.assignedApproverName ?? null,
         requiredApprovalTier: loan.requiredApprovalTier ?? null,
+        // ── Workflow queue fields ──────────────────────────────────────
+        queueStage: (loan.queueStage as QueueStage) ?? null,
+        queuePosition: loan.queuePosition ?? null,
+        queueLength: loan.queueLength ?? null,
+        queueOwnerName: loan.queueOwnerName ?? null,
+        isQueueHead: loan.isQueueHead ?? false,
     };
 }
 
@@ -130,6 +136,8 @@ export function useLoanMonitoring(
 
             if (filters.dateRange.from) params.fromDate = filters.dateRange.from.toISOString();
             if (filters.dateRange.to) params.toDate = filters.dateRange.to.toISOString();
+
+            if (filters.myTurn) params.myTurn = "true";
 
             if (sorting.length > 0) {
                 const backendSortId = SORT_COLUMN_MAP[sorting[0].id];

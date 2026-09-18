@@ -1005,6 +1005,17 @@ export interface CreatedLoanSummary {
     requiredApprovalTier?: number | null;
     /** User ID of the assigned approver (active lease). */
     assignedApproverId?: number | null;
+    // ── Workflow queue fields (GET /api/loans) ────────────────────────
+    /** Current queue stage (Recommendation / Evaluation / Approval). */
+    queueStage?: string | null;
+    /** Position in the queue (1 = on the desk right now). */
+    queuePosition?: number | null;
+    /** Total number of items in the current queue stage. */
+    queueLength?: number | null;
+    /** Display name of the officer currently reviewing this file. */
+    queueOwnerName?: string | null;
+    /** True when this file is at position 1 — the "head" of the queue. */
+    isQueueHead?: boolean;
 }
 
 /**

@@ -2,6 +2,8 @@ import type { LoanStatus } from "@/src/lib/loan-status";
 
 export type { LoanStatus };
 
+export type QueueStage = "Recommendation" | "Evaluation" | "Approval";
+
 export interface LoanMonitoringRecord {
     /**
      * Numeric primary key from `LoanApplication.Id`. Server-backed rows
@@ -40,6 +42,17 @@ export interface LoanMonitoringRecord {
     assignedApproverName: string | null;
     /** Required approval tier (1-5), or null if not yet routed. */
     requiredApprovalTier: number | null;
+    // ── Workflow queue fields ──────────────────────────────────────────
+    /** Current queue stage (Recommendation / Evaluation / Approval), or null if not queued. */
+    queueStage: QueueStage | null;
+    /** Position in the queue (1 = on the desk right now), or null if not queued. */
+    queuePosition: number | null;
+    /** Total number of items in the current queue stage, or null if not queued. */
+    queueLength: number | null;
+    /** Display name of the officer currently reviewing this file, or null. */
+    queueOwnerName: string | null;
+    /** True when this file is at position 1 — the "head" of the queue. */
+    isQueueHead: boolean;
 }
 
 export interface MonitoringFilters {
@@ -47,4 +60,6 @@ export interface MonitoringFilters {
     dateRange: { from: Date | undefined; to: Date | undefined };
     status: LoanStatus[];
     branchCode: string;
+    /** When true, filters to only loans where the current user is the head owner. */
+    myTurn: boolean;
 }

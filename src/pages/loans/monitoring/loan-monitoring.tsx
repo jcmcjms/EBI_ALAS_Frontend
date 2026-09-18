@@ -53,6 +53,7 @@ export function LoanMonitoringPage() {
         dateRange: { from: undefined, to: undefined },
         branchCode: "all",
         status: urlStatus ?? queueDefaultForRole(role),
+        myTurn: false,
     }));
 
     // Once the user touches filters (or arrived via an explicit URL), the
@@ -91,6 +92,7 @@ export function LoanMonitoringPage() {
     const [selectedLoanId, setSelectedLoanId] = useState<number | null>(
         Number.isFinite(initialId) && initialId > 0 ? initialId : null,
     );
+    const [selectedRecord, setSelectedRecord] = useState<LoanMonitoringRecord | null>(null);
 
     // ── Cancel dialog state ────────────────────────────────────────────────
     const [cancelDialog, setCancelDialog] = useState<{
@@ -117,17 +119,26 @@ export function LoanMonitoringPage() {
                         // any future record shape that might omit it.
                         if (r.id !== undefined) {
                             setSelectedLoanId(r.id);
+                            setSelectedRecord(r);
                         }
                     }}
                     slaPolicy={slaPolicy.data ?? null}
-                    currentUser={user ? { id: Number(user.userId), role: user.role } : null}
+                    currentUser={user ? {
+                        id: Number(user.userId),
+                        role: user.role,
+                        name: [user.firstName, user.middleName, user.lastName].filter(Boolean).join(" ") || undefined,
+                    } : null}
                     onCancel={(r) => setCancelDialog({ open: true, record: r, reason: "", pending: false })}
                 />
             </Card>
 
             <LoanDetailsDrawer
                 applicationId={selectedLoanId}
-                onClose={() => setSelectedLoanId(null)}
+                record={selectedRecord}
+                onClose={() => {
+                    setSelectedLoanId(null);
+                    setSelectedRecord(null);
+                }}
             />
 
             {/* ── Cancel confirmation dialog ──────────────────────────────── */}

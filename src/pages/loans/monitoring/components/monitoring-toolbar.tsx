@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/src/components/ui/pop
 import { Calendar } from "@/src/components/ui/calendar.tsx";
 import { Badge } from "@/src/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
-import { MagnifyingGlass, CalendarBlank, Funnel, Export, X } from "@phosphor-icons/react";
+import { MagnifyingGlass, CalendarBlank, Funnel, Export, X, UserCircle } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import type { MonitoringFilters } from "../types";
 import type { LoanStatus } from "@/src/lib/loan-status";
@@ -134,6 +134,32 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                         <Funnel size={12} weight="bold" /> My queue
                     </Button>
                 )
+            )}
+
+            {/* "My turn" toggle — shows only the file currently owned by the user */}
+            {filters.myTurn ? (
+                <Badge variant="secondary" className="h-9 gap-1.5 px-3 text-xs font-normal">
+                    <UserCircle size={12} weight="bold" />
+                    My turn
+                    <button
+                        type="button"
+                        aria-label="Show all queued applications"
+                        className="ml-0.5 rounded-sm hover:text-destructive focus-visible:ring-1 focus-visible:ring-ring"
+                        onClick={() => onFiltersChange({ ...filters, myTurn: false })}
+                    >
+                        <X size={12} weight="bold" />
+                    </button>
+                </Badge>
+            ) : (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 gap-1.5 text-xs text-muted-foreground"
+                    onClick={() => onFiltersChange({ ...filters, myTurn: true })}
+                    title="Show only the application currently assigned to you"
+                >
+                    <UserCircle size={12} weight="bold" /> My turn
+                </Button>
             )}
 
             <Button variant="outline" size="sm" className="h-9 ml-auto gap-1.5 text-xs">

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight, Clock } from "@phosphor-icons/react";
 import {
     Sheet,
     SheetContent,
@@ -14,10 +14,14 @@ import { LoanTimeline } from "@/src/components/loan/loan-timeline";
 import { cn } from "@/src/lib/utils";
 import { getLoanById } from "@/src/lib/api/loans";
 import { LOAN_STATUS_META, type LoanStatus } from "@/src/lib/loan-status";
+import type { LoanMonitoringRecord } from "../types";
 
 interface LoanDetailsDrawerProps {
     applicationId: number | null;
     onClose: () => void;
+    /** Monitoring record from the parent table — carries queue fields
+     *  that the detail endpoint may not yet return. */
+    record?: LoanMonitoringRecord | null;
 }
 
 /**
@@ -34,6 +38,7 @@ interface LoanDetailsDrawerProps {
 export function LoanDetailsDrawer({
     applicationId,
     onClose,
+    record,
 }: LoanDetailsDrawerProps) {
     const isOpen = applicationId !== null;
     const navigate = useNavigate();
@@ -104,6 +109,36 @@ export function LoanDetailsDrawer({
                             <ArrowRight size={16} weight="bold" />
                             Review &amp; Process Application
                         </Button>
+                    </div>
+                )}
+
+                {/* Queue position banner */}
+                {record?.queueStage && (
+                    <div
+                        role="status"
+                        className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground mx-6 mt-3"
+                    >
+                        {record.isQueueHead ? (
+                            <>
+                                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                                <span>
+                                    On the {record.queueStage.toLowerCase()} desk now — reviewing:{" "}
+                                    <span className="font-medium text-foreground">
+                                        {record.queueOwnerName ?? "unassigned"}
+                                    </span>
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <Clock size={14} weight="bold" className="shrink-0" />
+                                <span>
+                                    Position {record.queuePosition} of {record.queueLength} in the{" "}
+                                    {record.queueStage.toLowerCase()} queue. It moves to{" "}
+                                    {record.queueOwnerName ?? "the designated reviewer"} automatically when the
+                                    current file clears.
+                                </span>
+                            </>
+                        )}
                     </div>
                 )}
 
