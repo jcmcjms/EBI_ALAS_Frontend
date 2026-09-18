@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
@@ -36,7 +36,15 @@ function formatWaiting(mins: number): string {
 
 interface PendingQueueProps { data: PendingQueueItem[]; }
 
-export function PendingQueue({ data }: PendingQueueProps) {
+/**
+ * Pending queue card showing the top 5 pending loan applications.
+ *
+ * Memoized to prevent re-renders when parent updates but data hasn't changed.
+ * The queue data changes infrequently (only on new submissions or status changes),
+ * so memoization significantly reduces unnecessary re-renders during real-time
+ * dashboard updates.
+ */
+export const PendingQueue = memo(function PendingQueue({ data }: PendingQueueProps) {
     const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
     const displayData = useMemo(() => data.slice(0, 5), [data]);
@@ -132,4 +140,4 @@ export function PendingQueue({ data }: PendingQueueProps) {
             )}
         </Card>
     );
-}
+});

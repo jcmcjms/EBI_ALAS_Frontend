@@ -17,6 +17,16 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Strict Type-Checking — banking-grade quality */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,

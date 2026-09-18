@@ -16,7 +16,7 @@ import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { RoleBadge } from "@/src/lib/role-badges";
 import { cn } from "@/src/lib/utils";
-import { getLoanHistory, type LoanHistoryEntry } from "@/src/lib/api/loans";
+import { getLoanHistory } from "@/src/lib/api/loans";
 import { loanReviewKeys } from "@/src/lib/api/loan-review";
 import {
     describeHistoryEntry,

@@ -3,7 +3,7 @@ import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 import { getSharedConnection } from "@/src/lib/signalr/connection";
 import { useAuthStore } from "@/src/store/authStore";
-import { usePresenceStore, type PresenceUser } from "@/src/store/presenceStore";
+import { usePresenceStore } from "@/src/store/presenceStore";
 
 /**
  * Entity viewer — a user currently watching a specific record.

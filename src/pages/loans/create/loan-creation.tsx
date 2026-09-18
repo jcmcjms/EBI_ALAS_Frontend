@@ -19,7 +19,7 @@ import {
   Stack,
   WarningCircle,
 } from "@phosphor-icons/react";
-import { toastSuccess, toastError } from "@/src/components/ui/toast";
+import { toastError } from "@/src/components/ui/toast";
 
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";

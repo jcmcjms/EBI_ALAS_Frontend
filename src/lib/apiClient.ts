@@ -157,12 +157,9 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
             config.headers[CSRF_HEADER] = xsrfToken;
         } else if (accessToken) {
             // User is authenticated but the JWT doesn't carry a fresh xsrfToken.
-            // Don't crash the request; just log. The response interceptor will
-            // surface a CSRF failure if the backend rejects it.
-            console.warn(
-                "[CSRF] Authenticated request without XsrfToken claim — backend will reject.",
-                { method, url: config.url }
-            );
+            // Don't crash the request; the response interceptor will surface
+            // a CSRF failure if the backend rejects it.
+            // In production, log to monitoring service, not browser console.
         }
     }
 
@@ -199,12 +196,9 @@ apiClient.interceptors.response.use(
 
         // ── CSRF failure: try one silent refresh-and-retry before giving up ──
         if (isCsrfFailure(error) && originalRequest && !originalRequest._csrfRetry) {
+            // CSRF validation failed — attempting silent refresh to mint a fresh XsrfToken claim.
+            // In production, log to monitoring service, not browser console.
             const url = originalRequest.url ?? "(unknown)";
-            const method = (originalRequest.method ?? "?").toUpperCase();
-            console.warn(
-                `[CSRF] Backend rejected ${method} ${url} as CSRF_VALIDATION_FAILED. ` +
-                "Attempting silent refresh to mint a fresh XsrfToken claim."
-            );
 
             // Don't loop forever on the refresh endpoint itself.
             if (url === "/api/auth/refresh") {
@@ -226,10 +220,7 @@ apiClient.interceptors.response.use(
                 if (!newXsrf) {
                     // Refresh succeeded but the new token still lacks the claim.
                     // Backend config issue — surface a toast and bail.
-                    console.error(
-                        "[CSRF] Refreshed access token still has no XsrfToken claim. " +
-                        "Backend must include the claim in issued access JWTs."
-                    );
+                    // In production, log to monitoring service, not browser console.
                     toastError("Session security token expired — please log in again.");
                     return Promise.reject(error);
                 }

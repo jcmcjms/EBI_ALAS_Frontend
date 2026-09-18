@@ -12,7 +12,8 @@ export const ROLE_QUEUE_DEFAULTS: Record<string, LoanStatus[]> = {
 };
 
 export function queueDefaultForRole(role: string | undefined | null): LoanStatus[] {
-    return (role && ROLE_QUEUE_DEFAULTS[role]) ?? [];
+    if (!role) return [];
+    return ROLE_QUEUE_DEFAULTS[role] ?? [];
 }
 
 export const sameStatusSet = (a: LoanStatus[], b: LoanStatus[]) =>

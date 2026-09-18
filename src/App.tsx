@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Spinner } from "@/src/components/ui/spinner";
 import { ProtectedRoute } from "@/src/components/auth/ProtectedRoute";
+import { FeatureErrorBoundary } from "@/src/components/system/FeatureErrorBoundary";
 import { PERMISSIONS } from "@/src/lib/api/types";
 
 const Login = lazy(() => import("./pages/auth/login"));
@@ -44,19 +45,25 @@ function App() {
                     {/* Protected Routes */}
                     <Route path="/dashboard" element={
                         <ProtectedRoute>
-                            <Dashboard />
+                            <FeatureErrorBoundary featureName="Dashboard">
+                                <Dashboard />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
 
                     {/* Loan Routes */}
                     <Route path="/loans/monitoring" element={
                         <ProtectedRoute>
-                            <LoanMonitoring />
+                            <FeatureErrorBoundary featureName="Loan Monitoring">
+                                <LoanMonitoring />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
                     <Route path="/loans/create" element={
                         <ProtectedRoute>
-                            <LoanCreation />
+                            <FeatureErrorBoundary featureName="Loan Creation">
+                                <LoanCreation />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
                     {/* /loans/approval/:loanId is reachable by every workflow role
@@ -68,22 +75,30 @@ function App() {
                         `PUT /api/loans/{id}/status` through. */}
                     <Route path="/loans/approval/:loanId" element={
                         <ProtectedRoute>
-                            <LoanApproval />
+                            <FeatureErrorBoundary featureName="Loan Approval">
+                                <LoanApproval />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
                     <Route path="/loans/evaluation/:loanId" element={
                         <ProtectedRoute>
-                            <LoanEvaluation />
+                            <FeatureErrorBoundary featureName="Loan Evaluation">
+                                <LoanEvaluation />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
                     <Route path="/notifications" element={
                         <ProtectedRoute>
-                            <Notifications />
+                            <FeatureErrorBoundary featureName="Notifications">
+                                <Notifications />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
                     <Route path="/account" element={
                         <ProtectedRoute>
-                            <Account />
+                            <FeatureErrorBoundary featureName="Account">
+                                <Account />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
 
@@ -91,25 +106,32 @@ function App() {
                         user list requires `user.view` (CanViewUsers). */}
                     <Route path="/admin/users" element={
                         <ProtectedRoute requiredPermission={PERMISSIONS.userView}>
-                            <UsersPage />
+                            <FeatureErrorBoundary featureName="User Management">
+                                <UsersPage />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
                     <Route path="/admin/loan-products" element={
                         <ProtectedRoute requiredPermission={PERMISSIONS.loanProductView}>
-                            <LoanProductsPage />
+                            <FeatureErrorBoundary featureName="Loan Products">
+                                <LoanProductsPage />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
                     <Route path="/admin/audit-logs" element={
                         <ProtectedRoute requiredPermission={PERMISSIONS.auditLogsView}>
-                            <AuditLogs />
+                            <FeatureErrorBoundary featureName="Audit Logs">
+                                <AuditLogs />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
                     <Route path="/admin/workflow" element={
                         <ProtectedRoute requiredPermission={PERMISSIONS.workflowManage}>
-                            <WorkflowSettings />
+                            <FeatureErrorBoundary featureName="Workflow Settings">
+                                <WorkflowSettings />
+                            </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />
-
                     {/* Catch-all redirect */}
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>

@@ -47,8 +47,12 @@ export function Dashboard() {
                             As of {asOf.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
                         </span>
                         {user?.role === "Encoder" && (
-                            <Button size="sm" onClick={() => navigate("/loans/create")}>
-                                <Plus size={16} weight="bold" className="mr-1" />
+                            <Button
+                                size="sm"
+                                onClick={() => navigate("/loans/create")}
+                                aria-label="Create new loan application"
+                            >
+                                <Plus size={16} weight="bold" className="mr-1" aria-hidden="true" />
                                 New Loan
                             </Button>
                         )}
@@ -56,9 +60,18 @@ export function Dashboard() {
                 </div>
 
                 {isError ? (
-                    <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+                    <div
+                        className="flex h-64 flex-col items-center justify-center gap-3 text-center"
+                        role="alert"
+                        aria-live="polite"
+                    >
                         <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                            <WarningCircle size={24} weight="duotone" className="text-muted-foreground" />
+                            <WarningCircle
+                                size={24}
+                                weight="duotone"
+                                className="text-muted-foreground"
+                                aria-hidden="true"
+                            />
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-foreground">Unable to load dashboard</p>
@@ -66,8 +79,14 @@ export function Dashboard() {
                                 {getErrorMessage(error)}. Please try again.
                             </p>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
-                            <ArrowClockwise size={14} weight="bold" /> Try again
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => refetch()}
+                            className="gap-1.5"
+                            aria-label="Retry loading dashboard"
+                        >
+                            <ArrowClockwise size={14} weight="bold" aria-hidden="true" /> Try again
                         </Button>
                     </div>
                 ) : isLoading ? (

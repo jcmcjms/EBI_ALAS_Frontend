@@ -31,6 +31,12 @@ import type {
 export const DAYS_PER_MONTH = 30;
 
 /**
+ * Bank-policy take-home-pay floor the borrower must retain after all
+ * deductions ("Less: Minimum NTHP" row on the approval form).
+ */
+export const DEFAULT_MINIMUM_NTHP = 5_000;
+
+/**
  * Single-payment products (policy count = 1) diverge from the real term
  * by far more than any grace period; quote feed days verbatim when the
  * gap exceeds this tolerance.
@@ -81,14 +87,16 @@ export function formatRatePercent(rate: number): string {
 }
 
 /**
- * Builds the product line string for the approval form header:
- *   "ATM SAL | 84 months @ 21.57% per Annum"
- * or "<days> days @ …" when the policy count doesn't describe the term
- * (single-payment products).
+ * Builds the product line string for the approval form header, matching
+ * the legacy LAM template verbatim:
+ *   "[ A17 ] APDS - EMP 84 months @ 9.66% per Annum"
+ * or "[ C02 ] … 720 days @ …" when the policy count doesn't describe the
+ * term (single-payment products).
  *
  * Backend mirror: (none — display-only)
  */
 export function buildProductLine(
+    productCode: string | null | undefined,
     productDisplay: string,
     approvalTermDays: number,
     policyTermMonths: number | null | undefined,
@@ -100,7 +108,13 @@ export function buildProductLine(
         Math.abs(policyTermMonths * DAYS_PER_MONTH - approvalTermDays) <= GRACE_TOLERANCE_DAYS
             ? `${policyTermMonths} months`
             : `${approvalTermDays.toLocaleString()} days`;
-    return `${productDisplay} | ${termLabel} @ ${formatRatePercent(ratePercent)}% per Annum`;
+
+    // Legacy template quotes the product code in brackets before the
+    // description; orphaned/retired rows without a parsable code fall
+    // back to the bare description rather than printing "[  ]".
+    const codePrefix = productCode?.trim() ? `[ ${productCode.trim()} ] ` : "";
+
+    return `${codePrefix}${productDisplay} ${termLabel} @ ${formatRatePercent(ratePercent)}% per Annum`;
 }
 
 /**
@@ -151,10 +165,15 @@ export function computeLoanMetrics(
     const nthp = client.netTakeHomePay || 0;
     const netPayAfterDeduction = nthp - amortization + ebiDeductions;
     const totalMonthlyIncome = netPayAfterDeduction;
-    // Incoming loans are added to gross disposable income (more income sources),
-    // while NTHP is the preserved floor/minimum (deducted to get net capacity).
-    const totalDisposableGross = nthp + ebiDeductions + incomingTotal;
-    const totalDeductionsFinal = nthp;
+
+    // Capacity-to-pay block, mirroring the legacy template:
+    //   Total Disposable   = NTHP + reloan deductions released
+    //   Less: Minimum NTHP = policy floor the borrower retains (₱5,000)
+    //   Total Deductions   = that floor + incoming/undeducted deductions
+    //   Total Disposable   = net capacity feeding the MLA PV
+    const totalDisposableGross = nthp + ebiDeductions;
+    const minimumNthp = DEFAULT_MINIMUM_NTHP;
+    const totalDeductionsFinal = minimumNthp + incomingTotal;
     const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
 
     // Capacity-to-pay ceiling — see computeMaximumLoanableAmount docs.
@@ -188,6 +207,7 @@ export function computeLoanMetrics(
         netPayAfterDeduction,
         totalMonthlyIncome,
         totalDisposableGross,
+        minimumNthp,
         totalDeductionsFinal,
         totalDisposableNet,
         maximumLoanableAmount,

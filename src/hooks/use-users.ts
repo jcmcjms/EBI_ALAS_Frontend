@@ -12,7 +12,7 @@ import {
     updateUserStatus,
 } from "@/src/lib/api/users";
 import { queryKeys } from "@/src/lib/queryKeys";
-import type { CreateUserPayload, ResetPasswordResponse, UpdateUserPayload, UserImportResult, UserQueryParams, UserResponse } from "@/src/lib/api/types";
+import type { CreateUserPayload, UpdateUserPayload, UserImportResult, UserQueryParams, UserResponse } from "@/src/lib/api/types";
 
 /** Paged + filtered user directory (server-side search/role/status/pagination). */
 export function useUsers(params: UserQueryParams) {

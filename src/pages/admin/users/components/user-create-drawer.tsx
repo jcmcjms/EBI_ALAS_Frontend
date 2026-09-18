@@ -219,11 +219,11 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                 branchId: form.branchId,
                 role: form.role,
                 eSignature: form.eSignature,
-                // Omit the key entirely when not applicable so the backend's
+                // Set to null when not applicable so the backend's
                 // null = "keep existing" semantics work correctly on update.
-                ...(isBranchScope && form.coveredBranches.length > 0
-                    ? { coveredBranches: form.coveredBranches }
-                    : {}),
+                coveredBranches: isBranchScope && form.coveredBranches.length > 0
+                    ? form.coveredBranches
+                    : null,
             });
             if (!success) return;
 

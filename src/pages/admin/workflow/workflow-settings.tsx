@@ -213,7 +213,7 @@ export function WorkflowSettingsPage() {
                                 {pending ? "Enable" : "Disable"} the
                                 recommendation step?
                             </AlertDialogTitle>
-                            <AlertDialogDescription asChild>
+                            <AlertDialogDescription>
                                 <div className="space-y-2 text-sm">
                                     <p>
                                         {pending

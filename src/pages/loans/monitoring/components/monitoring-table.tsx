@@ -272,15 +272,26 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
 
                 if (complete === null)
                     return (
-                        <CircleDashed size={16} className="text-muted-foreground"
-                            title="Completeness not verified yet — checks run automatically and on demand" />
+                        <CircleDashed
+                            size={16}
+                            className="text-muted-foreground"
+                            aria-label="Completeness not verified yet — checks run automatically and on demand"
+                        />
                     );
                 return complete ? (
-                    <CheckCircle size={16} weight="fill" className="text-emerald-500"
-                        title={`All documents uploaded${at ? ` — verified ${new Date(at).toLocaleString()}` : ""}`} />
+                    <CheckCircle
+                        size={16}
+                        weight="fill"
+                        className="text-emerald-500"
+                        aria-label={`All documents uploaded${at ? ` — verified ${new Date(at).toLocaleString()}` : ""}`}
+                    />
                 ) : (
-                    <XCircle size={16} weight="fill" className="text-amber-500"
-                        title="Missing documents — open the Files tab to see which" />
+                    <XCircle
+                        size={16}
+                        weight="fill"
+                        className="text-amber-500"
+                        aria-label="Missing documents — open the Files tab to see which"
+                    />
                 );
             },
         }),

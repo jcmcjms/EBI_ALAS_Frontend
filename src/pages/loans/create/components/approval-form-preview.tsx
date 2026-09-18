@@ -23,6 +23,7 @@ import {
     resolveApprovalTermDays,
     toAnnualRatePercent,
     buildProductLine,
+    DEFAULT_MINIMUM_NTHP,
 } from "@/src/lib/loan-approval-utils";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
@@ -241,7 +242,7 @@ function SingleLoanApprovalForm({
     );
 
     const productLine = parameters.product
-        ? buildProductLine(productDisplay, approvalTermDays, parameters.policyTermMonths, annualRatePercent)
+        ? buildProductLine(productCode, productDisplay, approvalTermDays, parameters.policyTermMonths, annualRatePercent)
         : "-";
 
     const deviations = form?.deviations;
@@ -606,14 +607,12 @@ function SingleLoanApprovalForm({
  * Stamp (0.75%) and Notarial Fee (₱500) are template values kept inline
  * so the PDF export matches the legacy spreadsheet line-for-line.
  *
- * DEFAULT_MINIMUM_NTHP is the bank-policy take-home-pay floor the
- * borrower must retain after all deductions ("Less: Minimum NTHP").
+ * DEFAULT_MINIMUM_NTHP is imported from loan-approval-utils.ts.
  * DAYS_PER_MONTH is the legacy "1 month = 30 days" convention.
  */
 const LEGACY_TOTAL_DEDUCTION_RATE = 0.06;
 const LEGACY_DOC_STAMP_RATE = 0.0075;
 const LEGACY_NOTARIAL_FEE = 500;
-const DEFAULT_MINIMUM_NTHP = 5_000;
 
 /* Fixed row counts of the legacy Excel grid were removed when the
  * reloan / buy-out / incoming matrices moved to dynamic rows derived

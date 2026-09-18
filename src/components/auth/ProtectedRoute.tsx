@@ -53,12 +53,9 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
 
     // (3b) Permission gate.
     if (requiredPermission && !hasPermission(requiredPermission)) {
-        // TODO: Log this unauthorized access attempt to your SIEM system
-        // Example: siem.log({ event: "unauthorized_access", userId, path, requiredPermission });
-        console.warn(
-            "[Security] Unauthorized access attempt:",
-            { requiredPermission, path: window.location.pathname }
-        );
+        // Security: Unauthorized access attempt — route to forbidden page.
+        // In production, this should be logged to a SIEM system via an API call,
+        // never to the browser console (information leakage risk).
         return <Navigate to="/forbidden" replace />;
     }
 

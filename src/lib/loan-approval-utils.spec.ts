@@ -100,23 +100,33 @@ describe("formatRatePercent", () => {
 
 describe("buildProductLine", () => {
     it("builds months-based line for policy-matching term", () => {
-        const result = buildProductLine("ATM SAL", 2520, 84, 21.57);
-        expect(result).toBe("ATM SAL | 84 months @ 21.57% per Annum");
+        const result = buildProductLine("A17", "ATM SAL", 2520, 84, 21.57);
+        expect(result).toBe("[ A17 ] ATM SAL 84 months @ 21.57% per Annum");
     });
 
     it("builds days-based line for single-payment product", () => {
-        const result = buildProductLine("C02 LUMPSUM", 720, 1, 9.66);
-        expect(result).toBe("C02 LUMPSUM | 720 days @ 9.66% per Annum");
+        const result = buildProductLine("C02", "C02 LUMPSUM", 720, 1, 9.66);
+        expect(result).toBe("[ C02 ] C02 LUMPSUM 720 days @ 9.66% per Annum");
     });
 
     it("builds days-based line when policyTermMonths is null", () => {
-        const result = buildProductLine("ATM SAL", 2572, null, 21.57);
-        expect(result).toBe("ATM SAL | 2,572 days @ 21.57% per Annum");
+        const result = buildProductLine("A17", "ATM SAL", 2572, null, 21.57);
+        expect(result).toBe("[ A17 ] ATM SAL 2,572 days @ 21.57% per Annum");
     });
 
-    it("builds months-based line when policyTermMonths is undefined", () => {
-        const result = buildProductLine("ATM SAL", 2572, undefined, 21.57);
-        expect(result).toBe("ATM SAL | 2,572 days @ 21.57% per Annum");
+    it("builds days-based line when policyTermMonths is undefined", () => {
+        const result = buildProductLine("A17", "ATM SAL", 2572, undefined, 21.57);
+        expect(result).toBe("[ A17 ] ATM SAL 2,572 days @ 21.57% per Annum");
+    });
+
+    it("omits code prefix when productCode is null", () => {
+        const result = buildProductLine(null, "ATM SAL", 2520, 84, 21.57);
+        expect(result).toBe("ATM SAL 84 months @ 21.57% per Annum");
+    });
+
+    it("omits code prefix when productCode is empty string", () => {
+        const result = buildProductLine("  ", "ATM SAL", 2520, 84, 21.57);
+        expect(result).toBe("ATM SAL 84 months @ 21.57% per Annum");
     });
 });
 

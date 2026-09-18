@@ -102,4 +102,5 @@ export const dummyLoanData: LoanApplicationFormData = {
     otherRemarks: "",
     remarks: "",
   },
+  loanType: "New",
 };

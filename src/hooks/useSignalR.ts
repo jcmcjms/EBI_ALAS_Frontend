@@ -160,10 +160,9 @@ export function useSignalR() {
                     if (disposed) return;
                     setIsConnected(true);
                     setConnection(conn);
-                }).catch((err) => {
-                    if (!disposed) {
-                        console.error("SignalR Connection Error:", err);
-                    }
+                }).catch(() => {
+                    // SignalR connection failed — will retry via automatic reconnect.
+                    // In production, log to monitoring service, not browser console.
                 }).finally(() => {
                     setStartingPromise(null);
                 });

@@ -69,7 +69,6 @@ import {
     getLoanRouting,
     releaseAssignment,
     approvalMatrixKeys,
-    type LoanRoutingDto,
 } from "@/src/lib/api/approval-matrix";
 import { queryKeys } from "@/src/lib/queryKeys";
 import { cn } from "@/src/lib/utils";
@@ -418,9 +417,8 @@ export function LoanApprovalPage() {
         );
     }
 
-    const isLoanOwner = Number(user.userId) === detail.createdById;
-    const canWriteRemarks = canWriteDocumentRemarks(user?.role, isLoanOwner);
-    const canUpload = canWriteRemarks || user?.role === "Approver";
+    const isLoanOwner = user ? Number(user.userId) === detail.createdById : false;
+    const canWriteRemarks = user ? canWriteDocumentRemarks(user.role, isLoanOwner) : false;
     const deviationCount =
         detail.deviationDetails.length +
         (detail.feeDeviationJustification ? 1 : 0);

@@ -1,7 +1,6 @@
 import {
     Bell,
     ChartBar,
-    GitBranch,
     House,
     ListChecks,
     Users,
@@ -82,6 +81,7 @@ export const navMain: NavItem[] = [
                 url: "/admin/workflow",
                 requiredPermission: "workflow.manage",
             },
+
         ],
     },
 ]

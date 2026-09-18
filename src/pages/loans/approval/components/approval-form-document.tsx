@@ -1,6 +1,9 @@
 import { forwardRef, memo } from "react";
 import { cn } from "@/src/lib/utils";
-import { resolveLoanProductDisplayName } from "@/src/lib/loan-product-display";
+import {
+    parseProductCode,
+    resolveLoanProductDisplayName,
+} from "@/src/lib/loan-product-display";
 import {
     computeLoanMetrics,
     resolveApprovalTermDays,
@@ -150,6 +153,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
         client,
     });
 
+    const productCode = parseProductCode(params.product);
     const productDisplay = resolveLoanProductDisplayName(params.product, catLoanClass);
 
     // ── Approval-form boundary normalization ───────────────────────
@@ -163,7 +167,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
         ?? toAnnualRatePercent(params.interestRate);
 
     const productLine = params.product
-        ? buildProductLine(productDisplay, approvalTermDays, params.policyTermMonths, annualRatePercent)
+        ? buildProductLine(productCode, productDisplay, approvalTermDays, params.policyTermMonths, annualRatePercent)
         : "-";
 
     const remarksLines = [deviations?.remarks, deviations?.aoRecommendation, deviations?.otherRemarks].filter(
@@ -436,7 +440,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                         </tr>
                         <tr>
                             <td className="px-1.5 py-0.5 font-bold">Less: Minimum NTHP</td>
-                            <td className="px-1.5 py-0.5 text-right tabular-nums">{num(c.nthp)}</td>
+                            <td className="px-1.5 py-0.5 text-right tabular-nums">{num(c.minimumNthp)}</td>
                             <td />
                             <td />
                         </tr>
