@@ -60,11 +60,17 @@ export interface Activity {
 
 export interface ProcessedLoan {
     id: number;
-    formNumber: string;
+    lamId: string;          // was `formNumber` — backend never sent it
     clientName: string;
     status: string;
     applicationDate: string;
     proposedAmount: number;
+}
+
+export interface UpdateProfilePayload {
+    email: string | null;
+    phone: string | null;
+    emergencyContact: string | null;
 }
 
 export interface RecentClient {
@@ -79,11 +85,7 @@ export async function getAccountProfile(): Promise<AccountProfile> {
     return response.data.data;
 }
 
-export async function updateAccountProfile(data: {
-    email?: string;
-    phone?: string;
-    emergencyContact?: string;
-}): Promise<void> {
+export async function updateAccountProfile(data: UpdateProfilePayload): Promise<void> {
     await apiClient.put("/api/account/me", data);
 }
 
@@ -94,6 +96,11 @@ export async function getAccountSessions(pageNumber = 1, pageSize = 10): Promise
 
 export async function revokeAccountSession(sessionId: number): Promise<void> {
     await apiClient.delete(`/api/account/me/sessions/${sessionId}`);
+}
+
+export async function revokeOtherSessions(): Promise<number> {
+    const response = await apiClient.delete("/api/account/me/sessions/others");
+    return response.data.data?.revokedCount ?? 0;
 }
 
 export async function getAccountActivity(limit = 10): Promise<Activity[]> {

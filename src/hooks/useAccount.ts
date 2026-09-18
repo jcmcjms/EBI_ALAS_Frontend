@@ -9,7 +9,9 @@ import {
     getAccountClients,
     updateAccountProfile,
     revokeAccountSession,
+    revokeOtherSessions,
     type PagedSessionsResponse,
+    type UpdateProfilePayload,
 } from "@/src/lib/api/account";
 import { getErrorMessage } from "@/src/lib/apiClient";
 
@@ -57,7 +59,7 @@ export function useUpdateProfile() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: updateAccountProfile,
+        mutationFn: (data: UpdateProfilePayload) => updateAccountProfile(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.account.profile });
             toastSuccess("Profile updated successfully");
@@ -74,11 +76,26 @@ export function useRevokeSession() {
     return useMutation({
         mutationFn: revokeAccountSession,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["account-sessions"] });
-            toastSuccess("Session revoked successfully");
+            queryClient.invalidateQueries({ queryKey: queryKeys.account.sessionsAll });
+            toastSuccess("Session revoked.");
         },
         onError: (error) => {
             toastError(getErrorMessage(error) || "Failed to revoke session");
+        },
+    });
+}
+
+export function useRevokeOtherSessions() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: revokeOtherSessions,
+        onSuccess: (count) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.account.sessionsAll });
+            toastSuccess(`Signed out ${count} other session${count === 1 ? "" : "s"}.`);
+        },
+        onError: (error) => {
+            toastError(getErrorMessage(error) || "Failed to sign out other sessions");
         },
     });
 }

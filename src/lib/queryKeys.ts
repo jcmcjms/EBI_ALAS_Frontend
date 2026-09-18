@@ -108,6 +108,7 @@ export const queryKeys = {
     // ── Account ─────────────────────────────────────────────────────────────
     account: {
         profile: ["account-profile"] as const,
+        sessionsAll: ["account-sessions"] as const,
         sessions: (page: number, pageSize: number) =>
             ["account-sessions", page, pageSize] as const,
         activity: (limit: number) => ["account-activity", limit] as const,
