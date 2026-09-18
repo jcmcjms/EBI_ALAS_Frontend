@@ -87,8 +87,14 @@ export function ProfileEditSheet({ open, onOpenChange }: ProfileEditSheetProps) 
                     </SheetDescription>
                 </SheetHeader>
 
-                <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 overflow-y-auto py-6" noValidate>
-                    <div className="space-y-2">
+                <form
+                    onSubmit={handleSubmit}
+                    noValidate
+                    // px-4 aligns the fields with SheetHeader/SheetFooter (both p-4);
+                    // gap-5 between groups + gap-2 label→input is the shadcn form rhythm.
+                    className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 pt-2 pb-4"
+                >
+                    <div className="grid gap-2">
                         <Label htmlFor="profile-email">Email</Label>
                         <Input
                             id="profile-email"
@@ -102,7 +108,7 @@ export function ProfileEditSheet({ open, onOpenChange }: ProfileEditSheetProps) 
                         {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="grid gap-2">
                         <Label htmlFor="profile-phone">Phone</Label>
                         <Input
                             id="profile-phone"
@@ -116,7 +122,7 @@ export function ProfileEditSheet({ open, onOpenChange }: ProfileEditSheetProps) 
                         {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="grid gap-2">
                         <Label htmlFor="profile-emergency">Emergency contact</Label>
                         <Input
                             id="profile-emergency"
@@ -130,7 +136,11 @@ export function ProfileEditSheet({ open, onOpenChange }: ProfileEditSheetProps) 
                         )}
                     </div>
 
-                    <SheetFooter className="mt-auto gap-2">
+                    {/* -mx-4 cancels the form's px-4 so the footer's own p-4 re-aligns the
+                        buttons with the fields while the border/bg span the full sheet
+                        width — the pinned footer then reads as a distinct action bar
+                        instead of floating in the empty scroll area. */}
+                    <SheetFooter className="-mx-4 mt-auto gap-2 border-t bg-muted/30">
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                             Cancel
                         </Button>
