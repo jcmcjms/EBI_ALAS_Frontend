@@ -794,7 +794,7 @@ export interface AuditLogQueryParams {
 
 /**
  * Mirrors `LoanProductResponse` on the backend (the list/get response
- * for `/api/loan-products` and `/api/loan-products/active`).
+ * for `/api/loan-products`).
  *
  * PK is `code` (string), matching the backend's choice of
  * `webloan.loan_product.id_code` as the natural key. The mirror
@@ -869,15 +869,15 @@ export interface LoanProductSyncResult {
 }
 
 /**
- * Query parameters for `GET /api/loan-products/active`.
+ * Query parameters for `GET /api/loan-products`.
  *
- * The list endpoint (`GET /api/loan-products`) takes no params — it
- * returns every row in the mirror (active + retired). The `/active`
- * variant is what the AO-facing loan-creation form uses to populate
- * its product dropdown.
+ * The list endpoint returns every row in the mirror (active + retired).
+ * The admin catalog page filters client-side via the "Include retired"
+ * toggle. The AO-facing loan-creation form no longer fetches the
+ * catalog — it uses the pending-loan feed and `/loan-class` instead.
  */
 export interface LoanProductsQuery {
-    /** Restrict to active products (default true for AO-facing dropdowns). */
+    /** Filter hint for client-side toggle (not sent to the API). */
     isActive?: boolean;
     /** Optional filter by code (e.g. "PL"). */
     code?: string;

@@ -19,9 +19,6 @@ import {
  *
  *   GET  /api/loan-products        → every row in the mirror (active + retired).
  *                                    Used by the admin catalog page.
- *   GET  /api/loan-products/active → non-retired rows only. Used by the
- *                                    AO loan-creation form's product
- *                                    dropdown.
  *   GET  /api/loan-products/{code} → single product by code (404 when
  *                                    the code hasn't been synced yet).
  *   PUT  /api/loan-products/{code} → admin write of policy fields
@@ -66,13 +63,6 @@ export async function getLoanProducts(): Promise<LoanProductResponse[]> {
     return unwrapApiData(res.data);
 }
 
-/** GET /api/loan-products/active — non-retired rows only. */
-export async function getActiveLoanProducts(): Promise<LoanProductResponse[]> {
-    const res = await apiClient.get<ApiResponse<LoanProductResponse[]>>(
-        "/api/loan-products/active"
-    );
-    return unwrapApiData(res.data);
-}
 
 /** GET /api/loan-products/{code} — 404 when the code is not in the mirror. */
 export async function getLoanProductByCode(
@@ -128,12 +118,12 @@ export async function syncLoanProducts(): Promise<LoanProductSyncResult> {
 const LOAN_PRODUCTS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Fetch the loan-product catalog.
+ * Fetch the loan-product catalog (admin view — active + retired).
  *
- * Defaults to the **active-only** endpoint so the AO loan-creation
- * form (the heaviest consumer of this hook) never picks a retired
- * product. Pass `{ includeRetired: true }` for the admin catalog
- * page, which needs to show retired rows for historical context.
+ * Single source of truth: `GET /api/loan-products` returns every row
+ * in the mirror. The admin catalog page filters client-side via the
+ * "Include retired" toggle; the creation tree no longer fetches the
+ * catalog at all (it uses the pending-loan feed and `/loan-class`).
  *
  * `staleTime` is 5 minutes: the catalog is bank policy and changes
  * infrequently (Compliance re-rates when BSP updates doc-stamps tax
@@ -141,11 +131,9 @@ const LOAN_PRODUCTS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
  * session without thrashing the API on every keystroke.
  */
 export function useLoanProducts(params: LoanProductsQuery = {}) {
-    const includeRetired = params.isActive === false;
     return useQuery({
         queryKey: queryKeys.loanProducts.list(params),
-        queryFn: () =>
-            includeRetired ? getLoanProducts() : getActiveLoanProducts(),
+        queryFn: getLoanProducts,
         staleTime: LOAN_PRODUCTS_STALE_TIME,
     });
 }

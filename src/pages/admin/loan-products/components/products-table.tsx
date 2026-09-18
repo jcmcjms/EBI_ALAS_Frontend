@@ -89,9 +89,9 @@ import { ConfirmActionSheet } from "../../users/components/confirm-action-sheet"
  *   - No `isActive` toggle — the field that *looks* like a toggle
  *     (`isActive` on the proposed shape) is `isRetired` on the
  *     backend, and it's sync-owned.
- *   - Defaults to **active-only** (`GET /api/loan-products/active`).
- *     An "Include retired" toggle in the header flips to the full
- *     list endpoint so ops can audit historical rows on demand.
+ *   - Defaults to **active-only** (client-side filter on the full
+ *     `GET /api/loan-products` response). An "Include retired" toggle
+ *     in the header shows all rows so ops can audit historical policy.
  *
  * ## Permission gating
  *
@@ -328,18 +328,18 @@ export function ProductsTable() {
     const canViewProducts = hasPermission(PERMISSIONS.loanProductView);
 
     // ── Data ─────────────────────────────────────────────────────
-    // Default to **active-only**. The day-to-day operator task on this
-    // page is "configure the products we sell right now" — retired
-    // rows are mostly historical context and clutter the table when
-    // the bank has cycled through many products. The "Include retired"
-    // toggle below flips the hook to `isActive: false`, which routes
-    // the request to `GET /api/loan-products` (full list) instead of
-    // `/api/loan-products/active`.
+    // Fetch every row from `GET /api/loan-products` (active + retired).
+    // The "Include retired" toggle filters client-side — no second
+    // endpoint, no second permission story.
     const [showRetired, setShowRetired] = useState(false);
-    const { data, isLoading, isError, error, isFetching } = useLoanProducts({
-        isActive: !showRetired,
-    });
-    const products = data ?? [];
+    const { data, isLoading, isError, error, isFetching } = useLoanProducts();
+    const products = useMemo(
+        () =>
+            showRetired
+                ? (data ?? [])
+                : (data ?? []).filter((p) => !p.isRetired),
+        [data, showRetired]
+    );
 
     // ── Mutations ────────────────────────────────────────────────
     const updateMutation = useUpdateLoanProduct();
@@ -467,22 +467,19 @@ export function ProductsTable() {
                             <div className="flex items-center gap-2">
                                 {/* "Include retired" toggle.
                                  *
-                                 * Off (default): fetch only active products
-                                 * from `/api/loan-products/active`. This is
-                                 * the day-to-day operator view — only the
-                                 * products we sell right now.
+                                 * Off (default): client-side filter hides
+                                 * retired rows from the already-fetched
+                                 * full catalog. Day-to-day operator view
+                                 * — only the products we sell right now.
                                  *
-                                 * On: fetch every row from
-                                 * `/api/loan-products`, including retired
+                                 * On: shows every row including retired
                                  * ones, so ops can audit historical policy
                                  * (the row's `IsRetired` chip + last-synced
                                  * timestamp stay visible).
                                  *
-                                 * The toggle changes the underlying query
-                                 * key (`queryKeys.loanProducts.list(...)`),
-                                 * so flipping it swaps the request — not just
-                                 * a client-side filter. The same row won't
-                                 * appear in both lists. */}
+                                 * Single endpoint (`GET /api/loan-products`),
+                                 * single permission story — no second route
+                                 * for active-only. */}
                                 <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5">
                                     <Checkbox
                                         id="show-retired"
