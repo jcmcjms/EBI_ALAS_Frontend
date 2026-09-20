@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toastSuccess, toastInfo } from "@/src/components/ui/toast";
+import { toast } from "sonner";
 import {
     BellSimple,
     CaretDown,
@@ -116,9 +116,9 @@ export function NotificationsPage() {
 
     const handleResolve = (id: string, resolution: "approved" | "declined") => {
         resolveNotification(id, resolution);
-        if (resolution === "approved") toastSuccess("Request approved.");
-        else toastInfo("Request declined.");
-        // TODO(api): POST /api/notifications/{id}/resolve with optimistic rollback.
+        if (resolution === "approved") toast.success("Request approved.");
+        else toast.info("Request declined.");
+        // TODO(team): Replace client-side resolve with POST /api/notifications/{id}/resolve + optimistic rollback.
     };
 
     // Filter setters reset pagination inline so a filter change never

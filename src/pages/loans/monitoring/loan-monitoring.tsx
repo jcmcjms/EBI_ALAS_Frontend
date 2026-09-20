@@ -79,6 +79,9 @@ export function LoanMonitoringPage() {
             next.set("status", filters.status.join(","));
         else next.delete("status");
         setSearchParams(next, { replace: true });
+        // setSearchParams is intentionally excluded — including it would
+        // cause an infinite loop because setSearchParams changes the
+        // searchParams reference on every call.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters.status]);
 

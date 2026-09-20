@@ -1,4 +1,5 @@
 import { apiClient } from "../apiClient";
+import type { ApiResponse } from "./types";
 
 /**
  * Wire format for GET /api/notifications. Mirrors
@@ -20,13 +21,17 @@ export interface NotificationResponse {
  * authenticated user. The SPA's header bell calls this on a 30s poll
  * via the `useNotifications` hook.
  *
- * The endpoint returns `ApiResponse<List<NotificationResponse>>`; we
- * unwrap `.data` to give callers a clean array. The ApiResponse envelope
- * is unwrapped manually (not via `unwrapApiData` from `types.ts`) so this
- * file stays a leaf module — `types.ts` is a dependency of nearly every
- * other API file and we don't want a circular import later.
+ * Returns an empty array when the backend reports failure (e.g. the
+ * notifications table is unavailable) so the bell degrades gracefully
+ * instead of crashing the header. Throws on network/infra errors.
  */
 export async function getNotifications(): Promise<NotificationResponse[]> {
-    const response = await apiClient.get("/api/notifications");
-    return response.data?.data ?? [];
+    const { data: envelope } = await apiClient.get<ApiResponse<NotificationResponse[]>>("/api/notifications");
+    if (!envelope.success) {
+        // Graceful degradation: bell shows zero notifications rather than
+        // crashing the header. The error is non-critical for the user's
+        // primary workflow (loan origination/approval).
+        return [];
+    }
+    return envelope.data ?? [];
 }

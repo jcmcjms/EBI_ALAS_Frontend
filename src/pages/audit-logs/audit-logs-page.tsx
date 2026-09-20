@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
@@ -65,16 +65,26 @@ function formatDate(iso: string) {
     });
 }
 
+/** Delay before the search input triggers an API call. */
+const SEARCH_DEBOUNCE_MS = 300;
+
 export function AuditLogsPage() {
     const [search, setSearch] = useState("");
     const [actionFilter, setActionFilter] = useState<string>("all");
     const [page, setPage] = useState(1);
     const [selectedLog, setSelectedLog] = useState<AuditLogRecord | null>(null);
 
+    // Debounce the search input to avoid firing an API call on every keystroke.
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+        return () => clearTimeout(t);
+    }, [search]);
+
     const { data, isLoading } = useAuditLogs({
         page,
         pageSize: 20,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         action: actionFilter === "all" ? undefined : actionFilter,
     });
 

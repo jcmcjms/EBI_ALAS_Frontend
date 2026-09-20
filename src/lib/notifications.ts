@@ -1,6 +1,4 @@
 // Domain types + mapper + seed data for notifications.
-// TODO(api): move types into src/lib/api/types.ts and hydrate via
-// GET /api/notifications once the .NET endpoint exists.
 
 import type { NotificationResponse } from "@/src/lib/api/notifications";
 

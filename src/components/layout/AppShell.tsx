@@ -3,11 +3,7 @@ import * as React from "react";
 import { AppSidebar } from "@/src/components/layout/app-sidebar";
 import { SiteHeader } from "@/src/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
-import { useApprovalRealtime } from "@/src/hooks/useApprovalRealtime";
-import { useDashboardRealtime } from "@/src/hooks/useDashboardRealtime";
-import { useNotifications } from "@/src/hooks/useNotifications";
-import { usePresenceSync } from "@/src/hooks/use-presence";
-import { useSignalR } from "@/src/hooks/useSignalR";
+import { useNotifications } from "@/src/hooks/use-notifications";
 import { useAuthStore } from "@/src/store/authStore";
 
 /**
@@ -22,39 +18,23 @@ const APP_SHELL_STYLE = {
 } as React.CSSProperties;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-    // Real-time WebSocket connection — receives instant notification
-    // pushes from the server. Returns { connection, isConnected } so
-    // other hooks can gate polling on connection state.
-    const { connection, isConnected } = useSignalR();
-
-    // Org-wide presence — hydrates the presence store on mount and
-    // keeps it in sync via PresenceSnapshot / PresenceChanged events.
-    usePresenceSync();
-
-    // Bell: when SignalR is connected, polling is DISABLED — the
-    // WebSocket pushes new notifications into the Zustand store
-    // instantly. When disconnected, falls back to 30s polling.
+    // Bell polling lives at the shell layer (not SiteHeader) so the
+    // query mounts exactly once per session, regardless of how many
+    // components render the bell. The hook pipes results into the
+    // Zustand store, which the header bell reads.
     //
     // Gated on `user` being set — the /login page never reaches
     // AppShell, but AuthInitProvider's loading screen does, so we
     // must still defer polling until the bootstrap completes.
     const user = useAuthStore((s) => s.user);
-    useNotifications(Boolean(user), isConnected);
-
-    // Real-time approval queue + presence updates (approver-specific)
-    useApprovalRealtime(() => connection);
-
-    // Real-time dashboard refresh — when a loan status changes, the
-    // server pushes a DashboardUpdated event that invalidates the
-    // TanStack Query cache, replacing the 30s dashboard poll.
-    useDashboardRealtime(() => connection);
+    useNotifications(Boolean(user));
 
     return (
         <SidebarProvider style={APP_SHELL_STYLE}>
             <AppSidebar variant="inset" />
-            <SidebarInset className="min-w-0">
+            <SidebarInset>
                 <SiteHeader />
-                <main className="flex min-w-0 flex-1 flex-col overflow-x-clip">{children}</main>
+                <main className="flex flex-1 flex-col">{children}</main>
             </SidebarInset>
         </SidebarProvider>
     );

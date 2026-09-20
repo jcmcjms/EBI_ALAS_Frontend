@@ -124,7 +124,7 @@ export function useRevokeUserSessions() {
 /** GET /api/users/{id}/audit-log — requires `user.view`. */
 export function useUserAuditLog(id: number | null) {
     return useQuery({
-        queryKey: id !== null ? ["users", id, "audit-log"] : ["users", "audit-log", "disabled"],
+        queryKey: id !== null ? queryKeys.users.auditLog(id) : ["users", "audit-log", "disabled"],
         queryFn: () => getUserAuditLog(id!),
         enabled: id !== null,
     });

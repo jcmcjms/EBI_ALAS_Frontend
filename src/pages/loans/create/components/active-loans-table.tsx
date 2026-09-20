@@ -133,13 +133,6 @@ export function ActiveLoansTable({
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
 
-    // Resolve the bare accountNo + display label for the currently
-    // selected accountId, so downstream code (PreLoanPicker, error /
-    // empty messages) can speak in the term the user is used to seeing.
-    // const selectedAccount = accounts.find(
-    //     (a) => a.accountId === selectedAccountId
-    // );
-
     const handleFetch = async (accountId: string) => {
         if (!accountId || !cisNo) return;
         // Resolve the bare accountNo before any state mutation so the

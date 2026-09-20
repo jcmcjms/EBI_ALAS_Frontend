@@ -98,10 +98,12 @@ export function CISLookup({
   // (e.g. "ALDREX JOEY L. CEZAR"). On submit, the API must still re-authoritatively
   // derive the acting officer from the JWT — never trust the client-provided value.
 
-  // Auto-reset the two-click confirm after 3s.
+  /** How long the two-click confirm stays active before auto-resetting. */
+  const CONFIRM_RESET_MS = 3000;
+
   useEffect(() => {
     if (!confirmClear) return;
-    const timer = setTimeout(() => setConfirmClear(false), 3000);
+    const timer = setTimeout(() => setConfirmClear(false), CONFIRM_RESET_MS);
     return () => clearTimeout(timer);
   }, [confirmClear]);
 

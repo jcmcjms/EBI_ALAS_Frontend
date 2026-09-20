@@ -53,7 +53,6 @@ import {
     getLoanDetail,
     getLoanHistory,
     updateLoanStatus,
-    loanReviewKeys,
     type LoanDetailResponse,
 } from "@/src/lib/api/loan-review";
 import { queryKeys } from "@/src/lib/queryKeys";
@@ -218,13 +217,13 @@ export function LoanEvaluationPage() {
     const user = useAuthStore((s) => s.user);
 
     const loan = useQuery({
-        queryKey: loanReviewKeys.detail(id),
+        queryKey: queryKeys.loans.review.detail(id),
         queryFn: () => getLoanDetail(id),
         enabled: Number.isFinite(id) && id > 0,
     });
 
     const history = useQuery({
-        queryKey: loanReviewKeys.history(id),
+        queryKey: queryKeys.loans.review.history(id),
         queryFn: () => getLoanHistory(id),
         enabled: Number.isFinite(id) && id > 0,
     });
@@ -255,8 +254,8 @@ export function LoanEvaluationPage() {
             toastSuccess(`Application ${actionLabel}.`);
             setComments("");
             setPendingAction(null);
-            qc.invalidateQueries({ queryKey: loanReviewKeys.detail(id) });
-            qc.invalidateQueries({ queryKey: loanReviewKeys.history(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
         onError: (e: Error) => {

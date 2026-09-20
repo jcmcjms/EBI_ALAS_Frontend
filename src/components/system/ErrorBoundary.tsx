@@ -35,9 +35,6 @@ export class ErrorBoundary extends Component<Props, State> {
     // ── Telemetry hook ────────────────────────────────────────────────
     // Wire this to your observability platform (Sentry, Datadog, etc.)
     // Example: Sentry.captureException(error, { extra: { errorInfo } });
-    //
-    // In production, send to monitoring service. Console.error is used
-    // here as a fallback for development visibility only.
     if (import.meta.env.DEV) {
       console.error("[ErrorBoundary] Unhandled rendering error:", error, errorInfo);
     }

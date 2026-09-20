@@ -2,10 +2,9 @@ import { AppShell } from "@/src/components/layout/AppShell";
 import { useAuthStore } from "@/src/store/authStore";
 import { useNavigate } from "react-router-dom";
 import { BRANCHES } from "@/src/lib/api/types";
-import { Plus, WarningCircle, ArrowClockwise } from "@phosphor-icons/react";
+import { Plus } from "@phosphor-icons/react";
 import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
-import { getErrorMessage } from "@/src/lib/apiClient";
 
 import { ApprovedLoans } from "@/src/pages/dashboard/components/approved-loans";
 import { DashboardSummary } from "@/src/pages/dashboard/components/dashboard-summary";
@@ -13,7 +12,7 @@ import { NowServing } from "@/src/pages/dashboard/components/now-serving";
 import { PendingQueue } from "@/src/pages/dashboard/components/pending-queue";
 import { PushBack } from "@/src/pages/dashboard/components/push-back";
 import { WeeklyTrend } from "@/src/pages/dashboard/components/weekly-trend";
-import { useDashboardData } from "@/src/hooks/useDashboardData";
+import { useDashboardData } from "@/src/hooks/use-dashboard-data";
 
 function greeting(): string {
     const h = new Date().getHours();
@@ -25,7 +24,7 @@ function greeting(): string {
 export function Dashboard() {
     const user = useAuthStore((state) => state.user);
     const navigate = useNavigate();
-    const { data, isLoading, isError, error, dataUpdatedAt, refetch } = useDashboardData();
+    const { data, isLoading, isError, dataUpdatedAt, refetch } = useDashboardData();
 
     const asOf = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date();
 
@@ -46,48 +45,17 @@ export function Dashboard() {
                         <span className="text-xs tabular-nums text-muted-foreground mr-2">
                             As of {asOf.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
                         </span>
-                        {user?.role === "Encoder" && (
-                            <Button
-                                size="sm"
-                                onClick={() => navigate("/loans/create")}
-                                aria-label="Create new loan application"
-                            >
-                                <Plus size={16} weight="bold" className="mr-1" aria-hidden="true" />
-                                New Loan
-                            </Button>
-                        )}
+                        <Button size="sm" onClick={() => navigate("/loans/create")}>
+                            <Plus size={16} weight="bold" className="mr-1" />
+                            New Loan
+                        </Button>
                     </div>
                 </div>
 
                 {isError ? (
-                    <div
-                        className="flex h-64 flex-col items-center justify-center gap-3 text-center"
-                        role="alert"
-                        aria-live="polite"
-                    >
-                        <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                            <WarningCircle
-                                size={24}
-                                weight="duotone"
-                                className="text-muted-foreground"
-                                aria-hidden="true"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-foreground">Unable to load dashboard</p>
-                            <p className="text-xs text-muted-foreground">
-                                {getErrorMessage(error)}. Please try again.
-                            </p>
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => refetch()}
-                            className="gap-1.5"
-                            aria-label="Retry loading dashboard"
-                        >
-                            <ArrowClockwise size={14} weight="bold" aria-hidden="true" /> Try again
-                        </Button>
+                    <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+                        <p className="text-sm text-muted-foreground">Failed to load dashboard data.</p>
+                        <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
                     </div>
                 ) : isLoading ? (
                     <DashboardSkeleton />

@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { useAuthInit } from "@/src/hooks/useAuthInit";
+import { useAuthInit } from "@/src/hooks/use-auth-init";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useAuthStore } from "@/src/store/authStore";
 
@@ -21,7 +21,6 @@ interface AuthInitProviderProps {
  * it stays consistent with what `ProtectedRoute` sees.
  */
 export function AuthInitProvider({ children }: AuthInitProviderProps) {
-  // Kick off the bootstrap. The hook publishes its progress into the store.
   useAuthInit();
 
   const isInitializing = useAuthStore((state) => state.isInitializing);

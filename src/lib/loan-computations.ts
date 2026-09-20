@@ -444,11 +444,9 @@ export function buildLoanMetricsSnapshot(
             annualRatePercent,
             termDays,
             applicationChargeRate,
-            // TODO(product-config): once the Loan Product DTO is wired
-            // through TanStack Query, replace these zeros with the
-            // values returned by the selected product (A16 currently
-            // hard-codes 6% application charge + 0.75% doc stamp +
-            // 500 notarial fee in the approval form preview).
+            // TODO(team): Wire loan product fees from useLoanProduct() into
+            // this snapshot. The TanStack Query hooks already exist — the
+            // caller (approval-form-preview) just needs to pass the product.
             docStamp: 0,
             notarialFee: 0,
             insurance: 0,

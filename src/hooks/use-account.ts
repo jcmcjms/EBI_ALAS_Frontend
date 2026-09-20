@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toastSuccess, toastError } from "@/src/components/ui/toast";
+import { toast } from "sonner";
 import { queryKeys } from "@/src/lib/queryKeys";
 import {
     getAccountProfile,
@@ -9,9 +9,7 @@ import {
     getAccountClients,
     updateAccountProfile,
     revokeAccountSession,
-    revokeOtherSessions,
     type PagedSessionsResponse,
-    type UpdateProfilePayload,
 } from "@/src/lib/api/account";
 import { getErrorMessage } from "@/src/lib/apiClient";
 
@@ -59,13 +57,13 @@ export function useUpdateProfile() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: UpdateProfilePayload) => updateAccountProfile(data),
+        mutationFn: updateAccountProfile,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.account.profile });
-            toastSuccess("Profile updated successfully");
+            toast.success("Profile updated successfully");
         },
         onError: (error) => {
-            toastError(getErrorMessage(error) || "Failed to update profile");
+            toast.error(getErrorMessage(error) || "Failed to update profile");
         },
     });
 }
@@ -76,26 +74,11 @@ export function useRevokeSession() {
     return useMutation({
         mutationFn: revokeAccountSession,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.account.sessionsAll });
-            toastSuccess("Session revoked.");
+            queryClient.invalidateQueries({ queryKey: queryKeys.account.all });
+            toast.success("Session revoked successfully");
         },
         onError: (error) => {
-            toastError(getErrorMessage(error) || "Failed to revoke session");
-        },
-    });
-}
-
-export function useRevokeOtherSessions() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: revokeOtherSessions,
-        onSuccess: (count) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.account.sessionsAll });
-            toastSuccess(`Signed out ${count} other session${count === 1 ? "" : "s"}.`);
-        },
-        onError: (error) => {
-            toastError(getErrorMessage(error) || "Failed to sign out other sessions");
+            toast.error(getErrorMessage(error) || "Failed to revoke session");
         },
     });
 }

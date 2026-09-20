@@ -44,15 +44,6 @@ export interface LoanDetailResponse {
     termDays: number;
     interestRate: number;
     nthpDate: string | null;
-
-    // ── Approval form convention fields (frozen at submission) ──────
-    /** webloan loan_data.total_amortization: amortization period count (e.g. 84). */
-    policyTermMonths: number | null;
-    /** Frozen TERM (Days) printed on the approval form at submission time. */
-    approvalTermDays: number | null;
-    /** Frozen annual rate in percent (e.g. 21.57) normalized at submission time. */
-    annualRatePercent: number | null;
-
     notarialFee: number;
     docStamps: number;
     insurance: number;
@@ -82,14 +73,6 @@ export interface LoanDetailResponse {
         actionByUserName: string;
     }[];
     evaluationVerdict: string | null;
-    // ── Delegation-of-authority routing fields ──────────────────────
-    loanType: string;
-    deviationSeverity: number;
-    requiredApprovalTier: number | null;
-    assignedApproverId: number | null;
-    assignedApproverName: string | null;
-    assignedAt: string | null;
-    documentsCompleteAt: string | null;
     outstandingLoans: {
         id: number;
         pn: string;
@@ -126,6 +109,17 @@ export interface LoanDetailResponse {
     preLoanFormNumber: string | null;
 }
 
+export interface LoanAttachmentDto {
+    id: number;
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+    category: string | null;
+    uploadedById: number;
+    uploadedByName: string;
+    uploadedAt: string;
+}
+
 export interface LoanChecklistDocumentDto {
     loanNo: string;
     loanProduct: string;
@@ -150,17 +144,6 @@ export interface DeviationRemarkDto {
     createdAt: string;
 }
 
-export interface DocumentRemarkDto {
-    id: number;
-    checklistIdCode: string;
-    docId: number | null;
-    parentRemarkId: number | null;
-    authorName: string;
-    authorRole: string;
-    body: string;
-    createdAt: string;
-}
-
 export interface LoanDeviationDto {
     id: number;
     reasonText: string;
@@ -169,14 +152,6 @@ export interface LoanDeviationDto {
     sortOrder: number;
     remarks: DeviationRemarkDto[];
 }
-
-export const loanReviewKeys = {
-    detail: (id: number) => ["loans", id, "detail"] as const,
-    history: (id: number) => ["loans", id, "history"] as const,
-    checklistDocuments: (id: number) => ["loans", id, "checklist-documents"] as const,
-    deviations: (id: number) => ["loans", id, "deviations"] as const,
-    documentRemarks: (id: number) => ["loans", id, "document-remarks"] as const,
-};
 
 export async function getLoanDetail(id: number): Promise<LoanDetailResponse> {
     const res = await apiClient.get<ApiResponse<LoanDetailResponse>>(`/api/loans/${id}`);
@@ -198,6 +173,13 @@ export async function getLoanHistory(id: number) {
     return unwrapApiData(res.data);
 }
 
+export async function getLoanAttachments(id: number): Promise<LoanAttachmentDto[]> {
+    const res = await apiClient.get<ApiResponse<LoanAttachmentDto[]>>(
+        `/api/loans/${id}/attachments`
+    );
+    return unwrapApiData(res.data);
+}
+
 export async function getChecklistDocuments(id: number): Promise<LoanChecklistDocumentDto[]> {
     const res = await apiClient.get<ApiResponse<LoanChecklistDocumentDto[]>>(
         `/api/loans/${id}/checklist-documents`
@@ -205,50 +187,53 @@ export async function getChecklistDocuments(id: number): Promise<LoanChecklistDo
     return unwrapApiData(res.data);
 }
 
-/**
- * Session-scoped blob cache: BPB_BINARY_SERVER reads go through OPENQUERY on a
- * linked server, so re-fetching on every open is the dominant latency. Capped
- * so a reviewer leafing through the checklist can't pin unbounded memory.
- */
-const checklistBlobCache = new Map<number, Blob>();
-const CHECKLIST_BLOB_CACHE_MAX = 5;
-
-export async function fetchChecklistDocument(docId: number): Promise<Blob> {
-    const cached = checklistBlobCache.get(docId);
-    if (cached) return cached;
-
-    const res = await apiClient.get(
-        `/api/loans/checklist-documents/${docId}/view`,
-        { responseType: "blob" },
-    );
-    const blob = res.data as Blob;
-
-    if (checklistBlobCache.size >= CHECKLIST_BLOB_CACHE_MAX) {
-        const oldest = checklistBlobCache.keys().next().value;
-        if (oldest !== undefined) checklistBlobCache.delete(oldest);
-    }
-    checklistBlobCache.set(docId, blob);
-    return blob;
-}
-
-/** Explicit download — same bytes, save dialog. */
-export async function downloadChecklistDocument(docId: number, fileName: string): Promise<void> {
-    const blob = await fetchChecklistDocument(docId);
-    const url = URL.createObjectURL(blob);
+export async function viewChecklistDocument(docId: number, fileName: string) {
+    const res = await apiClient.get(`/api/loans/checklist-documents/${docId}/view`, {
+        responseType: "blob",
+    });
+    const url = URL.createObjectURL(res.data as Blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = fileName;
-    document.body.appendChild(a);
     a.click();
-    a.remove();
     URL.revokeObjectURL(url);
 }
 
-/** Mirrors the backend allow-list: what the preview surface can render. */
-export function canPreviewInline(contentType: string | null): boolean {
-    const t = (contentType ?? "").toLowerCase();
-    return t === "application/pdf" || t === "image/png"
-        || t === "image/jpeg" || t === "image/jpg" || t === "image/gif";
+export async function uploadLoanAttachment(
+    id: number,
+    file: File,
+    category: string | null,
+    onProgress?: (pct: number) => void
+): Promise<LoanAttachmentDto> {
+    const form = new FormData();
+    form.append("file", file);
+    if (category) form.append("category", category);
+    const res = await apiClient.post<ApiResponse<LoanAttachmentDto>>(
+        `/api/loans/${id}/attachments`,
+        form,
+        {
+            headers: { "Content-Type": "multipart/form-data" },
+            onUploadProgress: (e) =>
+                onProgress?.(e.total ? Math.round((e.loaded / e.total) * 100) : 0),
+        }
+    );
+    return unwrapApiData(res.data);
+}
+
+export async function downloadLoanAttachment(attachmentId: number, fileName: string) {
+    const res = await apiClient.get(`/api/loans/attachments/${attachmentId}/download`, {
+        responseType: "blob",
+    });
+    const url = URL.createObjectURL(res.data as Blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+export async function deleteLoanAttachment(attachmentId: number): Promise<void> {
+    await apiClient.delete(`/api/loans/attachments/${attachmentId}`);
 }
 
 export async function getLoanDeviations(id: number): Promise<LoanDeviationDto[]> {
@@ -268,51 +253,6 @@ export async function postDeviationRemark(
         payload
     );
     return unwrapApiData(res.data);
-}
-
-export async function getDocumentRemarks(id: number): Promise<DocumentRemarkDto[]> {
-    const res = await apiClient.get<ApiResponse<DocumentRemarkDto[]>>(
-        `/api/loans/${id}/document-remarks`
-    );
-    return unwrapApiData(res.data);
-}
-
-export async function postDocumentRemark(
-    id: number,
-    payload: {
-        checklistIdCode: string;
-        docId?: number | null;
-        parentRemarkId?: number | null;
-        body: string;
-    }
-): Promise<DocumentRemarkDto> {
-    const res = await apiClient.post<ApiResponse<DocumentRemarkDto>>(
-        `/api/loans/${id}/document-remarks`,
-        payload
-    );
-    return unwrapApiData(res.data);
-}
-
-/** Roles allowed to write document remarks — mirrors the backend WriterRoles. */
-export const DOCUMENT_REMARK_WRITER_ROLES = [
-    "Recommender",
-    "Evaluator",
-    "Approver",
-    "Admin",
-];
-
-/**
- * Write-access rule for document remark threads.
- * Reviewers (+Admin) may remark on any loan they can read; Encoders may
- * add/reply only on applications they submitted. Mirrors the ownership guard
- * in DocumentRemarkEndpoints.cs — the backend remains the authority.
- */
-export function canWriteDocumentRemarks(
-    role: string | undefined,
-    isLoanOwner: boolean,
-): boolean {
-    if (role === "Encoder") return isLoanOwner;
-    return (DOCUMENT_REMARK_WRITER_ROLES as readonly string[]).includes(role ?? "");
 }
 
 export async function updateLoanStatus(

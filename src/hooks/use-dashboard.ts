@@ -45,7 +45,6 @@ export function useDashboardSummary() {
         queryFn: async () => {
             const res = await apiClient.get("/api/dashboard/summary");
             const body = res.data;
-            // Backend wraps in { success, data, message }
             const raw: DashboardSummaryResponse = body.data ?? body;
             return mapSummaryData(raw);
         },

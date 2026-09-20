@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
@@ -6,6 +6,7 @@ import {
     CheckCircle,
     XCircle,
     ArrowCounterClockwise,
+    ArrowRight,
     FilePdf,
     Printer,
     Clock,
@@ -14,14 +15,10 @@ import {
     MagnifyingGlassMinus,
     MagnifyingGlassPlus,
     ArrowLeft,
-    ArrowClockwise,
     ThumbsUp,
     ThumbsDown,
-    Info,
 } from "@phosphor-icons/react";
-import { toastSuccess, toastError } from "@/src/components/ui/toast";
-import axios from "axios";
-import { getErrorMessage } from "@/src/lib/apiClient";
+import { toast } from "sonner";
 
 import {
     Card,
@@ -49,30 +46,22 @@ import {
 } from "@/src/components/ui/alert-dialog";
 
 import { useAuthStore } from "@/src/store/authStore";
-import { useEscalationStore } from "@/src/store/escalationStore";
 import { ApprovalFormDocument } from "./components/approval-form-document";
 import { AttachmentsPanel } from "./components/attachments-panel";
 import { DeviationRemarksPanel } from "./components/deviation-remarks-panel";
 import { ApprovalFormViewport } from "@/src/components/loan/approval-form-sheet";
-import { LoanTimeline } from "@/src/components/loan/loan-timeline";
 import {
     getLoanDetail,
-    loanReviewKeys,
+    getLoanHistory,
     updateLoanStatus,
     cancelLoanApplication,
     CANCELLABLE_STATUSES,
-    canWriteDocumentRemarks,
     type LoanDetailResponse,
     type EvaluationVerdict,
 } from "@/src/lib/api/loan-review";
-import {
-    getLoanRouting,
-    releaseAssignment,
-    approvalMatrixKeys,
-} from "@/src/lib/api/approval-matrix";
 import { queryKeys } from "@/src/lib/queryKeys";
 import { cn } from "@/src/lib/utils";
-import { LOAN_STATUS_META, type LoanStatus } from "@/src/lib/loan-status";
+import type { LoanStatus } from "@/src/lib/loan-status";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
 
@@ -99,14 +88,6 @@ const WORKFLOW_ACTIONS: WorkflowAction[] = [
     { role: "Approver", from: "ForApproval", to: "ForRevision", label: "Return to Encoder", kind: "return", remarksRequired: true, confirm: true },
     { role: "Approver", from: "ForApproval", to: "Rejected", label: "Reject", kind: "reject", remarksRequired: true, confirm: true },
 ];
-
-function actionIcon(a: WorkflowAction) {
-    if (a.kind === "reject") return <XCircle size={16} />;
-    if (a.kind === "return") return <ArrowCounterClockwise size={16} />;
-    if (a.verdict === "NotRecommended") return <ThumbsDown size={16} weight="fill" />;
-    if (a.verdict === "Recommended") return <ThumbsUp size={16} weight="fill" />;
-    return <CheckCircle size={16} weight="bold" />;
-}
 
 /**
  * Map the flattened `LoanDetailResponse` (returned by `GET /api/loans/{id}`)
@@ -196,7 +177,13 @@ function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
                     purpose: l.purpose ?? "",
                     proposedAmount: l.proposedAmount,
                     term: l.termDays,
-                    policyTermMonths: l.policyTermMonths ?? undefined,
+                    // Policy term (months) — not surfaced by the
+                    // approval endpoint's `LoanDetailResponse` yet
+                    // (it carries `termDays` only). Falls through as
+                    // undefined so the form schema's `.optional()`
+                    // accepts it; the field renders blank on the
+                    // approval-page context.
+                    policyTermMonths: undefined,
                     interestRate: l.interestRate,
                     nthpDate: l.nthpDate,
                     notarialFee: l.notarialFee ?? 0,
@@ -208,8 +195,6 @@ function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
                         insurance: l.standardInsurance ?? 0,
                     },
                 },
-                approvalTermDays: l.approvalTermDays ?? undefined,
-                annualRatePercent: l.annualRatePercent ?? undefined,
             },
         ],
         outstandingLoans: l.outstandingLoans.map((o) => ({
@@ -270,19 +255,9 @@ export function LoanApprovalPage() {
     const [cancelPending, setCancelPending] = useState(false);
 
     const user = useAuthStore((s) => s.user);
-    const isEscalated = useEscalationStore((s) => s.isEscalated(id));
-    const clearEscalated = useEscalationStore((s) => s.clearEscalated);
-
-    // Clear the escalation badge after 10 seconds so it doesn't persist forever.
-    useEffect(() => {
-        if (isEscalated) {
-            const timer = setTimeout(() => clearEscalated(id), 10_000);
-            return () => clearTimeout(timer);
-        }
-    }, [isEscalated, id, clearEscalated]);
 
     const loan = useQuery({
-        queryKey: loanReviewKeys.detail(id),
+        queryKey: queryKeys.loans.review.detail(id),
         queryFn: () => getLoanDetail(id),
         enabled: Number.isFinite(id) && id > 0,
         staleTime: 30_000,        // back-nav / tab-return / mutation refetch: instant
@@ -290,15 +265,12 @@ export function LoanApprovalPage() {
         placeholderData: keepPreviousData,  // same-id refetches keep the sheet painted
     });
 
-    // ── Routing info (approval tier, documents, assignment) ──────────────────
-    const routing = useQuery({
-        queryKey: approvalMatrixKeys.routing(id),
-        queryFn: () => getLoanRouting(id),
-        enabled: Number.isFinite(id) && id > 0 && loan.data?.status === "ForApproval",
+    const history = useQuery({
+        queryKey: queryKeys.loans.review.history(id),
+        queryFn: () => getLoanHistory(id),
+        enabled: Number.isFinite(id) && id > 0,
         staleTime: 30_000,
     });
-
-    const routingData = routing.data;
 
     const detail = loan.data;
     const frozen = detail ? TERMINAL.includes(detail.status) : false;
@@ -313,59 +285,18 @@ export function LoanApprovalPage() {
         mutationFn: (a: WorkflowAction) =>
             updateLoanStatus(id, a.to, remarks.trim(), a.verdict),
         onSuccess: (_d, a) => {
-            toastSuccess(
+            toast.success(
                 a.verdict === "NotRecommended"
                     ? "Evaluation recorded as Not Recommended — forwarded to Approver."
                     : a.kind === "return"
                         ? "Application pushed back to the encoder."
                         : `Application moved to ${a.to}.`);
             setRemarks("");
-            qc.invalidateQueries({ queryKey: loanReviewKeys.detail(id) });
-            qc.invalidateQueries({ queryKey: loanReviewKeys.history(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
-            qc.invalidateQueries({ queryKey: approvalMatrixKeys.routing(id) });
-        },
-        onError: (e: Error) => {
-            // Extract structured error from Axios 422/400 responses
-            // so we can show the specific missing documents list.
-            if (axios.isAxiosError(e) && e.response?.data) {
-                const data = e.response.data as {
-                    message?: string;
-                    errors?: string[];
-                };
-                const msg = data.message || getErrorMessage(e);
-                const details = Array.isArray(data.errors) && data.errors.length > 0
-                    ? data.errors
-                    : null;
-
-                if (details) {
-                    toastError(
-                        <div className="space-y-1.5">
-                            <p className="font-semibold">{msg}</p>
-                            <ul className="list-disc pl-4 text-xs opacity-90">
-                                {details.map((d, i) => <li key={i}>{d}</li>)}
-                            </ul>
-                        </div>,
-                        { timeout: 10_000 },
-                    );
-                } else {
-                    toastError(msg);
-                }
-            } else {
-                toastError(getErrorMessage(e));
-            }
-        },
-    });
-
-    // ── Release assignment mutation ──────────────────────────────────────────
-    const releaseMut = useMutation({
-        mutationFn: () => releaseAssignment(id),
-        onSuccess: () => {
-            toastSuccess("Assignment released. The loan is now available for other approvers.");
-            qc.invalidateQueries({ queryKey: approvalMatrixKeys.routing(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
-        onError: (e: Error) => toastError(getErrorMessage(e)),
+        onError: (e: Error) => toast.error(e.message),
     });
 
     // ── Empty / error states ─────────────────────────────────────────
@@ -394,31 +325,24 @@ export function LoanApprovalPage() {
     if (loan.isError || !detail || !formData) {
         return (
             <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
-                <div className="flex flex-col items-center gap-3 text-center">
-                    <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-                        <WarningCircle size={28} weight="duotone" className="text-muted-foreground" />
-                    </div>
-                    <div className="space-y-1">
-                        <h2 className="text-lg font-medium">Unable to load this application</h2>
-                        <p className="text-sm text-muted-foreground max-w-[360px]">
-                            {loan.isError ? getErrorMessage(loan.error) : "The application data could not be loaded. It may have been removed or you may not have access."}
-                        </p>
-                    </div>
-                    <div className="flex gap-2 pt-1">
-                        <Button variant="outline" onClick={() => loan.refetch()}>
-                            <ArrowClockwise data-icon="inline-start" /> Try again
-                        </Button>
-                        <Button onClick={() => navigate("/loans/monitoring")}>
-                            Back to Monitoring
-                        </Button>
-                    </div>
+                <div className="text-center space-y-4">
+                    <WarningCircle size={48} className="mx-auto text-destructive" />
+                    <h2 className="text-xl font-semibold">Failed to Load Application</h2>
+                    <Button onClick={() => navigate("/loans/monitoring")}>
+                        Return to Monitoring
+                    </Button>
                 </div>
             </div>
         );
     }
 
-    const isLoanOwner = user ? Number(user.userId) === detail.createdById : false;
-    const canWriteRemarks = user ? canWriteDocumentRemarks(user.role, isLoanOwner) : false;
+    const canWriteRemarks =
+        user?.role === "Recommender" ||
+        user?.role === "Evaluator" ||
+        (user?.role === "Encoder" &&
+            user.userId === String(detail.createdById)) ||
+        user?.role === "Admin";
+    const canUpload = canWriteRemarks || user?.role === "Approver";
     const deviationCount =
         detail.deviationDetails.length +
         (detail.feeDeviationJustification ? 1 : 0);
@@ -456,14 +380,6 @@ export function LoanApprovalPage() {
                             <Clock size={12} weight="fill" />
                             {detail.status}
                         </Badge>
-                        {routingData?.matchedRule && detail.status === "ForApproval" && (
-                            <Badge
-                                variant="secondary"
-                                className="gap-1.5 border-violet-200 bg-violet-50 text-violet-700"
-                            >
-                                {routingData.matchedRule}
-                            </Badge>
-                        )}
                         {detail.hasDeviations && (
                             <Badge
                                 variant="secondary"
@@ -482,11 +398,6 @@ export function LoanApprovalPage() {
                         {detail.evaluationVerdict === "EvaluatedRecommended" && (
                             <Badge variant="secondary" className="gap-1.5 border-emerald-200 bg-emerald-50 text-emerald-700">
                                 <ThumbsUp size={12} weight="fill" /> Evaluator: Recommended
-                            </Badge>
-                        )}
-                        {isEscalated && (
-                            <Badge variant="secondary" className="gap-1.5 border-orange-200 bg-orange-50 text-orange-700">
-                                <ArrowCounterClockwise size={12} weight="fill" /> Escalated
                             </Badge>
                         )}
                         {detail.status === "Cancelled" && (
@@ -607,191 +518,204 @@ export function LoanApprovalPage() {
                                         </CardTitle>
                                         <CardDescription className="pt-1 text-xs">
                                             Review the sheet, then route the
-                                            application to the next stage.
+                                            application. Remarks are mandatory.
                                         </CardDescription>
                                     </CardHeader>
-
                                     <CardContent className="space-y-6 pt-4">
-                                        {/* ── Where the file is right now ── */}
-                                        <div className="flex items-start gap-2 rounded-md border bg-muted/40 px-3 py-2">
-                                            <Info size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
-                                            <p className="text-xs text-muted-foreground">
-                                                Current stage:{" "}
-                                                <span className="font-medium text-foreground">
-                                                    {LOAN_STATUS_META[detail.status as LoanStatus]?.label ?? detail.status}
-                                                </span>
-                                                {" — "}
-                                                {LOAN_STATUS_META[detail.status as LoanStatus]?.hint}
-                                            </p>
+                                        {/* ── Audit Trail ── */}
+                                        <div className="space-y-3">
+                                            <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                <Clock size={12} /> Audit Trail
+                                            </h3>
+                                            {history.isLoading ? (
+                                                <div className="flex justify-center py-4">
+                                                    <Spinner className="size-5" />
+                                                </div>
+                                            ) : (
+                                                <ul className="space-y-3 text-xs">
+                                                    {(history.data ?? []).map(
+                                                        (h) => (
+                                                            <li
+                                                                key={h.id}
+                                                                className="flex gap-3"
+                                                            >
+                                                                {h.toStatus ===
+                                                                "Rejected" ? (
+                                                                    <XCircle
+                                                                        size={16}
+                                                                        weight="fill"
+                                                                        className="mt-0.5 shrink-0 text-destructive"
+                                                                    />
+                                                                ) : h.toStatus ===
+                                                                  "ForRevision" ? (
+                                                                    <ArrowCounterClockwise
+                                                                        size={16}
+                                                                        weight="bold"
+                                                                        className="mt-0.5 shrink-0 text-amber-500"
+                                                                    />
+                                                                ) : (
+                                                                    <ArrowRight
+                                                                        size={16}
+                                                                        weight="bold"
+                                                                        className="mt-0.5 shrink-0 text-blue-500"
+                                                                    />
+                                                                )}
+                                                                <div>
+                                                                    <p className="font-medium">
+                                                                        {
+                                                                            h.actionBy
+                                                                        }
+                                                                    </p>
+                                                                    <p className="text-muted-foreground">
+                                                                        {
+                                                                            h.action
+                                                                        }
+                                                                        {h.toStatus
+            ? ` → ${h.toStatus}`
+            : ""}{" "}
+                                                                        •{" "}
+                                                                        {new Date(
+                                                                            h.actionDate
+                                                                        ).toLocaleString()}
+                                                                    </p>
+                                                                    {h.comments && (
+                                                                        <p className="mt-1 border-l-2 border-border pl-2 italic text-muted-foreground">
+                                                                            &ldquo;
+                                                                            {
+                                                                                h.comments
+                                                                            }
+                                                                            &rdquo;
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </li>
+                                                        )
+                                                    )}
+                                                </ul>
+                                            )}
                                         </div>
 
-                                        {/* ── Delegation-of-authority decision gates ── */}
-                                        {routingData && !routingData.documentsComplete && detail.status === "ForApproval" && (
-                                            <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-                                                <WarningCircle size={14} className="mt-0.5 shrink-0 text-amber-600" />
-                                                <p className="text-xs text-amber-800">
-                                                    <span className="font-semibold">Cannot be approved:</span> missing {routingData.missingDocuments.join(", ")}.
-                                                </p>
-                                            </div>
-                                        )}
-                                        {routingData && user?.role === "Approver" && routingData.requiredApprovalTier && detail.status === "ForApproval" && (
-                                            <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2">
-                                                <Info size={14} className="mt-0.5 shrink-0 text-blue-600" />
-                                                <p className="text-xs text-blue-800">
-                                                    Requires <span className="font-semibold">{routingData.matchedRule}</span> approval.
-                                                </p>
-                                            </div>
-                                        )}
-                                        {routingData && routingData.assignedApproverId && routingData.assignedApproverId !== Number(user?.userId) && detail.status === "ForApproval" && (
-                                            <div className="flex items-start gap-2 rounded-md border border-purple-200 bg-purple-50 px-3 py-2">
-                                                <UserCircle size={14} className="mt-0.5 shrink-0 text-purple-600" />
-                                                <p className="text-xs text-purple-800">
-                                                    Currently being reviewed by <span className="font-semibold">{routingData.assignedApproverName}</span>.
-                                                    {isEscalated && (
-                                                        <span className="ml-1 inline-flex items-center gap-1 font-semibold text-orange-700">
-                                                            (Escalated)
-                                                        </span>
-                                                    )}
-                                                </p>
-                                            </div>
-                                        )}
-                                        {/* ── Release button (when assigned to me) ── */}
-                                        {routingData && routingData.assignedApproverId === Number(user?.userId) && detail.status === "ForApproval" && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="w-full gap-2 border-orange-200 text-orange-700 hover:bg-orange-50"
-                                                disabled={releaseMut.isPending}
-                                                onClick={() => releaseMut.mutate()}
+                                        <div className="h-px bg-border" />
+
+                                        {/* ── Remarks ── */}
+                                        <div className="space-y-2">
+                                            <Label
+                                                htmlFor="remarks"
+                                                className="flex items-center gap-1.5 text-sm font-semibold"
                                             >
-                                                <ArrowCounterClockwise size={14} />
-                                                {releaseMut.isPending ? "Releasing…" : "Release Assignment"}
-                                            </Button>
-                                        )}
-
-                                        {/* ── Activity & Remarks (NOT "audit trail": this is the
-                                               application's conversation; the formal audit log lives
-                                               under Administration → Audit Logs) ─────────────────── */}
-                                        <section className="space-y-3" aria-label="Activity and remarks">
-                                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                Activity &amp; Remarks
-                                            </h3>
-                                            <LoanTimeline applicationId={id} compact limit={5} />
-                                        </section>
-
-                                        <div className="h-px bg-border" role="separator" />
-
-                                        {/* ── Your Decision: remarks + actions grouped so it is obvious
-                                               the text belongs to the button you press ────────────── */}
-                                        <section className="space-y-3" aria-label="Your decision">
-                                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                Your Decision
-                                            </h3>
-
-                                            <div className="space-y-2">
-                                                <Label htmlFor="remarks" className="text-sm font-semibold">
-                                                    Remarks / Conditions
-                                                </Label>
-                                                <Textarea
-                                                    id="remarks"
-                                                    rows={3}
-                                                    disabled={frozen || act.isPending}
-                                                    placeholder="Comments, conditions, or reasons — stored with the workflow action…"
-                                                    value={remarks}
-                                                    onChange={(e) => setRemarks(e.target.value)}
-                                                    maxLength={2000}
-                                                />
-                                                <p className="text-[11px] text-muted-foreground">
-                                                    {remarks.trim().length}/2000 · visible to all reviewers ·{" "}
-                                                    <span className="font-medium">required</span> for pushback,
-                                                    rejection, and a Not Recommended evaluation
+                                                Remarks / Conditions
+                                                {actions.some((a) => a.remarksRequired) && <span className="text-destructive">*</span>}
+                                            </Label>
+                                            <Textarea
+                                                id="remarks"
+                                                rows={4}
+                                                disabled={
+                                                    frozen || act.isPending
+                                                }
+                                                placeholder="Comments, conditions, or reasons — stored with the workflow action…"
+                                                value={remarks}
+                                                onChange={(e) =>
+                                                    setRemarks(e.target.value)
+                                                }
+                                            />
+                                            {remarks.trim().length < MIN_REMARKS && !frozen && (
+                                                <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                                    <WarningCircle
+                                                        size={12}
+                                                        weight="fill"
+                                                    />{" "}
+                                                    Required (min {MIN_REMARKS} chars) for pushback, rejection, and a Not Recommended evaluation.
                                                 </p>
-                                            </div>
+                                            )}
+                                        </div>
 
-                                            <div className="space-y-2">
-                                                {canCancel && (
+                                        {/* ── Action buttons ── */}
+                                        <div className="space-y-2">
+                                            {canCancel && (
+                                                <Button
+                                                    variant="destructive"
+                                                    className="w-full gap-2"
+                                                    disabled={cancelOpen}
+                                                    onClick={() => setCancelOpen(true)}
+                                                >
+                                                    <XCircle size={16} /> Cancel Application
+                                                </Button>
+                                            )}
+                                            {frozen && (
+                                                <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
+                                                    This application is{" "}
+                                                    <strong>
+                                                        {detail.status}
+                                                    </strong>{" "}
+                                                    — no further actions.
+                                                </p>
+                                            )}
+                                            {actions.map((a) => {
+                                                const blocked = act.isPending || (a.remarksRequired && remarks.trim().length < MIN_REMARKS);
+                                                const icon =
+                                                    a.kind === "reject" ? <XCircle size={16} /> :
+                                                    a.kind === "return" ? <ArrowCounterClockwise size={16} /> :
+                                                    a.verdict === "NotRecommended" ? <ThumbsDown size={16} weight="fill" /> :
+                                                    a.verdict === "Recommended" ? <ThumbsUp size={16} weight="fill" /> :
+                                                    <CheckCircle size={16} weight="bold" />;
+
+                                                const button = (
                                                     <Button
-                                                        variant="destructive"
-                                                        className="w-full gap-2"
-                                                        disabled={cancelOpen}
-                                                        onClick={() => setCancelOpen(true)}
+                                                        key={`${a.to}-${a.verdict ?? a.kind}`}
+                                                        className={cn(
+                                                            "w-full gap-2",
+                                                            a.verdict === "NotRecommended" &&
+                                                                "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900",
+                                                            a.kind === "return" &&
+                                                                "border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive",
+                                                        )}
+                                                        variant={a.kind === "reject" ? "destructive"
+                                                            : a.kind === "return" || a.verdict === "NotRecommended" ? "outline"
+                                                            : "default"}
+                                                        disabled={blocked}
+                                                        onClick={() => !a.confirm && act.mutate(a)}
                                                     >
-                                                        <XCircle size={16} /> Cancel Application
+                                                        {icon} {a.label}
                                                     </Button>
-                                                )}
-                                                {frozen && (
-                                                    <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
-                                                        This application is{" "}
-                                                        <strong>{detail.status}</strong>{" "}
-                                                        — no further actions.
-                                                    </p>
-                                                )}
+                                                );
 
-                                                {actions.map((a) => {
-                                                    const needsRemarks =
-                                                        a.remarksRequired && remarks.trim().length < MIN_REMARKS;
-                                                    const blocked = act.isPending || needsRemarks;
+                                                if (!a.confirm) return <div key={`${a.to}-${a.verdict ?? a.kind}`}>{button}</div>;
 
-                                                    const button = (
-                                                        <Button
-                                                            className={cn(
-                                                                "w-full gap-2",
-                                                                a.verdict === "NotRecommended" &&
-                                                                    "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900",
-                                                                a.kind === "return" &&
-                                                                    "border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive",
-                                                            )}
-                                                            variant={a.kind === "reject" ? "destructive"
-                                                                : a.kind === "return" || a.verdict === "NotRecommended"
-                                                                    ? "outline" : "default"}
-                                                            disabled={blocked}
-                                                            title={needsRemarks
-                                                                ? `Add remarks (min ${MIN_REMARKS} characters) to use this action`
-                                                                : undefined}
-                                                            onClick={() => !a.confirm && act.mutate(a)}
-                                                        >
-                                                            {actionIcon(a)} {a.label}
-                                                        </Button>
-                                                    );
-
-                                                    if (!a.confirm) return <div key={`${a.to}-${a.verdict ?? a.kind}`}>{button}</div>;
-
-                                                    return (
-                                                        <AlertDialog key={`${a.to}-${a.verdict ?? a.kind}`}>
-                                                            <AlertDialogTrigger render={button} />
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Confirm: {a.label}</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        {a.kind === "return"
-                                                                            ? "The application returns to the ENCODER for revision. They will be notified with your remarks."
-                                                                            : a.verdict === "NotRecommended"
-                                                                                ? "The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached."
-                                                                                : "This terminates the loan process and notifies the encoder."}
-                                                                        {remarks.trim() && (
-                                                                            <span className="mt-2 block border-l-2 border-border pl-2 italic">
-                                                                                &ldquo;{remarks.trim()}&rdquo;
-                                                                            </span>
-                                                                        )}
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction
-                                                                        className={a.kind === "return" || a.kind === "reject"
-                                                                            ? "bg-destructive text-destructive-foreground"
-                                                                            : "bg-amber-600 text-white hover:bg-amber-700"}
-                                                                        onClick={() => act.mutate(a)}
-                                                                    >
-                                                                        Confirm
-                                                                    </AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    );
-                                                })}
-                                            </div>
-                                        </section>
+                                                return (
+                                                    <AlertDialog key={`${a.to}-${a.verdict ?? a.kind}`}>
+                                                        <AlertDialogTrigger render={button} />
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Confirm: {a.label}</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    {a.kind === "return"
+                                                                        ? "The application returns to the ENCODER (not the recommender) for revision. They will be notified with your remarks."
+                                                                        : a.verdict === "NotRecommended"
+                                                                            ? "The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached."
+                                                                            : "This terminates the loan process and notifies the encoder."}
+                                                                    {remarks.trim() && (
+                                                                        <span className="mt-2 block border-l-2 border-border pl-2 italic">
+                                                                            &ldquo;{remarks.trim()}&rdquo;
+                                                                        </span>
+                                                                    )}
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    className={a.kind === "return" || a.kind === "reject"
+                                                                        ? "bg-destructive text-destructive-foreground"
+                                                                        : "bg-amber-600 text-white hover:bg-amber-700"}
+                                                                    onClick={() => act.mutate(a)}
+                                                                >
+                                                                    Confirm
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                );
+                                            })}
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </TabsContent>
@@ -839,11 +763,16 @@ export function LoanApprovalPage() {
                                             Attached Files
                                         </CardTitle>
                                         <CardDescription className="pt-1 text-xs">
-                                            Required documents for this loan product, sourced from the document server.
+                                            Supporting documents submitted with,
+                                            or added during, review.
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="pt-4">
-                                        <AttachmentsPanel loanId={id} role={user?.role} frozen={frozen} isLoanOwner={isLoanOwner} />
+                                        <AttachmentsPanel
+                                            loanId={id}
+                                            frozen={frozen}
+                                            canUpload={!!canUpload}
+                                        />
                                     </CardContent>
                                 </Card>
                             </TabsContent>
@@ -892,15 +821,15 @@ export function LoanApprovalPage() {
                                 setCancelPending(true);
                                 try {
                                     await cancelLoanApplication(id, cancelReason.trim());
-                                    toastSuccess("Application cancelled.");
+                                    toast.success("Application cancelled.");
                                     setCancelOpen(false);
                                     setCancelReason("");
                                     setCancelPending(false);
-                                    qc.invalidateQueries({ queryKey: loanReviewKeys.detail(id) });
-                                    qc.invalidateQueries({ queryKey: loanReviewKeys.history(id) });
+                                    qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
+                                    qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
                                     qc.invalidateQueries({ queryKey: queryKeys.loans.all });
                                 } catch (e) {
-                                    toastError(e instanceof Error ? getErrorMessage(e) : "Could not cancel.");
+                                    toast.error(e instanceof Error ? e.message : "Could not cancel.");
                                     setCancelPending(false);
                                 }
                             }}

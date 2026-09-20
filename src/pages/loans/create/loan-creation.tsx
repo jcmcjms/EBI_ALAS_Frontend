@@ -129,7 +129,6 @@ function useSectionProgress(
 ) {
   const { control, formState } = useFormContext<LoanApplicationFormData>();
   const branchType = useWatch({ control, name: "branchType" });
-  // CHANGED: watch loans array instead of single loan
   const loans = useWatch({ control, name: "loans" });
   const verification = useWatch({ control, name: "verification" });
   const deviations = useWatch({ control, name: "deviations" });
@@ -510,7 +509,6 @@ export function LoanCreationPage() {
         school: "",
         referrer: "",
       },
-      // CHANGED: loans array (managed by useFieldArray in active-loans-table)
       loans: [],
       outstandingLoans: [],
       ebiReloans: [],
@@ -672,10 +670,9 @@ export function LoanCreationPage() {
   // defaults to "show" (conservative — matches the prior behavior).
   const branchTypeCode = useWatch({ control, name: "branchType.creationTypeCode" });
 
-  // CHANGED: preLoanSelected is now based on loans array length
-  // The 1.3 loan-number pick writes to `loans` array via useFieldArray
-  // (active-loans-table.tsx handleLoanToggle) and clears it on account
-  // switch / client change. The stepper gate and submit gate both read it.
+  // The loans array is managed by useFieldArray in active-loans-table.
+  // The stepper gate and submit gate both read its length to determine
+  // whether a pre-loan has been selected.
   const loans = useWatch({ control, name: "loans" }) ?? [];
   const preLoanSelected = loans.length > 0;
 

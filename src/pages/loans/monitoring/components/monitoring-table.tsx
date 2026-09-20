@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import {
     FlexRender,
     createCoreRowModel,
@@ -12,10 +12,10 @@ import {
     type PaginationState,
     type SortingState,
 } from "@tanstack/react-table";
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle, CheckCircle, UserCircle, CircleDashed } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle } from "@phosphor-icons/react";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
@@ -24,13 +24,14 @@ import { LOAN_STATUS_META } from "@/src/lib/loan-status";
 import { AGING_BADGE_CLASS, assessAging } from "@/src/lib/loan-aging";
 import type { LoanStatus } from "@/src/lib/loan-status";
 import { CANCELLABLE_STATUSES } from "@/src/lib/api/loan-review";
-import { getErrorMessage } from "@/src/lib/apiClient";
 
 /** Per-column Tailwind classes surfaced through `meta.className`. */
 type MonitoringColumnMeta = {
     className?: string;
-    headerClassName?: string;
 };
+
+/** Skeleton rows to show while the first page loads — enough to fill a 1080p viewport. */
+const SKELETON_ROW_COUNT = 8;
 
 /**
  * Resolve a branch code (e.g. "011") to its human-readable name
@@ -65,23 +66,6 @@ const features = tableFeatures({
     coreRowModel: createCoreRowModel(),
 });
 
-// ── Sticky column classes ────────────────────────────────────────────────────
-// Opaque backgrounds are mandatory on sticky cells — translucent tokens
-// (bg-muted/40, hover:bg-muted/30) let scrolling content ghost through.
-// Z-layering: corner cell z-30 > sticky header z-20 > pinned body z-10.
-// The scroll-shadow appears only when the user has panned right (data-scrolled-x
-// is set on the wrapper), using an arbitrary Tailwind v4 variant off that attr.
-const STICKY_BODY = cn(
-    "sticky left-0 z-10 bg-background group-hover:bg-accent",
-    "[[data-scrolled-x=true]_&]:shadow-[6px_0_12px_-4px_rgb(0_0_0/0.18)]",
-    "dark:[[data-scrolled-x=true]_&]:shadow-[6px_0_12px_-4px_rgb(0_0_0/0.6)]",
-);
-const STICKY_HEAD = cn(
-    "sticky left-0 z-30 bg-muted",
-    "[[data-scrolled-x=true]_&]:shadow-[6px_0_12px_-4px_rgb(0_0_0/0.18)]",
-    "dark:[[data-scrolled-x=true]_&]:shadow-[6px_0_12px_-4px_rgb(0_0_0/0.6)]",
-);
-
 const columnHelper = createColumnHelper<typeof features, LoanMonitoringRecord>();
 
 interface MonitoringTableProps {
@@ -92,9 +76,32 @@ interface MonitoringTableProps {
      *  to built-in defaults from LOAN_STATUS_META. */
     slaPolicy?: Record<string, number> | null;
     /** Current authenticated user — used to gate the cancel action. */
-    currentUser?: { id: number; role: string; name?: string } | null;
+    currentUser?: { id: number; role: string } | null;
     /** Called when the user clicks the cancel button on a row. */
     onCancel?: (record: LoanMonitoringRecord) => void;
+}
+
+// ─── Shared Timer Context ───────────────────────────────────────────────────
+//
+// Instead of each `TimeLapsedIndicator` row creating its own `setInterval`
+// (15 timers × 1s each = 15 state updates/second), a single provider at
+// the table level ticks once per second and publishes `Date.now()` via
+// context. All rows read the same timestamp — one timer, one re-render
+// cycle, identical visual output.
+
+const SharedTimerContext = createContext<number>(Date.now());
+
+function SharedTimerProvider({ children }: { children: ReactNode }) {
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const t = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(t);
+    }, []);
+    return (
+        <SharedTimerContext.Provider value={now}>
+            {children}
+        </SharedTimerContext.Provider>
+    );
 }
 
 // ─── Time Lapsed indicator (SLA-driven urgency) ─────────────────────────────
@@ -135,15 +142,7 @@ interface TimeLapsedIndicatorProps {
 }
 
 function TimeLapsedIndicator({ lastActionDate, status, slaPolicy }: TimeLapsedIndicatorProps) {
-    // Terminal statuses (Cancelled, Rejected, Approved, Disbursed, OnGoing)
-    // have no SLA — freeze the timer instead of ticking indefinitely.
-    const isTerminal = !LOAN_STATUS_META[status]?.defaultSlaHours;
-    const [now, setNow] = useState(() => Date.now());
-    useEffect(() => {
-        if (isTerminal) return;
-        const t = setInterval(() => setNow(Date.now()), 1000);
-        return () => clearInterval(t);
-    }, [isTerminal]);
+    const now = useContext(SharedTimerContext);
 
     const assessment = assessAging(status, lastActionDate, now, slaPolicy);
 
@@ -184,10 +183,6 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState<SortingState>([{ id: "applicationDate", desc: true }]);
 
-    // Server is the single source of truth for filter / sort / paginate.
-    // The hook returns the already-mapped page of records plus the total
-    // row count so react-table can drive its pagination footer.
-    //
     // `keepPreviousData` (set inside the hook) keeps the previous page
     // visible during a refetch so pagination/sort doesn't flash an empty
     // state — first load still shows the skeleton below.
@@ -201,32 +196,11 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
         refetch,
     } = useLoanMonitoring(filters, pagination, sorting);
 
-    // ── Scroll state tracking for sticky-column shadow affordance ───────
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const [scrolledX, setScrolledX] = useState(false);
-    const [moreX, setMoreX] = useState(false);
-
-    const updateScrollState = useCallback(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        setScrolledX(el.scrollLeft > 1);
-        setMoreX(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
-    }, []);
-
-    useEffect(() => {
-        updateScrollState();
-        const el = scrollRef.current;
-        if (!el) return;
-        const ro = new ResizeObserver(updateScrollState);
-        ro.observe(el);
-        return () => ro.disconnect();
-    }, [updateScrollState, pageData.length]);
-
     const columns = columnHelper.columns([
         columnHelper.accessor("formNumber", {
             header: "LAM ID",
             cell: (info) => <span className="text-xs font-semibold">{info.getValue()}</span>,
-            meta: { className: STICKY_BODY, headerClassName: STICKY_HEAD },
+            meta: { className: "sticky left-0 bg-background z-10 border-r" }
         }),
         columnHelper.accessor("branchCode", {
             header: "Branch",
@@ -263,77 +237,6 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                     </Badge>
                 );
             }
-        }),
-        columnHelper.accessor("documentsComplete", {
-            header: "Docs",
-            cell: (info) => {
-                const complete = info.getValue();
-                const at = info.row.original.documentsCompleteAt;
-
-                if (complete === null)
-                    return (
-                        <CircleDashed
-                            size={16}
-                            className="text-muted-foreground"
-                            aria-label="Completeness not verified yet — checks run automatically and on demand"
-                        />
-                    );
-                return complete ? (
-                    <CheckCircle
-                        size={16}
-                        weight="fill"
-                        className="text-emerald-500"
-                        aria-label={`All documents uploaded${at ? ` — verified ${new Date(at).toLocaleString()}` : ""}`}
-                    />
-                ) : (
-                    <XCircle
-                        size={16}
-                        weight="fill"
-                        className="text-amber-500"
-                        aria-label="Missing documents — open the Files tab to see which"
-                    />
-                );
-            },
-        }),
-        columnHelper.accessor("assignedApproverName", {
-            header: "Assigned To",
-            cell: (info) => {
-                const row = info.row.original;
-                const mine = row.isQueueHead && row.queueOwnerName === currentUser?.name;
-
-                if (row.isQueueHead) {
-                    return (
-                        <div className="flex items-center gap-1.5">
-                            <div className="relative">
-                                <UserCircle size={16} className="text-muted-foreground" />
-                                <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-background" />
-                            </div>
-                            <span className="text-xs font-medium">
-                                {row.queueOwnerName ?? info.getValue() ?? "Unassigned desk"}
-                            </span>
-                            {mine && (
-                                <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px] font-normal">
-                                    Your turn
-                                </Badge>
-                            )}
-                        </div>
-                    );
-                }
-
-                if (row.queuePosition != null) {
-                    return (
-                        <Badge
-                            variant="outline"
-                            className="text-xs font-normal text-muted-foreground"
-                            title={`Waiting for ${row.queueStage} — ${row.queueOwnerName ?? "the designated reviewer"} is on the current file`}
-                        >
-                            Queue #{row.queuePosition} of {row.queueLength}
-                        </Badge>
-                    );
-                }
-
-                return <span className="text-xs text-muted-foreground">—</span>;
-            },
         }),
         columnHelper.accessor("lastActionDate", {
             header: "Time Lapsed",
@@ -423,22 +326,12 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
     //   (c) `pageData.length === 0` — server returned zero rows for
     //       the current filter. Show a contextual empty state with a
     //       hint to clear filters.
-    //
-    // ── Render states ────────────────────────────────────────────────────
-    //
-    // Loading / error / empty are deliberately NOT table rows. A `colSpan`
-    // row is sized by the table grid: its width follows the min-w-[1180px]
-    // scroll extent (not the visible viewport) and its height pins it to
-    // the top of the body — which made the error block read as off-center.
-    // The body now renders only real rows (or skeletons); a full-area
-    // overlay owns the error / empty messaging, centered in the visible
-    // body region (below the sticky header, above the pagination footer).
     const showSkeleton = isLoading && pageData.length === 0;
     const showError = isError;
     const showEmpty = !showSkeleton && !showError && pageData.length === 0;
-    const showStateOverlay = showError || showEmpty;
 
     return (
+        <SharedTimerProvider>
         <div className="flex-1 flex flex-col overflow-hidden">
             {/* Refetch banner — subtle indicator that a background refresh
                 is in flight (e.g. after returning from another page). */}
@@ -448,131 +341,80 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                 </div>
             )}
 
-            <div className="relative flex-1 min-w-0">
-                {/* Scroll wrapper — this is the ONLY horizontal scroller.
-                    overscroll-x-contain prevents scroll-chaining to the page. */}
-                <div
-                    ref={scrollRef}
-                    onScroll={updateScrollState}
-                    data-scrolled-x={scrolledX}
-                    className="h-full overflow-auto overscroll-x-contain"
-                >
-                    <table className="w-full caption-bottom text-xs min-w-[1180px]">
-                        <TableHeader className="bg-muted sticky top-0 z-20">
-                                {table.getHeaderGroups().map((headerGroup) => (
-                                    <TableRow key={headerGroup.id} className="hover:bg-transparent border-b">
-                                        {headerGroup.headers.map((header) => (
-                                            <TableHead
-                                                key={header.id}
-                                                className={cn(
-                                                    "h-10 px-4 text-xs font-semibold text-muted-foreground",
-                                                    header.column.columnDef.meta?.headerClassName
-                                                        ?? header.column.columnDef.meta?.className,
-                                                )}
-                                            >
-                                                {header.isPlaceholder ? null : (
-                                                    <div
-                                                        className={cn("flex items-center gap-1", header.column.getCanSort() && "cursor-pointer select-none")}
-                                                        onClick={header.column.getToggleSortingHandler()}
-                                                    >
-                                                        {FlexRender({header})}
-                                                        {{ asc: <CaretUp size={14} />, desc: <CaretDown size={14} /> }[header.column.getIsSorted() as string] ?? <CaretUpDown size={14} className="opacity-30" />}
-                                                    </div>
-                                                )}
-                                            </TableHead>
-                                        ))}
-                                    </TableRow>
-                                ))}
-                            </TableHeader>
-                        <TableBody>
-                            {showSkeleton ? (
-                                // 8 skeleton rows is enough to fill the visible
-                                // viewport on a 1080p screen at the default
-                                // 15-row pageSize — more would just churn DOM.
-                                Array.from({ length: 8 }).map((_, i) => (
-                                    <SkeletonRow key={i} colSpan={columns.length} />
-                                ))
-                            ) : (
-                                table.getRowModel().rows.map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        className={cn(
-                                            "group hover:bg-accent transition-colors cursor-pointer",
-                                            row.original.isQueueHead && row.original.queueOwnerName === currentUser?.name && "bg-primary/[0.04]",
-                                        )}
-                                        onClick={() => onRowClick(row.original)}
+            <div className="flex-1 overflow-auto">
+                <Table>
+                    <TableHeader className="bg-muted/40 sticky top-0 z-20">
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id} className="hover:bg-transparent border-b">
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead
+                                        key={header.id}
+                                        className={cn("h-10 px-4 text-xs font-semibold text-muted-foreground", header.column.columnDef.meta?.className)}
                                     >
-                                        {row.getAllCells().map((cell) => (
-                                            <TableCell key={cell.id} className={cn("py-2 px-4 h-12 text-sm", cell.column.columnDef.meta?.className)}>
-                                                {FlexRender({cell})}
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </table>
-                </div>
-
-                {/* Centered error / empty state. Overlays the visible body
-                    area (inset-x-0 = viewport pane, not the table's scroll
-                    extent; top-10 clears the sticky h-10 header) so it stays
-                    optically centered at any width or scroll offset. Opaque
-                    bg so the empty body never ghosts through. */}
-                {showStateOverlay && (
-                    <div
-                        role={showError ? "alert" : undefined}
-                        className="absolute inset-x-0 top-10 bottom-0 z-10 flex items-center justify-center bg-background px-6"
-                    >
-                        {showError ? (
-                            <div className="flex max-w-[420px] flex-col items-center gap-3 text-center">
-                                <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                                    <WarningCircle size={24} weight="duotone" className="text-muted-foreground" />
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium text-foreground">
-                                        Unable to load applications
-                                    </p>
-                                    {/* Sentence-split: getErrorMessage() already
-                                        ends with a period — concatenating produced
-                                        "later.. If this keeps happening…". */}
-                                    <p className="text-xs text-muted-foreground">
-                                        {getErrorMessage(error)}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        If this keeps happening, please contact your system administrator.
-                                    </p>
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => refetch()}
-                                    className="gap-1.5"
-                                >
-                                    <ArrowClockwise size={14} weight="bold" /> Try again
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center gap-3 text-center">
-                                <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                                    <CircleDashed size={24} weight="duotone" className="text-muted-foreground" />
-                                </div>
-                                <p className="text-xs text-muted-foreground max-w-[320px]">
+                                        {header.isPlaceholder ? null : (
+                                            <div
+                                                className={cn("flex items-center gap-1", header.column.getCanSort() && "cursor-pointer select-none")}
+                                                onClick={header.column.getToggleSortingHandler()}
+                                            >
+                                                {FlexRender({header})}
+                                                {{ asc: <CaretUp size={14} />, desc: <CaretDown size={14} /> }[header.column.getIsSorted() as string] ?? <CaretUpDown size={14} className="opacity-30" />}
+                                            </div>
+                                        )}
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        {showSkeleton ? (
+                            Array.from({ length: SKELETON_ROW_COUNT }).map((_, i) => (
+                                <SkeletonRow key={i} colSpan={columns.length} />
+                            ))
+                        ) : showError ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-32 text-center">
+                                    <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+                                        <WarningCircle size={28} weight="bold" className="text-destructive" />
+                                        <div>
+                                            Failed to load loan applications.
+                                            <div className="text-xs mt-0.5">
+                                                {error instanceof Error ? error.message : "Unknown error."}
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => refetch()}
+                                            className="gap-1.5 mt-1"
+                                        >
+                                            <ArrowClockwise size={14} weight="bold" /> Retry
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : showEmpty ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
                                     No loan applications match the current filters.
-                                </p>
-                            </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            table.getRowModel().rows.map((row) => (
+                                <TableRow
+                                    key={row.id}
+                                    className="hover:bg-muted/30 transition-colors cursor-pointer"
+                                    onClick={() => onRowClick(row.original)}
+                                >
+                                    {row.getAllCells().map((cell) => (
+                                        <TableCell key={cell.id} className={cn("py-2 px-4 h-12 text-sm", cell.column.columnDef.meta?.className)}>
+                                            {FlexRender({cell})}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
                         )}
-                    </div>
-                )}
-
-                {/* Right-edge gradient — tells users more columns exist
-                    before they scroll. Only rendered when content overflows. */}
-                {moreX && (
-                    <div
-                        aria-hidden
-                        className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent"
-                    />
-                )}
+                    </TableBody>
+                </Table>
             </div>
 
             {/* Pagination Footer — driven entirely by server rowCount, so
@@ -596,5 +438,6 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                 </div>
             </div>
         </div>
+        </SharedTimerProvider>
     );
 }

@@ -30,6 +30,9 @@ export function useLoanProduct(code: string | null) {
                 : ["loan-products", "detail", "disabled"],
         queryFn: () => getLoanProductByCode(code!),
         enabled: code !== null,
+        // Loan products are reference data that rarely changes — match the
+        // list hook's 5-minute staleTime to avoid unnecessary refetches.
+        staleTime: 5 * 60 * 1000,
     });
 }
 

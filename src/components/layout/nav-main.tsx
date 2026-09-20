@@ -40,7 +40,6 @@ export function NavMain({
                 }
                 return true
             })
-            // Only include the parent item if it has at least one visible sub-item
             if (filteredSubItems.length === 0) {
                 return null
             }

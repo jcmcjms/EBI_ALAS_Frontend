@@ -51,6 +51,7 @@ export const queryKeys = {
         list: <T extends object>(params: T) => ["users", "list", params] as const,
         detail: (id: number) => ["users", "detail", id] as const,
         stats: () => ["users", "stats"] as const,
+        auditLog: (id: number) => ["users", id, "audit-log"] as const,
     },
 
     // ── Loans (transactional — always fresh by default) ─────────────────────
@@ -70,6 +71,16 @@ export const queryKeys = {
         slaPolicy: ["loans", "sla-policy"] as const,
         /** Role-based queue default — fetched once per session, staleTime: Infinity. */
         queueDefault: ["loans", "queue-default"] as const,
+        // ── Loan Review (approval/evaluation detail views) ──────────────────
+        review: {
+            detail: (id: number) => ["loans", "review", id, "detail"] as const,
+            history: (id: number) => ["loans", "review", id, "history"] as const,
+            attachments: (id: number) => ["loans", "review", id, "attachments"] as const,
+            checklistDocuments: (id: number) => ["loans", "review", id, "checklist-documents"] as const,
+            deviations: (id: number) => ["loans", "review", id, "deviations"] as const,
+        },
+        /** Loan history/timeline for a specific application. */
+        history: (id: number) => ["loans", id, "history"] as const,
     },
 
     // ── WebLoans (CIS lookup / outstanding / pending) ──────────────────────
@@ -107,6 +118,7 @@ export const queryKeys = {
 
     // ── Account ─────────────────────────────────────────────────────────────
     account: {
+        all: ["account"] as const,
         profile: ["account-profile"] as const,
         sessionsAll: ["account-sessions"] as const,
         sessions: (page: number, pageSize: number) =>

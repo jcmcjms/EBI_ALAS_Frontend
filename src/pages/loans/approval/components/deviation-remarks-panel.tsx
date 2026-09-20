@@ -15,11 +15,11 @@ import { Spinner } from "@/src/components/ui/spinner";
 
 import {
     getLoanDeviations,
-    loanReviewKeys,
     postDeviationRemark,
     type DeviationRemarkDto,
     type LoanDeviationDto,
 } from "@/src/lib/api/loan-review";
+import { queryKeys } from "@/src/lib/queryKeys";
 
 const ROLE_BADGE: Record<string, string> = {
     Encoder: "border-slate-300 bg-slate-100 text-slate-700",
@@ -97,7 +97,7 @@ function ThreadComposer({
             setParentId(null);
             onReply?.(0);
             qc.invalidateQueries({
-                queryKey: loanReviewKeys.deviations(loanId),
+                queryKey: queryKeys.loans.review.deviations(loanId),
             });
         },
         onError: (e: Error) => toastError(e.message),
@@ -257,7 +257,7 @@ export function DeviationRemarksPanel({
     frozen: boolean;
 }) {
     const deviations = useQuery({
-        queryKey: loanReviewKeys.deviations(loanId),
+        queryKey: queryKeys.loans.review.deviations(loanId),
         queryFn: () => getLoanDeviations(loanId),
     });
 

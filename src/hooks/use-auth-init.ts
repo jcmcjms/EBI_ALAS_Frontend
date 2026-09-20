@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/src/store/authStore";
 import { apiClient } from "@/src/lib/apiClient";
 import { extractUserFromToken } from "@/src/lib/jwt";
-import { toastError } from "@/src/components/ui/toast";
+import { toast } from "sonner";
 
 /**
  * Silently restores the user session from an HttpOnly refresh cookie on
@@ -62,13 +62,13 @@ export function useAuthInit(): void {
                 const axiosError = error as { response?: { status?: number } };
                 const status = axiosError?.response?.status;
                 if (status === 502) {
-                    toastError("Server is temporarily unavailable. Please try again later.");
+                    toast.error("Server is temporarily unavailable. Please try again later.");
                 } else if (status === 401 || status === 403) {
                     // Session expired — no toast needed, user will see login page.
                 } else if (!axiosError?.response) {
-                    toastError("Unable to connect to the server. Please check your network connection.");
+                    toast.error("Unable to connect to the server. Please check your network connection.");
                 } else {
-                    toastError("Failed to restore session. Please log in again.");
+                    toast.error("Failed to restore session. Please log in again.");
                 }
             } finally {
                 if (!cancelled) {

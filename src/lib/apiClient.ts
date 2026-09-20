@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
-import { toastError } from "@/src/components/ui/toast";
+import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore.ts";
 import { decodeJwtPayload } from "./jwt.ts";
 
@@ -157,9 +157,14 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
             config.headers[CSRF_HEADER] = xsrfToken;
         } else if (accessToken) {
             // User is authenticated but the JWT doesn't carry a fresh xsrfToken.
-            // Don't crash the request; the response interceptor will surface
-            // a CSRF failure if the backend rejects it.
-            // In production, log to monitoring service, not browser console.
+            // Don't crash the request; just log. The response interceptor will
+            // surface a CSRF failure if the backend rejects it.
+            if (import.meta.env.DEV) {
+                console.warn(
+                    "[CSRF] Authenticated request without XsrfToken claim — backend will reject.",
+                    { method, url: config.url }
+                );
+            }
         }
     }
 
@@ -196,13 +201,18 @@ apiClient.interceptors.response.use(
 
         // ── CSRF failure: try one silent refresh-and-retry before giving up ──
         if (isCsrfFailure(error) && originalRequest && !originalRequest._csrfRetry) {
-            // CSRF validation failed — attempting silent refresh to mint a fresh XsrfToken claim.
-            // In production, log to monitoring service, not browser console.
             const url = originalRequest.url ?? "(unknown)";
+            const method = (originalRequest.method ?? "?").toUpperCase();
+            if (import.meta.env.DEV) {
+                console.warn(
+                    `[CSRF] Backend rejected ${method} ${url} as CSRF_VALIDATION_FAILED. ` +
+                    "Attempting silent refresh to mint a fresh XsrfToken claim."
+                );
+            }
 
             // Don't loop forever on the refresh endpoint itself.
             if (url === "/api/auth/refresh") {
-                toastError("Session security token expired — please log in again.");
+                toast.error("Session security token expired — please log in again.");
                 return Promise.reject(error);
             }
 
@@ -220,8 +230,13 @@ apiClient.interceptors.response.use(
                 if (!newXsrf) {
                     // Refresh succeeded but the new token still lacks the claim.
                     // Backend config issue — surface a toast and bail.
-                    // In production, log to monitoring service, not browser console.
-                    toastError("Session security token expired — please log in again.");
+                    if (import.meta.env.DEV) {
+                        console.error(
+                            "[CSRF] Refreshed access token still has no XsrfToken claim. " +
+                            "Backend must include the claim in issued access JWTs."
+                        );
+                    }
+                    toast.error("Session security token expired — please log in again.");
                     return Promise.reject(error);
                 }
                 headers[CSRF_HEADER] = newXsrf;
@@ -230,20 +245,17 @@ apiClient.interceptors.response.use(
             } catch {
                 // Refresh failed (cookie expired, backend unreachable, etc.).
                 // Fall through to the forced re-auth path below.
-                toastError("Session security token expired — please log in again.");
+                toast.error("Session security token expired — please log in again.");
                 return Promise.reject(error);
             }
         }
 
         // ── Non-401 (and not CSRF): reject as-is ────────────────────────────
-        // Skip the refresh-then-retry path for auth endpoints — the user is
-        // logging in (no refresh token yet) or refreshing (already retried).
         if (
             error.response?.status !== 401 ||
             !originalRequest ||
             originalRequest._retry ||
-            originalRequest.url === "/api/auth/refresh" ||
-            originalRequest.url === "/api/auth/login"
+            originalRequest.url === "/api/auth/refresh"
         ) {
             return Promise.reject(error);
         }
@@ -274,14 +286,12 @@ apiClient.interceptors.response.use(
  */
 export function getErrorMessage(error: unknown): string {
     if (axios.isAxiosError(error)) {
-        // Server responded with an error status
         if (error.response) {
             const status = error.response.status;
             const data = error.response.data;
 
             // Proxy / infrastructure errors — the response is usually HTML or empty,
             // not JSON, so we map the status code to a readable message.
-            if (status === 401) return "Invalid username or password.";
             if (status === 502) return "Server is temporarily unavailable. Please try again later.";
             if (status === 503) return "Service is currently unavailable. Please try again later.";
             if (status === 504) return "Server timed out. Please try again later.";
