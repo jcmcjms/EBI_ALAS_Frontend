@@ -285,7 +285,7 @@ export async function cancelLoanApplication(
 
 /** Statuses from which an Encoder may cancel their own application. */
 export const CANCELLABLE_STATUSES: LoanStatus[] = [
-    "Draft", "ForRecommendation", "ForChecking", "ForApproval", "ForRevision",
+    "Draft", "ForRecommendation", "ForChecking", "ForApproval", "ForRevision", "ForIncompleteDocuments",
 ];
 
 // ── SLA Policy ──────────────────────────────────────────────────────────────
@@ -336,3 +336,106 @@ export function useQueueDefault() {
         retry: 1,
     });
 }
+
+// ── Document Remarks ────────────────────────────────────────────────────────
+
+export interface DocumentRemarkDto {
+    id: number;
+    loanApplicationId: number;
+    checklistIdCode: string;
+    docId: number | null;
+    parentRemarkId: number | null;
+    authorId: number;
+    authorName: string;
+    authorRole: string;
+    body: string;
+    createdAt: string;
+}
+
+/**
+ * GET /api/loans/{id}/document-remarks — all remarks for a loan, grouped by
+ * checklistIdCode on the client side.
+ */
+export async function getDocumentRemarks(loanId: number): Promise<DocumentRemarkDto[]> {
+    const res = await apiClient.get<ApiResponse<DocumentRemarkDto[]>>(
+        `/api/loans/${loanId}/document-remarks`
+    );
+    return unwrapApiData(res.data);
+}
+
+/**
+ * POST /api/loans/{id}/document-remarks — add a remark on a checklist item.
+ */
+export async function postDocumentRemark(
+    loanId: number,
+    payload: {
+        checklistIdCode: string;
+        docId?: number | null;
+        parentRemarkId?: number | null;
+        body: string;
+    }
+): Promise<DocumentRemarkDto> {
+    const res = await apiClient.post<ApiResponse<DocumentRemarkDto>>(
+        `/api/loans/${loanId}/document-remarks`,
+        payload
+    );
+    return unwrapApiData(res.data);
+}
+
+// ── Document Checklist ──────────────────────────────────────────────────────
+
+export interface DocumentChecklistItem {
+    id: number;
+    loanApplicationId: number;
+    code: string;
+    name: string;
+    status: string;
+    docId: number | null;
+    updatedAtUtc: string;
+}
+
+/**
+ * GET /api/loans/{id}/checklist-documents — returns the per-item document
+ * checklist with status tracking (Missing/Pending/Submitted/Verified).
+ */
+export async function getDocumentChecklist(loanId: number): Promise<DocumentChecklistItem[]> {
+    const res = await apiClient.get<ApiResponse<DocumentChecklistItem[]>>(
+        `/api/loans/${loanId}/checklist-documents`
+    );
+    return unwrapApiData(res.data);
+}
+
+// ── Preview Helpers ─────────────────────────────────────────────────────────
+
+/** Returns true when the content type can be rendered inline (PDF/image). */
+export function canPreviewInline(contentType: string | null): boolean {
+    if (!contentType) return false;
+    return (
+        contentType.startsWith("image/") ||
+        contentType === "application/pdf"
+    );
+}
+
+/**
+ * Fetch a checklist document's binary content as a Blob for inline preview.
+ * Returns the blob URL (caller must revoke when done).
+ */
+export async function fetchChecklistDocument(docId: number): Promise<{ url: string; contentType: string | null }> {
+    const res = await apiClient.get(`/api/loans/checklist-documents/${docId}/view`, {
+        responseType: "blob",
+    });
+    const blob = res.data as Blob;
+    return {
+        url: URL.createObjectURL(blob),
+        contentType: blob.type || null,
+    };
+}
+
+// ── Query Keys (extended) ───────────────────────────────────────────────────
+
+/** Extended query keys for loan review features. */
+export const loanReviewKeys = {
+    ...queryKeys.loans.review,
+    documentRemarks: (loanId: number) => ["loans", "review", loanId, "document-remarks"] as const,
+    documentChecklist: (loanId: number) => ["loans", "review", loanId, "document-checklist"] as const,
+};

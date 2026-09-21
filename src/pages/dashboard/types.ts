@@ -47,3 +47,11 @@ export interface WeeklyTrendPoint {
     approved: number;
     pushBacks: number;
 }
+
+export interface IncompleteDocsQueueItem {
+    position: number;
+    lamId: string;
+    branch: string;
+    waitingSinceUtc: string;
+    missingCount: number;
+}

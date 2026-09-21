@@ -1,0 +1,133 @@
+import { memo, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { WarningCircle } from "@phosphor-icons/react";
+import { Badge } from "@/src/components/ui/badge";
+import { Button } from "@/src/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { cn } from "@/src/lib/utils";
+import { assessAging, AGING_BADGE_CLASS } from "@/src/lib/loan-aging";
+import { useSlaPolicy } from "@/src/lib/api/loan-review";
+import type { IncompleteDocsQueueItem } from "../types";
+
+function formatWaiting(mins: number): string {
+    const h = Math.floor(mins / 60);
+    return h > 0 ? `${h}h ${mins % 60}m` : `${mins}m`;
+}
+
+interface Props {
+    data: IncompleteDocsQueueItem[];
+}
+
+/**
+ * "Queue for Incomplete Documents (to be added to checking)" from the workflow
+ * sketch: files parked on the encoder while requirements are completed. They
+ * re-enter the Checking queue tail once documents verify complete.
+ */
+export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({ data }: Props) {
+    const navigate = useNavigate();
+    const display = useMemo(() => data.slice(0, 5), [data]);
+    const slaPolicy = useSlaPolicy();
+
+    return (
+        <Card id="incomplete-docs-queue" className="scroll-mt-24 flex flex-col">
+            <CardHeader className="flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                    <WarningCircle className="size-5 text-amber-600 dark:text-amber-400" aria-hidden />
+                    Incomplete Documents
+                    {data.length > 0 && (
+                        <Badge variant="secondary" className="tabular-nums">
+                            {data.length}
+                        </Badge>
+                    )}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 flex-1">
+                {data.length === 0 ? (
+                    <p className="py-10 text-center text-sm text-muted-foreground">
+                        No applications waiting on documents.
+                    </p>
+                ) : (
+                    <ul className="divide-y">
+                        {display.map((item) => {
+                            const mins = Math.max(
+                                0,
+                                Math.floor(
+                                    (Date.now() - new Date(item.waitingSinceUtc).getTime()) / 60_000
+                                )
+                            );
+                            const assessment = assessAging(
+                                "ForIncompleteDocuments",
+                                item.waitingSinceUtc,
+                                Date.now(),
+                                slaPolicy.data ?? null
+                            );
+                            return (
+                                <li key={item.lamId}>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            navigate(
+                                                "/loans/monitoring?status=ForIncompleteDocuments"
+                                            )
+                                        }
+                                        className={cn(
+                                            "flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/50",
+                                            "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
+                                            item.position === 1 && "bg-primary/[0.04]"
+                                        )}
+                                    >
+                                        <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">
+                                            #{item.position}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="mb-1 truncate text-sm font-medium">
+                                                {item.lamId}
+                                            </p>
+                                            <p className="truncate text-xs text-muted-foreground">
+                                                {item.branch}
+                                            </p>
+                                        </div>
+                                        <Badge
+                                            variant="outline"
+                                            className="h-4 px-1.5 text-[10px] font-normal text-amber-600 dark:text-amber-400"
+                                        >
+                                            {item.missingCount} missing
+                                        </Badge>
+                                        <span className="shrink-0 text-right text-sm font-medium tabular-nums">
+                                            {formatWaiting(mins)}
+                                            {assessment.tier === "breach" && (
+                                                <Badge
+                                                    variant="outline"
+                                                    className={cn(
+                                                        "ml-2 h-4 px-1.5 text-[10px]",
+                                                        AGING_BADGE_CLASS.breach
+                                                    )}
+                                                >
+                                                    Aging
+                                                </Badge>
+                                            )}
+                                        </span>
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </CardContent>
+            {data.length > 5 && (
+                <CardFooter className="justify-center border-t p-3">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-sm"
+                        onClick={() =>
+                            navigate("/loans/monitoring?status=ForIncompleteDocuments")
+                        }
+                    >
+                        View all {data.length} waiting files
+                    </Button>
+                </CardFooter>
+            )}
+        </Card>
+    );
+});

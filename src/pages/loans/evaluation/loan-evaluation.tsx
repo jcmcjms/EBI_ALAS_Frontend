@@ -59,7 +59,7 @@ import { queryKeys } from "@/src/lib/queryKeys";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
 
-type EvaluationAction = "recommended" | "notRecommended" | "pushback";
+type EvaluationAction = "recommended" | "notRecommended" | "pushback" | "incompleteDocuments";
 
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing"];
 
@@ -250,7 +250,9 @@ export function LoanEvaluationPage() {
                     ? pendingAction === "notRecommended"
                         ? "Not Recommended (forwarded to Approver)"
                         : "Recommended (forwarded to Approver)"
-                    : "Pushed back to Encoder";
+                    : status === "ForIncompleteDocuments"
+                        ? "flagged as having incomplete documents"
+                        : "Pushed back to Encoder";
             toastSuccess(`Application ${actionLabel}.`);
             setComments("");
             setPendingAction(null);
@@ -292,8 +294,8 @@ export function LoanEvaluationPage() {
     const handleAction = (action: EvaluationAction) => {
         const trimmed = comments.trim();
 
-        // Validation: pushback and notRecommended require comments
-        if ((action === "pushback" || action === "notRecommended") && trimmed.length < 10) {
+        // Validation: pushback, notRecommended, and incompleteDocuments require comments
+        if ((action === "pushback" || action === "notRecommended" || action === "incompleteDocuments") && trimmed.length < 10) {
             toastError("Comments are required (minimum 10 characters) for this action.");
             return;
         }
@@ -302,6 +304,8 @@ export function LoanEvaluationPage() {
 
         if (action === "pushback") {
             updateStatus.mutate({ status: "ForRevision", comments: trimmed });
+        } else if (action === "incompleteDocuments") {
+            updateStatus.mutate({ status: "ForIncompleteDocuments", comments: trimmed });
         } else {
             // Both recommended and notRecommended go to ForApproval
             const finalComments =
@@ -353,8 +357,8 @@ export function LoanEvaluationPage() {
     const isForChecking = detail.status === "ForChecking";
     const showEvaluatorActions = isEvaluator && isForChecking && !frozen;
 
-    // Comments required for pushback and notRecommended
-    const commentsRequired = pendingAction === "pushback" || pendingAction === "notRecommended";
+    // Comments required for pushback, notRecommended, and incompleteDocuments
+    const commentsRequired = pendingAction === "pushback" || pendingAction === "notRecommended" || pendingAction === "incompleteDocuments";
     const canAct =
         (!commentsRequired || comments.trim().length >= 10) && !updateStatus.isPending;
 
@@ -717,6 +721,71 @@ export function LoanEvaluationPage() {
                                                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                                         >
                                                             Confirm Pushback
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+
+                                            {/* Incomplete Documents */}
+                                            <AlertDialog>
+                                                <AlertDialogTrigger
+                                                    render={
+                                                        <Button
+                                                            variant="outline"
+                                                            className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                                                            disabled={
+                                                                !canAct ||
+                                                                pendingAction !==
+                                                                    null
+                                                            }
+                                                        />
+                                                    }
+                                                >
+                                                    <WarningCircle
+                                                        size={16}
+                                                    />
+                                                    Incomplete Documents
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>
+                                                            Flag incomplete
+                                                            documents?
+                                                        </AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This moves the
+                                                            application to the
+                                                            Incomplete Documents
+                                                            queue. The encoder
+                                                            will be notified to
+                                                            submit the missing
+                                                            requirements. The
+                                                            file returns to
+                                                            Checking once all
+                                                            documents are
+                                                            verified complete.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel
+                                                            disabled={
+                                                                updateStatus.isPending
+                                                            }
+                                                        >
+                                                            Cancel
+                                                        </AlertDialogCancel>
+                                                        <AlertDialogAction
+                                                            onClick={() =>
+                                                                handleAction(
+                                                                    "incompleteDocuments"
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                updateStatus.isPending
+                                                            }
+                                                            className="bg-amber-600 text-white hover:bg-amber-700"
+                                                        >
+                                                            Confirm
                                                         </AlertDialogAction>
                                                     </AlertDialogFooter>
                                                 </AlertDialogContent>

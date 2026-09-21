@@ -49,6 +49,9 @@ import { useAuthStore } from "@/src/store/authStore";
 import { ApprovalFormDocument } from "./components/approval-form-document";
 import { AttachmentsPanel } from "./components/attachments-panel";
 import { DeviationRemarksPanel } from "./components/deviation-remarks-panel";
+import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
+import { DocumentRequirementsPanel } from "../review/components/document-requirements-panel";
+import { GroupReviewSection } from "../review/components/group-review-section";
 import { ApprovalFormViewport } from "@/src/components/loan/approval-form-sheet";
 import {
     getLoanDetail,
@@ -64,6 +67,7 @@ import { cn } from "@/src/lib/utils";
 import type { LoanStatus } from "@/src/lib/loan-status";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
+import { useDocumentChecklist } from "@/src/hooks/use-document-remarks";
 
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing", "Cancelled"];
 const MIN_REMARKS = 10; // mirrors UpdateLoanStatusValidator
@@ -83,6 +87,7 @@ const WORKFLOW_ACTIONS: WorkflowAction[] = [
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Recommended", kind: "advance", verdict: "Recommended", remarksRequired: false },
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Not Recommended", kind: "advance", verdict: "NotRecommended", remarksRequired: true, confirm: true },
     { role: "Evaluator", from: "ForChecking", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
+    { role: "Evaluator", from: "ForChecking", to: "ForIncompleteDocuments", label: "Incomplete Documents", kind: "return", remarksRequired: true, confirm: true },
     // ── Approver ─────────────────────────────────────────────────────
     { role: "Approver", from: "ForApproval", to: "Approved", label: "Approve Loan", kind: "advance", remarksRequired: false },
     { role: "Approver", from: "ForApproval", to: "ForRevision", label: "Return to Encoder", kind: "return", remarksRequired: true, confirm: true },
@@ -272,6 +277,8 @@ export function LoanApprovalPage() {
         staleTime: 30_000,
     });
 
+    const checklist = useDocumentChecklist(id);
+
     const detail = loan.data;
     const frozen = detail ? TERMINAL.includes(detail.status) : false;
     const formData = useMemo(
@@ -417,6 +424,12 @@ export function LoanApprovalPage() {
             </header>
 
             <div className="container mx-auto px-6 py-8">
+                <div className="mb-6">
+                    <IncompleteDocumentsWarning
+                        status={detail.status}
+                        checklist={checklist.data}
+                    />
+                </div>
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
                     {/* ── Document: fixed 800px sheet inside a zoomable viewport ── */}
                     <div className="space-y-4">
@@ -777,6 +790,25 @@ export function LoanApprovalPage() {
                                 </Card>
                             </TabsContent>
                         </Tabs>
+
+                        {/* ── Document Requirements Panel ── */}
+                        <DocumentRequirementsPanel
+                            loanId={id}
+                            lamId={detail.lamId}
+                            status={detail.status}
+                            checklist={checklist.data}
+                            isHeadOwner={false}
+                        />
+
+                        {/* ── Group Review Section ── */}
+                        {detail.applicationGroupNo && (
+                            <GroupReviewSection
+                                groupNo={detail.applicationGroupNo}
+                                currentLoanId={id}
+                                allowedTargets={actions.map((a) => a.to)}
+                                statusOf={(s) => s}
+                            />
+                        )}
                     </aside>
                 </div>
             </div>

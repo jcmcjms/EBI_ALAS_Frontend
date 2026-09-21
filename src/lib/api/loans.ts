@@ -421,7 +421,12 @@ export async function getLoanById(id: number): Promise<LoanResponse> {
  */
 export async function updateLoanStatus(
     id: number,
-    payload: { status: string; comments?: string }
+    payload: {
+        status: string;
+        comments?: string;
+        missingRequirementCodes?: string[];
+        submittedRequirementCodes?: string[];
+    }
 ): Promise<LoanResponse> {
     const res = await apiClient.put<ApiResponse<LoanResponse>>(
         `/api/loans/${id}/status`,

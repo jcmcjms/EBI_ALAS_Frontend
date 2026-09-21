@@ -81,6 +81,12 @@ export const queryKeys = {
         },
         /** Loan history/timeline for a specific application. */
         history: (id: number) => ["loans", id, "history"] as const,
+        /** Document remarks per loan. */
+        documentRemarks: (loanId: number) => ["loans", "review", loanId, "document-remarks"] as const,
+        /** Document checklist per loan. */
+        documentChecklist: (loanId: number) => ["loans", "review", loanId, "document-checklist"] as const,
+        /** Loan group (application bundle). */
+        group: (groupNo: string) => ["loans", "group", groupNo] as const,
     },
 
     // ── WebLoans (CIS lookup / outstanding / pending) ──────────────────────

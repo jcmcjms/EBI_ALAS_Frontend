@@ -8,6 +8,7 @@ import { Skeleton } from "@/src/components/ui/skeleton";
 
 import { ApprovedLoans } from "@/src/pages/dashboard/components/approved-loans";
 import { DashboardSummary } from "@/src/pages/dashboard/components/dashboard-summary";
+import { IncompleteDocumentsQueue } from "@/src/pages/dashboard/components/incomplete-documents-queue";
 import { NowServing } from "@/src/pages/dashboard/components/now-serving";
 import { PendingQueue } from "@/src/pages/dashboard/components/pending-queue";
 import { PushBack } from "@/src/pages/dashboard/components/push-back";
@@ -64,8 +65,9 @@ export function Dashboard() {
                         <DashboardSummary data={data.summary} />
 
                         <div className="grid gap-6 xl:grid-cols-3">
-                            <div className="xl:col-span-2">
+                            <div className="xl:col-span-2 space-y-6">
                                 <PendingQueue data={data.pendingQueue} />
+                                <IncompleteDocumentsQueue data={data.incompleteDocsQueue} />
                             </div>
                             <div className="flex flex-col gap-6">
                                 <NowServing data={data.nowServing} />

@@ -4,7 +4,7 @@ import { getDashboardOverview, type DashboardOverviewDto } from "@/src/lib/api/d
 import { BRANCHES } from "@/src/lib/api/types";
 import type {
     DashboardSummary, LoanStatus, PendingQueueItem, NowServingItem,
-    PushBackItem, ApprovedLoanItem, WeeklyTrendPoint,
+    PushBackItem, ApprovedLoanItem, WeeklyTrendPoint, IncompleteDocsQueueItem,
 } from "@/src/pages/dashboard/types";
 
 export interface DashboardData {
@@ -14,6 +14,7 @@ export interface DashboardData {
     pushBacks: PushBackItem[];
     approvedLoans: ApprovedLoanItem[];
     weeklyTrend: WeeklyTrendPoint[];
+    incompleteDocsQueue: IncompleteDocsQueueItem[];
     fetchedAt: string;
 }
 
@@ -23,6 +24,7 @@ const STATUS_LABELS: Record<string, LoanStatus> = {
     ForChecking: "For Checking",
     ForApproval: "For Approval",
     ForRevision: "For Revision",
+    ForIncompleteDocuments: "For Incomplete Documents",
     ForDisbursement: "For Disbursement",
     Disbursed: "Disbursed",
     OnGoing: "On Going",
@@ -65,6 +67,13 @@ function mapOverview(o: DashboardOverviewDto): DashboardData {
         })),
         weeklyTrend: o.weeklyTrend.map((t) => ({
             day: t.day, approved: t.approved, pushBacks: t.pushBacks,
+        })),
+        incompleteDocsQueue: (o.documentQueue ?? []).map((d) => ({
+            position: d.position,
+            lamId: d.lamId,
+            branch: branchNameOf(d.branchCode),
+            waitingSinceUtc: d.waitingSinceUtc,
+            missingCount: d.missingCount,
         })),
         fetchedAt: o.generatedAtUtc,
     };
