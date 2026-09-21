@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-    DownloadSimple,
+    Eye,
     CheckCircle,
     XCircle,
     ListChecks,
@@ -30,11 +30,11 @@ import { Textarea } from "@/src/components/ui/textarea";
 import {
     getChecklistDocuments,
     getDocumentRemarks,
-    viewChecklistDocument,
     type LoanChecklistDocumentDto,
 } from "@/src/lib/api/loan-review";
 import { loanReviewKeys } from "@/src/lib/api/loan-review";
 import { DocumentRemarksThread } from "./document-remarks-thread";
+import { DocumentPreviewDialog } from "./document-preview-dialog";
 
 const MIN_REMARKS = 10;
 
@@ -69,6 +69,7 @@ export function AttachmentsPanel({
     const [selected, setSelected] = useState<Record<string, boolean>>({});
     const [pushBackOpen, setPushBackOpen] = useState(false);
     const [pushBackRemarks, setPushBackRemarks] = useState("");
+    const [previewDoc, setPreviewDoc] = useState<{ docId: number; fileName: string; contentType: string } | null>(null);
 
     const checklistDocs = useQuery({
         queryKey: loanReviewKeys.checklistDocuments(loanId),
@@ -177,9 +178,15 @@ export function AttachmentsPanel({
                                             size="sm"
                                             variant="outline"
                                             className="shrink-0 gap-1.5"
-                                            onClick={() => viewChecklistDocument(item.docId!, item.docStr ?? `document-${item.docId}`)}
+                                            onClick={() =>
+                                                setPreviewDoc({
+                                                    docId: item.docId!,
+                                                    fileName: item.docStr ?? `document-${item.docId}`,
+                                                    contentType: item.contentType ?? "application/octet-stream",
+                                                })
+                                            }
                                         >
-                                            <DownloadSimple size={14} weight="bold" /> View
+                                            <Eye size={14} weight="bold" /> View
                                         </Button>
                                     )}
                                     <Button
@@ -285,6 +292,12 @@ export function AttachmentsPanel({
                     </AlertDialog>
                 </div>
             )}
+
+            <DocumentPreviewDialog
+                open={previewDoc !== null}
+                onClose={() => setPreviewDoc(null)}
+                doc={previewDoc}
+            />
         </div>
     );
 }
