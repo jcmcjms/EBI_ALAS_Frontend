@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toastSuccess, toastInfo } from "@/src/components/ui/toast";
 import {
     BellSimple,
     CaretDown,
@@ -116,8 +116,8 @@ export function NotificationsPage() {
 
     const handleResolve = (id: string, resolution: "approved" | "declined") => {
         resolveNotification(id, resolution);
-        if (resolution === "approved") toast.success("Request approved.");
-        else toast.info("Request declined.");
+        if (resolution === "approved") toastSuccess("Request approved.");
+        else toastInfo("Request declined.");
         // TODO(team): Replace client-side resolve with POST /api/notifications/{id}/resolve + optimistic rollback.
     };
 

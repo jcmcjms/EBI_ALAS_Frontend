@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toastError, toastSuccess, toastInfo } from "@/src/components/ui/toast";
 import {
     CalendarBlank,
     CaretRight,
@@ -306,13 +306,13 @@ export function AccountPage() {
     const handleRevoke = (sessionId: number) => {
         revokeSession.mutate(sessionId, {
             onSuccess: () => {
-                toast.success("Session revoked successfully");
+                toastSuccess("Session revoked successfully");
             },
             onError: (err: unknown) => {
                 const message =
                     (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
                     "Failed to revoke session";
-                toast.error(message);
+                toastError(message);
             },
         });
     };
@@ -596,7 +596,7 @@ export function AccountPage() {
                                     </p>
                                     <Button
                                         variant="outline"
-                                        onClick={() => toast.info("MFA enrollment opens once the API is wired.")}
+                                        onClick={() => toastInfo("MFA enrollment opens once the API is wired.")}
                                     >
                                         Enroll
                                     </Button>

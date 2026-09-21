@@ -18,7 +18,7 @@ import {
     ThumbsUp,
     ThumbsDown,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toastError, toastSuccess } from "@/src/components/ui/toast";
 
 import {
     Card,
@@ -285,7 +285,7 @@ export function LoanApprovalPage() {
         mutationFn: (a: WorkflowAction) =>
             updateLoanStatus(id, a.to, remarks.trim(), a.verdict),
         onSuccess: (_d, a) => {
-            toast.success(
+            toastSuccess(
                 a.verdict === "NotRecommended"
                     ? "Evaluation recorded as Not Recommended — forwarded to Approver."
                     : a.kind === "return"
@@ -296,7 +296,7 @@ export function LoanApprovalPage() {
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
-        onError: (e: Error) => toast.error(e.message),
+        onError: (e: Error) => toastError(e.message),
     });
 
     // ── Empty / error states ─────────────────────────────────────────
@@ -821,7 +821,7 @@ export function LoanApprovalPage() {
                                 setCancelPending(true);
                                 try {
                                     await cancelLoanApplication(id, cancelReason.trim());
-                                    toast.success("Application cancelled.");
+                                    toastSuccess("Application cancelled.");
                                     setCancelOpen(false);
                                     setCancelReason("");
                                     setCancelPending(false);
@@ -829,7 +829,7 @@ export function LoanApprovalPage() {
                                     qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
                                     qc.invalidateQueries({ queryKey: queryKeys.loans.all });
                                 } catch (e) {
-                                    toast.error(e instanceof Error ? e.message : "Could not cancel.");
+                                    toastError(e instanceof Error ? e.message : "Could not cancel.");
                                     setCancelPending(false);
                                 }
                             }}

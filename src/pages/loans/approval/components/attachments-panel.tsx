@@ -13,7 +13,7 @@ import {
     XCircle,
     ListChecks,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toastError, toastSuccess } from "@/src/components/ui/toast";
 
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
@@ -99,31 +99,31 @@ export function AttachmentsPanel({
             uploadLoanAttachment(loanId, file, null, setProgress),
         onMutate: () => setProgress(0),
         onSuccess: (_, file) => {
-            toast.success(`"${file.name}" uploaded.`);
+            toastSuccess(`"${file.name}" uploaded.`);
             qc.invalidateQueries({
                 queryKey: queryKeys.loans.review.attachments(loanId),
             });
         },
-        onError: (e: Error) => toast.error(e.message),
+        onError: (e: Error) => toastError(e.message),
         onSettled: () => setProgress(null),
     });
 
     const remove = useMutation({
         mutationFn: deleteLoanAttachment,
         onSuccess: () => {
-            toast.success("File deleted.");
+            toastSuccess("File deleted.");
             qc.invalidateQueries({
                 queryKey: queryKeys.loans.review.attachments(loanId),
             });
         },
-        onError: (e: Error) => toast.error(e.message),
+        onError: (e: Error) => toastError(e.message),
     });
 
     const pickFiles = (files: FileList | null) => {
         if (!files) return;
         for (const file of Array.from(files)) {
             if (file.size > MAX_MB * 1024 * 1024) {
-                toast.error(`"${file.name}" exceeds ${MAX_MB} MB.`);
+                toastError(`"${file.name}" exceeds ${MAX_MB} MB.`);
                 continue;
             }
             upload.mutate(file);
