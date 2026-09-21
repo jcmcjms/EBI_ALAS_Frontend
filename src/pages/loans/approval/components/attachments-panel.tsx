@@ -136,12 +136,12 @@ export function AttachmentsPanel({
 
             {items.length > 0 && (
                 <ul className="space-y-2">
-                    {items.map((item) => {
+                    {items.map((item, index) => {
                         const isPending = item.uploadStatus !== "Uploaded";
                         const threadOpen = openThread === item.idCode;
                         const remarkCount = remarksFor(item.idCode).length;
                         return (
-                            <li key={item.idCode} className="rounded-md border bg-background">
+                            <li key={`${item.idCode}-${item.docId ?? index}`} className="rounded-md border bg-background">
                                 <div className="flex items-start gap-3 p-3">
                                     {canPushBack && isPending && (
                                         <input
