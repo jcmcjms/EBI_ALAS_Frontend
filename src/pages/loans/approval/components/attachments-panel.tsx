@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
     Eye,
+    DownloadSimple,
     CheckCircle,
     XCircle,
     ListChecks,
@@ -30,6 +31,7 @@ import { Textarea } from "@/src/components/ui/textarea";
 import {
     getChecklistDocuments,
     getDocumentRemarks,
+    viewChecklistDocument,
     type LoanChecklistDocumentDto,
 } from "@/src/lib/api/loan-review";
 import { loanReviewKeys } from "@/src/lib/api/loan-review";
@@ -174,20 +176,30 @@ export function AttachmentsPanel({
                                         )}
                                     </div>
                                     {!isPending && item.docId && (
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="shrink-0 gap-1.5"
-                                            onClick={() =>
-                                                setPreviewDoc({
-                                                    docId: item.docId!,
-                                                    fileName: item.docStr ?? `document-${item.docId}`,
-                                                    contentType: item.contentType ?? "application/octet-stream",
-                                                })
-                                            }
-                                        >
-                                            <Eye size={14} weight="bold" /> View
-                                        </Button>
+                                        <>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="shrink-0 gap-1.5"
+                                                onClick={() =>
+                                                    setPreviewDoc({
+                                                        docId: item.docId!,
+                                                        fileName: item.docStr ?? `document-${item.docId}`,
+                                                        contentType: item.contentType ?? "application/octet-stream",
+                                                    })
+                                                }
+                                            >
+                                                <Eye size={14} weight="bold" /> View
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="shrink-0 gap-1.5"
+                                                onClick={() => viewChecklistDocument(item.docId!, item.docStr ?? `document-${item.docId}`)}
+                                            >
+                                                <DownloadSimple size={14} weight="bold" /> Download
+                                            </Button>
+                                        </>
                                     )}
                                     <Button
                                         size="sm"
