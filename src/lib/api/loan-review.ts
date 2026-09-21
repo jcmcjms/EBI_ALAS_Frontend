@@ -258,13 +258,15 @@ export async function postDeviationRemark(
 export async function updateLoanStatus(
     id: number,
     status: string,
-    comments: string,
+    comments?: string,
     verdict?: EvaluationVerdict,
+    opts?: { missingRequirementCodes?: string[] },
 ) {
     const res = await apiClient.put<ApiResponse<unknown>>(`/api/loans/${id}/status`, {
         status,
-        comments,
+        comments: comments ?? null,
         verdict: verdict ?? null,
+        ...opts,
     });
     return unwrapApiData(res.data);
 }

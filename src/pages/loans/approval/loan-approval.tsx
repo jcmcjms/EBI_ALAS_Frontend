@@ -17,6 +17,7 @@ import {
     ArrowLeft,
     ThumbsUp,
     ThumbsDown,
+    ListChecks,
 } from "@phosphor-icons/react";
 import { toastError, toastSuccess } from "@/src/components/ui/toast";
 
@@ -50,12 +51,12 @@ import { ApprovalFormDocument } from "./components/approval-form-document";
 import { AttachmentsPanel } from "./components/attachments-panel";
 import { DeviationRemarksPanel } from "./components/deviation-remarks-panel";
 import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
-import { DocumentRequirementsPanel } from "../review/components/document-requirements-panel";
 import { GroupReviewSection } from "../review/components/group-review-section";
 import { ApprovalFormViewport } from "@/src/components/loan/approval-form-sheet";
 import {
     getLoanDetail,
     getLoanHistory,
+    getChecklistDocuments,
     updateLoanStatus,
     cancelLoanApplication,
     CANCELLABLE_STATUSES,
@@ -67,7 +68,6 @@ import { cn } from "@/src/lib/utils";
 import type { LoanStatus } from "@/src/lib/loan-status";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
-import { useDocumentChecklist } from "@/src/hooks/use-document-remarks";
 
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing", "Cancelled"];
 const MIN_REMARKS = 10; // mirrors UpdateLoanStatusValidator
@@ -277,7 +277,12 @@ export function LoanApprovalPage() {
         staleTime: 30_000,
     });
 
-    const checklist = useDocumentChecklist(id);
+    const checklist = useQuery({
+        queryKey: queryKeys.loans.review.checklistDocuments(id),
+        queryFn: () => getChecklistDocuments(id),
+        enabled: Number.isFinite(id) && id > 0,
+        staleTime: 30_000,
+    });
 
     const detail = loan.data;
     const frozen = detail ? TERMINAL.includes(detail.status) : false;
@@ -301,6 +306,20 @@ export function LoanApprovalPage() {
             setRemarks("");
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+        },
+        onError: (e: Error) => toastError(e.message),
+    });
+
+    const pushBackDocs = useMutation({
+        mutationFn: ({ codes, text }: { codes: string[]; text: string }) =>
+            updateLoanStatus(id, "ForIncompleteDocuments", text, undefined, { missingRequirementCodes: codes }),
+        onSuccess: () => {
+            toastSuccess("Pushed back to the Incomplete Documents queue.");
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.dashboard.full });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
         onError: (e: Error) => toastError(e.message),
@@ -349,7 +368,6 @@ export function LoanApprovalPage() {
         (user?.role === "Encoder" &&
             user.userId === String(detail.createdById)) ||
         user?.role === "Admin";
-    const canUpload = canWriteRemarks || user?.role === "Approver";
     const deviationCount =
         detail.deviationDetails.length +
         (detail.feeDeviationJustification ? 1 : 0);
@@ -768,37 +786,32 @@ export function LoanApprovalPage() {
                                 <Card>
                                     <CardHeader className="border-b pb-4">
                                         <CardTitle className="flex items-center gap-2 text-base">
-                                            <FilePdf
+                                            <ListChecks
                                                 size={18}
                                                 weight="bold"
                                                 className="text-primary"
                                             />
-                                            Attached Files
+                                            Document Requirements
                                         </CardTitle>
                                         <CardDescription className="pt-1 text-xs">
-                                            Supporting documents submitted with,
-                                            or added during, review.
+                                            Checklist synced from the document server. Documents are uploaded and
+                                            updated in WebLoan — remarks here coordinate encoder ↔ reviewer.
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="pt-4">
                                         <AttachmentsPanel
                                             loanId={id}
+                                            status={detail.status}
                                             frozen={frozen}
-                                            canUpload={!!canUpload}
+                                            canRemark={!!canWriteRemarks}
+                                            canPushBack={(user?.role === "Evaluator" || user?.role === "Admin") && detail.status === "ForChecking"}
+                                            pushBackPending={pushBackDocs.isPending}
+                                            onPushBack={(codes, text) => pushBackDocs.mutate({ codes, text })}
                                         />
                                     </CardContent>
                                 </Card>
                             </TabsContent>
                         </Tabs>
-
-                        {/* ── Document Requirements Panel ── */}
-                        <DocumentRequirementsPanel
-                            loanId={id}
-                            lamId={detail.lamId}
-                            status={detail.status}
-                            checklist={checklist.data}
-                            isHeadOwner={false}
-                        />
 
                         {/* ── Group Review Section ── */}
                         {detail.applicationGroupNo && (

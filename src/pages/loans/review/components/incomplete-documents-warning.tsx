@@ -1,27 +1,25 @@
-import { useMemo } from "react";
 import { Warning } from "@phosphor-icons/react";
 import { Alert, AlertDescription, AlertTitle } from "@/src/components/ui/alert";
-import { Badge } from "@/src/components/ui/badge";
-import type { DocumentChecklistItem } from "@/src/lib/api/loan-review";
+import type { LoanChecklistDocumentDto } from "@/src/lib/api/loan-review";
+
+const MAX_LISTED = 6;
 
 interface Props {
     status: string;
-    checklist: DocumentChecklistItem[] | undefined;
+    checklist: LoanChecklistDocumentDto[] | undefined;
 }
 
 /**
- * Persistent (non-toast) warning: reviewers must see document state the moment
- * the file opens, including files that returned to Checking/Approval with a
- * history of push-backs. role="status" keeps it out of the toast aria stream.
+ * Application-level completeness: ANY pending requirement ⇒ incomplete file.
+ * Shown parked (ForIncompleteDocuments) or whenever a reviewer has the file
+ * with requirements still pending (e.g. returned to Checking mid-sync).
  */
 export function IncompleteDocumentsWarning({ status, checklist }: Props) {
-    const unresolved = useMemo(
-        () => (checklist ?? []).filter((i) => i.status === "Missing" || i.status === "Pending"),
-        [checklist]
-    );
+    const pending = (checklist ?? []).filter((i) => i.uploadStatus !== "Uploaded");
     const parked = status === "ForIncompleteDocuments";
-    if (!parked && unresolved.length === 0) return null;
+    if (!parked && pending.length === 0) return null;
 
+    const listed = pending.slice(0, MAX_LISTED);
     return (
         <Alert
             variant="destructive"
@@ -32,30 +30,21 @@ export function IncompleteDocumentsWarning({ status, checklist }: Props) {
             <Warning />
             <AlertTitle>
                 {parked
-                    ? "Incomplete documents — waiting on encoder"
-                    : "Document requirements unresolved"}
+                    ? "Incomplete documents — waiting on encoder (WebLoan)"
+                    : `Incomplete documents — ${pending.length} requirement(s) pending`}
             </AlertTitle>
-            <AlertDescription className="space-y-2">
+            <AlertDescription className="space-y-1">
                 <p>
                     {parked
-                        ? "This application is parked in the Incomplete Documents queue. It returns to the Checking queue only after every requirement below is submitted and verified."
-                        : "The following requirements are still open. Verify submission before forwarding to the next stage."}
+                        ? "The file returns to the Checking queue automatically once every requirement verifies complete on the document server."
+                        : "A file with any pending requirement is incomplete. Verify uploads before forwarding to the next stage."}
                 </p>
-                <ul className="flex flex-wrap gap-1.5">
-                    {unresolved.map((i) => (
-                        <li key={i.code}>
-                            <Badge variant="outline" className="font-normal">
-                                {i.name} ·{" "}
-                                <span className="text-amber-600 dark:text-amber-400">
-                                    {i.status}
-                                </span>
-                            </Badge>
-                        </li>
-                    ))}
-                    {parked && unresolved.length === 0 && (
-                        <li className="text-sm">Awaiting completeness sync...</li>
-                    )}
-                </ul>
+                {pending.length > 0 && (
+                    <p className="text-xs">
+                        {listed.map((p) => p.checklistDescription ?? p.idCode).join(" · ")}
+                        {pending.length > MAX_LISTED && ` · +${pending.length - MAX_LISTED} more`}
+                    </p>
+                )}
             </AlertDescription>
         </Alert>
     );
