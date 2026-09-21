@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { Stack } from "@phosphor-icons/react";
+import { ChevronRight, Eye, Stack } from "@phosphor-icons/react";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Checkbox } from "@/src/components/ui/checkbox";
 import {
     Dialog,
@@ -24,6 +24,8 @@ interface Props {
     /** Target statuses the acting role may move the CURRENT loan to. */
     allowedTargets: string[];
     statusOf: (status: string) => string;
+    /** Row click → open that loan's review (parent navigates). */
+    onSelectLoan?: (loanId: number) => void;
 }
 
 export function GroupReviewSection({
@@ -31,6 +33,7 @@ export function GroupReviewSection({
     currentLoanId,
     allowedTargets,
     statusOf,
+    onSelectLoan,
 }: Props) {
     const group = useLoanGroup(groupNo);
     const update = useUpdateGroupStatus();
@@ -138,36 +141,51 @@ export function GroupReviewSection({
                     ))}
                 </div>
             </CardHeader>
+            <CardDescription className="px-6 pt-1 text-xs">
+                Select a loan to open its review. Bundle actions apply one decision to every eligible loan.
+            </CardDescription>
             <CardContent>
                 <ul className="divide-y rounded-md border">
                     {loans.map((l) => (
                         <li
                             key={l.id}
                             className={cn(
-                                "flex items-center gap-3 p-3",
+                                "group/row",
                                 l.id === currentLoanId && "bg-primary/[0.04]"
                             )}
                         >
-                            <span className="flex-1 truncate font-mono text-sm">
-                                {l.lamId}
-                            </span>
-                            <span className="w-24 truncate text-sm text-muted-foreground">
-                                {l.productCode}
-                            </span>
-                            {l.unresolvedDocs > 0 && (
-                                <Badge
-                                    variant="outline"
-                                    className="font-normal text-amber-600 dark:text-amber-400"
-                                >
-                                    {l.unresolvedDocs} doc(s) open
-                                </Badge>
-                            )}
-                            <Badge variant="outline" className="font-normal">
-                                {statusOf(l.status)}
-                            </Badge>
-                            {l.id === currentLoanId && (
-                                <Badge variant="secondary">viewing</Badge>
-                            )}
+                            <button
+                                type="button"
+                                onClick={() => onSelectLoan?.(l.id)}
+                                aria-current={l.id === currentLoanId ? "page" : undefined}
+                                title={`Open ${l.lamId}`}
+                                className={cn(
+                                    "flex w-full items-center gap-3 p-3 text-left transition-colors",
+                                    "hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                )}
+                            >
+                                <span className="flex-1 truncate font-mono text-sm">{l.lamId}</span>
+                                <span className="w-24 truncate text-sm text-muted-foreground">
+                                    {l.productCode}
+                                </span>
+                                {l.unresolvedDocs > 0 && (
+                                    <Badge variant="outline" className="font-normal text-amber-600 dark:text-amber-400">
+                                        {l.unresolvedDocs} doc(s) open
+                                    </Badge>
+                                )}
+                                <Badge variant="outline" className="font-normal">{statusOf(l.status)}</Badge>
+                                {l.id === currentLoanId ? (
+                                    <Badge variant="secondary" className="gap-1">
+                                        <Eye size={12} weight="bold" /> viewing
+                                    </Badge>
+                                ) : (
+                                    <ChevronRight
+                                        size={14}
+                                        className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100"
+                                        aria-hidden
+                                    />
+                                )}
+                            </button>
                         </li>
                     ))}
                 </ul>

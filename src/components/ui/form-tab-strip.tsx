@@ -12,6 +12,8 @@ export interface FormTabItem {
   title?: string;
   /** Destructive indicator dot (row has validation errors). */
   hasError?: boolean;
+  /** Amber indicator dot — review attention (e.g. unresolved documents). */
+  hasWarning?: boolean;
 }
 
 interface FormTabStripProps {
@@ -99,6 +101,9 @@ export function FormTabStrip({
                 {item.metric && <span className="tabular-nums opacity-70">{item.metric}</span>}
                 {item.hasError && (
                   <span className="size-1.5 rounded-full bg-destructive" aria-label="Has validation errors" />
+                )}
+                {!item.hasError && item.hasWarning && (
+                  <span className="size-1.5 rounded-full bg-amber-500" aria-label="Needs attention" />
                 )}
               </button>
             );

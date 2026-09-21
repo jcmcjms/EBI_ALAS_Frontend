@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
@@ -52,7 +52,9 @@ import { AttachmentsPanel } from "./components/attachments-panel";
 import { DeviationRemarksPanel } from "./components/deviation-remarks-panel";
 import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
 import { GroupReviewSection } from "../review/components/group-review-section";
+import { ApprovalGroupTabs } from "./components/approval-group-tabs";
 import { ApprovalFormViewport } from "@/src/components/loan/approval-form-sheet";
+import { useLoanGroup } from "@/src/hooks/use-loan-group";
 import {
     getLoanDetail,
     getLoanHistory,
@@ -284,6 +286,35 @@ export function LoanApprovalPage() {
         staleTime: 30_000,
     });
 
+    // Group membership drives the sticky tab strip. Same query key as
+    // GroupReviewSection's internal useLoanGroup — React Query dedupes,
+    // so this costs zero extra requests.
+    const group = useLoanGroup(loan.data?.applicationGroupNo ?? "");
+    const groupLoans = group.data?.loans ?? [];
+
+    // ── Selection is navigation: reset per-loan ephemeral state ──────
+    useEffect(() => {
+        setRemarks("");
+        setZoom(1);
+        setTab("workflow");
+        setCancelOpen(false);
+        setCancelReason("");
+        window.scrollTo({ top: 0 });
+    }, [id]);
+
+    // ── Prefetch siblings so tab switches paint instantly ────────────
+    // detail has staleTime 30s + keepPreviousData, so a prefetched
+    // sibling renders its sheet synchronously on switch.
+    useEffect(() => {
+        for (const sibling of groupLoans) {
+            if (sibling.id === id) continue;
+            void qc.prefetchQuery({
+                queryKey: queryKeys.loans.review.detail(sibling.id),
+                queryFn: () => getLoanDetail(sibling.id),
+            });
+        }
+    }, [groupLoans, id, qc]);
+
     const detail = loan.data;
     const frozen = detail ? TERMINAL.includes(detail.status) : false;
     const formData = useMemo(
@@ -439,6 +470,14 @@ export function LoanApprovalPage() {
                         {detail.createdByName} (Encoder)
                     </Badge>
                 </div>
+
+                {/* ── Group navigation (multi-loan applications only) ── */}
+                <ApprovalGroupTabs
+                    loans={groupLoans}
+                    currentLoanId={id}
+                    onSelect={(loanId) => navigate(`/loans/approval/${loanId}`)}
+                    statusOf={(s) => s}
+                />
             </header>
 
             <div className="container mx-auto px-6 py-8">
@@ -820,6 +859,7 @@ export function LoanApprovalPage() {
                                 currentLoanId={id}
                                 allowedTargets={actions.map((a) => a.to)}
                                 statusOf={(s) => s}
+                                onSelectLoan={(loanId) => navigate(`/loans/approval/${loanId}`)}
                             />
                         )}
                     </aside>
