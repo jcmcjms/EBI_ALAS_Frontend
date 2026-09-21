@@ -33,6 +33,7 @@ import {
   HidesOutstandingLoans,
   type LoanApplicationFormData,
 } from "./schema";
+import { ActiveLoanProvider } from "./active-loan-context";
 import { LoanTransfersProvider } from "./loan-transfers-provider";
 import { CISLookup } from "./components/cis-lookup";
 import { PersonalInfoSection } from "./components/personal-info-section";
@@ -82,35 +83,35 @@ function countFieldErrors(node: unknown): number {
   );
 }
 
+/** Keys on each loan error node that belong to a given section. */
+const LOAN_SCOPED_KEYS: Partial<Record<SectionId, string[]>> = {
+  "loan-params": ["parameters"],
+  "other-obligations": ["ebiReloans", "buyOuts", "incomingLoans"],
+  verification: ["verification"],
+  deviations: ["deviations"],
+};
+
 function sectionErrorCount(errors: FieldErrors<LoanApplicationFormData>, id: SectionId): number {
+  const keys = LOAN_SCOPED_KEYS[id];
+  if (keys) {
+    const loanErrors = errors.loans;
+    if (!Array.isArray(loanErrors)) return 0;
+    return loanErrors.reduce<number>(
+      (n, le) => n + (le ? keys.reduce((m, k) => m + countFieldErrors(le[k as keyof typeof le]), 0) : 0),
+      0,
+    );
+  }
   switch (id) {
     case "cis-lookup":
       return countFieldErrors(errors.branchType) + countFieldErrors(errors.client);
-    case "loan-params": {
-      // Count errors across all loans in the array
-      const loans = errors.loans;
-      if (!loans || !Array.isArray(loans)) return 0;
-      return loans.reduce<number>(
-        (sum, loanError) => sum + countFieldErrors(loanError),
-        0
-      );
-    }
+    case "personal-info":
+      return 0; // read-only, CIS-sourced
     case "obligations":
       return countFieldErrors(errors.outstandingLoans);
-    case "other-obligations":
-      return (
-        countFieldErrors(errors.ebiReloans) +
-        countFieldErrors(errors.buyOuts) +
-        countFieldErrors(errors.incomingLoans)
-      );
-    case "verification":
-      return countFieldErrors(errors.verification);
-    case "deviations":
-      return countFieldErrors(errors.deviations);
     case "approval-form":
       return 0; // preview only, no validation
     default:
-      return 0; // personal-info is read-only, CIS-sourced
+      return 0;
   }
 }
 
@@ -130,8 +131,6 @@ function useSectionProgress(
   const { control, formState } = useFormContext<LoanApplicationFormData>();
   const branchType = useWatch({ control, name: "branchType" });
   const loans = useWatch({ control, name: "loans" });
-  const verification = useWatch({ control, name: "verification" });
-  const deviations = useWatch({ control, name: "deviations" });
 
   const isComplete = (id: SectionId): boolean => {
     switch (id) {
@@ -154,31 +153,26 @@ function useSectionProgress(
         if (!Array.isArray(loans) || loans.length === 0) return false;
         return true;
       case "verification":
-        // `findings` is a required, non-empty string in the schema.
-        return !!verification?.findings?.trim();
+        // Per-loan: all loans must have non-empty findings
+        if (!Array.isArray(loans) || loans.length === 0) return false;
+        return loans.every((l) => !!l?.verification?.findings?.trim());
       case "deviations":
-        // `otherRemarks` is always required. `deviationDetails` is
-        // also required (as a non-empty array) when `hasDeviations`
-        // is true — the schema's superRefine enforces the same at
-        // submit time, but we mirror the check here so the sidebar
-        // stepper turns green as soon as the AO has selected at
-        // least one reason, without waiting for a submit attempt.
-        //
-        // Each selected reason also needs a non-empty justification
-        // in `deviationJustifications` (≥5 chars per `MIN_JUSTIFICATION_LENGTH`
-        // in schema.ts). Mirroring that here so the stepper reflects
-        // the *full* audit-trail requirement, not just the count.
-        if (!deviations?.otherRemarks?.trim()) return false;
-        if (deviations.hasDeviations) {
-          const details = deviations.deviationDetails ?? [];
-          if (details.length === 0) return false;
-          const justifications = deviations.deviationJustifications ?? {};
-          const allJustified = details.every(
-            (reason) => (justifications[reason] ?? "").trim().length >= 5
-          );
-          if (!allJustified) return false;
-        }
-        return true;
+        // Per-loan: all loans must have non-empty otherRemarks, and if
+        // hasDeviations is true, at least one reason with justification
+        if (!Array.isArray(loans) || loans.length === 0) return false;
+        return loans.every((l) => {
+          const d = l?.deviations;
+          if (!d?.otherRemarks?.trim()) return false;
+          if (d.hasDeviations) {
+            const details = d.deviationDetails ?? [];
+            if (details.length === 0) return false;
+            const justifications = d.deviationJustifications ?? {};
+            return details.every(
+              (reason) => (justifications[reason] ?? "").trim().length >= 5
+            );
+          }
+          return true;
+        });
       case "approval-form":
         return isClientLoaded; // preview available once client is loaded
     }
@@ -511,32 +505,9 @@ export function LoanCreationPage() {
       },
       loans: [],
       outstandingLoans: [],
-      ebiReloans: [],
-      buyOuts: [],
-      incomingLoans: [],
       preLoan: undefined,
-      verification: { findings: "" },
-      deviations: {
-        hasDeviations: false,
-        // `deviationDetails` is now a DeviationReason[] (the fixed
-        // catalogue of deviation reasons surfaced by the wizard's
-        // checkbox group). Seed as an empty array so the form passes
-        // a stable, type-narrow shape to RHF on first mount.
-        deviationDetails: [],
-        // Relational map of per-reason justifications (see
-        // `schema.ts::deviationsSchema`). Seeded empty — entries are
-        // written by the deviations section's textarea when the AO
-        // checks a reason, and pruned on uncheck so the payload
-        // doesn't ship orphaned keys.
-        deviationJustifications: {},
-        aoRecommendation: "",
-        otherRemarks: "",
-        remarks: "",
-        // Optional on mount — the schema's root `superRefine` upgrades
-        // it to required *only* when a fee override is detected, so
-        // we don't need a sentinel value here.
-        feeDeviationJustification: "",
-      },
+      // ── Delegation-of-authority routing ──────────────────────────
+      loanType: "New",
     },
   });
 
@@ -706,6 +677,7 @@ export function LoanCreationPage() {
 
   return (
     <FormProvider {...methods}>
+      <ActiveLoanProvider loans={loans}>
       {/* ── LoanTransfersProvider ─────────────────────────────────────
        * Must sit inside FormProvider because `useLoanTransfers` reads the
        * form via `useFormContext`. It mounts exactly one `useFieldArray`
@@ -976,6 +948,7 @@ export function LoanCreationPage() {
         )}
       </form>
       </LoanTransfersProvider>
+      </ActiveLoanProvider>
     </FormProvider>
   );
 }

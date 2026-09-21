@@ -956,24 +956,24 @@ export interface LoanSubmissionPayload {
             notarialFee: number; docStamps: number; insurance: number;
             standardFeesSnapshot: { notarialFee: number; docStamps: number; insurance: number };
         };
+        ebiReloans: Array<{ pn: string; name: string; existingDeduction: number; outstandingBalance: number; payToClose: number }>;
+        buyOuts: Array<{ pn: string; name: string; amortization: number; outstandingBalance: number }>;
+        incomingLoans: Array<{ name: string; deductions: number; remarks: string }>;
+        verification: { findings: string };
+        deviations: {
+            hasDeviations: boolean;
+            deviationDetails: string[];
+            deviationJustifications: Record<string, string>;
+            remarks?: string; aoRecommendation?: string;
+            otherRemarks: string; feeDeviationJustification?: string;
+        };
     }>;
     outstandingLoans: Array<{
         pn: string; principalBalance: number; amortization: number;
         outstandingBalance: number; dateGranted?: string; dateMaturity?: string;
         status: string; productWithDescription?: string;
     }>;
-    ebiReloans: Array<{ pn: string; name: string; existingDeduction: number; outstandingBalance: number; payToClose: number }>;
-    buyOuts: Array<{ pn: string; name: string; amortization: number; outstandingBalance: number }>;
-    incomingLoans: Array<{ name: string; deductions: number; remarks: string }>;
     preLoan?: { id: number; accountNo: string; bch: string; formNumber?: string; productDescription?: string };
-    verification: { findings: string };
-    deviations: {
-        hasDeviations: boolean;
-        deviationDetails: string[];
-        deviationJustifications: Record<string, string>;
-        remarks?: string; aoRecommendation?: string;
-        otherRemarks: string; feeDeviationJustification?: string;
-    };
     // ── Delegation-of-authority routing ──────────────────────────
     /** "New" or "Renewal" — determines approval tier routing. */
     loanType?: "New" | "Renewal";

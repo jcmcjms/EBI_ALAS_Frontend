@@ -23,6 +23,12 @@
  * `useLoanTransfers()` call from any component would silently desync
  * that component's render from the provider's.
  *
+ * ── Active-loan scoping ──────────────────────────────────────────
+ * The EBI, BuyOut, and Incoming field arrays are now scoped to the
+ * active loan's index (`loans.{idx}.ebiReloans`, etc.). The provider
+ * keys the bridge by `activeLoanNo` so that `useFieldArray` instances
+ * are remounted when the AO switches tabs.
+ *
  * ── Bidirectional transfer contract ───────────────────────────────────
  * Reclassification is strictly bidirectional and only between
  * `outstanding` and `ebi`:
@@ -35,38 +41,10 @@
  * `buyout` and `incoming` rows are now managed directly by the AO via
  * Add/Delete buttons in the section-5 table; they are no longer
  * destinations for outstanding rows.
- *
- * The hook enforces this contract as a defense-in-depth check, so any
- * caller that bypasses the UI is still rejected with a clear toast
- * rather than silently corrupting form state.
- *
- * ── Why we identify rows by `id`, not array index ──────────────────────
- * In react-hook-form, the array index returned by `useFieldArray`'s
- * `fields` and the array index returned by `useWatch` on the same path
- * can desync whenever the form state is mutated (e.g. when an `append`
- * is followed by a `remove`, or when RHF normalizes a `default([])`
- * array). Passing a positional index from a `useWatch` map back into
- * `sourceArray.fields[index]` then produces `undefined` and the
- * transfer silently fails with "source row not found".
- *
- * The correct identity for a `useFieldArray` row is its RHF-generated
- * `id` field. So `handleTransfer` accepts an `id`, and we look up the
- * matching field by id before doing the `remove`. The mapping is done
- * against the watched value (the source of truth for the row's *data*),
- * not against the `fields` snapshot, which avoids the index mismatch
- * entirely.
- *
- * ── Why we append *then* remove ─────────────────────────────────────────
- * Reversing the order would briefly leave the source row visible while
- * the target is being updated, which can race with the `useWatch`
- * re-render in the source table and produce a flicker (and in some RHF
- * versions, a duplicated-key React warning). Append first, remove
- * second: both happen synchronously in the same microtask, so the user
- * only ever sees the row in its new section.
  */
 
 import { useCallback } from "react";
-import { useFieldArray, useFormContext, type Control } from "react-hook-form";
+import { useFieldArray, useFormContext, type Control, type FieldArrayPath } from "react-hook-form";
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
 
 import {
@@ -80,38 +58,30 @@ import type { EbiReloan, LoanApplicationFormData, OutstandingLoan } from "../sch
 
 type LoanArrays = {
     outstanding: ReturnType<typeof useFieldArray<LoanApplicationFormData, "outstandingLoans">>;
-    ebi: ReturnType<typeof useFieldArray<LoanApplicationFormData, "ebiReloans">>;
-    buyOut: ReturnType<typeof useFieldArray<LoanApplicationFormData, "buyOuts">>;
-    incoming: ReturnType<typeof useFieldArray<LoanApplicationFormData, "incomingLoans">>;
+    ebi: ReturnType<typeof useFieldArray<LoanApplicationFormData>>;
+    buyOut: ReturnType<typeof useFieldArray<LoanApplicationFormData>>;
+    incoming: ReturnType<typeof useFieldArray<LoanApplicationFormData>>;
 };
 
 /**
  * Discriminated helpers for `useFieldArray.append()` so we don't have
- * to cast at the call site. The base `useFieldArray` types only allow
- * appending a row of the matching schema; this union over the four
- * sections lets the transfer branch pick the right overload.
+ * to cast at the call site.
  */
 type OutstandingArray = LoanArrays["outstanding"];
 type EbiArray = LoanArrays["ebi"];
 
-export function useLoanTransfers() {
-    // The form context is provided by <FormProvider> in loan-creation.tsx.
-    // We still ask for it through `useFormContext` so that consumers
-    // (components) don't have to know how the form is wired.
+export function useLoanTransfers(loanIndex: number | null) {
     const { control, getValues } = useFormContext<LoanApplicationFormData>();
 
+    const idx = loanIndex ?? 0; // mounted-but-idle when no loan selected; all mutators guard on null
+
     const outstanding = useFieldArray({ control, name: "outstandingLoans" });
-    const ebi = useFieldArray({ control, name: "ebiReloans" });
-    const buyOut = useFieldArray({ control, name: "buyOuts" });
-    const incoming = useFieldArray({ control, name: "incomingLoans" });
+    const ebi = useFieldArray({ control, name: `loans.${idx}.ebiReloans` as FieldArrayPath<LoanApplicationFormData> });
+    const buyOut = useFieldArray({ control, name: `loans.${idx}.buyOuts` as FieldArrayPath<LoanApplicationFormData> });
+    const incoming = useFieldArray({ control, name: `loans.${idx}.incomingLoans` as FieldArrayPath<LoanApplicationFormData> });
 
     const arrays: LoanArrays = { outstanding, ebi, buyOut, incoming };
 
-    /**
-     * Internal lookup that maps a public `LoanSection` ("buyout") to the
-     * camelCase key used by `arrays` ("buyOut"). Keeping this as a
-     * `Record` rather than a function makes call-sites self-documenting.
-     */
     const sectionToArray: Record<LoanSection, keyof LoanArrays> = {
         outstanding: "outstanding",
         ebi: "ebi",
@@ -119,43 +89,23 @@ export function useLoanTransfers() {
         incoming: "incoming",
     };
 
-    /**
-     * The same mapping but for the form-state path used by `getValues`
-     * and `useWatch`. The `useFieldArray` `name` and the form-state path
-     * are identical for our four sections, but we keep the indirection
-     * so the schema can rename a path later without touching call-sites.
-     */
-    const sectionToPath: Record<LoanSection, "outstandingLoans" | "ebiReloans" | "buyOuts" | "incomingLoans"> = {
+    const sectionToPath: Record<LoanSection, string> = {
         outstanding: "outstandingLoans",
-        ebi: "ebiReloans",
-        buyout: "buyOuts",
-        incoming: "incomingLoans",
+        ebi: `loans.${idx}.ebiReloans`,
+        buyout: `loans.${idx}.buyOuts`,
+        incoming: `loans.${idx}.incomingLoans`,
     };
 
-    /**
-     * Transfer the row identified by `rowId` from `source` to the end
-     * of `target`. Re-mapping is delegated to the pure helpers in
-     * `loan-transfer-utils`.
-     *
-     * @param source  The section the row currently lives in.
-     * @param rowId   The RHF-generated `id` of the row to move. This is
-     *                 the React key the table component uses to identify
-     *                 the row, so it can never be wrong even if the
-     *                 array indices desync.
-     * @param target  The section to move the row into.
-     */
     const handleTransfer = useCallback(
         (source: LoanSection, rowId: string, target: LoanSection): void => {
             if (source === target) return;
 
-            // ── Enforce the bidirectional contract ───────────────────
-            // Transfers are allowed only between `outstanding` and `ebi`.
-            // Anything else (including transfers into `buyout` /
-            // `incoming`, or transfers *out of* `buyout` / `incoming`)
-            // is rejected. This is the second line of defence — the
-            // `TransferActionMenu` already only offers these targets —
-            // so any caller that bypasses the UI is still rejected with
-            // a clear error rather than silently corrupting form state.
+            // Guard: EBI transfers require an active loan
+            if (loanIndex === null && target === "ebi") {
+                toastError("Select a loan number in Step 1.3 before transferring to EBI accounts.");
+                return;
+            }
+
             const isValidTransfer =
                 (source === "outstanding" && target === "ebi") ||
                 (source === "ebi" && target === "outstanding");
@@ -171,33 +121,15 @@ export function useLoanTransfers() {
             const targetArray = arrays[sectionToArray[target]];
             const sourcePath = sectionToPath[source];
 
-            // ── Step 1: locate the row by `id` in the `useFieldArray` snapshot.
-            // `fields` is the only reliable place to find the *current*
-            // index for a given id, because `useFieldArray` re-derives
-            // it from RHF's internal store on every render.
             const fieldIndex = sourceArray.fields.findIndex((f) => f.id === rowId);
 
-            // ── Step 2: read the row's *data* from the live form state.
-            // We use `getValues` here (synchronous) rather than `useWatch`,
-            // so we are guaranteed to read the most recent committed
-            // value, not whatever the current render's subscription saw.
-            const liveValues = (getValues(sourcePath) as unknown[] | undefined) ?? [];
+            const liveValues = (getValues(sourcePath as never) as unknown[] | undefined) ?? [];
 
-            // The mapping helpers take a `TransferSourceRow` (record of
-            // unknown values), so we normalise the raw RHF value into the
-            // shape the mappers understand. Every section's row has at
-            // least `{ id: string }` set by `useFieldArray`, plus the
-            // section's own schema fields — `unknown` is the safe type
-            // for "could be any of them".
             const normalize = (v: unknown): TransferSourceRow =>
                 typeof v === "object" && v !== null
                     ? (v as TransferSourceRow)
                     : {};
 
-            // The row's data should sit at the same index as the field.
-            // If the indices somehow desync (e.g. a stale closure during
-            // a rapid double-click), we recover by searching for the
-            // matching `id` in the raw values array instead.
             let rowData: unknown = liveValues[fieldIndex];
 
             if (rowData == null) {
@@ -208,21 +140,10 @@ export function useLoanTransfers() {
             }
 
             if (fieldIndex < 0 || rowData == null) {
-                // Defensive: this should not be reachable in normal
-                // operation, but if it ever is we want the user to
-                // know rather than silently no-op.
                 toastError("Could not transfer loan — source row not found.");
                 return;
             }
 
-            // ── Step 3: map the row's data into the target schema.
-            // After the bidirectional contract check above, `target` is
-            // narrowed to one of {"ebi", "outstanding"}, so a `switch`
-            // with exhaustiveness checking is the right shape. The
-            // `never` branch makes the compiler complain if a future
-            // section is ever added without being handled.
-            // Narrow target to only the valid options to satisfy TypeScript
-            // exhaustiveness in the presence of `buyout` / `incoming`.
             const restrictedTarget = target as "ebi" | "outstanding";
             let mappedRow: EbiReloan | OutstandingLoan;
             switch (restrictedTarget) {
@@ -239,20 +160,6 @@ export function useLoanTransfers() {
                 }
             }
 
-            // ── Step 4: append to the target, then remove from the source.
-            //
-            // Order matters: appending first keeps the array lengths
-            // symmetric during the React render cycle, which avoids
-            // a row briefly disappearing. In react-hook-form >= 7.55
-            // the mutation helpers no longer accept `shouldDirty`; the
-            // form is considered dirty automatically on commit, which
-            // is exactly the behaviour we want.
-            //
-            // `targetArray` is a union of the four `useFieldArray` return
-            // shapes; `append` is therefore an overloaded function whose
-            // parameter type is `OutstandingLoan | EbiReloan | ...`.
-            // Narrow to the destination-specific overload so the right
-            // schema is accepted without `as any`.
             if (restrictedTarget === "ebi") {
                 (targetArray as EbiArray).append(
                     mappedRow as EbiReloan,
@@ -268,9 +175,7 @@ export function useLoanTransfers() {
 
             toastSuccess(`Transferred loan to ${LOAN_SECTION_LABELS[restrictedTarget]}`);
         },
-        // The four `useFieldArray` returns are stable references per
-        // render, but we list them anyway to keep the linter honest.
-        [arrays, sectionToArray, sectionToPath, getValues],
+        [loanIndex, arrays, sectionToArray, sectionToPath, getValues],
     );
 
     return { arrays, handleTransfer, control: control as Control<LoanApplicationFormData> };

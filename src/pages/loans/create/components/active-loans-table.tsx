@@ -36,7 +36,7 @@ import { getOutstandingLoans, getPendingLoan } from "@/src/lib/api/webloans";
 import type { OutstandingLoan, PendingLoan, WebLoanAccount } from "@/src/lib/api/types";
 
 import type { LoanApplicationFormData, CreationTypeCode } from "../schema";
-import { CREATION_TYPE } from "../schema";
+import { CREATION_TYPE, createPerLoanSectionDefaults } from "../schema";
 import type { PreLoanItem } from "@/src/lib/api/types";
 
 interface ActiveLoansTableProps {
@@ -359,6 +359,7 @@ export function ActiveLoansTable({
                     insurance: 0,
                 },
             },
+            ...createPerLoanSectionDefaults(),
         };
 
         append(newLoanEntry);

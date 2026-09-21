@@ -19,6 +19,8 @@ interface FormTabStripProps {
   value: string;
   onValueChange: (value: string) => void;
   ariaLabel: string;
+  /** DOM-id namespace. Defaults to "form". Multiple strips on one page need unique prefixes. */
+  idPrefix?: string;
   /** Surface the active tab merges into: white print sheet vs card body. */
   activeSurface?: "sheet" | "card";
   /** Right slot on the seam (counter, prev/next). */
@@ -36,7 +38,7 @@ interface FormTabStripProps {
  */
 export function FormTabStrip({
   items, value, onValueChange, ariaLabel,
-  activeSurface = "card", trailing,
+  idPrefix = "form", activeSurface = "card", trailing,
 }: FormTabStripProps) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -72,9 +74,9 @@ export function FormTabStrip({
                 ref={(el) => { refs.current[i] = el; }}
                 type="button"
                 role="tab"
-                id={`form-tab-${item.value}`}
+                id={`${idPrefix}-tab-${item.value}`}
                 aria-selected={active}
-                aria-controls={`form-panel-${item.value}`}
+                aria-controls={`${idPrefix}-panel-${item.value}`}
                 tabIndex={active ? 0 : -1}
                 title={item.title}
                 onClick={() => onValueChange(item.value)}

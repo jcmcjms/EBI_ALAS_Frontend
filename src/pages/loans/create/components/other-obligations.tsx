@@ -1,7 +1,7 @@
 /**
  * OtherObligationsSection
  * -----------------------
- * Section 5 of the loan creation wizard. Renders three tables:
+ * Section 5 of the loan creation wizard. Renders three tables per loan:
  *
  *   1. EBI Accounts for Reloans  — read-only rows populated via
  *      transfers from Outstanding Loans. Each row exposes a transfer
@@ -27,12 +27,16 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
+import { Badge } from "@/src/components/ui/badge";
 import { Bank, CreditCard, ArrowLineDown, Plus, Trash } from "@phosphor-icons/react";
 
 import { useLoanTransfersContext } from "../loan-transfers-provider";
 import { TransferActionMenu } from "./transfer-action-menu";
 import { SectionCard, SubSectionHeading } from "./section-card";
+import { PerLoanTabs } from "./per-loan-tabs";
 import { getSection } from "../sections";
+import { useActiveLoan } from "../active-loan-context";
+import type { LoanApplicationFormData } from "../schema";
 
 type EbiRow = {
     pn?: string;
@@ -45,66 +49,7 @@ type BuyOutRow = { pn?: string; name?: string; amortization?: number; outstandin
 type IncomingRow = { name?: string; deductions?: number; remarks?: string };
 
 export function OtherObligationsSection() {
-    const { control, register, getValues } = useFormContext();
-    // `arrays` is consumed for RHF row ids (React keys) and for the
-    // append/remove helpers used by the Add/Delete buttons. The
-    // bidirectional transfer hook (`handleTransfer`) is wired up to
-    // the EBI rows below.
-    // Consume the SINGLE shared `useLoanTransfers` instance via context.
-    // Calling `useLoanTransfers()` directly here would mount a second
-    // `useFieldArray("ebiReloans")` (and a second set for the other
-    // three arrays) whose `fields` snapshots never see mutations made
-    // by Section 4's instance, so a transfer fired from the Outstanding
-    // Loans table would silently disappear here. See
-    // loan-transfers-provider.tsx for the full contract.
-    const { arrays, handleTransfer } = useLoanTransfersContext();
-
-    // ── Iterate `useFieldArray.fields` (not `useWatch`) ─────────────────
-    // Iterating over `arrays.ebi.fields` is the only reliable way to
-    // get a stable RHF-generated `id` per row. The previous version
-    // mapped over `useWatch`'s data array and then *guessed* the id by
-    // indexing `fields[i]` — that index frequently desyncs from the
-    // data index (e.g. when `setValue("outstandingLoans", [...])`
-    // replaces the whole array in `active-loans-table.tsx`, which
-    // bypasses `useFieldArray`'s mutation API). The desync surfaced as
-    // "Could not transfer loan — source row not found." when the user
-    // tried to move a row back from EBI to Outstanding. Iterating the
-    // `fields` snapshot directly removes the guess entirely: every
-    // `field.id` here is the *same* id `useFieldArray`'s `remove` will
-    // accept on the matching `findIndex` inside `useLoanTransfers`.
-    const ebiFields = arrays.ebi.fields;
-    const buyOutFields = arrays.buyOut.fields;
-    const incomingFields = arrays.incoming.fields;
-
-    // Row *data* is still pulled from `useWatch` (or `getValues`) so the
-    // inputs render the latest values, but we index that array by the
-    // `field` index — which, since both `fields` and `getValues` read
-    // from the same RHF store, stays aligned.
-    const ebiReloansValues = (getValues("ebiReloans") as EbiRow[] | undefined) ?? [];
-    const buyOutValues = (getValues("buyOuts") as BuyOutRow[] | undefined) ?? [];
-    const incomingValues = (getValues("incomingLoans") as IncomingRow[] | undefined) ?? [];
-
-    // Kept for backward compatibility with anything downstream that may
-    // re-render on these watched values (the sections still need to
-    // re-render when the underlying form state mutates). Using
-    // `useWatch` here ensures we re-render when the AO types into any
-    // row input.
-    useWatch({ control, name: "ebiReloans" });
-    useWatch({ control, name: "buyOuts" });
-    useWatch({ control, name: "incomingLoans" });
-
-    // ── Add-row handlers ────────────────────────────────────────────────
-    // We seed each new row with empty strings / zeros rather than
-    // undefined so the schema's `.default(...)` constraints are happy
-    // and the inputs render a stable initial DOM node.
-    const addBuyOut = () => {
-        arrays.buyOut.append({ pn: "", name: "", amortization: 0, outstandingBalance: 0 });
-    };
-
-    const addIncoming = () => {
-        arrays.incoming.append({ name: "", deductions: 0, remarks: "" });
-    };
-
+    const { loans } = useActiveLoan();
     const section = getSection("other-obligations");
 
     return (
@@ -114,7 +59,52 @@ export function OtherObligationsSection() {
             description={section.description}
             systemSourced
             contentClassName="p-0 divide-y"
+            badge={loans.length > 0 ? <Badge variant="secondary">{loans.length} loan{loans.length === 1 ? "" : "s"}</Badge> : undefined}
         >
+            {loans.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground">
+                    Select loan numbers in Step 1.3 to declare obligations per loan.
+                </div>
+            ) : (
+                <PerLoanTabs
+                    idPrefix="other-obligations"
+                    ariaLabel="Obligations per loan"
+                    mountStrategy="active-only"
+                    renderPanel={(loan, i) => <OtherObligationsFields loanIndex={i} />}
+                />
+            )}
+        </SectionCard>
+    );
+}
+
+function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
+    const { control, register, getValues } = useFormContext<LoanApplicationFormData>();
+    const { arrays, handleTransfer } = useLoanTransfersContext();
+
+    const ebiFields = arrays.ebi.fields;
+    const buyOutFields = arrays.buyOut.fields;
+    const incomingFields = arrays.incoming.fields;
+
+    const prefix = `loans.${loanIndex}` as const;
+
+    const ebiReloansValues = (getValues(`${prefix}.ebiReloans`) as EbiRow[] | undefined) ?? [];
+    const buyOutValues = (getValues(`${prefix}.buyOuts`) as BuyOutRow[] | undefined) ?? [];
+    const incomingValues = (getValues(`${prefix}.incomingLoans`) as IncomingRow[] | undefined) ?? [];
+
+    useWatch({ control, name: `${prefix}.ebiReloans` });
+    useWatch({ control, name: `${prefix}.buyOuts` });
+    useWatch({ control, name: `${prefix}.incomingLoans` });
+
+    const addBuyOut = () => {
+        arrays.buyOut.append({ pn: "", name: "", amortization: 0, outstandingBalance: 0 });
+    };
+
+    const addIncoming = () => {
+        arrays.incoming.append({ name: "", deductions: 0, remarks: "" });
+    };
+
+    return (
+        <>
             {/* ── EBI Reloans ─────────────────────────────────────── */}
             <div className="p-4">
                 <SubSectionHeading
@@ -125,17 +115,7 @@ export function OtherObligationsSection() {
                 <Table className="mt-3">
                     <TableHeader>
                         <TableRow>
-                            {/* PN / Account No. is widened to 180px so
-                                typical 8–12 digit account numbers stay
-                                readable without truncation, while still
-                                leaving room for the other columns. */}
                             <TableHead className="w-[180px]">PN / Account No.</TableHead>
-                            {/* Product Name and Existing Deduction share the
-                                remaining horizontal space evenly via
-                                `flex-1`, so neither dominates the row. The
-                                `min-w-[140px]` floor prevents either column
-                                from collapsing into illegibility on narrow
-                                viewports. */}
                             <TableHead className="flex-1 min-w-[140px]">
                                 Product Name
                             </TableHead>
@@ -150,13 +130,6 @@ export function OtherObligationsSection() {
                     </TableHeader>
                     <TableBody>
                         {ebiFields.map((field, i) => {
-                            // `i` here is the index into `useFieldArray`'s
-                            // `fields` snapshot, which matches `getValues`'s
-                            // index for the same row (both read from RHF's
-                            // internal store on every render). Reading the
-                            // row's data through `ebiReloansValues[i]` (not
-                            // through a captured iteration variable) keeps
-                            // the data in sync with the `fields` snapshot.
                             const loan = ebiReloansValues[i];
                             return (
                                 <TableRow
@@ -165,7 +138,7 @@ export function OtherObligationsSection() {
                                 >
                                     <TableCell className="min-w-0">
                                         <Input
-                                            {...register(`ebiReloans.${i}.pn`)}
+                                            {...register(`${prefix}.ebiReloans.${i}.pn`)}
                                             defaultValue={loan?.pn}
                                             readOnly
                                             title={loan?.pn}
@@ -174,7 +147,7 @@ export function OtherObligationsSection() {
                                     </TableCell>
                                     <TableCell className="min-w-0">
                                         <Input
-                                            {...register(`ebiReloans.${i}.name`)}
+                                            {...register(`${prefix}.ebiReloans.${i}.name`)}
                                             defaultValue={loan?.name}
                                             readOnly
                                             title={loan?.name}
@@ -184,7 +157,7 @@ export function OtherObligationsSection() {
                                     <TableCell className="min-w-0">
                                         <Input
                                             type="number"
-                                            {...register(`ebiReloans.${i}.existingDeduction`, {
+                                            {...register(`${prefix}.ebiReloans.${i}.existingDeduction`, {
                                                 valueAsNumber: true,
                                             })}
                                             defaultValue={loan?.existingDeduction}
@@ -199,7 +172,7 @@ export function OtherObligationsSection() {
                                             step="0.01"
                                             inputMode="decimal"
                                             {...register(
-                                                `ebiReloans.${i}.payToClose`,
+                                                `${prefix}.ebiReloans.${i}.payToClose`,
                                                 { valueAsNumber: true },
                                             )}
                                             defaultValue={loan?.payToClose ?? 0}
@@ -212,10 +185,6 @@ export function OtherObligationsSection() {
                                         <TransferActionMenu
                                             currentSection="ebi"
                                             onTransfer={(target) =>
-                                                // Pass `field.id` directly — it is the
-                                                // RHF-generated id for this exact row,
-                                                // and `useFieldArray.findIndex` inside
-                                                // the hook will find it unambiguously.
                                                 handleTransfer("ebi", field.id, target)
                                             }
                                         />
@@ -284,14 +253,14 @@ export function OtherObligationsSection() {
                                 >
                                     <TableCell>
                                         <Input
-                                            {...register(`buyOuts.${i}.pn`)}
+                                            {...register(`${prefix}.buyOuts.${i}.pn`)}
                                             defaultValue={loan?.pn}
                                             className="h-8 text-xs"
                                         />
                                     </TableCell>
                                     <TableCell>
                                         <Input
-                                            {...register(`buyOuts.${i}.name`)}
+                                            {...register(`${prefix}.buyOuts.${i}.name`)}
                                             defaultValue={loan?.name}
                                             className="h-8 text-xs"
                                         />
@@ -299,7 +268,7 @@ export function OtherObligationsSection() {
                                     <TableCell>
                                         <Input
                                             type="number"
-                                            {...register(`buyOuts.${i}.amortization`, {
+                                            {...register(`${prefix}.buyOuts.${i}.amortization`, {
                                                 valueAsNumber: true,
                                             })}
                                             defaultValue={loan?.amortization}
@@ -309,7 +278,7 @@ export function OtherObligationsSection() {
                                     <TableCell>
                                         <Input
                                             type="number"
-                                            {...register(`buyOuts.${i}.outstandingBalance`, {
+                                            {...register(`${prefix}.buyOuts.${i}.outstandingBalance`, {
                                                 valueAsNumber: true,
                                             })}
                                             defaultValue={loan?.outstandingBalance}
@@ -391,7 +360,7 @@ export function OtherObligationsSection() {
                                 >
                                     <TableCell>
                                         <Input
-                                            {...register(`incomingLoans.${i}.name`)}
+                                            {...register(`${prefix}.incomingLoans.${i}.name`)}
                                             defaultValue={loan?.name}
                                             className="h-8 text-xs"
                                         />
@@ -399,7 +368,7 @@ export function OtherObligationsSection() {
                                     <TableCell>
                                         <Input
                                             type="number"
-                                            {...register(`incomingLoans.${i}.deductions`, {
+                                            {...register(`${prefix}.incomingLoans.${i}.deductions`, {
                                                 valueAsNumber: true,
                                             })}
                                             defaultValue={loan?.deductions}
@@ -408,7 +377,7 @@ export function OtherObligationsSection() {
                                     </TableCell>
                                     <TableCell>
                                         <Input
-                                            {...register(`incomingLoans.${i}.remarks`)}
+                                            {...register(`${prefix}.incomingLoans.${i}.remarks`)}
                                             defaultValue={loan?.remarks}
                                             className="h-8 text-xs"
                                         />
@@ -441,7 +410,6 @@ export function OtherObligationsSection() {
                     </TableBody>
                 </Table>
             </div>
-
-        </SectionCard>
+        </>
     );
 }

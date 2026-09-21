@@ -238,59 +238,6 @@ export const loanParametersSchema = z.object({
         .default({ notarialFee: 0, docStamps: 0, insurance: 0 }),
 });
 
-// ── Selected Loan (per-loan state for multi-loan applications) ──
-//
-// Represents a single loan selected in step 1.3. Each selected loan
-// carries its own parameters (amount, rate, term, fees) to support
-// independent approval forms when multiple loans are processed together.
-// The `productCode` field is extracted from the product description for
-// the Zod-level unique-product constraint (see `loanApplicationSchema.superRefine`).
-export const selectedLoanSchema = z.object({
-    /**
-     * Unique identifier for RHF field array. This is RHF's internal key
-     * (`keyName` option) and lives only in the `fields` snapshot returned
-     * by `useFieldArray` — it never lands in form values, so it must NOT
-     * be required in the schema (otherwise every `zodResolver` submit would
-     * fail with "loans.N.id: Required"). React keys in the UI layer use
-     * `loanNo` (the actual PN), which is stable and meaningful.
-     */
-    // id: z.string()  <-- RHF internal only; not part of form values
-    /** The loan number (PN) selected by the AO. */
-    loanNo: z.string().min(1, "Loan number is required"),
-    /**
-     * Extracted product code (e.g., "C21", "C35") used for:
-     * 1. UI-level constraint (prevent same-product selection)
-     * 2. Zod-level validation (superRefine unique check)
-     * 3. Smart-default fee lookup
-     */
-    productCode: z.string(),
-    /** Full product description from the pending loan (e.g., "C21 - Salary Loan"). */
-    productDescription: z.string(),
-    /** Creation type code (0/1/2/6/null) from the pending loan. */
-    creationTypeCode: creationTypeCodeSchema,
-    /** Creation type label (e.g., "New Loan", "Restructured") from the pending loan. */
-    creationTypeLabel: z.string(),
-    /**
-     * Branch code extracted from the selected accountId.
-     * Used for loan-class lookup (cat_loan_class) in the approval form.
-     */
-    branchCode: z.string(),
-    /** All loan parameters for this specific loan. */
-    parameters: loanParametersSchema,
-    /**
-     * Frozen at submission: the TERM (Days) actually printed on the
-     * approval form. Present only on review/approval pages that receive
-     * data from the backend (not on the create page).
-     */
-    approvalTermDays: z.number().optional(),
-    /**
-     * Frozen at submission: annual rate in percent (e.g. 21.57),
-     * normalized from webloan's decimal fraction. Present only on
-     * review/approval pages that receive data from the backend.
-     */
-    annualRatePercent: z.number().optional(),
-});
-
 // ── Verification Conducted ─────────────────────────────────────
 // `findings` is required: the AO must record what was verified
 // (employment, payslip, collateral, etc.) before the application can
@@ -447,6 +394,70 @@ export const deviationsSchema = z
         }
     });
 
+// ── Selected Loan (per-loan state for multi-loan applications) ──
+//
+// Represents a single loan selected in step 1.3. Each selected loan
+// carries its own parameters (amount, rate, term, fees) to support
+// independent approval forms when multiple loans are processed together.
+// The `productCode` field is extracted from the product description for
+// the Zod-level unique-product constraint (see `loanApplicationSchema.superRefine`).
+export const selectedLoanSchema = z.object({
+    /**
+     * Unique identifier for RHF field array. This is RHF's internal key
+     * (`keyName` option) and lives only in the `fields` snapshot returned
+     * by `useFieldArray` — it never lands in form values, so it must NOT
+     * be required in the schema (otherwise every `zodResolver` submit would
+     * fail with "loans.N.id: Required"). React keys in the UI layer use
+     * `loanNo` (the actual PN), which is stable and meaningful.
+     */
+    // id: z.string()  <-- RHF internal only; not part of form values
+    /** The loan number (PN) selected by the AO. */
+    loanNo: z.string().min(1, "Loan number is required"),
+    /**
+     * Extracted product code (e.g., "C21", "C35") used for:
+     * 1. UI-level constraint (prevent same-product selection)
+     * 2. Zod-level validation (superRefine unique check)
+     * 3. Smart-default fee lookup
+     */
+    productCode: z.string(),
+    /** Full product description from the pending loan (e.g., "C21 - Salary Loan"). */
+    productDescription: z.string(),
+    /** Creation type code (0/1/2/6/null) from the pending loan. */
+    creationTypeCode: creationTypeCodeSchema,
+    /** Creation type label (e.g., "New Loan", "Restructured") from the pending loan. */
+    creationTypeLabel: z.string(),
+    /**
+     * Branch code extracted from the selected accountId.
+     * Used for loan-class lookup (cat_loan_class) in the approval form.
+     */
+    branchCode: z.string(),
+    /** All loan parameters for this specific loan. */
+    parameters: loanParametersSchema,
+    /**
+     * Frozen at submission: the TERM (Days) actually printed on the
+     * approval form. Present only on review/approval pages that receive
+     * data from the backend (not on the create page).
+     */
+    approvalTermDays: z.number().optional(),
+    /**
+     * Frozen at submission: annual rate in percent (e.g. 21.57),
+     * normalized from webloan's decimal fraction. Present only on
+     * review/approval pages that receive data from the backend.
+     */
+    annualRatePercent: z.number().optional(),
+
+    // ── §5 obligations declared against this loan only ──────────
+    ebiReloans: z.array(ebiReloanSchema).default([]),
+    buyOuts: z.array(buyOutSchema).default([]),
+    incomingLoans: z.array(incomingLoanSchema).default([]),
+
+    // ── §6 per-loan verification trail ──────────────────────────
+    verification: verificationSchema,
+
+    // ── §7 per-loan deviations / remarks audit bucket ───────────
+    deviations: deviationsSchema,
+});
+
 // ── Full Loan Application ──────────────────────────────────────
 //
 // `loanApplicationSchema` is the root schema wired to `useForm`'s
@@ -475,31 +486,20 @@ export const loanApplicationSchema = z
         // enabling multiple distinct approval forms within one application.
         loans: z.array(selectedLoanSchema).min(1, "Select at least one loan to process."),
         outstandingLoans: z.array(outstandingLoanSchema).default([]),
-        ebiReloans: z.array(ebiReloanSchema).default([]),
-        buyOuts: z.array(buyOutSchema).default([]),
-        incomingLoans: z.array(incomingLoanSchema).default([]),
         preLoan: preLoanRefSchema.optional(),
-        // Both sections are required: the wizard seeds them with empty
-        // strings in `loan-creation.tsx` so they always exist on mount.
-        // Marking them required at the parent level ensures the
-        // `.min(1)` constraints on `findings`, `otherRemarks`, and
-        // (conditionally) `deviationDetails` are actually evaluated.
-        verification: verificationSchema,
-        deviations: deviationsSchema,
         // ── Delegation-of-authority routing ──────────────────────────
         // "New" or "Renewal" — determines which tier of the approval
         // matrix the loan is routed to. Default derived from form data.
         loanType: z.enum(["New", "Renewal"]).default("New"),
     })
     .superRefine((data, ctx) => {
-        const { loans, deviations } = data;
+        const { loans } = data;
 
         // ── Rule 1: Fee deviation justification (per-loan) ─────────────
         //
         // Iterate all loans and check if any fee field deviates from its
-        // snapshot. If so, a justification is required.
+        // snapshot. If so, a justification is required on THAT loan.
         const FEES_TOLERANCE = 0.01;
-        let hasFeeOverride = false;
 
         for (let i = 0; i < loans.length; i++) {
             const loan = loans[i];
@@ -509,33 +509,19 @@ export const loanApplicationSchema = z
                 insurance: 0,
             };
 
-            const notarialDiff = Math.abs(
-                (loan.parameters.notarialFee ?? 0) - (snapshot.notarialFee ?? 0)
-            );
-            const docStampsDiff = Math.abs(
-                (loan.parameters.docStamps ?? 0) - (snapshot.docStamps ?? 0)
-            );
-            const insuranceDiff = Math.abs(
-                (loan.parameters.insurance ?? 0) - (snapshot.insurance ?? 0)
-            );
+            const deviated =
+                Math.abs((loan.parameters.notarialFee ?? 0) - (snapshot.notarialFee ?? 0)) > FEES_TOLERANCE ||
+                Math.abs((loan.parameters.docStamps ?? 0) - (snapshot.docStamps ?? 0)) > FEES_TOLERANCE ||
+                Math.abs((loan.parameters.insurance ?? 0) - (snapshot.insurance ?? 0)) > FEES_TOLERANCE;
 
-            if (
-                notarialDiff > FEES_TOLERANCE ||
-                docStampsDiff > FEES_TOLERANCE ||
-                insuranceDiff > FEES_TOLERANCE
-            ) {
-                hasFeeOverride = true;
-                break;
+            if (deviated && !loan.deviations?.feeDeviationJustification?.trim()) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["loans", i, "deviations", "feeDeviationJustification"],
+                    message:
+                        "Provide a justification — at least one fee on this loan deviates from the bank's standard rate.",
+                });
             }
-        }
-
-        if (hasFeeOverride && !deviations?.feeDeviationJustification?.trim()) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ["deviations", "feeDeviationJustification"],
-                message:
-                    "Provide a justification — at least one fee deviates from the bank's standard rate.",
-            });
         }
 
         // ── Rule 2: Unique product codes across all selected loans ─────
@@ -583,3 +569,21 @@ export type SelectedLoan = z.infer<typeof selectedLoanSchema>;
 export type VerificationData = z.infer<typeof verificationSchema>;
 export type DeviationsData = z.infer<typeof deviationsSchema>;
 export type LoanApplicationFormData = z.infer<typeof loanApplicationSchema>;
+
+/** Fresh §5–§7 buckets for a newly selected loan (single writer: active-loans-table). */
+export function createPerLoanSectionDefaults() {
+    return {
+        ebiReloans: [] as EbiReloan[],
+        buyOuts: [] as BuyOut[],
+        incomingLoans: [] as IncomingLoan[],
+        verification: { findings: "" },
+        deviations: {
+            hasDeviations: false,
+            deviationDetails: [] as DeviationReason[],
+            deviationJustifications: {} as Record<string, string>,
+            aoRecommendation: "",
+            otherRemarks: "",
+            feeDeviationJustification: "",
+        },
+    };
+}

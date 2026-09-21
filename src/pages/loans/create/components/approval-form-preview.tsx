@@ -9,7 +9,7 @@ import { ApprovalFormSheet } from "@/src/components/loan/approval-form-sheet";
 
 import { SectionCard } from "./section-card";
 import { getSection } from "../sections";
-import type { ClientFormData, LoanApplicationFormData, SelectedLoan } from "../schema";
+import type { ClientFormData, LoanApplicationFormData, LoanParameters, SelectedLoan } from "../schema";
 import { useCatLoanClass } from "@/src/hooks/use-cat-loan-class";
 import {
     parseProductCode,
@@ -150,7 +150,18 @@ function SingleLoanApprovalForm({
     index,
     lamIdByLoanNo,
 }: SingleLoanApprovalFormProps) {
-    const { parameters } = loan;
+    // Defensive fallback: if parameters is missing from the form state
+    // (e.g. during a useWatch snapshot race), use safe defaults to avoid
+    // crashing the entire approval form preview.
+    const parameters = loan.parameters ?? {
+        product: "",
+        purpose: "",
+        proposedAmount: 0,
+        term: 0,
+        notarialFee: 0,
+        docStamps: 0,
+        insurance: 0,
+    } as LoanParameters;
 
     // ── Loan product display name ─────────────────────────────────
     const productCode = parseProductCode(parameters.product);
@@ -197,9 +208,9 @@ function SingleLoanApprovalForm({
     const deductionPct = principal > 0 ? (deductionsSubtotal / principal) * 100 : 0;
 
     const outstandingLoans = form?.outstandingLoans ?? [];
-    const ebiReloans = form?.ebiReloans ?? [];
-    const buyOuts = form?.buyOuts ?? [];
-    const incomingLoans = form?.incomingLoans ?? [];
+    const ebiReloans = loan.ebiReloans ?? [];
+    const buyOuts = loan.buyOuts ?? [];
+    const incomingLoans = loan.incomingLoans ?? [];
 
     const totalPrincipal = outstandingLoans.reduce((s, l) => s + (l.principalBalance || 0), 0);
     const ebiDeductions = ebiReloans.reduce((s, r) => s + (r.existingDeduction || 0), 0);
@@ -245,8 +256,8 @@ function SingleLoanApprovalForm({
         ? buildProductLine(productCode, productDisplay, approvalTermDays, parameters.policyTermMonths, annualRatePercent)
         : "-";
 
-    const deviations = form?.deviations;
-    const verification = form?.verification;
+    const deviations = loan.deviations;
+    const verification = loan.verification;
     const remarksLines = [deviations?.remarks, deviations?.aoRecommendation, deviations?.otherRemarks].filter(
         (x): x is string => !!x
     );
@@ -715,14 +726,15 @@ export const ApprovalFormPreview = forwardRef<
                             {/* Muted band ends exactly at the seam; active tab merges into the sheet */}
                             <div className="bg-muted/30 px-3 pt-2">
                                 <FormTabStrip
+                                    idPrefix="approval"
                                     ariaLabel="Approval forms"
                                     activeSurface="sheet"
                                     items={watchedLoans.map((l) => ({
-                                        value: l.loanNo,
-                                        label: l.productCode,
-                                        hint: `…${l.loanNo.slice(-4)}`,
-                                        metric: num(l.parameters.proposedAmount),
-                                        title: `${l.loanNo} · ${l.productDescription}`,
+                                        value: l.loanNo ?? "",
+                                        label: l.productCode ?? "",
+                                        hint: l.loanNo ? `…${l.loanNo.slice(-4)}` : "…",
+                                        metric: num(l.parameters?.proposedAmount ?? 0),
+                                        title: l.loanNo ? `${l.loanNo} · ${l.productDescription ?? ""}` : (l.productDescription ?? ""),
                                     }))}
                                     value={effectiveActiveLoanNo}
                                     onValueChange={setActiveLoanNo}
@@ -748,13 +760,16 @@ export const ApprovalFormPreview = forwardRef<
 
                             {/* Sheets: screen shows the active one; print emits the whole package,
                                 one form per physical page (the bank's assembly requirement). */}
-                            <div ref={ref} id="approval-form-preview" className="bg-white text-black">
-                                {watchedLoans.map((loan, index) => (
+                            <div className="bg-white text-black">
+                                {watchedLoans.map((loan, index) => {
+                                    // Guard: skip loans with missing loanNo to avoid key warnings
+                                    if (!loan.loanNo) return null;
+                                    return (
                                     <div
                                         key={loan.loanNo}
-                                        id={`form-panel-${loan.loanNo}`}
+                                        id={`approval-panel-${loan.loanNo}`}
                                         role="tabpanel"
-                                        aria-labelledby={`form-tab-${loan.loanNo}`}
+                                        aria-labelledby={`approval-tab-${loan.loanNo}`}
                                         className={cn(
                                             "p-5 text-[10px] leading-[1.4]",
                                             loan.loanNo !== effectiveActiveLoanNo && !captureAll && "hidden print:block",
@@ -775,7 +790,8 @@ export const ApprovalFormPreview = forwardRef<
                                                 lamIdByLoanNo={lamIdByLoanNo}
                                             />
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </>
                     )}

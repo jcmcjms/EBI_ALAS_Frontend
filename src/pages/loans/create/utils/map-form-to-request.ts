@@ -26,11 +26,13 @@ export function mapFormToSubmissionPayload(
             creationTypeLabel: loan.creationTypeLabel,
             branchCode: loan.branchCode,
             parameters: loan.parameters,
+            ebiReloans: loan.ebiReloans.map((row) => ({ ...row })),
+            buyOuts: loan.buyOuts.map((row) => ({ ...row })),
+            incomingLoans: loan.incomingLoans.map((row) => ({ ...row })),
+            verification: { findings: loan.verification.findings },
+            deviations: { ...loan.deviations },
         })),
         outstandingLoans: form.outstandingLoans.map((row) => ({ ...row })),
-        ebiReloans: form.ebiReloans.map((row) => ({ ...row })),
-        buyOuts: form.buyOuts.map((row) => ({ ...row })),
-        incomingLoans: form.incomingLoans.map((row) => ({ ...row })),
         preLoan: form.preLoan
             ? {
                   id: form.preLoan.id,
@@ -40,9 +42,6 @@ export function mapFormToSubmissionPayload(
                   productDescription: form.preLoan.productDescription,
               }
             : undefined,
-        verification: { findings: form.verification.findings },
-        deviations: { ...form.deviations },
-        // ── Delegation-of-authority routing ──────────────────────────
         loanType: form.loanType ?? "New",
     };
 }
