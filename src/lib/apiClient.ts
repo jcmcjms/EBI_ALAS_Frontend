@@ -255,7 +255,8 @@ apiClient.interceptors.response.use(
             error.response?.status !== 401 ||
             !originalRequest ||
             originalRequest._retry ||
-            originalRequest.url === "/api/auth/refresh"
+            originalRequest.url === "/api/auth/refresh" ||
+            originalRequest.url === "/api/auth/login"
         ) {
             return Promise.reject(error);
         }
