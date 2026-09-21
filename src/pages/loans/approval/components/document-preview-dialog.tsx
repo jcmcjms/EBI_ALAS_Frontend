@@ -40,8 +40,8 @@ export function DocumentPreviewDialog({ open, onClose, doc }: DocumentPreviewDia
         setLoading(true);
         setError(false);
         try {
-            const blob = await fetchChecklistDocument(doc.docId);
-            setObjectUrl(URL.createObjectURL(blob));
+            const result = await fetchChecklistDocument(doc.docId);
+            setObjectUrl(result.url);
         } catch {
             setError(true);
         } finally {
@@ -82,15 +82,14 @@ export function DocumentPreviewDialog({ open, onClose, doc }: DocumentPreviewDia
 
     const handleDownload = () => {
         void (async () => {
-            const blob = await fetchChecklistDocument(doc.docId);
-            const url = URL.createObjectURL(blob);
+            const result = await fetchChecklistDocument(doc.docId);
             const a = document.createElement("a");
-            a.href = url;
+            a.href = result.url;
             a.download = doc.fileName;
             document.body.appendChild(a);
             a.click();
             a.remove();
-            URL.revokeObjectURL(url);
+            URL.revokeObjectURL(result.url);
         })();
     };
 
