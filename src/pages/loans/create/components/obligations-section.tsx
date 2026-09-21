@@ -15,8 +15,8 @@ export function ObligationsSection() {
     // snapshot never sees mutations made by the EBI section's instance,
     // re-introducing the "transfer toast fires but target stays empty"
     // bug. See loan-transfers-provider.tsx for the full contract.
-    const { arrays, handleTransfer } = useLoanTransfersContext();
-    const outstandingFields = arrays.outstanding.fields;
+    const { outstanding, handleTransfer } = useLoanTransfersContext();
+    const outstandingFields = outstanding.fields;
 
     // Re-render when the underlying outstanding-loans form state changes
     // (the AO types into a row, the active-loans-table hydrates from
@@ -136,11 +136,10 @@ export function ObligationsSection() {
                                         <TransferActionMenu
                                             currentSection="outstanding"
                                             onTransfer={(target) =>
-                                                // Pass `field.id` directly — it is the
-                                                // RHF-generated id for this exact row,
-                                                // and `useFieldArray.findIndex` inside
-                                                // the hook will find it unambiguously.
-                                                handleTransfer("outstanding", field.id, target)
+                                                // Pass the row index — `handleTransfer`
+                                                // now uses index-based lookup (controlled
+                                                // rows make index-keyed splice safe).
+                                                handleTransfer("outstanding", i, target)
                                             }
                                         />
                                     </TableCell>

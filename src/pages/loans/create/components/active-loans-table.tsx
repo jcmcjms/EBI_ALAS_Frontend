@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormContext, useWatch, useFieldArray } from "react-hook-form";
 import { toastError } from "@/src/components/ui/toast";
 import {
@@ -106,7 +106,7 @@ export function ActiveLoansTable({
     totalActiveLoansCount,
     onPreLoanChange,
 }: ActiveLoansTableProps) {
-    const { control, setValue } = useFormContext<LoanApplicationFormData>();
+    const { control, setValue, getValues } = useFormContext<LoanApplicationFormData>();
 
     // useFieldArray manages the loans array in form state
     const { fields, append, remove, replace } = useFieldArray({
@@ -133,32 +133,37 @@ export function ActiveLoansTable({
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
 
-    const handleFetch = async (accountId: string) => {
+    /**
+     * Core fetch logic — loads outstanding + pending loans for the given
+     * account. When `resetSelection` is true (user-initiated account
+     * switch), clears all selected loans and per-loan form state first.
+     * When false (mount-time self-heal), preserves existing form state
+     * so a remount doesn't destroy the AO's work.
+     */
+    const loadLoans = async (accountId: string, opts: { resetSelection: boolean }) => {
         if (!accountId || !cisNo) return;
-        // Resolve the bare accountNo before any state mutation so the
-        // form-clear block below can identify the account the user is
-        // switching FROM (used in toast / error messages downstream).
         const accountRow = accounts.find((a) => a.accountId === accountId);
         if (!accountRow) return;
-        setSelectedAccountId(accountId);
 
-        // Clear all selected loans using a single atomic replace
-        replace([]);
-        onPreLoanChange("", null);
+        if (opts.resetSelection) {
+            // Clear all selected loans using a single atomic replace
+            replace([]);
+            onPreLoanChange("", null);
 
-        // Wipe any obligations row that came from a previous account — the
-        // outstanding balance is loan-specific and must not leak across
-        // account switches. We also wipe the CIS-level NTHP / NTHP-date
-        // and any previously-picked loan parameters so a stale balance
-        // from the previous (cis, account) pair can't leak through either;
-        // the fresh fetch below re-hydrates them from the response.
-        setValue("outstandingLoans", []);
-        setValue("client.netTakeHomePay", 0);
-        setPendingNthpDate("");
+            // Wipe any obligations row that came from a previous account — the
+            // outstanding balance is loan-specific and must not leak across
+            // account switches. We also wipe the CIS-level NTHP / NTHP-date
+            // and any previously-picked loan parameters so a stale balance
+            // from the previous (cis, account) pair can't leak through either;
+            // the fresh fetch below re-hydrates them from the response.
+            setValue("outstandingLoans", []);
+            setValue("client.netTakeHomePay", 0);
+            setPendingNthpDate("");
 
-        // Clear creation type since we're switching accounts
-        setValue("branchType.creationTypeCode", null);
-        setValue("branchType.creationTypeLabel", "");
+            // Clear creation type since we're switching accounts
+            setValue("branchType.creationTypeCode", null);
+            setValue("branchType.creationTypeLabel", "");
+        }
 
         setIsLoading(true);
         setLoadError(null);
@@ -277,6 +282,24 @@ export function ActiveLoansTable({
         setHasFetched(true);
         setIsLoading(false);
     };
+
+    const handleFetch = (accountId: string) => {
+        setSelectedAccountId(accountId);
+        setValue("branchType.lai", accountId, { shouldDirty: false });
+        return loadLoans(accountId, { resetSelection: true });
+    };
+
+    // Mount-time self-heal: form already carries an LAI (and possibly selected
+    // loans) but this island mounted fresh — reload the picker instead of
+    // stranding the AO with ghost tabs and no list.
+    useEffect(() => {
+        const lai = getValues("branchType.lai");
+        if (lai && !selectedAccountId && accounts.some((a) => a.accountId === lai)) {
+            setSelectedAccountId(lai);
+            void loadLoans(lai, { resetSelection: false });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     /**
      * Toggle a loan number in/out of the selection using useFieldArray.

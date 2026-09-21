@@ -3,31 +3,19 @@
  * ----------------
  * Centralized state-management hook for the four loan sections shown in
  * the loan creation wizard (Outstanding, EBI Reloans, Buy-Outs,
- * Incoming). It exposes the four `useFieldArray` instances as a single
- * object so any component can read or mutate any section without
- * re-subscribing locally, and provides a single `handleTransfer` action
- * that atomically moves a row from one section to another while
- * re-mapping its columns through `loan-transfer-utils`.
+ * Incoming).
  *
  * ── Single-instance contract ─────────────────────────────────────
- * `useFieldArray` must be mounted ONCE per array name — react-hook-form
- * explicitly does not support multiple `useFieldArray` instances with
- * the same `name`, because each instance keeps a private `fields`
- * snapshot that is not re-synchronised when a sibling instance mutates
- * the same array. The symptom is the "transfer toast fires but the
- * target table stays empty" bug we hit three commits in a row.
- *
- * This hook is therefore only invoked by `<LoanTransfersProvider>`,
- * mounted once inside `<FormProvider>` in `loan-creation.tsx`.
- * Components obtain it via `useLoanTransfersContext()`. A second direct
- * `useLoanTransfers()` call from any component would silently desync
- * that component's render from the provider's.
+ * Outstanding Loans keeps a real `useFieldArray` (static name, mounted
+ * once for the form's lifetime). The three per-loan arrays (EBI,
+ * Buy-Outs, Incoming) are ordinary form paths: rows render controlled
+ * from form state and mutate via `setValue`, which removes the "one
+ * useFieldArray per name" constraint that previously forced a keyed
+ * remount of the whole form.
  *
  * ── Active-loan scoping ──────────────────────────────────────────
- * The EBI, BuyOut, and Incoming field arrays are now scoped to the
- * active loan's index (`loans.{idx}.ebiReloans`, etc.). The provider
- * keys the bridge by `activeLoanNo` so that `useFieldArray` instances
- * are remounted when the AO switches tabs.
+ * The EBI, BuyOut, and Incoming form paths are scoped to the active
+ * loan's index (`loans.{idx}.ebiReloans`, etc.).
  *
  * ── Bidirectional transfer contract ───────────────────────────────────
  * Reclassification is strictly bidirectional and only between
@@ -38,13 +26,19 @@
  *   • `outstanding`  →  `incoming`← rejected
  *   • any path involving `buyout` / `incoming` ← rejected
  *
- * `buyout` and `incoming` rows are now managed directly by the AO via
+ * `buyout` and `incoming` rows are managed directly by the AO via
  * Add/Delete buttons in the section-5 table; they are no longer
  * destinations for outstanding rows.
+ *
+ * ── Transfer keying ──────────────────────────────────────────────
+ * Transfers now use **row index** (not RHF field-id). This is safe
+ * because every input is now controlled (renders from form state each
+ * render), so a splice can't leave a stale uncontrolled DOM value
+ * behind.
  */
 
 import { useCallback } from "react";
-import { useFieldArray, useFormContext, type Control, type FieldArrayPath } from "react-hook-form";
+import { useFieldArray, useFormContext, type Control, type FieldPath } from "react-hook-form";
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
 
 import {
@@ -54,129 +48,117 @@ import {
     type LoanSection,
     type TransferSourceRow,
 } from "../utils/loan-transfer-utils";
-import type { EbiReloan, LoanApplicationFormData, OutstandingLoan } from "../schema";
+import type { LoanApplicationFormData, OutstandingLoan } from "../schema";
 
-type LoanArrays = {
-    outstanding: ReturnType<typeof useFieldArray<LoanApplicationFormData, "outstandingLoans">>;
-    ebi: ReturnType<typeof useFieldArray<LoanApplicationFormData>>;
-    buyOut: ReturnType<typeof useFieldArray<LoanApplicationFormData>>;
-    incoming: ReturnType<typeof useFieldArray<LoanApplicationFormData>>;
-};
+export type PerLoanArrayKind = "ebiReloans" | "buyOuts" | "incomingLoans";
+
+type ArrayPath = FieldPath<LoanApplicationFormData>;
+
+const normalize = (v: unknown): TransferSourceRow =>
+    typeof v === "object" && v !== null ? (v as TransferSourceRow) : {};
 
 /**
- * Discriminated helpers for `useFieldArray.append()` so we don't have
- * to cast at the call site.
+ * Outstanding Loans keeps a real useFieldArray (static name, mounted once
+ * for the form's lifetime). The three per-loan arrays are ordinary form
+ * paths: rows render controlled from form state and mutate via setValue,
+ * which removes the "one useFieldArray per name" constraint that previously
+ * forced a keyed remount of the whole form.
  */
-type OutstandingArray = LoanArrays["outstanding"];
-type EbiArray = LoanArrays["ebi"];
-
-export function useLoanTransfers(loanIndex: number | null) {
-    const { control, getValues } = useFormContext<LoanApplicationFormData>();
-
-    const idx = loanIndex ?? 0; // mounted-but-idle when no loan selected; all mutators guard on null
+export function useLoanTransfers(activeLoanIndex: number | null) {
+    const { control, getValues, setValue } = useFormContext<LoanApplicationFormData>();
 
     const outstanding = useFieldArray({ control, name: "outstandingLoans" });
-    const ebi = useFieldArray({ control, name: `loans.${idx}.ebiReloans` as FieldArrayPath<LoanApplicationFormData> });
-    const buyOut = useFieldArray({ control, name: `loans.${idx}.buyOuts` as FieldArrayPath<LoanApplicationFormData> });
-    const incoming = useFieldArray({ control, name: `loans.${idx}.incomingLoans` as FieldArrayPath<LoanApplicationFormData> });
 
-    const arrays: LoanArrays = { outstanding, ebi, buyOut, incoming };
+    const arrayPath = (index: number, kind: PerLoanArrayKind) =>
+        `loans.${index}.${kind}` as ArrayPath;
 
-    const sectionToArray: Record<LoanSection, keyof LoanArrays> = {
-        outstanding: "outstanding",
-        ebi: "ebi",
-        buyout: "buyOut",
-        incoming: "incoming",
+    const getRows = <T,>(index: number, kind: PerLoanArrayKind): T[] =>
+        (getValues(arrayPath(index, kind)) as T[] | undefined) ?? [];
+
+    const setRows = (index: number, kind: PerLoanArrayKind, next: unknown[]) =>
+        setValue(arrayPath(index, kind), next as never, { shouldDirty: true });
+
+    const requireActive = (): number | null => {
+        if (activeLoanIndex === null) {
+            toastError("Select a loan number in Step 1.3 before adding obligations.");
+            return null;
+        }
+        return activeLoanIndex;
     };
 
-    const sectionToPath: Record<LoanSection, string> = {
-        outstanding: "outstandingLoans",
-        ebi: `loans.${idx}.ebiReloans`,
-        buyout: `loans.${idx}.buyOuts`,
-        incoming: `loans.${idx}.incomingLoans`,
-    };
+    const appendRow = useCallback(
+        (kind: PerLoanArrayKind, row: unknown) => {
+            const index = requireActive();
+            if (index === null) return;
+            setRows(index, kind, [...getRows(index, kind), row]);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [activeLoanIndex]
+    );
 
+    const removeRow = useCallback(
+        (kind: PerLoanArrayKind, rowIndex: number) => {
+            const index = requireActive();
+            if (index === null) return;
+            setRows(index, kind, getRows(index, kind).filter((_, i) => i !== rowIndex));
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [activeLoanIndex]
+    );
+
+    /**
+     * Bidirectional Outstanding ↔ EBI(active loan) transfer, index-based.
+     * Indices are safe here: both sides read their row data from the same
+     * render's form state, and every input is controlled (renders from
+     * form state each render), so a splice can't leave a stale uncontrolled
+     * DOM value behind.
+     */
     const handleTransfer = useCallback(
-        (source: LoanSection, rowId: string, target: LoanSection): void => {
+        (source: "outstanding" | "ebi", rowIndex: number, target: "outstanding" | "ebi") => {
             if (source === target) return;
 
-            // Guard: EBI transfers require an active loan
-            if (loanIndex === null && target === "ebi") {
+            if (target === "ebi" && activeLoanIndex === null) {
                 toastError("Select a loan number in Step 1.3 before transferring to EBI accounts.");
                 return;
             }
 
-            const isValidTransfer =
-                (source === "outstanding" && target === "ebi") ||
-                (source === "ebi" && target === "outstanding");
-
-            if (!isValidTransfer) {
-                toastError(
-                    "Transfers are only allowed between Outstanding Loans and EBI Accounts.",
-                );
-                return;
-            }
-
-            const sourceArray = arrays[sectionToArray[source]];
-            const targetArray = arrays[sectionToArray[target]];
-            const sourcePath = sectionToPath[source];
-
-            const fieldIndex = sourceArray.fields.findIndex((f) => f.id === rowId);
-
-            const liveValues = (getValues(sourcePath as never) as unknown[] | undefined) ?? [];
-
-            const normalize = (v: unknown): TransferSourceRow =>
-                typeof v === "object" && v !== null
-                    ? (v as TransferSourceRow)
-                    : {};
-
-            let rowData: unknown = liveValues[fieldIndex];
-
-            if (rowData == null) {
-                const idIndex = (liveValues as Array<{ id?: string }>).findIndex(
-                    (v) => v?.id === rowId,
-                );
-                if (idIndex >= 0) rowData = liveValues[idIndex];
-            }
-
-            if (fieldIndex < 0 || rowData == null) {
-                toastError("Could not transfer loan — source row not found.");
-                return;
-            }
-
-            const restrictedTarget = target as "ebi" | "outstanding";
-            let mappedRow: EbiReloan | OutstandingLoan;
-            switch (restrictedTarget) {
-                case "ebi":
-                    mappedRow = mapToEbi(normalize(rowData), source);
-                    break;
-                case "outstanding":
-                    mappedRow = mapToOutstanding(normalize(rowData), source);
-                    break;
-                default: {
-                    const _exhaustive: never = restrictedTarget;
-                    toastError(`Unknown target section: ${String(_exhaustive)}`);
+            if (source === "outstanding") {
+                const live = (getValues("outstandingLoans") as OutstandingLoan[] | undefined) ?? [];
+                const rowData = live[rowIndex];
+                if (!rowData) {
+                    toastError("Could not transfer loan — source row not found.");
                     return;
                 }
-            }
-
-            if (restrictedTarget === "ebi") {
-                (targetArray as EbiArray).append(
-                    mappedRow as EbiReloan,
-                    { shouldFocus: false }
-                );
+                const mapped = mapToEbi(normalize(rowData), "outstanding");
+                const targetIndex = activeLoanIndex as number;
+                setRows(targetIndex, "ebiReloans", [...getRows(targetIndex, "ebiReloans"), mapped]);
+                outstanding.remove(rowIndex);
             } else {
-                (targetArray as OutstandingArray).append(
-                    mappedRow as OutstandingLoan,
-                    { shouldFocus: false }
-                );
+                const sourceIndex = activeLoanIndex as number;
+                const live = getRows<TransferSourceRow>(sourceIndex, "ebiReloans");
+                const rowData = live[rowIndex];
+                if (!rowData) {
+                    toastError("Could not transfer loan — source row not found.");
+                    return;
+                }
+                const mapped = mapToOutstanding(normalize(rowData), "ebi");
+                setRows(sourceIndex, "ebiReloans", live.filter((_, i) => i !== rowIndex));
+                outstanding.append(mapped as never, { shouldFocus: false });
             }
-            sourceArray.remove(fieldIndex);
 
-            toastSuccess(`Transferred loan to ${LOAN_SECTION_LABELS[restrictedTarget]}`);
+            toastSuccess(`Transferred loan to ${LOAN_SECTION_LABELS[target === "ebi" ? "ebi" : "outstanding"]}`);
         },
-        [loanIndex, arrays, sectionToArray, sectionToPath, getValues],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [activeLoanIndex, outstanding]
     );
 
-    return { arrays, handleTransfer, control: control as Control<LoanApplicationFormData> };
+    return {
+        outstanding,
+        activeLoanIndex,
+        getRows,
+        appendRow,
+        removeRow,
+        handleTransfer,
+        control: control as Control<LoanApplicationFormData>,
+    };
 }

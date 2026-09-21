@@ -21,9 +21,14 @@
  *     grids below.
  *   • Phosphor icons are used throughout for consistency with the
  *     rest of the wizard.
+ *
+ * Controlled-row contract:
+ *   All inputs render from `useWatch` values (form state) and mutate
+ *   via `setValue`. This makes index-keyed rows safe under splice and
+ *   removes the `useFieldArray` "one instance per name" constraint.
  */
 
-import { useFormContext, useWatch } from "react-hook-form";
+import { useFormContext, useWatch, type FieldPath } from "react-hook-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
@@ -36,17 +41,7 @@ import { SectionCard, SubSectionHeading } from "./section-card";
 import { PerLoanTabs } from "./per-loan-tabs";
 import { getSection } from "../sections";
 import { useActiveLoan } from "../active-loan-context";
-import type { LoanApplicationFormData } from "../schema";
-
-type EbiRow = {
-    pn?: string;
-    name?: string;
-    existingDeduction?: number;
-    outstandingBalance?: number;
-    payToClose?: number;
-};
-type BuyOutRow = { pn?: string; name?: string; amortization?: number; outstandingBalance?: number };
-type IncomingRow = { name?: string; deductions?: number; remarks?: string };
+import type { LoanApplicationFormData, EbiReloan, BuyOut, IncomingLoan } from "../schema";
 
 export function OtherObligationsSection() {
     const { loans } = useActiveLoan();
@@ -78,30 +73,21 @@ export function OtherObligationsSection() {
 }
 
 function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
-    const { control, register, getValues } = useFormContext<LoanApplicationFormData>();
-    const { arrays, handleTransfer } = useLoanTransfersContext();
+    const { control, setValue } = useFormContext<LoanApplicationFormData>();
+    const { appendRow, removeRow, handleTransfer } = useLoanTransfersContext();
 
-    const ebiFields = arrays.ebi.fields;
-    const buyOutFields = arrays.buyOut.fields;
-    const incomingFields = arrays.incoming.fields;
+    const P = `loans.${loanIndex}`;
 
-    const prefix = `loans.${loanIndex}` as const;
+    // Controlled rows: subscribe to form state so inputs re-render on mutation.
+    const ebi = (useWatch({ control, name: `${P}.ebiReloans` as FieldPath<LoanApplicationFormData> }) as EbiReloan[] | undefined) ?? [];
+    const buyOuts = (useWatch({ control, name: `${P}.buyOuts` as FieldPath<LoanApplicationFormData> }) as BuyOut[] | undefined) ?? [];
+    const incoming = (useWatch({ control, name: `${P}.incomingLoans` as FieldPath<LoanApplicationFormData> }) as IncomingLoan[] | undefined) ?? [];
 
-    const ebiReloansValues = (getValues(`${prefix}.ebiReloans`) as EbiRow[] | undefined) ?? [];
-    const buyOutValues = (getValues(`${prefix}.buyOuts`) as BuyOutRow[] | undefined) ?? [];
-    const incomingValues = (getValues(`${prefix}.incomingLoans`) as IncomingRow[] | undefined) ?? [];
+    const setCell = (path: string, value: unknown) =>
+        setValue(path as FieldPath<LoanApplicationFormData>, value as never, { shouldDirty: true });
 
-    useWatch({ control, name: `${prefix}.ebiReloans` });
-    useWatch({ control, name: `${prefix}.buyOuts` });
-    useWatch({ control, name: `${prefix}.incomingLoans` });
-
-    const addBuyOut = () => {
-        arrays.buyOut.append({ pn: "", name: "", amortization: 0, outstandingBalance: 0 });
-    };
-
-    const addIncoming = () => {
-        arrays.incoming.append({ name: "", deductions: 0, remarks: "" });
-    };
+    const addBuyOut = () => appendRow("buyOuts", { pn: "", name: "", amortization: 0, outstandingBalance: 0 });
+    const addIncoming = () => appendRow("incomingLoans", { name: "", deductions: 0, remarks: "" });
 
     return (
         <>
@@ -129,70 +115,54 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {ebiFields.map((field, i) => {
-                            const loan = ebiReloansValues[i];
-                            return (
-                                <TableRow
-                                    key={field.id}
-                                    className="hover:bg-muted/30"
-                                >
-                                    <TableCell className="min-w-0">
-                                        <Input
-                                            {...register(`${prefix}.ebiReloans.${i}.pn`)}
-                                            defaultValue={loan?.pn}
-                                            readOnly
-                                            title={loan?.pn}
-                                            className="h-8 text-xs bg-muted/50 min-w-0 overflow-hidden text-ellipsis"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="min-w-0">
-                                        <Input
-                                            {...register(`${prefix}.ebiReloans.${i}.name`)}
-                                            defaultValue={loan?.name}
-                                            readOnly
-                                            title={loan?.name}
-                                            className="h-8 text-xs bg-muted/50 min-w-0 overflow-hidden text-ellipsis"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="min-w-0">
-                                        <Input
-                                            type="number"
-                                            {...register(`${prefix}.ebiReloans.${i}.existingDeduction`, {
-                                                valueAsNumber: true,
-                                            })}
-                                            defaultValue={loan?.existingDeduction}
-                                            readOnly
-                                            className="h-8 text-right text-xs bg-muted/50 min-w-0 overflow-hidden text-ellipsis"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            step="0.01"
-                                            inputMode="decimal"
-                                            {...register(
-                                                `${prefix}.ebiReloans.${i}.payToClose`,
-                                                { valueAsNumber: true },
-                                            )}
-                                            defaultValue={loan?.payToClose ?? 0}
-                                            placeholder="0.00"
-                                            aria-label={`Pay to close for ${loan?.name ?? loan?.pn ?? `row ${i + 1}`}`}
-                                            className="h-8 text-right text-xs"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <TransferActionMenu
-                                            currentSection="ebi"
-                                            onTransfer={(target) =>
-                                                handleTransfer("ebi", field.id, target)
-                                            }
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                        {ebiFields.length === 0 && (
+                        {ebi.map((row, i) => (
+                            <TableRow key={`ebi-${i}`} className="hover:bg-muted/30">
+                                <TableCell className="min-w-0">
+                                    <Input
+                                        value={row.pn ?? ""}
+                                        readOnly
+                                        title={row.pn}
+                                        className="h-8 text-xs bg-muted/50 min-w-0 overflow-hidden text-ellipsis"
+                                    />
+                                </TableCell>
+                                <TableCell className="min-w-0">
+                                    <Input
+                                        value={row.name ?? ""}
+                                        readOnly
+                                        title={row.name}
+                                        className="h-8 text-xs bg-muted/50 min-w-0 overflow-hidden text-ellipsis"
+                                    />
+                                </TableCell>
+                                <TableCell className="min-w-0">
+                                    <Input
+                                        type="number"
+                                        value={row.existingDeduction ?? 0}
+                                        readOnly
+                                        className="h-8 text-right text-xs bg-muted/50"
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Input
+                                        type="number"
+                                        min={0}
+                                        step="0.01"
+                                        inputMode="decimal"
+                                        value={row.payToClose ?? 0}
+                                        onChange={(e) => setCell(`${P}.ebiReloans.${i}.payToClose`, Number(e.target.value || 0))}
+                                        placeholder="0.00"
+                                        aria-label={`Pay to close for ${row.name ?? row.pn ?? `row ${i + 1}`}`}
+                                        className="h-8 text-right text-xs"
+                                    />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <TransferActionMenu
+                                        currentSection="ebi"
+                                        onTransfer={(target) => handleTransfer("ebi", i, target)}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {ebi.length === 0 && (
                             <TableRow>
                                 <TableCell
                                     colSpan={5}
@@ -244,63 +214,53 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {buyOutFields.map((field, i) => {
-                            const loan = buyOutValues[i];
-                            return (
-                                <TableRow
-                                    key={field.id}
-                                    className="group hover:bg-muted/30"
-                                >
-                                    <TableCell>
-                                        <Input
-                                            {...register(`${prefix}.buyOuts.${i}.pn`)}
-                                            defaultValue={loan?.pn}
-                                            className="h-8 text-xs"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            {...register(`${prefix}.buyOuts.${i}.name`)}
-                                            defaultValue={loan?.name}
-                                            className="h-8 text-xs"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            type="number"
-                                            {...register(`${prefix}.buyOuts.${i}.amortization`, {
-                                                valueAsNumber: true,
-                                            })}
-                                            defaultValue={loan?.amortization}
-                                            className="h-8 text-right text-xs"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            type="number"
-                                            {...register(`${prefix}.buyOuts.${i}.outstandingBalance`, {
-                                                valueAsNumber: true,
-                                            })}
-                                            defaultValue={loan?.outstandingBalance}
-                                            className="h-8 text-right text-xs"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={() => arrays.buyOut.remove(i)}
-                                            aria-label="Delete buy-out account"
-                                        >
-                                            <Trash size={14} weight="bold" />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                        {buyOutFields.length === 0 && (
+                        {buyOuts.map((row, i) => (
+                            <TableRow key={`buyout-${i}`} className="group hover:bg-muted/30">
+                                <TableCell>
+                                    <Input
+                                        value={row.pn ?? ""}
+                                        onChange={(e) => setCell(`${P}.buyOuts.${i}.pn`, e.target.value)}
+                                        className="h-8 text-xs"
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Input
+                                        value={row.name ?? ""}
+                                        onChange={(e) => setCell(`${P}.buyOuts.${i}.name`, e.target.value)}
+                                        className="h-8 text-xs"
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Input
+                                        type="number"
+                                        value={row.amortization ?? 0}
+                                        onChange={(e) => setCell(`${P}.buyOuts.${i}.amortization`, Number(e.target.value || 0))}
+                                        className="h-8 text-right text-xs"
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Input
+                                        type="number"
+                                        value={row.outstandingBalance ?? 0}
+                                        onChange={(e) => setCell(`${P}.buyOuts.${i}.outstandingBalance`, Number(e.target.value || 0))}
+                                        className="h-8 text-right text-xs"
+                                    />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => removeRow("buyOuts", i)}
+                                        aria-label="Delete buy-out account"
+                                    >
+                                        <Trash size={14} weight="bold" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {buyOuts.length === 0 && (
                             <TableRow>
                                 <TableCell
                                     colSpan={5}
@@ -351,53 +311,45 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {incomingFields.map((field, i) => {
-                            const loan = incomingValues[i];
-                            return (
-                                <TableRow
-                                    key={field.id}
-                                    className="group hover:bg-muted/30"
-                                >
-                                    <TableCell>
-                                        <Input
-                                            {...register(`${prefix}.incomingLoans.${i}.name`)}
-                                            defaultValue={loan?.name}
-                                            className="h-8 text-xs"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            type="number"
-                                            {...register(`${prefix}.incomingLoans.${i}.deductions`, {
-                                                valueAsNumber: true,
-                                            })}
-                                            defaultValue={loan?.deductions}
-                                            className="h-8 text-right text-xs"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            {...register(`${prefix}.incomingLoans.${i}.remarks`)}
-                                            defaultValue={loan?.remarks}
-                                            className="h-8 text-xs"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={() => arrays.incoming.remove(i)}
-                                            aria-label="Delete incoming loan"
-                                        >
-                                            <Trash size={14} weight="bold" />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                        {incomingFields.length === 0 && (
+                        {incoming.map((row, i) => (
+                            <TableRow key={`incoming-${i}`} className="group hover:bg-muted/30">
+                                <TableCell>
+                                    <Input
+                                        value={row.name ?? ""}
+                                        onChange={(e) => setCell(`${P}.incomingLoans.${i}.name`, e.target.value)}
+                                        className="h-8 text-xs"
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Input
+                                        type="number"
+                                        value={row.deductions ?? 0}
+                                        onChange={(e) => setCell(`${P}.incomingLoans.${i}.deductions`, Number(e.target.value || 0))}
+                                        className="h-8 text-right text-xs"
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Input
+                                        value={row.remarks ?? ""}
+                                        onChange={(e) => setCell(`${P}.incomingLoans.${i}.remarks`, e.target.value)}
+                                        className="h-8 text-xs"
+                                    />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => removeRow("incomingLoans", i)}
+                                        aria-label="Delete incoming loan"
+                                    >
+                                        <Trash size={14} weight="bold" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {incoming.length === 0 && (
                             <TableRow>
                                 <TableCell
                                     colSpan={4}
