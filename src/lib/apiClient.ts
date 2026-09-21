@@ -283,7 +283,23 @@ apiClient.interceptors.response.use(
 );
 
 /**
+ * Readable fallbacks for responses whose body carries no usable message
+ * (empty body from bare Results.Unauthorized()/rate limiter, HTML error pages).
+ */
+function getStatusFallbackMessage(status: number): string {
+    if (status === 400) return "The request was invalid. Please check your input and try again.";
+    if (status === 401) return "Authentication failed. Please check your credentials and try again.";
+    if (status === 403) return "You do not have permission to perform this action.";
+    if (status === 404) return "The requested resource was not found.";
+    if (status === 409) return "The operation conflicts with the current state. Please refresh and try again.";
+    if (status === 429) return "Too many attempts. Please wait a moment and try again.";
+    if (status >= 500) return "Server error. Please try again later.";
+    return "An unexpected error occurred. Please try again.";
+}
+
+/**
  * Extracts a user-friendly error message from an Axios error.
+ * Guarantees a non-empty string — never produces a blank toast.
  */
 export function getErrorMessage(error: unknown): string {
     if (axios.isAxiosError(error)) {
@@ -297,8 +313,8 @@ export function getErrorMessage(error: unknown): string {
             if (status === 503) return "Service is currently unavailable. Please try again later.";
             if (status === 504) return "Server timed out. Please try again later.";
 
-            // Try common error message shapes from the API (only for JSON responses)
-            if (typeof data === "string" && !data.startsWith("<")) return data;
+            // Plain-text body — only usable when non-empty and not an HTML error page.
+            if (typeof data === "string" && !data.startsWith("<") && data.trim().length > 0) return data;
 
             // Combine the top-level message with specific error details
             // when the backend includes an errors array (e.g. validation failures).
@@ -310,6 +326,9 @@ export function getErrorMessage(error: unknown): string {
             }
             if (data?.error) return data.error;
             if (data?.detail) return data.detail;
+
+            // Empty/HTML/unrecognized body — never surface an empty toast again.
+            return getStatusFallbackMessage(status);
         }
         // Request was made but no response received (network error)
         if (error.request) {
