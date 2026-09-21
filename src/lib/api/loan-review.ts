@@ -107,6 +107,7 @@ export interface LoanDetailResponse {
     }[];
     preLoanId: number | null;
     preLoanFormNumber: string | null;
+    webLoanPnNumbers: string[];
 }
 
 export interface LoanAttachmentDto {
