@@ -15,7 +15,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle, UserCircle } from "@phosphor-icons/react";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
@@ -75,8 +75,9 @@ interface MonitoringTableProps {
      *  /sla-policy endpoint is unreachable — the indicator falls back
      *  to built-in defaults from LOAN_STATUS_META. */
     slaPolicy?: Record<string, number> | null;
-    /** Current authenticated user — used to gate the cancel action. */
-    currentUser?: { id: number; role: string } | null;
+    /** Current authenticated user — used to gate the cancel action
+     *  and highlight "Your turn" on the assigned-to column. */
+    currentUser?: { id: number; role: string; name?: string } | null;
     /** Called when the user clicks the cancel button on a row. */
     onCancel?: (record: LoanMonitoringRecord) => void;
 }
@@ -270,6 +271,46 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                         )}
                     </div>
                 );
+            },
+        }),
+        columnHelper.accessor("assignedApproverName", {
+            header: "Assigned To",
+            cell: (info) => {
+                const row = info.row.original;
+                const mine = row.isQueueHead && row.queueOwnerName === currentUser?.name;
+
+                if (row.isQueueHead) {
+                    return (
+                        <div className="flex items-center gap-1.5">
+                            <div className="relative">
+                                <UserCircle size={16} className="text-muted-foreground" />
+                                <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-background" />
+                            </div>
+                            <span className="text-xs font-medium">
+                                {row.queueOwnerName ?? info.getValue() ?? "Unassigned desk"}
+                            </span>
+                            {mine && (
+                                <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px] font-normal">
+                                    Your turn
+                                </Badge>
+                            )}
+                        </div>
+                    );
+                }
+
+                if (row.queuePosition != null) {
+                    return (
+                        <Badge
+                            variant="outline"
+                            className="text-xs font-normal text-muted-foreground"
+                            title={`Waiting for ${row.queueStage} — ${row.queueOwnerName ?? "the designated reviewer"} is on the current file`}
+                        >
+                            Queue #{row.queuePosition} of {row.queueLength}
+                        </Badge>
+                    );
+                }
+
+                return <span className="text-xs text-muted-foreground">—</span>;
             },
         }),
         columnHelper.display({
