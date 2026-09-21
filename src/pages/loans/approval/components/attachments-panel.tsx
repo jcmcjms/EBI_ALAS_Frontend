@@ -164,7 +164,7 @@ export function AttachmentsPanel({
                                         {!isPending && item.docId && (
                                             <p className="text-xs text-muted-foreground">
                                                 {item.docStr && <>Document: {item.docStr} &bull; </>}
-                                                {item.contentType && `${item.contentType} &bull; `}
+                                                {item.contentType && <>{item.contentType} &bull; </>}
                                                 {item.uploadedBy && `Uploaded by ${item.uploadedBy}`}
                                                 {item.created && ` on ${new Date(item.created).toLocaleDateString()}`}
                                             </p>
