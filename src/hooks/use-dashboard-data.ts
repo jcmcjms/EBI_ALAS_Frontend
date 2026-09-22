@@ -53,6 +53,8 @@ function mapOverview(o: DashboardOverviewDto): DashboardData {
             status: STATUS_LABELS[p.status] ?? "On Going",
             statusKey: p.status,
             date: p.waitingSinceUtc,
+            clientName: p.clientName,
+            encoderName: p.encoderName,
         })),
         nowServing: o.nowServing.map((n) => ({
             number: n.number, checker: n.checker, lamId: n.lamId, isActive: n.isActive,
@@ -75,6 +77,8 @@ function mapOverview(o: DashboardOverviewDto): DashboardData {
             branch: branchNameOf(d.branchCode),
             waitingSinceUtc: d.waitingSinceUtc,
             missingCount: d.missingCount,
+            clientName: d.clientName,
+            encoderName: d.encoderName,
         })),
         fetchedAt: o.generatedAtUtc,
     };

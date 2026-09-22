@@ -9,6 +9,8 @@ export interface PendingQueueItem {
      *  The `status` field above is the human-readable label for the badge. */
     statusKey: string;
     date: string;
+    clientName: string;
+    encoderName: string;
 }
 
 export interface NowServingItem {
@@ -55,4 +57,6 @@ export interface IncompleteDocsQueueItem {
     branch: string;
     waitingSinceUtc: string;
     missingCount: number;
+    clientName: string;
+    encoderName: string;
 }

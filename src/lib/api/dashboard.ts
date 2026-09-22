@@ -10,12 +10,12 @@ export interface DashboardOverviewDto {
         approvedToday: number;
         approvedVsAvgPercent: number;
     };
-    pendingQueue: { position: number; lamId: string; branchCode: string; status: string; waitingSinceUtc: string }[];
+    pendingQueue: { position: number; lamId: string; branchCode: string; status: string; waitingSinceUtc: string; clientName: string; encoderName: string }[];
     nowServing: { number: number; checker: string; lamId: string; isActive: boolean }[];
     pushBacks: { number: number; lamId: string; branchCode: string; reason: string; pushedBackAtUtc: string }[];
     approvedLoans: { fullName: string; lamId: string; branchCode: string; approvedAtUtc: string }[];
     weeklyTrend: { day: string; approved: number; pushBacks: number }[];
-    documentQueue: { id: number; position: number; lamId: string; branchCode: string; waitingSinceUtc: string; missingCount: number }[];
+    documentQueue: { id: number; position: number; lamId: string; branchCode: string; waitingSinceUtc: string; missingCount: number; clientName: string; encoderName: string }[];
     generatedAtUtc: string;
 }
 

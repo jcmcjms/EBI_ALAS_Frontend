@@ -4,15 +4,13 @@ import { WarningCircle } from "@phosphor-icons/react";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { cn } from "@/src/lib/utils";
+import { initialsOf } from "@/src/lib/name-utils";
 import { assessAging, AGING_BADGE_CLASS } from "@/src/lib/loan-aging";
 import { useSlaPolicy } from "@/src/lib/api/loan-review";
+import { formatWaiting, waitingMinutes } from "./pending-queue";
 import type { IncompleteDocsQueueItem } from "../types";
-
-function formatWaiting(mins: number): string {
-    const h = Math.floor(mins / 60);
-    return h > 0 ? `${h}h ${mins % 60}m` : `${mins}m`;
-}
 
 interface Props {
     data: IncompleteDocsQueueItem[];
@@ -49,12 +47,7 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                 ) : (
                     <ul className="divide-y">
                         {display.map((item) => {
-                            const mins = Math.max(
-                                0,
-                                Math.floor(
-                                    (Date.now() - new Date(item.waitingSinceUtc).getTime()) / 60_000
-                                )
-                            );
+                            const mins = waitingMinutes(item.waitingSinceUtc);
                             const assessment = assessAging(
                                 "ForIncompleteDocuments",
                                 item.waitingSinceUtc,
@@ -79,20 +72,27 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                                         <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">
                                             #{item.position}
                                         </span>
+                                        <Avatar size="sm" className="border">
+                                            <AvatarFallback>{initialsOf(item.clientName)}</AvatarFallback>
+                                        </Avatar>
                                         <div className="flex-1 min-w-0">
-                                            <p className="mb-1 truncate text-sm font-medium">
-                                                {item.lamId}
-                                            </p>
-                                            <p className="truncate text-xs text-muted-foreground">
-                                                {item.branch}
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <p className="text-sm font-medium truncate">{item.lamId}</p>
+                                                <Badge
+                                                    variant="outline"
+                                                    className="h-4 px-1.5 text-[10px] font-normal text-amber-600 dark:text-amber-400"
+                                                >
+                                                    {item.missingCount} doc(s) missing
+                                                </Badge>
+                                            </div>
+                                            <p
+                                                className="text-xs truncate"
+                                                title={`${item.clientName} · encoded by ${item.encoderName} · ${item.branch}`}
+                                            >
+                                                <span className="font-medium text-foreground/90">{item.clientName}</span>
+                                                <span className="text-muted-foreground"> · by {item.encoderName}</span>
                                             </p>
                                         </div>
-                                        <Badge
-                                            variant="outline"
-                                            className="h-4 px-1.5 text-[10px] font-normal text-amber-600 dark:text-amber-400"
-                                        >
-                                            {item.missingCount} missing
-                                        </Badge>
                                         <span className="shrink-0 text-right text-sm font-medium tabular-nums">
                                             {formatWaiting(mins)}
                                             {assessment.tier === "breach" && (

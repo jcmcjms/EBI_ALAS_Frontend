@@ -5,6 +5,7 @@ import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { cn } from "@/src/lib/utils";
+import { initialsOf } from "@/src/lib/name-utils";
 import type { PendingQueueItem, LoanStatus } from "../types";
 import type { LoanStatus as LoanStatusKey } from "@/src/lib/loan-status";
 import { assessAging, AGING_BADGE_CLASS } from "@/src/lib/loan-aging";
@@ -25,11 +26,11 @@ const statusStyles: Record<LoanStatus, string> = {
     "Disbursed": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
 };
 
-function waitingMinutes(date: string): number {
+export function waitingMinutes(date: string): number {
     return Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 60_000));
 }
 
-function formatWaiting(mins: number): string {
+export function formatWaiting(mins: number): string {
     const h = Math.floor(mins / 60);
     return h > 0 ? `${h}h ${mins % 60}m` : `${mins}m`;
 }
@@ -100,13 +101,19 @@ export const PendingQueue = memo(function PendingQueue({ data }: PendingQueuePro
                                     className={cn("flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", item.position === 1 && "bg-primary/[0.04]")}
                                 >
                                     <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">#{item.position}</span>
-                                    <Avatar size="sm" className="border"><AvatarFallback>{item.lamId.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                                    <Avatar size="sm" className="border"><AvatarFallback>{initialsOf(item.clientName)}</AvatarFallback></Avatar>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
                                             <p className="text-sm font-medium truncate">{item.lamId}</p>
                                             <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-4 font-normal", statusStyles[item.status])}>{item.status}</Badge>
                                         </div>
-                                        <p className="text-xs text-muted-foreground truncate">{item.branch}</p>
+                                        <p
+                                            className="text-xs truncate"
+                                            title={`${item.clientName} · encoded by ${item.encoderName} · ${item.branch}`}
+                                        >
+                                            <span className="font-medium text-foreground/90">{item.clientName}</span>
+                                            <span className="text-muted-foreground"> · by {item.encoderName}</span>
+                                        </p>
                                     </div>
                                     <div className="text-right shrink-0">
                                         <span className="text-sm font-medium tabular-nums">{formatWaiting(mins)}</span>
