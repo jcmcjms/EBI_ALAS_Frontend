@@ -49,7 +49,7 @@ import { useAuthStore } from "@/src/store/authStore";
 import { ApprovalFormDocument } from "./components/approval-form-document";
 import { AttachmentsPanel } from "./components/attachments-panel";
 import { DeviationRemarksPanel } from "./components/deviation-remarks-panel";
-import { ApplicationTimeline } from "./components/application-timeline";
+import { ApplicationTimeline } from "@/src/components/loan/application-timeline";
 import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
 import { GroupReviewSection } from "../review/components/group-review-section";
 import { ApprovalGroupTabs } from "./components/approval-group-tabs";
@@ -636,7 +636,7 @@ export function LoanApprovalPage() {
                                             <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                                 <Clock size={12} /> Remarks
                                             </h3>
-                                            <ApplicationTimeline loanId={id} />
+                                            <ApplicationTimeline loanId={id} variant="panel" />
                                         </div>
 
                                         <div className="h-px bg-border" />

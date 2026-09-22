@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/src/lib/apiClient";
-import { unwrapApiData, type ApiResponse } from "./types";
+import { unwrapApiData, type ApiResponse, type PagedResult } from "./types";
 import { queryKeys } from "@/src/lib/queryKeys";
 import type { LoanStatus } from "@/src/lib/loan-status";
 import { LOAN_STATUS_META } from "@/src/lib/loan-status";
@@ -191,8 +191,13 @@ export interface TimelineEvent {
     subjectCode: string | null;
 }
 
-export async function getLoanTimeline(id: number): Promise<TimelineEvent[]> {
-    const res = await apiClient.get<ApiResponse<TimelineEvent[]>>(`/api/loans/${id}/timeline`);
+export async function getLoanTimeline(
+    id: number,
+    page: number,
+    pageSize: number,
+): Promise<PagedResult<TimelineEvent>> {
+    const res = await apiClient.get<ApiResponse<PagedResult<TimelineEvent>>>(
+        `/api/loans/${id}/timeline`, { params: { page, pageSize } });
     return unwrapApiData(res.data);
 }
 

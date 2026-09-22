@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Clock } from "@phosphor-icons/react";
+import { ArrowRight } from "@phosphor-icons/react";
 import {
     Sheet,
     SheetContent,
@@ -10,7 +10,8 @@ import {
 } from "@/src/components/ui/sheet";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { LoanTimeline } from "@/src/components/loan/loan-timeline";
+import { ApplicationTimeline } from "@/src/components/loan/application-timeline";
+import { queueDeskSentence } from "@/src/lib/loan-timeline";
 import { cn } from "@/src/lib/utils";
 import { getLoanById } from "@/src/lib/api/loans";
 import { LOAN_STATUS_META, type LoanStatus } from "@/src/lib/loan-status";
@@ -49,6 +50,8 @@ export function LoanDetailsDrawer({
         enabled: applicationId !== null && applicationId > 0,
         staleTime: 30_000,
     });
+
+    const deskSentence = queueDeskSentence(record?.queueStage, record?.queueOwnerName);
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -112,39 +115,29 @@ export function LoanDetailsDrawer({
                     </div>
                 )}
 
-                {/* Queue position banner */}
-                {record?.queueStage && (
-                    <div
-                        role="status"
-                        className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground mx-6 mt-3"
-                    >
-                        {record.isQueueHead ? (
-                            <>
-                                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                                <span>
-                                    On the {record.queueStage.toLowerCase()} desk now — reviewing:{" "}
-                                    <span className="font-medium text-foreground">
-                                        {record.queueOwnerName ?? "unassigned"}
-                                    </span>
-                                </span>
-                            </>
-                        ) : (
-                            <>
-                                <Clock size={14} weight="bold" className="shrink-0" />
-                                <span>
-                                    Position {record.queuePosition} of {record.queueLength} in the{" "}
-                                    {record.queueStage.toLowerCase()} queue. It moves to{" "}
-                                    {record.queueOwnerName ?? "the designated reviewer"} automatically when the
-                                    current file clears.
-                                </span>
-                            </>
+                {/* Queue position banner — human-readable desk sentence */}
+                {deskSentence && (
+                    <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground mx-6 mt-3">
+                        <p className="flex items-center gap-2">
+                            <span className="size-2 rounded-full bg-emerald-500" aria-hidden />
+                            {deskSentence}
+                        </p>
+                        {record?.queuePosition != null && (
+                            <p className="mt-1 pl-4 tabular-nums">
+                                Queue position {record.queuePosition} of {record.queueLength}.
+                            </p>
                         )}
                     </div>
                 )}
 
                 <div className="flex-1 overflow-y-auto p-6">
                     {applicationId !== null ? (
-                        <LoanTimeline applicationId={applicationId} />
+                        <>
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                                Application history
+                            </h3>
+                            <ApplicationTimeline loanId={applicationId} variant="inline" />
+                        </>
                     ) : (
                         <div className="text-sm text-muted-foreground">
                             Select an application to view its history.
