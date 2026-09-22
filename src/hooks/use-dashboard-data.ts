@@ -69,6 +69,7 @@ function mapOverview(o: DashboardOverviewDto): DashboardData {
             day: t.day, approved: t.approved, pushBacks: t.pushBacks,
         })),
         incompleteDocsQueue: (o.documentQueue ?? []).map((d) => ({
+            id: d.id,
             position: d.position,
             lamId: d.lamId,
             branch: branchNameOf(d.branchCode),

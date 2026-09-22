@@ -67,6 +67,8 @@ import {
 } from "@/src/lib/api/loan-review";
 import { queryKeys } from "@/src/lib/queryKeys";
 import { cn } from "@/src/lib/utils";
+import { apiClient } from "@/src/lib/apiClient";
+import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 import type { LoanStatus } from "@/src/lib/loan-status";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
@@ -85,6 +87,7 @@ type WorkflowAction = {
 const WORKFLOW_ACTIONS: WorkflowAction[] = [
     { role: "Recommender", from: "ForRecommendation", to: "ForChecking", label: "Recommend for Checking", kind: "advance", remarksRequired: false },
     { role: "Recommender", from: "ForRecommendation", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
+    { role: "Recommender", from: "ForRecommendation", to: "ForIncompleteDocuments", label: "Incomplete Documents", kind: "return", remarksRequired: true, confirm: true },
     // ── Evaluator: three distinct decisions ──────────────────────────
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Recommended", kind: "advance", verdict: "Recommended", remarksRequired: false },
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Not Recommended", kind: "advance", verdict: "NotRecommended", remarksRequired: true, confirm: true },
@@ -94,6 +97,7 @@ const WORKFLOW_ACTIONS: WorkflowAction[] = [
     { role: "Approver", from: "ForApproval", to: "Approved", label: "Approve Loan", kind: "advance", remarksRequired: false },
     { role: "Approver", from: "ForApproval", to: "ForRevision", label: "Return to Encoder", kind: "return", remarksRequired: true, confirm: true },
     { role: "Approver", from: "ForApproval", to: "Rejected", label: "Reject", kind: "reject", remarksRequired: true, confirm: true },
+    { role: "Approver", from: "ForApproval", to: "ForIncompleteDocuments", label: "Incomplete Documents", kind: "return", remarksRequired: true, confirm: true },
 ];
 
 /**
@@ -356,6 +360,23 @@ export function LoanApprovalPage() {
         onError: (e: Error) => toastError(e.message),
     });
 
+    const recheck = useMutation({
+        mutationFn: async () => {
+            const res = await apiClient.post<ApiResponse<{ complete: boolean; missing: string[] }>>(
+                `/api/loans/${id}/documents/verify`);
+            return unwrapApiData(res.data);
+        },
+        onSuccess: (r) => {
+            toastSuccess(r.complete
+                ? "All requirements uploaded — application released to the review queue."
+                : `Still missing: ${r.missing.join(", ")}`);
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+        },
+        onError: (e: Error) => toastError(e.message),
+    });
+
     // ── Empty / error states ─────────────────────────────────────────
     if (!Number.isFinite(id) || id <= 0) {
         return (
@@ -592,6 +613,32 @@ export function LoanApprovalPage() {
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-6 pt-4">
+                                        {/* ── Held for Incomplete Documents ── */}
+                                        {detail.status === "ForIncompleteDocuments" && (
+                                            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 space-y-2 dark:border-amber-500/40 dark:bg-amber-500/10">
+                                                <p className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
+                                                    <WarningCircle size={16} weight="fill" />
+                                                    Held for incomplete documents
+                                                </p>
+                                                <p className="text-xs text-amber-700 dark:text-amber-400">
+                                                    Returns automatically to{" "}
+                                                    <strong>{detail.incompleteReturnStatus ?? "ForChecking"}</strong> once every
+                                                    requirement is uploaded. No manual action is needed.
+                                                </p>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="gap-1.5"
+                                                    disabled={recheck.isPending}
+                                                    onClick={() => recheck.mutate()}
+                                                >
+                                                    <ArrowCounterClockwise size={14} weight="bold" />
+                                                    Re-check documents now
+                                                </Button>
+                                            </div>
+                                        )}
+
                                         {/* ── Audit Trail ── */}
                                         <div className="space-y-3">
                                             <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -758,11 +805,13 @@ export function LoanApprovalPage() {
                                                             <AlertDialogHeader>
                                                                 <AlertDialogTitle>Confirm: {a.label}</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    {a.kind === "return"
-                                                                        ? "The application returns to the ENCODER (not the recommender) for revision. They will be notified with your remarks."
-                                                                        : a.verdict === "NotRecommended"
-                                                                            ? "The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached."
-                                                                            : "This terminates the loan process and notifies the encoder."}
+                                                                    {a.to === "ForIncompleteDocuments"
+                                                                        ? "Applications with missing requirements are held automatically on entry. Use this only when the document server disagrees with the file."
+                                                                        : a.kind === "return"
+                                                                            ? "The application returns to the ENCODER (not the recommender) for revision. They will be notified with your remarks."
+                                                                            : a.verdict === "NotRecommended"
+                                                                                ? "The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached."
+                                                                                : "This terminates the loan process and notifies the encoder."}
                                                                     {remarks.trim() && (
                                                                         <span className="mt-2 block border-l-2 border-border pl-2 italic">
                                                                             &ldquo;{remarks.trim()}&rdquo;
@@ -843,7 +892,12 @@ export function LoanApprovalPage() {
                                             status={detail.status}
                                             frozen={frozen}
                                             canRemark={!!canWriteRemarks}
-                                            canPushBack={(user?.role === "Evaluator" || user?.role === "Admin") && detail.status === "ForChecking"}
+                                            canPushBack={
+                                                (user?.role === "Evaluator" && detail.status === "ForChecking") ||
+                                                (user?.role === "Recommender" && detail.status === "ForRecommendation") ||
+                                                (user?.role === "Approver" && detail.status === "ForApproval") ||
+                                                user?.role === "Admin"
+                                            }
                                             pushBackPending={pushBackDocs.isPending}
                                             onPushBack={(codes, text) => pushBackDocs.mutate({ codes, text })}
                                         />

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight, Eye, Stack } from "@phosphor-icons/react";
+import { CaretRight, Eye, Stack } from "@phosphor-icons/react";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
@@ -179,7 +179,7 @@ export function GroupReviewSection({
                                         <Eye size={12} weight="bold" /> viewing
                                     </Badge>
                                 ) : (
-                                    <ChevronRight
+                                    <CaretRight
                                         size={14}
                                         className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100"
                                         aria-hidden

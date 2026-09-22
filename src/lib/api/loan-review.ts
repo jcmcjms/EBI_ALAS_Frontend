@@ -73,6 +73,7 @@ export interface LoanDetailResponse {
         actionByUserName: string;
     }[];
     evaluationVerdict: string | null;
+    incompleteReturnStatus: string | null;
     outstandingLoans: {
         id: number;
         pn: string;

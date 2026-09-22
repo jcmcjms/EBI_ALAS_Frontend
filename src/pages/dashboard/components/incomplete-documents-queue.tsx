@@ -67,7 +67,7 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                                         type="button"
                                         onClick={() =>
                                             navigate(
-                                                "/loans/monitoring?status=ForIncompleteDocuments"
+                                                `/loans/approval/${item.id}`
                                             )
                                         }
                                         className={cn(

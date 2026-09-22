@@ -15,7 +15,7 @@ export interface DashboardOverviewDto {
     pushBacks: { number: number; lamId: string; branchCode: string; reason: string; pushedBackAtUtc: string }[];
     approvedLoans: { fullName: string; lamId: string; branchCode: string; approvedAtUtc: string }[];
     weeklyTrend: { day: string; approved: number; pushBacks: number }[];
-    documentQueue: { position: number; lamId: string; branchCode: string; waitingSinceUtc: string; missingCount: number }[];
+    documentQueue: { id: number; position: number; lamId: string; branchCode: string; waitingSinceUtc: string; missingCount: number }[];
     generatedAtUtc: string;
 }
 

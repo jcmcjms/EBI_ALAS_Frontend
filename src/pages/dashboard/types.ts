@@ -49,6 +49,7 @@ export interface WeeklyTrendPoint {
 }
 
 export interface IncompleteDocsQueueItem {
+    id: number;
     position: number;
     lamId: string;
     branch: string;
