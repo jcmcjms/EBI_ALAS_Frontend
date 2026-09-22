@@ -74,7 +74,7 @@ export function ApplicationTimeline({ loanId, variant = "panel" }: ApplicationTi
         <div
             className={cn(
                 "flex flex-wrap items-center justify-between gap-2",
-                variant === "panel" && "sticky top-0 z-10 border-b bg-card/95 px-4 py-2 backdrop-blur",
+                variant === "panel" && "sticky top-0 z-20 border-b bg-card/95 px-4 py-2 backdrop-blur",
             )}
         >
             <div className="flex items-center gap-1.5" role="group" aria-label="Filter history">
@@ -218,7 +218,7 @@ export function ApplicationTimeline({ loanId, variant = "panel" }: ApplicationTi
     }
 
     return (
-        <div className="max-h-[32rem] overflow-y-auto overscroll-contain rounded-md border bg-card">
+        <div className="relative isolate max-h-[32rem] overflow-y-auto overscroll-contain rounded-md border bg-card">
             {controls}
             {feed}
         </div>
