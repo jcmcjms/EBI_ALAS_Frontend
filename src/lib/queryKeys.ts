@@ -75,6 +75,7 @@ export const queryKeys = {
         review: {
             detail: (id: number) => ["loans", "review", id, "detail"] as const,
             history: (id: number) => ["loans", "review", id, "history"] as const,
+            timeline: (id: number) => ["loans", "review", id, "timeline"] as const,
             attachments: (id: number) => ["loans", "review", id, "attachments"] as const,
             checklistDocuments: (id: number) => ["loans", "review", id, "checklist-documents"] as const,
             deviations: (id: number) => ["loans", "review", id, "deviations"] as const,

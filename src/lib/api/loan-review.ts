@@ -175,6 +175,27 @@ export async function getLoanHistory(id: number) {
     return unwrapApiData(res.data);
 }
 
+// ── Unified Loan Timeline ────────────────────────────────────────────────
+
+export interface TimelineEvent {
+    id: string;
+    type: "workflow" | "deviation" | "deviationRemark" | "documentRemark" | "remark";
+    occurredAtUtc: string;
+    actorName: string | null;
+    actorRole: string | null;
+    action: string | null;
+    fromStatus: string | null;
+    toStatus: string | null;
+    comment: string | null;
+    subject: string | null;
+    subjectCode: string | null;
+}
+
+export async function getLoanTimeline(id: number): Promise<TimelineEvent[]> {
+    const res = await apiClient.get<ApiResponse<TimelineEvent[]>>(`/api/loans/${id}/timeline`);
+    return unwrapApiData(res.data);
+}
+
 export async function getLoanAttachments(id: number): Promise<LoanAttachmentDto[]> {
     const res = await apiClient.get<ApiResponse<LoanAttachmentDto[]>>(
         `/api/loans/${id}/attachments`
@@ -442,4 +463,5 @@ export const loanReviewKeys = {
     ...queryKeys.loans.review,
     documentRemarks: (loanId: number) => ["loans", "review", loanId, "document-remarks"] as const,
     documentChecklist: (loanId: number) => ["loans", "review", loanId, "document-checklist"] as const,
+    timeline: (id: number) => ["loans", "review", id, "timeline"] as const,
 };

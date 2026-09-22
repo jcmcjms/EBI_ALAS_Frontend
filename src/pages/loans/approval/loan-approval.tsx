@@ -6,7 +6,6 @@ import {
     CheckCircle,
     XCircle,
     ArrowCounterClockwise,
-    ArrowRight,
     FilePdf,
     Printer,
     Clock,
@@ -50,6 +49,7 @@ import { useAuthStore } from "@/src/store/authStore";
 import { ApprovalFormDocument } from "./components/approval-form-document";
 import { AttachmentsPanel } from "./components/attachments-panel";
 import { DeviationRemarksPanel } from "./components/deviation-remarks-panel";
+import { ApplicationTimeline } from "./components/application-timeline";
 import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
 import { GroupReviewSection } from "../review/components/group-review-section";
 import { ApprovalGroupTabs } from "./components/approval-group-tabs";
@@ -57,7 +57,6 @@ import { ApprovalFormViewport } from "@/src/components/loan/approval-form-sheet"
 import { useLoanGroup } from "@/src/hooks/use-loan-group";
 import {
     getLoanDetail,
-    getLoanHistory,
     getChecklistDocuments,
     updateLoanStatus,
     cancelLoanApplication,
@@ -276,13 +275,6 @@ export function LoanApprovalPage() {
         placeholderData: keepPreviousData,  // same-id refetches keep the sheet painted
     });
 
-    const history = useQuery({
-        queryKey: queryKeys.loans.review.history(id),
-        queryFn: () => getLoanHistory(id),
-        enabled: Number.isFinite(id) && id > 0,
-        staleTime: 30_000,
-    });
-
     const checklist = useQuery({
         queryKey: queryKeys.loans.review.checklistDocuments(id),
         queryFn: () => getChecklistDocuments(id),
@@ -340,7 +332,7 @@ export function LoanApprovalPage() {
                         : `Application moved to ${a.to}.`);
             setRemarks("");
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
         onError: (e: Error) => toastError(e.message),
@@ -352,7 +344,7 @@ export function LoanApprovalPage() {
         onSuccess: () => {
             toastSuccess("Pushed back to the Incomplete Documents queue.");
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
             qc.invalidateQueries({ queryKey: queryKeys.dashboard.full });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
@@ -642,74 +634,9 @@ export function LoanApprovalPage() {
                                         {/* ── Audit Trail ── */}
                                         <div className="space-y-3">
                                             <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                <Clock size={12} /> Audit Trail
+                                                <Clock size={12} /> Remarks
                                             </h3>
-                                            {history.isLoading ? (
-                                                <div className="flex justify-center py-4">
-                                                    <Spinner className="size-5" />
-                                                </div>
-                                            ) : (
-                                                <ul className="space-y-3 text-xs">
-                                                    {(history.data ?? []).map(
-                                                        (h) => (
-                                                            <li
-                                                                key={h.id}
-                                                                className="flex gap-3"
-                                                            >
-                                                                {h.toStatus ===
-                                                                "Rejected" ? (
-                                                                    <XCircle
-                                                                        size={16}
-                                                                        weight="fill"
-                                                                        className="mt-0.5 shrink-0 text-destructive"
-                                                                    />
-                                                                ) : h.toStatus ===
-                                                                  "ForRevision" ? (
-                                                                    <ArrowCounterClockwise
-                                                                        size={16}
-                                                                        weight="bold"
-                                                                        className="mt-0.5 shrink-0 text-amber-500"
-                                                                    />
-                                                                ) : (
-                                                                    <ArrowRight
-                                                                        size={16}
-                                                                        weight="bold"
-                                                                        className="mt-0.5 shrink-0 text-blue-500"
-                                                                    />
-                                                                )}
-                                                                <div>
-                                                                    <p className="font-medium">
-                                                                        {
-                                                                            h.actionBy
-                                                                        }
-                                                                    </p>
-                                                                    <p className="text-muted-foreground">
-                                                                        {
-                                                                            h.action
-                                                                        }
-                                                                        {h.toStatus
-            ? ` → ${h.toStatus}`
-            : ""}{" "}
-                                                                        •{" "}
-                                                                        {new Date(
-                                                                            h.actionDate
-                                                                        ).toLocaleString()}
-                                                                    </p>
-                                                                    {h.comments && (
-                                                                        <p className="mt-1 border-l-2 border-border pl-2 italic text-muted-foreground">
-                                                                            &ldquo;
-                                                                            {
-                                                                                h.comments
-                                                                            }
-                                                                            &rdquo;
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-                                                            </li>
-                                                        )
-                                                    )}
-                                                </ul>
-                                            )}
+                                            <ApplicationTimeline loanId={id} />
                                         </div>
 
                                         <div className="h-px bg-border" />
@@ -964,7 +891,7 @@ export function LoanApprovalPage() {
                                     setCancelReason("");
                                     setCancelPending(false);
                                     qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
-                                    qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
+                                    qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
                                     qc.invalidateQueries({ queryKey: queryKeys.loans.all });
                                 } catch (e) {
                                     toastError(e instanceof Error ? e.message : "Could not cancel.");
