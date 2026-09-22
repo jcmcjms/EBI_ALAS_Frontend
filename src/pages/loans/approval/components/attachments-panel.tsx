@@ -13,7 +13,6 @@ import {
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { Spinner } from "@/src/components/ui/spinner";
-import { Alert, AlertDescription, AlertTitle } from "@/src/components/ui/alert";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -42,7 +41,6 @@ const MIN_REMARKS = 10;
 
 interface AttachmentsPanelProps {
     loanId: number;
-    status: string;
     frozen: boolean;
     /** Reviewers + submitting encoder may write remarks (backend enforces). */
     canRemark: boolean;
@@ -60,7 +58,6 @@ interface AttachmentsPanelProps {
  */
 export function AttachmentsPanel({
     loanId,
-    status,
     frozen,
     canRemark,
     canPushBack,
@@ -87,7 +84,6 @@ export function AttachmentsPanel({
     const items: LoanChecklistDocumentDto[] = checklistDocs.data ?? [];
     const pending = useMemo(() => items.filter((i) => i.uploadStatus !== "Uploaded"), [items]);
     const uploadedCount = items.length - pending.length;
-    const parked = status === "ForIncompleteDocuments";
     const selectedCodes = pending.filter((p) => selected[p.idCode]).map((p) => p.idCode);
 
     const remarksFor = (code: string) =>
@@ -109,18 +105,6 @@ export function AttachmentsPanel({
                     </Badge>
                 )}
             </div>
-
-            {parked && (
-                <Alert role="status" aria-live="polite">
-                    <ArrowCounterClockwise />
-                    <AlertTitle>Waiting on documents</AlertTitle>
-                    <AlertDescription>
-                        Documents are updated in the <strong>WebLoan website</strong>, not here.
-                        Completeness re-syncs automatically; once every requirement is uploaded
-                        the file returns to the Checking queue on its own.
-                    </AlertDescription>
-                </Alert>
-            )}
 
             {checklistDocs.isLoading && <Spinner className="size-5" />}
             {checklistDocs.isError && (

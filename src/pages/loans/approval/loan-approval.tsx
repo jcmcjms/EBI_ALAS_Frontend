@@ -889,7 +889,6 @@ export function LoanApprovalPage() {
                                     <CardContent className="pt-4">
                                         <AttachmentsPanel
                                             loanId={id}
-                                            status={detail.status}
                                             frozen={frozen}
                                             canRemark={!!canWriteRemarks}
                                             canPushBack={

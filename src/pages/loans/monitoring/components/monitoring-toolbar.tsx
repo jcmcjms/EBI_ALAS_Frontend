@@ -4,22 +4,14 @@ import { Input } from "@/src/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/src/components/ui/popover.tsx";
 import { Calendar } from "@/src/components/ui/calendar.tsx";
 import { Badge } from "@/src/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
-import { MagnifyingGlass, CalendarBlank, Funnel, Export, X, UserCircle } from "@phosphor-icons/react";
+import { Checkbox } from "@/src/components/ui/checkbox";
+import { MagnifyingGlass, CalendarBlank, Funnel, Export, X, UserCircle, CaretDown } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import type { MonitoringFilters } from "../types";
 import type { LoanStatus } from "@/src/lib/loan-status";
 import { LOAN_STATUS_META, STATUS_FILTER_ORDER } from "@/src/lib/loan-status";
 import { sameStatusSet } from "@/src/lib/role-queues";
 import { cn } from "@/src/lib/utils";
-
-/** Value→label lookup for the status filter trigger. Without this,
- *  <Select.Value> renders the raw enum (e.g. "ForRecommendation")
- *  instead of the human-readable label. */
-const STATUS_SELECT_ITEMS = [
-    { value: "all", label: "All Statuses" },
-    ...STATUS_FILTER_ORDER.map((s) => ({ value: s as string, label: LOAN_STATUS_META[s].label })),
-];
 
 interface ToolbarProps {
     filters: MonitoringFilters;
@@ -80,33 +72,79 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                 </PopoverContent>
             </Popover>
 
-            {/* Status Filter — renders the real workflow stages, not the
-                old collapsed buckets (Pending / Under Review / …). */}
-            <Select value={(filters.status[0] ?? "all") as string} onValueChange={(val) => onFiltersChange({ ...filters, status: val === "all" ? [] : [val as LoanStatus] })} items={STATUS_SELECT_ITEMS}>
-                <SelectTrigger className="h-9 w-[180px] bg-background">
-                    <Funnel size={14} className="mr-2 text-muted-foreground" />
-                    <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    {STATUS_FILTER_ORDER.map((s) => (
-                        <SelectItem key={s} value={s}>
-                            <span className="flex items-center gap-2">
+            {/* Status Filter — multi-select: role queues can span several stages
+                (Evaluator = ForChecking + ForIncompleteDocuments), and dashboard
+                deep-links arrive comma-joined. A single-value Select silently
+                dropped everything after the first status. */}
+            <Popover>
+                <PopoverTrigger className="inline-flex h-9 min-w-[180px] cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-accent hover:text-accent-foreground">
+                    <span className="flex items-center gap-2 truncate">
+                        <Funnel size={14} className="text-muted-foreground" />
+                        {filters.status.length === 0 ? (
+                            <span className="text-muted-foreground">All Statuses</span>
+                        ) : filters.status.length === 1 ? (
+                            LOAN_STATUS_META[filters.status[0]].label
+                        ) : (
+                            `${filters.status.length} statuses`
+                        )}
+                    </span>
+                    <CaretDown size={12} className="text-muted-foreground" />
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[260px] p-2">
+                    <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted/60"
+                        onClick={() => onFiltersChange({ ...filters, status: [] })}
+                    >
+                        <span className="text-muted-foreground">All Statuses</span>
+                    </button>
+                    <div className="my-1 h-px bg-border" />
+                    <div className="max-h-72 overflow-y-auto">
+                        {STATUS_FILTER_ORDER.map((s) => (
+                            <label
+                                key={s}
+                                className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted/60"
+                            >
+                                <Checkbox
+                                    checked={filters.status.includes(s)}
+                                    onCheckedChange={(v) =>
+                                        onFiltersChange({
+                                            ...filters,
+                                            status:
+                                                v === true
+                                                    ? [...filters.status, s]
+                                                    : filters.status.filter((x) => x !== s),
+                                        })
+                                    }
+                                />
                                 <span
                                     className={cn(
                                         "inline-block h-2 w-2 rounded-full border",
-                                        LOAN_STATUS_META[s].className,
+                                        LOAN_STATUS_META[s].className
                                     )}
                                 />
-                                {LOAN_STATUS_META[s].label}
+                                <span className="flex-1">{LOAN_STATUS_META[s].label}</span>
                                 {roleQueue.includes(s) && (
-                                    <span className="text-[10px] text-muted-foreground">(your queue)</span>
+                                    <span className="text-[10px] text-muted-foreground">your queue</span>
                                 )}
-                            </span>
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+                            </label>
+                        ))}
+                    </div>
+                    {filters.status.length > 0 && (
+                        <>
+                            <div className="my-1 h-px bg-border" />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start gap-1.5 text-xs text-muted-foreground"
+                                onClick={() => onFiltersChange({ ...filters, status: [] })}
+                            >
+                                <X size={12} weight="bold" /> Clear status filter
+                            </Button>
+                        </>
+                    )}
+                </PopoverContent>
+            </Popover>
 
             {/* "My queue" affordance — visible, removable default filter */}
             {roleQueue.length > 0 && (

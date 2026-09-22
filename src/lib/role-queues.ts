@@ -6,9 +6,9 @@ import type { LoanStatus } from "./loan-status";
  * the server policy reconciles it once /queue-default resolves.
  */
 export const ROLE_QUEUE_DEFAULTS: Record<string, LoanStatus[]> = {
-    Recommender: ["ForRecommendation"],
-    Evaluator: ["ForChecking"],
-    Approver: ["ForApproval"],
+    Recommender: ["ForRecommendation", "ForIncompleteDocuments"],
+    Evaluator: ["ForChecking", "ForIncompleteDocuments"],
+    Approver: ["ForApproval", "ForIncompleteDocuments"],
 };
 
 export function queueDefaultForRole(role: string | undefined | null): LoanStatus[] {
