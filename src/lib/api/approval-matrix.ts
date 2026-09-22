@@ -16,6 +16,7 @@ export interface ApprovalAuthorityDto {
 }
 
 export interface DeviationCatalogItemDto {
+    id: number;
     description: string;
     severity: 0 | 1 | 2; // None=0, Minor=1, Major=2
 }

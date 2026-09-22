@@ -13,10 +13,7 @@ import {
   CloudCheck,
   IdentificationBadge,
   LockSimple,
-  MagnifyingGlass,
   PaperPlaneTilt,
-  Receipt,
-  Stack,
   WarningCircle,
 } from "@phosphor-icons/react";
 import { toastError } from "@/src/components/ui/toast";
@@ -43,6 +40,7 @@ import { OtherObligationsSection } from "./components/other-obligations";
 import { VerificationSection } from "./components/verification-section";
 import { DeviationsSection } from "./components/deviations-section";
 import { ApprovalFormPreview } from "./components/approval-form-preview";
+import { WorkflowOverview } from "@/src/components/loan/workflow-overview";
 import { useCreateLoan } from "@/src/hooks/use-create-loan";
 import { mapFormToSubmissionPayload } from "./utils/map-form-to-request";
 
@@ -403,37 +401,6 @@ function MobileSectionNav({
           })}
         </div>
       </nav>
-    </div>
-  );
-}
-
-// ── Workflow hint cards (empty state) ───────────────────────────
-
-function WorkflowHint({
-  icon,
-  step,
-  title,
-  body,
-}: {
-  icon: React.ReactNode;
-  step: string;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-lg border bg-background p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-          {icon}
-        </div>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {step}
-        </span>
-      </div>
-      <h3 className="mt-3 text-sm font-semibold">{title}</h3>
-      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-        {body}
-      </p>
     </div>
   );
 }
@@ -850,35 +817,7 @@ export function LoanCreationPage() {
                 </section>
               </fieldset>
             ) : (
-              <section
-                aria-label="How the application works"
-                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-              >
-                <WorkflowHint
-                  icon={<MagnifyingGlass size={16} weight="bold" />}
-                  step="Step 1"
-                  title="Look up the client"
-                  body="Enter the CIS number to pull the borrower's profile, agency details and existing accounts."
-                />
-                <WorkflowHint
-                  icon={<Receipt size={16} weight="bold" />}
-                  step="Step 2"
-                  title="Pick the account"
-                  body="Choose which of the borrower's accounts this application is for. Active loans refresh."
-                />
-                <WorkflowHint
-                  icon={<Stack size={16} weight="bold" />}
-                  step="Step 3"
-                  title="Attach a preloan"
-                  body="If the borrower has a pending preloan on the selected account, pick one to resume it."
-                />
-                <WorkflowHint
-                  icon={<PaperPlaneTilt size={16} weight="bold" />}
-                  step="Step 4"
-                  title="Submit for recommendation"
-                  body="Encode the proposed terms, then route to the Account Officer."
-                />
-              </section>
+              <WorkflowOverview />
             )}
 
             {/* Spacer for sticky footer */}
