@@ -77,18 +77,24 @@ export function WorkflowOverview() {
             <ol className="grid gap-6 p-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
                 {STEPS.map((step, i) => (
                     <li key={step.title} className="relative">
-                        {/* Connector into the next step (desktop only — on stacked
-                            layouts the numbering carries the sequence). */}
-                        {i < STEPS.length - 1 && (
-                            <span
-                                aria-hidden
-                                className="absolute left-6 -right-8 top-3 hidden h-px bg-border lg:block"
-                            />
-                        )}
-                        <div className="flex items-center gap-2">
+                        {/* ── Number rail: circle + connector on their own row so
+                             the line can never cross the step title (the old
+                             absolute line sat at the circle's center, which is
+                             mid-title once labels wrap). ── */}
+                        <div className="flex items-center">
                             <span className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-card text-[11px] font-bold tabular-nums text-primary">
                                 {i + 1}
                             </span>
+                            {i < STEPS.length - 1 && (
+                                <span
+                                    aria-hidden
+                                    className="-mr-8 ml-2 hidden h-px flex-1 bg-border lg:block"
+                                />
+                            )}
+                        </div>
+
+                        {/* ── Label block gets the full column width → far less wrapping ── */}
+                        <div className="mt-3 flex items-center gap-2">
                             <span className="text-primary" aria-hidden>
                                 {step.icon}
                             </span>
@@ -97,6 +103,7 @@ export function WorkflowOverview() {
                         <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                             {step.body}
                         </p>
+
                         {i === 0 && (
                             <Button
                                 type="button"
