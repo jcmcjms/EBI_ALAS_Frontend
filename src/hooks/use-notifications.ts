@@ -1,10 +1,18 @@
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getNotifications } from "@/src/lib/api/notifications";
+import {
+    getNotifications,
+    getNotificationInbox,
+    markNotificationRead,
+    markAllNotificationsRead,
+    type InboxQuery,
+} from "@/src/lib/api/notifications";
 import { queryKeys } from "@/src/lib/queryKeys";
 import { useNotificationStore } from "@/src/store/notificationStore";
 import { mapApiNotifications } from "@/src/lib/notifications";
+import { toastError } from "@/src/components/ui/toast";
+import { getErrorMessage } from "@/src/lib/apiClient";
 
 /**
  * Header-bell query for the current user's notifications.
@@ -70,4 +78,71 @@ export function useNotifications(enabled: boolean = true, isSignalRConnected: bo
     }, [query.data, setNotifications]);
 
     return query;
+}
+
+/**
+ * Server-driven inbox query for the notifications page.
+ * Supports status/type/search filtering and pagination.
+ * Returns items, totalCount, and unreadCount in one round-trip.
+ */
+export function useNotificationInbox(params: InboxQuery, enabled = true) {
+    return useQuery({
+        queryKey: [...queryKeys.notifications, "inbox", params],
+        queryFn: () => getNotificationInbox(params),
+        // Keep previous data while fetching next page to prevent
+        // skeleton flash during pagination.
+        placeholderData: (prev) => prev,
+        enabled,
+    });
+}
+
+/**
+ * Mutation hook to mark a single notification as read.
+ * Uses optimistic update: flips the store immediately, then
+ * invalidates on success. On error, shows a toast — the next
+ * poll reconciles the rollback.
+ */
+export function useMarkNotificationRead() {
+    const queryClient = useQueryClient();
+    const markRead = useNotificationStore((s) => s.markRead);
+
+    return useMutation({
+        mutationFn: (id: string) => markNotificationRead(Number(id)),
+        onMutate: async (id) => {
+            // Optimistic: bell + row flip instantly
+            await queryClient.cancelQueries({ queryKey: queryKeys.notifications });
+            markRead(id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+        },
+        onError: (error) => {
+            toastError(getErrorMessage(error));
+        },
+    });
+}
+
+/**
+ * Mutation hook to mark all unread notifications as read.
+ * Uses optimistic update: flips the store immediately, then
+ * invalidates on success. On error, shows a toast.
+ */
+export function useMarkAllNotificationsRead() {
+    const queryClient = useQueryClient();
+    const markAllRead = useNotificationStore((s) => s.markAllRead);
+
+    return useMutation({
+        mutationFn: markAllNotificationsRead,
+        onMutate: async () => {
+            // Optimistic: flip all in store immediately
+            await queryClient.cancelQueries({ queryKey: queryKeys.notifications });
+            markAllRead();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+        },
+        onError: (error) => {
+            toastError(getErrorMessage(error));
+        },
+    });
 }

@@ -14,9 +14,6 @@ export interface AppNotification {
     read: boolean;
     /** Person-originated notifications render an avatar instead of a type icon. */
     actor?: string;
-    /** Renders Accept/Decline actions until resolved. */
-    pendingAction?: "access-request" | "recommendation";
-    resolved?: "approved" | "declined";
     /** Route to navigate to when the notification is opened. */
     link?: string;
 }
@@ -46,6 +43,9 @@ export function initialsOf(name: string): string {
  * bucket. Backend titles are free-form English ("Ready for Evaluation",
  * "Application Returned", "New Loan Application Submitted") — these
  * matches map them to the icon family the UI renders in the bell dropdown.
+ *
+ * Used as a fallback when the server doesn't provide a type (legacy rows
+ * written before the Type column was added).
  */
 export function classifyNotification(title: string): NotificationType {
     const t = title.toLowerCase();
@@ -64,11 +64,14 @@ export function classifyNotification(title: string): NotificationType {
 /**
  * Map one wire-format notification row to the FE's `AppNotification`
  * shape (used by the Zustand store + bell UI).
+ *
+ * Prefers the server-provided type; falls back to title-based
+ * classification for rows written before the Type column existed.
  */
 export function mapApiNotification(n: NotificationResponse): AppNotification {
     return {
         id: String(n.id),
-        type: classifyNotification(n.title),
+        type: (n.type as NotificationType) ?? classifyNotification(n.title),
         title: n.title,
         description: n.description,
         createdAt: n.createdAt,

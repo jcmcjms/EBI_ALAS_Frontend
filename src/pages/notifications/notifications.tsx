@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toastSuccess, toastInfo } from "@/src/components/ui/toast";
 import {
     BellSimple,
     CaretDown,
@@ -22,7 +21,8 @@ import { Card } from "@/src/components/ui/card";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
-    DropdownMenuContent, DropdownMenuGroup,
+    DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuLabel,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
@@ -32,9 +32,12 @@ import {
 import { Input } from "@/src/components/ui/input";
 import { formatRelativeTime, initialsOf, type NotificationType } from "@/src/lib/notifications";
 import { cn } from "@/src/lib/utils";
+import { useNotificationInbox, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/src/hooks/use-notifications";
+import { useDebouncedValue } from "@/src/hooks/use-debounced";
 import { useNotificationStore } from "@/src/store/notificationStore";
 
 const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 300;
 
 const TYPE_META: Record<NotificationType, { label: string; icon: Icon; iconWrap: string; dot: string }> = {
     application: { label: "Application", icon: ClipboardText, iconWrap: "bg-blue-100 text-blue-600", dot: "bg-blue-500" },
@@ -77,55 +80,59 @@ function FilterMenu<T extends string>({ label, value, options, onChange }: Filte
 
 export function NotificationsPage() {
     const navigate = useNavigate();
-    const notifications = useNotificationStore((s) => s.notifications);
-    const markRead = useNotificationStore((s) => s.markRead);
-    const markAllRead = useNotificationStore((s) => s.markAllRead);
-    const resolveNotification = useNotificationStore((s) => s.resolveNotification);
 
-    const [query, setQuery] = useState("");
+    // Server-driven inbox state
+    const [search, setSearch] = useState("");
+    const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
     const [status, setStatus] = useState<StatusFilter>("all");
     const [type, setType] = useState<TypeFilter>("all");
     const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
     const [page, setPage] = useState(1);
-    const [prefs, setPrefs] = useState({ emailDigest: true, actionAlerts: true, autoRead: false });
+    const [autoRead, setAutoRead] = useState(false);
 
-    const unreadCount = notifications.filter((n) => !n.read).length;
+    // Server-driven inbox query
+    const { data, isLoading } = useNotificationInbox({
+        page,
+        pageSize: PAGE_SIZE,
+        status,
+        type: type === "all" ? undefined : type,
+        search: debouncedSearch.trim() || undefined,
+    });
 
-    const filtered = useMemo(() => {
-        const q = query.trim().toLowerCase();
-        return notifications
-            .filter((n) => (status === "all" ? true : status === "unread" ? !n.read : n.read))
-            .filter((n) => type === "all" || n.type === type)
-            .filter((n) => !q || n.title.toLowerCase().includes(q) || n.description.toLowerCase().includes(q))
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    }, [notifications, query, status, type]);
+    const items = useMemo(() => {
+        if (!data?.items) return [];
+        return data.items.map((n) => ({
+            id: String(n.id),
+            type: (n.type as NotificationType) ?? "system",
+            title: n.title,
+            description: n.description,
+            createdAt: n.createdAt,
+            read: n.isRead,
+            link: n.link ?? undefined,
+        }));
+    }, [data?.items]);
 
-    const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-    // Clamp `page` to the filtered list's bounds during render — this is
-    // the `useEffect` + `setState(1)` pattern rewritten to derive the
-    // result inline, avoiding a cascading render on every filter change.
-    const safePage = Math.min(Math.max(1, page), pageCount);
-    const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-    const from = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-    const to = Math.min(filtered.length, safePage * PAGE_SIZE);
+    const totalCount = data?.totalCount ?? 0;
+    const unreadCount = data?.unreadCount ?? 0;
+    const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+    // Mutations
+    const markReadMutation = useMarkNotificationRead();
+    const markAllMutation = useMarkAllNotificationsRead();
+
+    // Bell store (for optimistic badge updates)
+    const addNotification = useNotificationStore((s) => s.addNotification);
 
     const openNotification = (id: string, link?: string) => {
-        markRead(id);
+        if (autoRead) {
+            markReadMutation.mutate(id);
+        }
         if (link) navigate(link);
     };
 
-    const handleResolve = (id: string, resolution: "approved" | "declined") => {
-        resolveNotification(id, resolution);
-        if (resolution === "approved") toastSuccess("Request approved.");
-        else toastInfo("Request declined.");
-        // TODO(team): Replace client-side resolve with POST /api/notifications/{id}/resolve + optimistic rollback.
-    };
-
-    // Filter setters reset pagination inline so a filter change never
-    // lands the user mid-list with a stale page index. This avoids the
-    // `setState-in-effect` pattern the new lint rule forbids.
+    // Filter setters reset pagination inline
     const setQueryAndReset = (next: string) => {
-        setQuery(next);
+        setSearch(next);
         setPage(1);
     };
     const setStatusAndReset = (next: StatusFilter) => {
@@ -138,11 +145,14 @@ export function NotificationsPage() {
     };
 
     const clearFilters = () => {
-        setQuery("");
+        setSearch("");
         setStatus("all");
         setType("all");
         setPage(1);
     };
+
+    const from = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+    const to = Math.min(totalCount, page * PAGE_SIZE);
 
     return (
         <div className="flex flex-1 flex-col bg-muted/40">
@@ -161,7 +171,11 @@ export function NotificationsPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button onClick={markAllRead} disabled={unreadCount === 0} className="gap-2">
+                        <Button
+                            onClick={() => markAllMutation.mutate()}
+                            disabled={unreadCount === 0 || markAllMutation.isPending}
+                            className="gap-2"
+                        >
                             <Check size={16} weight="bold" />
                             Mark All as Read
                         </Button>
@@ -176,23 +190,11 @@ export function NotificationsPage() {
                                     <DropdownMenuLabel>Preferences</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuCheckboxItem
-                                    checked={prefs.emailDigest}
-                                    onCheckedChange={(c) => setPrefs((p) => ({ ...p, emailDigest: !!c }))}
-                                >
-                                    Daily email digest
-                                </DropdownMenuCheckboxItem>
-                                <DropdownMenuCheckboxItem
-                                    checked={prefs.actionAlerts}
-                                    onCheckedChange={(c) => setPrefs((p) => ({ ...p, actionAlerts: !!c }))}
-                                >
-                                    Alert on action-required items
-                                </DropdownMenuCheckboxItem>
-                                <DropdownMenuCheckboxItem
-                                    checked={prefs.autoRead}
-                                    onCheckedChange={(c) => setPrefs((p) => ({ ...p, autoRead: !!c }))}
-                                >
-                                    Mark read when opened
-                                </DropdownMenuCheckboxItem>
+                                        checked={autoRead}
+                                        onCheckedChange={(c) => setAutoRead(!!c)}
+                                    >
+                                        Mark read when opened
+                                    </DropdownMenuCheckboxItem>
                                 </DropdownMenuGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -208,7 +210,7 @@ export function NotificationsPage() {
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                         />
                         <Input
-                            value={query}
+                            value={search}
                             onChange={(e) => setQueryAndReset(e.target.value)}
                             placeholder="Search notifications..."
                             aria-label="Search notifications"
@@ -251,13 +253,18 @@ export function NotificationsPage() {
 
                 {/* List */}
                 <Card className="mt-6 overflow-hidden">
-                    {pageItems.length === 0 ? (
+                    {isLoading ? (
+                        <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+                            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                            <p className="text-sm text-muted-foreground">Loading notifications...</p>
+                        </div>
+                    ) : items.length === 0 ? (
                         <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                                 <BellSimple size={22} className="text-muted-foreground" />
                             </div>
                             <div>
-                                {notifications.length === 0 ? (
+                                {totalCount === 0 && status === "all" && type === "all" && !debouncedSearch.trim() ? (
                                     <>
                                         <p className="text-sm font-medium">No notifications yet</p>
                                         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -271,7 +278,7 @@ export function NotificationsPage() {
                                     </>
                                 )}
                             </div>
-                            {notifications.length > 0 && (
+                            {(status !== "all" || type !== "all" || debouncedSearch.trim()) && (
                                 <Button variant="outline" size="sm" onClick={clearFilters}>
                                     Clear filters
                                 </Button>
@@ -279,7 +286,7 @@ export function NotificationsPage() {
                         </div>
                     ) : (
                         <ul className="divide-y">
-                            {pageItems.map((n) => {
+                            {items.map((n) => {
                                 const meta = TYPE_META[n.type];
                                 const TypeIcon = meta.icon;
                                 return (
@@ -327,35 +334,6 @@ export function NotificationsPage() {
                                                 )}
                                             </div>
                                             <p className="mt-0.5 truncate text-sm text-muted-foreground">{n.description}</p>
-
-                                            {n.pendingAction && !n.resolved && (
-                                                <div className="mt-2 flex gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleResolve(n.id, "approved");
-                                                        }}
-                                                    >
-                                                        Accept
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleResolve(n.id, "declined");
-                                                        }}
-                                                    >
-                                                        Decline
-                                                    </Button>
-                                                </div>
-                                            )}
-                                            {n.resolved && (
-                                                <p className="mt-1 text-xs text-muted-foreground">
-                                                    {n.resolved === "approved" ? "You accepted this request." : "You declined this request."}
-                                                </p>
-                                            )}
                                         </div>
 
                                         <div className="flex shrink-0 items-center gap-3 self-center sm:gap-4">
@@ -381,13 +359,23 @@ export function NotificationsPage() {
                 {/* Pagination */}
                 <div className="mt-4 flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
-                        Showing {from} to {to} of {filtered.length} notification{filtered.length === 1 ? "" : "s"}
+                        Showing {from} to {to} of {totalCount} notification{totalCount === 1 ? "" : "s"}
                     </p>
                     <div className="flex gap-2">
-                        <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page <= 1}
+                            onClick={() => setPage(page - 1)}
+                        >
                             Previous
                         </Button>
-                        <Button variant="outline" size="sm" disabled={safePage >= pageCount} onClick={() => setPage(safePage + 1)}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page >= pageCount}
+                            onClick={() => setPage(page + 1)}
+                        >
                             Next
                         </Button>
                     </div>

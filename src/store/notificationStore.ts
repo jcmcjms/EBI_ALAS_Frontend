@@ -18,7 +18,6 @@ interface NotificationState {
     addNotification: (notification: AppNotification) => void;
     markRead: (id: string) => void;
     markAllRead: () => void;
-    resolveNotification: (id: string, resolution: "approved" | "declined") => void;
 }
 
 /**
@@ -54,12 +53,5 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     markAllRead: () =>
         set((state) => ({
             notifications: state.notifications.map((n) => (n.read ? n : { ...n, read: true })),
-        })),
-
-    resolveNotification: (id, resolution) =>
-        set((state) => ({
-            notifications: state.notifications.map((n) =>
-                n.id === id ? { ...n, read: true, pendingAction: undefined, resolved: resolution } : n
-            ),
         })),
 }));
