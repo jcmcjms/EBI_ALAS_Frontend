@@ -88,6 +88,8 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
+  // Injects CSS custom properties from the ChartConfig. The `dangerouslySetInnerHTML`
+  // is safe here: values come from developer-authored config, never user input.
   return (
     <style
       dangerouslySetInnerHTML={{
