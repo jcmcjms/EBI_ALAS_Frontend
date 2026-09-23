@@ -6,6 +6,7 @@ import { toastSuccess, toastError } from "@/src/components/ui/toast";
 import { loanApi } from "@/src/lib/api/loans";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { queryKeys } from "@/src/lib/queryKeys";
+import { generateUUID } from "@/src/lib/utils";
 import { workflowKeys, type WorkflowConfigurationDto } from "@/src/lib/api/workflow";
 import type { CreateLoanPayload, LoanSubmissionResponse } from "@/src/lib/api/types";
 
@@ -46,7 +47,7 @@ export function useCreateLoan() {
     // retries because `useRef` keeps it across re-renders within the
     // same hook instance — the value is replaced only when
     // `rotateIdempotencyKey()` is called after success.
-    const keyRef = useRef<string>(crypto.randomUUID());
+    const keyRef = useRef<string>(generateUUID());
 
     const mutation = useMutation<
         LoanSubmissionResponse,
@@ -101,7 +102,7 @@ export function useCreateLoan() {
      * previous one.
      */
     const rotateIdempotencyKey = useCallback(() => {
-        keyRef.current = crypto.randomUUID();
+        keyRef.current = generateUUID();
     }, []);
 
     return { ...mutation, rotateIdempotencyKey };

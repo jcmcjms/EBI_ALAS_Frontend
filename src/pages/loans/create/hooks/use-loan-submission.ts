@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef } from "react";
 
 import { submitLoanApplication } from "@/src/lib/api/loans";
+import { generateUUID } from "@/src/lib/utils";
 import type { LoanSubmissionPayload, LoanSubmissionResponse } from "@/src/lib/api/types";
 
 /**
@@ -15,7 +16,7 @@ import type { LoanSubmissionPayload, LoanSubmissionResponse } from "@/src/lib/ap
  */
 export function useLoanSubmission() {
     const queryClient = useQueryClient();
-    const keyRef = useRef<string>(crypto.randomUUID());
+    const keyRef = useRef<string>(generateUUID());
 
     const mutation = useMutation<
         LoanSubmissionResponse,
@@ -35,7 +36,7 @@ export function useLoanSubmission() {
     });
 
     const rotateIdempotencyKey = useCallback(() => {
-        keyRef.current = crypto.randomUUID();
+        keyRef.current = generateUUID();
     }, []);
 
     return { ...mutation, rotateIdempotencyKey };
