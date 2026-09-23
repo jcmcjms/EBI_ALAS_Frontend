@@ -257,12 +257,25 @@ export function NotificationsPage() {
                                 <BellSimple size={22} className="text-muted-foreground" />
                             </div>
                             <div>
-                                <p className="text-sm font-medium">No notifications match your filters</p>
-                                <p className="mt-0.5 text-xs text-muted-foreground">Try adjusting the search or filters.</p>
+                                {notifications.length === 0 ? (
+                                    <>
+                                        <p className="text-sm font-medium">No notifications yet</p>
+                                        <p className="mt-0.5 text-xs text-muted-foreground">
+                                            Notifications about loan applications and approvals will appear here.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-sm font-medium">No notifications match your filters</p>
+                                        <p className="mt-0.5 text-xs text-muted-foreground">Try adjusting the search or filters.</p>
+                                    </>
+                                )}
                             </div>
-                            <Button variant="outline" size="sm" onClick={clearFilters}>
-                                Clear filters
-                            </Button>
+                            {notifications.length > 0 && (
+                                <Button variant="outline" size="sm" onClick={clearFilters}>
+                                    Clear filters
+                                </Button>
+                            )}
                         </div>
                     ) : (
                         <ul className="divide-y">
