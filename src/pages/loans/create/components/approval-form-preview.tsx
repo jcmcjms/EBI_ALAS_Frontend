@@ -601,7 +601,6 @@ function SingleLoanApprovalForm({
                     </div>
 
                     </div>
-                </div>
 
                 {/* on-screen page gap — never printed */}
                 <div className="mt-8 border-t-4 border-dashed border-muted print:hidden" aria-hidden />
