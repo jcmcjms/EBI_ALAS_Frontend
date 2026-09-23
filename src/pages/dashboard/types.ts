@@ -59,4 +59,6 @@ export interface IncompleteDocsQueueItem {
     missingCount: number;
     clientName: string;
     encoderName: string;
+    flaggedByName?: string;
+    flaggedAt?: string;
 }

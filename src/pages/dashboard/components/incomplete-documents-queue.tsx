@@ -18,8 +18,8 @@ interface Props {
 
 /**
  * "Queue for Incomplete Documents (to be added to checking)" from the workflow
- * sketch: files parked on the encoder while requirements are completed. They
- * re-enter the Checking queue tail once documents verify complete.
+ * sketch: files flagged by reviewers while requirements are completed. They
+ * re-enter the review queue tail once documents verify complete.
  */
 export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({ data }: Props) {
     const navigate = useNavigate();
@@ -41,9 +41,14 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
             </CardHeader>
             <CardContent className="p-0 flex-1">
                 {data.length === 0 ? (
-                    <p className="py-10 text-center text-sm text-muted-foreground">
-                        No applications waiting on documents.
-                    </p>
+                    <div className="py-10 text-center space-y-1">
+                        <p className="text-sm text-muted-foreground">
+                            No applications flagged for missing documents.
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            Reviewers flag files from the Review &amp; Approval page.
+                        </p>
+                    </div>
                 ) : (
                     <ul className="divide-y">
                         {display.map((item) => {
@@ -87,10 +92,13 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                                             </div>
                                             <p
                                                 className="text-xs truncate"
-                                                title={`${item.clientName} · encoded by ${item.encoderName} · ${item.branch}`}
+                                                title={`${item.clientName} · encoded by ${item.encoderName} · ${item.flaggedByName ? `flagged by ${item.flaggedByName}` : ""} · ${item.branch}`}
                                             >
                                                 <span className="font-medium text-foreground/90">{item.clientName}</span>
                                                 <span className="text-muted-foreground"> · by {item.encoderName}</span>
+                                                {item.flaggedByName && (
+                                                    <span className="text-muted-foreground"> · flagged by {item.flaggedByName}</span>
+                                                )}
                                             </p>
                                         </div>
                                         <span className="shrink-0 text-right text-sm font-medium tabular-nums">

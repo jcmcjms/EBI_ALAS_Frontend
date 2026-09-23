@@ -79,6 +79,8 @@ function mapOverview(o: DashboardOverviewDto): DashboardData {
             missingCount: d.missingCount,
             clientName: d.clientName,
             encoderName: d.encoderName,
+            flaggedByName: d.flaggedByName,
+            flaggedAt: d.flaggedAt,
         })),
         fetchedAt: o.generatedAtUtc,
     };
