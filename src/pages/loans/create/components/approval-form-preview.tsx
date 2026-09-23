@@ -308,7 +308,7 @@ function SingleLoanApprovalForm({
 
                 <h1 className="mb-2 text-sm font-bold underline">LOAN APPROVAL FORM</h1>
 
-                <div className="border-2 border-black">
+                <div className="border-2 border-b-0 border-black print:border-b-2">
                     {/* ══ CLIENT INFORMATION ══ */}
                     <table className="w-full border-collapse">
                         <tbody>
@@ -602,12 +602,9 @@ function SingleLoanApprovalForm({
 
                     </div>
 
-                {/* on-screen page gap — never printed */}
-                <div className="mt-8 border-t-4 border-dashed border-muted print:hidden" aria-hidden />
-
                 {/* ══ PAGE 2 — certifications & signatures ══ */}
-                <section className="mt-2 break-before-page print:mt-0">
-                    <div className="mb-3 flex items-baseline justify-between border-b-2 border-black pb-1 print:mt-0">
+                <section className="break-before-page">
+                    <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
                         <span className="text-sm font-bold underline">
                             LOAN APPROVAL FORM (Continuation)
                         </span>
@@ -617,7 +614,7 @@ function SingleLoanApprovalForm({
                         </span>
                     </div>
 
-                    <div className="border-2 border-black">
+                    <div className="border-2 border-t-0 border-black print:border-t-2">
                         <div className="grid grid-cols-2">
                             <div className={cn(B, "min-h-40 border-r-0 p-1.5")}>
                                 <div className="font-bold">Deviations:</div>
