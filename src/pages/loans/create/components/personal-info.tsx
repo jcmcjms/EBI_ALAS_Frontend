@@ -2,7 +2,7 @@ import { useFormContext } from "react-hook-form";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import {
-    GraduationCap,
+    Buildings,
     LockSimple,
     UserCirclePlus,
     WarningCircle,
@@ -206,7 +206,7 @@ export function PersonalInfoSection() {
                 {/* ── Divider & Manual Entry Section ──────────────────── */}
                 <div className="border-t pt-6">
                     <div className="mb-4 flex items-center gap-2">
-                        <GraduationCap size={20} weight="bold" className="text-primary" />
+                        <Buildings size={20} weight="bold" className="text-primary" />
                         <h3 className="text-md font-semibold">
                             Referrer Information
                         </h3>
@@ -217,23 +217,23 @@ export function PersonalInfoSection() {
                     </p>
 
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* School Field */}
+                        {/* School/Agency Field */}
                         <div className="space-y-1.5">
                             <Label
                                 htmlFor="client.school"
                                 className="flex items-center gap-1.5 text-xs"
                             >
-                                <GraduationCap size={14} weight="bold" />
-                                Educational Attainment / School
+                                <Buildings size={14} weight="bold" />
+                                School/Agency
                             </Label>
                             <Input
                                 id="client.school"
                                 {...register("client.school")}
-                                placeholder="e.g. University of the Philippines"
+                                placeholder="e.g. Department of Education"
                                 {...getErrorProps("school")}
                             />
                             <p className="text-[11px] text-muted-foreground">
-                                Highest level of education or graduating institution.
+                                School or agency where the referrer works.
                             </p>
                             {clientErrors?.school?.message && (
                                 <p
