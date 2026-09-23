@@ -100,7 +100,7 @@ function AmtRow({ label, value, blue, bold, underline, topLine, labelBold }: {
 
 function SignatureBlock({ slot }: { slot: SignatureSlotDto }) {
     const name = slot.signedByName?.trim();
-    const title = slot.signedByJobTitle?.trim() || slot.jobTitle;
+    const title = slot.signedByJobTitle?.trim() || slot.jobTitle || "\u2014";
     return (
         <div>
             <div className="font-bold">{slot.action}:</div>
@@ -565,9 +565,6 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                         {/* ── Signature blocks, encoder → approver ── */}
                         {signatureSlots && signatureSlots.length > 0 && (
                             <div className="border-t-2 border-black p-3 break-inside-avoid">
-                                <div className="mb-3 text-center font-bold underline">
-                                    IN WITNESS WHEREOF, the undersigned affix their signatures:
-                                </div>
                                 <div className="grid grid-cols-2 gap-x-8 gap-y-6">
                                     {signatureSlots.map((slot) => (
                                         <SignatureBlock key={slot.role} slot={slot} />
