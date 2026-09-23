@@ -38,7 +38,6 @@ import { cn } from "@/src/lib/utils";
 import { stripRoleDisplayName } from "@/src/lib/role-badges";
 import { BRANCHES, PERMISSIONS, type CreateUserPayload, type UpdateUserPayload, type UserResponse } from "@/src/lib/api/types";
 
-/** Lookup branch display name by branch code. */
 function getBranchName(code: string): string {
     const branch = BRANCHES.find(b => b.code === code);
     return branch?.name ?? code;
@@ -55,7 +54,6 @@ import { AuditLogModal } from "./components/audit-log-modal";
 import { TemporaryPasswordDialog, type TemporaryCredential } from "./components/temporary-password-dialog";
 import { ImportUsersSheet } from "./components/import-users-sheet";
 
-/** Returns `value` only after it has stayed unchanged for `delayMs`. */
 function useDebouncedValue<T>(value: T, delayMs = 300): T {
     const [debounced, setDebounced] = useState(value);
     useEffect(() => {
@@ -83,7 +81,6 @@ type UsersTableMeta = {
     onToggleStatus?: (user: UserResponse) => void;
 };
 
-// Declare features for the table.
 // NOTE: `globalFilteringFeature` is required for `state.globalFilter` to be a
 // valid slice and for the search box to actually filter rows. String filter
 // functions must be registered via `filterFns` to be usable by name.
@@ -267,11 +264,11 @@ export function UsersDataTable() {
         pageSize: pagination.pageSize,
     });
 
+    // Directory-wide totals — unaffected by the search/role/branch filters.
     const stats = useUserStats();
 
     const paged = usersQuery.data;
 
-    // Server-side pagination controls derived from the PagedResult envelope.
     const canPreviousPage = paged?.hasPreviousPage ?? false;
     const canNextPage = paged?.hasNextPage ?? false;
 
@@ -299,6 +296,7 @@ export function UsersDataTable() {
         data: paged?.items ?? [],
         columns,
         state: {
+            // Search is server-driven via useUsers({ search }); this stays empty.
             globalFilter: "",
         },
         globalFilterFn: "includesString",
@@ -377,8 +375,6 @@ export function UsersDataTable() {
         }
     }
 
-    // Security workflows below have no backing endpoint yet — surface that
-    // honestly instead of faking success.
     function handleResetPasswordRequest(user: UserResponse) {
         if (!hasPermission(PERMISSIONS.userEdit)) {
             toastError("You don't have permission to reset passwords");
@@ -482,10 +478,9 @@ export function UsersDataTable() {
 
     async function handleUpdateUser(userId: number, changes: UserProfileChanges): Promise<boolean> {
         try {
-            // Spread the optional fields through. `eSignature` is only
-            // present when the user actually edited the signature pad —
-            // for routine profile edits it's omitted and the backend's
-            // "no-change" semantics preserve the existing PNG.
+            // `eSignature` is only present when the user actually edited the
+            // signature pad — for routine profile edits it's omitted and the
+            // backend's "no-change" semantics preserve the existing PNG.
             await updateUserMutation.mutateAsync({
                 id: userId,
                 payload: {

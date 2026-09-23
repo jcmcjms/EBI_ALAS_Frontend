@@ -13,6 +13,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: true, // expose to network so other users on same WiFi can access
     proxy: {
       '/api': {
         target: 'https://localhost:7220',

@@ -19,6 +19,7 @@ import {
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { cn } from "@/src/lib/utils";
 
+/** 10 MB ceiling — matches the "Up to 10 MB" copy in the upload UI. */
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 /** Error list cap — the full set is always available via the CSV report. */
 const VISIBLE_ERRORS = 50;
@@ -94,6 +95,7 @@ export function ImportProductsSheet({ open, onClose }: ImportProductsSheetProps)
         if (!result || result.errors.length === 0) return;
         const headers = ["Row", "Field", "Error"];
         const rows = result.errors.map((e: { rowNumber: number; field: string; error: string }) => [String(e.rowNumber), e.field, e.error]);
+        // BOM prefix forces Excel to interpret the file as UTF-8.
         const csv =
             "\uFEFF" +
             [headers, ...rows]
