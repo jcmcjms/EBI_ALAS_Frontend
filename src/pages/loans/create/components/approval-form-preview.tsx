@@ -25,6 +25,8 @@ import {
     buildProductLine,
     DEFAULT_MINIMUM_NTHP,
 } from "@/src/lib/loan-approval-utils";
+import { useAuthStore } from "@/src/store/authStore";
+import { useSignatureChain, withDraftEncoder, type SignatureSlotDto } from "@/src/lib/api/signatures";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
 
@@ -122,6 +124,29 @@ function DashRows({ count, incoming = false }: { count: number; incoming?: boole
     );
 }
 
+/* ── Signature block atom (same as approval-form-document.tsx) ── */
+
+function SignatureBlock({ slot }: { slot: SignatureSlotDto }) {
+    const name = slot.signedByName?.trim();
+    const title = slot.signedByJobTitle?.trim() || slot.jobTitle;
+    return (
+        <div>
+            <div className="font-bold">{slot.action}:</div>
+            <div className="mt-8 border-b border-black" />
+            <div className="mt-0.5 font-bold">{name ?? "\u00A0"}</div>
+            <div>
+                {title} <span className="font-bold">({slot.role})</span>
+            </div>
+            <div className="mt-1">
+                Date signed:{" "}
+                <span className="tabular-nums">
+                    {slot.signedAt ? isoDate(slot.signedAt) : "____________"}
+                </span>
+            </div>
+        </div>
+    );
+}
+
 /* ── Single Loan Approval Form ─────────────────────────────────────
  *
  * Renders the approval form for a single loan. This is extracted into
@@ -140,6 +165,8 @@ interface SingleLoanApprovalFormProps {
      * submit each sheet prints its own LAM ID.
      */
     lamIdByLoanNo?: Record<string, string>;
+    /** Server-resolved signature chain (page 2). Omitted → section hidden. */
+    signatureSlots?: SignatureSlotDto[];
 }
 
 function SingleLoanApprovalForm({
@@ -149,6 +176,7 @@ function SingleLoanApprovalForm({
     form,
     index,
     lamIdByLoanNo,
+    signatureSlots,
 }: SingleLoanApprovalFormProps) {
     // Defensive fallback: if parameters is missing from the form state
     // (e.g. during a useWatch snapshot race), use safe defaults to avoid
@@ -572,39 +600,72 @@ function SingleLoanApprovalForm({
                         </table>
                     </div>
 
-                    {/* ══ DEVIATIONS / VERIFICATIONS ══ */}
-                    <div className={BAND_FOOT}>
-                        <div className={cn(B, "min-h-56 border-r-0 border-t-0 p-1.5")}>
-                            <div className="font-bold">Deviations:</div>
-                            {deviations?.hasDeviations && deviations.deviationDetails.length > 0 ? (
-                                <ol className="mt-1 space-y-0.5 list-none">
-                                    {deviations.deviationDetails.map((reason, i) => (
-                                        <li key={reason}>
-                                            {i + 1}) {reason}
-                                        </li>
-                                    ))}
-                                </ol>
-                            ) : (
-                                <p className="mt-1">-</p>
-                            )}
-                        </div>
-                        <div className={cn(B, "min-h-56 border-t-0 p-1.5")}>
-                            <div className="font-bold">Verifications Conducted:</div>
-                            <ol className="mt-1 space-y-0.5">
-                                {verification?.findings && <li>1) {verification.findings}</li>}
-                                {!verification?.findings && <li>-</li>}
-                            </ol>
-                            <div className="mt-6 font-bold">Other Remarks</div>
-                            <div className="mt-1">REMARKS:</div>
-                            <ol className="space-y-0.5">
-                                {remarksLines.length === 0 && <li>-</li>}
-                                {remarksLines.map((line, i) => (
-                                    <li key={i}>{i + 1}) {line}</li>
-                                ))}
-                            </ol>
-                        </div>
                     </div>
                 </div>
+
+                {/* on-screen page gap — never printed */}
+                <div className="mt-8 border-t-4 border-dashed border-muted print:hidden" aria-hidden />
+
+                {/* ══ PAGE 2 — certifications & signatures ══ */}
+                <section className="mt-2 break-before-page print:mt-0">
+                    <div className="mb-3 flex items-baseline justify-between border-b-2 border-black pb-1 print:mt-0">
+                        <span className="text-sm font-bold underline">
+                            LOAN APPROVAL FORM (Continuation)
+                        </span>
+                        <span className="tabular-nums">
+                            {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{" "}
+                            {dash(loan.loanNo)}
+                        </span>
+                    </div>
+
+                    <div className="border-2 border-black">
+                        <div className="grid grid-cols-2">
+                            <div className={cn(B, "min-h-40 border-r-0 p-1.5")}>
+                                <div className="font-bold">Deviations:</div>
+                                {deviations?.hasDeviations && deviations.deviationDetails.length > 0 ? (
+                                    <ol className="mt-1 space-y-0.5 list-none">
+                                        {deviations.deviationDetails.map((reason, i) => (
+                                            <li key={reason}>
+                                                {i + 1}) {reason}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                ) : (
+                                    <p className="mt-1">-</p>
+                                )}
+                            </div>
+                            <div className={cn(B, "min-h-40 p-1.5")}>
+                                <div className="font-bold">Verifications Conducted:</div>
+                                <ol className="mt-1 space-y-0.5">
+                                    {verification?.findings && <li>1) {verification.findings}</li>}
+                                    {!verification?.findings && <li>-</li>}
+                                </ol>
+                                <div className="mt-4 font-bold">Other Remarks</div>
+                                <div className="mt-1">REMARKS:</div>
+                                <ol className="space-y-0.5">
+                                    {remarksLines.length === 0 && <li>-</li>}
+                                    {remarksLines.map((line, i) => (
+                                        <li key={i}>{i + 1}) {line}</li>
+                                    ))}
+                                </ol>
+                            </div>
+                        </div>
+
+                        {/* ── Signature blocks, encoder → approver ── */}
+                        {signatureSlots && signatureSlots.length > 0 && (
+                            <div className="border-t-2 border-black p-3 break-inside-avoid">
+                                <div className="mb-3 text-center font-bold underline">
+                                    IN WITNESS WHEREOF, the undersigned affix their signatures:
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                                    {signatureSlots.map((slot) => (
+                                        <SignatureBlock key={slot.role} slot={slot} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </section>
             </ApprovalFormSheet>
         </div>
     );
@@ -657,6 +718,14 @@ export const ApprovalFormPreview = forwardRef<
         const branchType = watchedForm?.branchType ?? ({} as LoanApplicationFormData["branchType"]);
 
         const section = getSection("approval-form");
+
+        // Signature chain — draft preview patches the encoder's name from the JWT session.
+        const { data: chain } = useSignatureChain();
+        const user = useAuthStore((s) => s.user);
+        const signatureSlots = useMemo(
+            () => withDraftEncoder(chain ?? [], user),
+            [chain, user]
+        );
 
         const [activeLoanNo, setActiveLoanNo] = useState("");
         const [captureAll, setCaptureAll] = useState(false); // PDF capture needs every sheet visible
@@ -788,6 +857,7 @@ export const ApprovalFormPreview = forwardRef<
                                                 form={watchedForm}
                                                 index={index}
                                                 lamIdByLoanNo={lamIdByLoanNo}
+                                                signatureSlots={signatureSlots}
                                             />
                                     </div>
                                     );

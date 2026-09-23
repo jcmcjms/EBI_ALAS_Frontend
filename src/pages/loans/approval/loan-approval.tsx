@@ -55,6 +55,7 @@ import { GroupReviewSection } from "../review/components/group-review-section";
 import { ApprovalGroupTabs } from "./components/approval-group-tabs";
 import { ApprovalFormViewport } from "@/src/components/loan/approval-form-sheet";
 import { useLoanGroup } from "@/src/hooks/use-loan-group";
+import { useLoanSignatureChain, signatureKeys } from "@/src/lib/api/signatures";
 import {
     getLoanDetail,
     getChecklistDocuments,
@@ -283,6 +284,9 @@ export function LoanApprovalPage() {
         staleTime: 30_000,
     });
 
+    // Signature chain — resolved from LoanActions audit trail.
+    const { data: signatureSlots } = useLoanSignatureChain(id);
+
     // Group membership drives the sticky tab strip. Same query key as
     // GroupReviewSection's internal useLoanGroup — React Query dedupes,
     // so this costs zero extra requests.
@@ -335,6 +339,7 @@ export function LoanApprovalPage() {
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+            qc.invalidateQueries({ queryKey: signatureKeys.loan(id) });
         },
         onError: (e: Error) => toastError(e.message),
     });
@@ -563,6 +568,7 @@ export function LoanApprovalPage() {
                                     <ApprovalFormDocument
                                         data={formData}
                                         catLoanClass={null}
+                                        signatureSlots={signatureSlots ?? undefined}
                                     />
                                 </ApprovalFormViewport>
                             </CardContent>

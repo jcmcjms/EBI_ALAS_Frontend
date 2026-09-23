@@ -56,6 +56,7 @@ import {
     type LoanDetailResponse,
 } from "@/src/lib/api/loan-review";
 import { queryKeys } from "@/src/lib/queryKeys";
+import { useLoanSignatureChain, signatureKeys } from "@/src/lib/api/signatures";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
 
@@ -231,6 +232,9 @@ export function LoanEvaluationPage() {
         enabled: Number.isFinite(id) && id > 0,
     });
 
+    // Signature chain — resolved from LoanActions audit trail.
+    const { data: signatureSlots } = useLoanSignatureChain(id);
+
     const detail = loan.data;
     const frozen = detail ? TERMINAL.includes(detail.status) : false;
     const formData = useMemo(
@@ -262,6 +266,7 @@ export function LoanEvaluationPage() {
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+            qc.invalidateQueries({ queryKey: signatureKeys.loan(id) });
         },
         onError: (e: Error) => {
             if (axios.isAxiosError(e) && e.response?.data) {
@@ -473,6 +478,7 @@ export function LoanEvaluationPage() {
                                     <ApprovalFormDocument
                                         data={formData}
                                         catLoanClass={loanClass.data?.catLoanClass ?? null}
+                                        signatureSlots={signatureSlots ?? undefined}
                                     />
                                 </ApprovalFormViewport>
                             </CardContent>
