@@ -76,7 +76,7 @@ export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
     ForIncompleteDocuments: {
         label: "For Incomplete Documents",
         defaultSlaHours: 48,
-        hint: "Waiting on encoder to submit missing documents",
+        hint: "Reviewer-flagged missing documents — with encoder for completion",
         className:
             "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400",
     },

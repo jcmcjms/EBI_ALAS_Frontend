@@ -7,6 +7,7 @@ const MAX_LISTED = 6;
 interface Props {
     status: string;
     checklist: LoanChecklistDocumentDto[] | undefined;
+    flagAction?: { actionByUserName: string; actionDate: string } | null;
 }
 
 /**
@@ -14,7 +15,7 @@ interface Props {
  * Shown parked (ForIncompleteDocuments) or whenever a reviewer has the file
  * with requirements still pending (e.g. returned to Checking mid-sync).
  */
-export function IncompleteDocumentsWarning({ status, checklist }: Props) {
+export function IncompleteDocumentsWarning({ status, checklist, flagAction }: Props) {
     const pending = (checklist ?? []).filter((i) => i.uploadStatus !== "Uploaded");
     const parked = status === "ForIncompleteDocuments";
     if (!parked && pending.length === 0) return null;
@@ -30,13 +31,13 @@ export function IncompleteDocumentsWarning({ status, checklist }: Props) {
             <Warning />
             <AlertTitle>
                 {parked
-                    ? "Incomplete documents — waiting on encoder (WebLoan)"
+                    ? `Incomplete documents — flagged by ${flagAction?.actionByUserName ?? "a reviewer"}${flagAction?.actionDate ? ` on ${new Date(flagAction.actionDate).toLocaleDateString()}` : ""} · waiting on encoder (WebLoan)`
                     : `Incomplete documents — ${pending.length} requirement(s) pending`}
             </AlertTitle>
             <AlertDescription className="space-y-1">
                 <p>
                     {parked
-                        ? "The file returns to the Checking queue automatically once every requirement verifies complete on the document server."
+                        ? "The file returns to the review desk automatically once every requirement verifies complete on the document server, or the evaluator may proceed to approval with justification."
                         : "A file with any pending requirement is incomplete. Verify uploads before forwarding to the next stage."}
                 </p>
                 {pending.length > 0 && (

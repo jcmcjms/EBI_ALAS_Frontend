@@ -53,6 +53,7 @@ import { ApplicationTimeline } from "@/src/components/loan/application-timeline"
 import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
 import { GroupReviewSection } from "../review/components/group-review-section";
 import { ApprovalGroupTabs } from "./components/approval-group-tabs";
+import { FlagIncompleteDocumentsDialog } from "./components/flag-incomplete-documents-dialog";
 import { ApprovalFormViewport } from "@/src/components/loan/approval-form-sheet";
 import { useLoanGroup } from "@/src/hooks/use-loan-group";
 import { useLoanSignatureChain, signatureKeys } from "@/src/lib/api/signatures";
@@ -88,17 +89,14 @@ type WorkflowAction = {
 const WORKFLOW_ACTIONS: WorkflowAction[] = [
     { role: "Recommender", from: "ForRecommendation", to: "ForChecking", label: "Recommend for Checking", kind: "advance", remarksRequired: false },
     { role: "Recommender", from: "ForRecommendation", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
-    { role: "Recommender", from: "ForRecommendation", to: "ForIncompleteDocuments", label: "Incomplete Documents", kind: "return", remarksRequired: true, confirm: true },
     // ── Evaluator ────────────────────────────────────────────────────
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Recommended", kind: "advance", verdict: "Recommended", remarksRequired: false },
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Not Recommended", kind: "advance", verdict: "NotRecommended", remarksRequired: true, confirm: true },
     { role: "Evaluator", from: "ForChecking", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
-    { role: "Evaluator", from: "ForChecking", to: "ForIncompleteDocuments", label: "Incomplete Documents", kind: "return", remarksRequired: true, confirm: true },
     // ── Approver ─────────────────────────────────────────────────────
     { role: "Approver", from: "ForApproval", to: "Approved", label: "Approve Loan", kind: "advance", remarksRequired: false },
     { role: "Approver", from: "ForApproval", to: "ForRevision", label: "Return to Encoder", kind: "return", remarksRequired: true, confirm: true },
     { role: "Approver", from: "ForApproval", to: "Rejected", label: "Reject", kind: "reject", remarksRequired: true, confirm: true },
-    { role: "Approver", from: "ForApproval", to: "ForIncompleteDocuments", label: "Incomplete Documents", kind: "return", remarksRequired: true, confirm: true },
 ];
 
 function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
@@ -266,6 +264,11 @@ export function LoanApprovalPage() {
     const [cancelReason, setCancelReason] = useState("");
     const [cancelPending, setCancelPending] = useState(false);
 
+    // ── Flag dialog state ──────────────────────────────────────────────────
+    const [flagOpen, setFlagOpen] = useState(false);
+    const [proceedOpen, setProceedOpen] = useState(false);
+    const [proceedReason, setProceedReason] = useState("");
+
     const user = useAuthStore((s) => s.user);
 
     const loan = useQuery({
@@ -325,6 +328,23 @@ export function LoanApprovalPage() {
 
     const actions = WORKFLOW_ACTIONS.filter((a) => a.role === user?.role && a.from === detail?.status);
 
+    // Exactly the roles the transition map allows to flag at each desk —
+    // the UI never offers a button that would 409.
+    const canFlagAtDesk = detail ? (
+        (detail.status === "ForRecommendation" && user?.role === "Recommender") ||
+        (detail.status === "ForChecking" && user?.role === "Evaluator") ||
+        (detail.status === "ForApproval" && user?.role === "Approver")
+    ) : false;
+
+    const canProceedFromFlagged = detail
+        ? detail.status === "ForIncompleteDocuments" && (user?.role === "Evaluator" || user?.role === "Admin")
+        : false;
+
+    const flagAction = useMemo(
+        () => detail?.actions ? [...detail.actions].reverse().find((a) => a.toStatus === "ForIncompleteDocuments") : undefined,
+        [detail?.actions]
+    );
+
     const act = useMutation({
         mutationFn: (a: WorkflowAction) =>
             updateLoanStatus(id, a.to, remarks.trim(), a.verdict),
@@ -348,10 +368,25 @@ export function LoanApprovalPage() {
         mutationFn: ({ codes, text }: { codes: string[]; text: string }) =>
             updateLoanStatus(id, "ForIncompleteDocuments", text, undefined, { missingRequirementCodes: codes }),
         onSuccess: () => {
-            toastSuccess("Pushed back to the Incomplete Documents queue.");
+            toastSuccess("File flagged as lacking documents.");
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.dashboard.full });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+        },
+        onError: (e: Error) => toastError(e.message),
+    });
+
+    const proceedToApproval = useMutation({
+        mutationFn: (reason: string) =>
+            updateLoanStatus(id, "ForApproval", reason),
+        onSuccess: () => {
+            toastSuccess("Application proceeded to approval with justification.");
+            setProceedOpen(false);
+            setProceedReason("");
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
             qc.invalidateQueries({ queryKey: queryKeys.dashboard.full });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
@@ -488,10 +523,31 @@ export function LoanApprovalPage() {
                             </Badge>
                         )}
                     </div>
-                    <Badge variant="outline" className="gap-1.5 font-normal">
-                        <UserCircle size={14} />
-                        {detail.createdByName} (Encoder)
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                        {canFlagAtDesk && !frozen && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setFlagOpen(true)}
+                                className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
+                            >
+                                <WarningCircle size={16} weight="bold" /> Flag as lacking documents
+                            </Button>
+                        )}
+                        {canProceedFromFlagged && !frozen && (
+                            <Button
+                                type="button"
+                                onClick={() => setProceedOpen(true)}
+                                className="gap-2"
+                            >
+                                <CheckCircle size={16} weight="bold" /> Proceed to Approval
+                            </Button>
+                        )}
+                        <Badge variant="outline" className="gap-1.5 font-normal">
+                            <UserCircle size={14} />
+                            {detail.createdByName} (Encoder)
+                        </Badge>
+                    </div>
                 </div>
 
                 {/* ── Group navigation (multi-loan applications only) ── */}
@@ -508,6 +564,7 @@ export function LoanApprovalPage() {
                     <IncompleteDocumentsWarning
                         status={detail.status}
                         checklist={checklist.data}
+                        flagAction={flagAction ? { actionByUserName: flagAction.actionByUserName, actionDate: flagAction.actionDate } : null}
                     />
                 </div>
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
@@ -617,29 +674,43 @@ export function LoanApprovalPage() {
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-6 pt-4">
-                                        {/* ── Held for Incomplete Documents ── */}
+                                        {/* ── Flagged for Incomplete Documents ── */}
                                         {detail.status === "ForIncompleteDocuments" && (
                                             <div className="rounded-md border border-amber-300 bg-amber-50 p-3 space-y-2 dark:border-amber-500/40 dark:bg-amber-500/10">
                                                 <p className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
                                                     <WarningCircle size={16} weight="fill" />
-                                                    Held for incomplete documents
+                                                    Incomplete documents — flagged by {flagAction?.actionByUserName ?? "a reviewer"}
+                                                    {flagAction?.actionDate && ` on ${new Date(flagAction.actionDate).toLocaleDateString()}`}
                                                 </p>
                                                 <p className="text-xs text-amber-700 dark:text-amber-400">
-                                                    Returns automatically to{" "}
+                                                    Waiting on encoder (WebLoan). Returns to{" "}
                                                     <strong>{detail.incompleteReturnStatus ?? "ForChecking"}</strong> once every
-                                                    requirement is uploaded. No manual action is needed.
+                                                    requirement verifies complete, or the evaluator may proceed to approval with justification.
                                                 </p>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="gap-1.5"
-                                                    disabled={recheck.isPending}
-                                                    onClick={() => recheck.mutate()}
-                                                >
-                                                    <ArrowCounterClockwise size={14} weight="bold" />
-                                                    Re-check documents now
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="gap-1.5"
+                                                        disabled={recheck.isPending}
+                                                        onClick={() => recheck.mutate()}
+                                                    >
+                                                        <ArrowCounterClockwise size={14} weight="bold" />
+                                                        Re-check documents now
+                                                    </Button>
+                                                    {canProceedFromFlagged && (
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            className="gap-1.5"
+                                                            onClick={() => setProceedOpen(true)}
+                                                        >
+                                                            <CheckCircle size={14} weight="bold" />
+                                                            Proceed to Approval
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
 
@@ -821,8 +892,8 @@ export function LoanApprovalPage() {
                                             Document Requirements
                                         </CardTitle>
                                         <CardDescription className="pt-1 text-xs">
-                                            Checklist synced from the document server. Documents are uploaded and
-                                            updated in WebLoan — remarks here coordinate encoder ↔ reviewer.
+                                            Checklist synced from the document server. Missing documents do not
+                                            block review — a reviewer may flag the file or proceed to approval.
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="pt-4">
@@ -912,6 +983,60 @@ export function LoanApprovalPage() {
                             }}
                         >
                             {cancelPending ? "Cancelling…" : "Cancel application"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Flag Incomplete Documents dialog ─────────────────────────── */}
+            <FlagIncompleteDocumentsDialog
+                open={flagOpen}
+                onOpenChange={setFlagOpen}
+                items={checklist.data ?? []}
+                isSubmitting={pushBackDocs.isPending}
+                onSubmit={({ missingRequirementCodes, comments }) =>
+                    pushBackDocs.mutate(
+                        { codes: missingRequirementCodes, text: comments },
+                        { onSuccess: () => setFlagOpen(false) }
+                    )
+                }
+            />
+
+            {/* ── Proceed to Approval dialog ───────────────────────────────── */}
+            <AlertDialog open={proceedOpen} onOpenChange={setProceedOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Proceed to approval with missing documents?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This file is flagged as lacking documents. Proceeding to approval
+                            requires a written justification that will be recorded in the audit trail.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="proceed-reason">Justification *</Label>
+                        <Textarea
+                            id="proceed-reason"
+                            rows={3}
+                            placeholder="Explain why approval can proceed despite missing documents…"
+                            value={proceedReason}
+                            onChange={(e) => setProceedReason(e.target.value)}
+                            maxLength={2000}
+                        />
+                        <p className="text-[11px] text-muted-foreground tabular-nums">
+                            {proceedReason.trim().length}/2000 — minimum 10
+                        </p>
+                    </div>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => { setProceedOpen(false); setProceedReason(""); }}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            disabled={proceedReason.trim().length < 10 || proceedToApproval.isPending}
+                            onClick={() => proceedToApproval.mutate(proceedReason.trim())}
+                        >
+                            {proceedToApproval.isPending ? "Proceeding…" : "Proceed to Approval"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

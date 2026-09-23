@@ -59,8 +59,13 @@ import { queryKeys } from "@/src/lib/queryKeys";
 import { useLoanSignatureChain, signatureKeys } from "@/src/lib/api/signatures";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
+import { FlagIncompleteDocumentsDialog } from "../approval/components/flag-incomplete-documents-dialog";
+import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
+import { getChecklistDocuments } from "@/src/lib/api/loan-review";
+import { apiClient } from "@/src/lib/apiClient";
+import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 
-type EvaluationAction = "recommended" | "notRecommended" | "pushback" | "incompleteDocuments";
+type EvaluationAction = "recommended" | "notRecommended" | "pushback";
 
 /** Statuses past which evaluation is closed — the page becomes read-only. */
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing"];
@@ -218,11 +223,20 @@ export function LoanEvaluationPage() {
     const [comments, setComments] = useState("");
     const [pendingAction, setPendingAction] = useState<EvaluationAction | null>(null);
     const [zoom, setZoom] = useState(1);
+    const [flagOpen, setFlagOpen] = useState(false);
+    const [proceedOpen, setProceedOpen] = useState(false);
+    const [proceedReason, setProceedReason] = useState("");
     const user = useAuthStore((s) => s.user);
 
     const loan = useQuery({
         queryKey: queryKeys.loans.review.detail(id),
         queryFn: () => getLoanDetail(id),
+        enabled: Number.isFinite(id) && id > 0,
+    });
+
+    const checklist = useQuery({
+        queryKey: queryKeys.loans.review.checklistDocuments(id),
+        queryFn: () => getChecklistDocuments(id),
         enabled: Number.isFinite(id) && id > 0,
     });
 
@@ -249,8 +263,8 @@ export function LoanEvaluationPage() {
     );
 
     const updateStatus = useMutation({
-        mutationFn: ({ status, comments }: { status: string; comments: string }) =>
-            updateLoanStatus(id, status, comments),
+        mutationFn: ({ status, comments, missingRequirementCodes }: { status: string; comments: string; missingRequirementCodes?: string[] }) =>
+            updateLoanStatus(id, status, comments, undefined, missingRequirementCodes ? { missingRequirementCodes } : undefined),
         onSuccess: (_data, { status }) => {
             const actionLabel =
                 status === "ForApproval"
@@ -300,10 +314,41 @@ export function LoanEvaluationPage() {
         },
     });
 
+    const proceedToApproval = useMutation({
+        mutationFn: (reason: string) =>
+            updateLoanStatus(id, "ForApproval", reason),
+        onSuccess: () => {
+            toastSuccess("Application proceeded to approval with justification.");
+            setProceedOpen(false);
+            setProceedReason("");
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+        },
+        onError: (e: Error) => toastError(e.message),
+    });
+
+    const recheck = useMutation({
+        mutationFn: async () => {
+            const res = await apiClient.post<ApiResponse<{ complete: boolean; missing: string[] }>>(
+                `/api/loans/${id}/documents/verify`);
+            return unwrapApiData(res.data);
+        },
+        onSuccess: (r) => {
+            toastSuccess(r.complete
+                ? "All requirements uploaded — application released to the review queue."
+                : `Still missing: ${r.missing.join(", ")}`);
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+        },
+        onError: (e: Error) => toastError(e.message),
+    });
+
     const handleAction = (action: EvaluationAction) => {
         const trimmed = comments.trim();
 
-        if ((action === "pushback" || action === "notRecommended" || action === "incompleteDocuments") && trimmed.length < 10) {
+        if ((action === "pushback" || action === "notRecommended") && trimmed.length < 10) {
             toastError("Comments are required (minimum 10 characters) for this action.");
             return;
         }
@@ -312,8 +357,6 @@ export function LoanEvaluationPage() {
 
         if (action === "pushback") {
             updateStatus.mutate({ status: "ForRevision", comments: trimmed });
-        } else if (action === "incompleteDocuments") {
-            updateStatus.mutate({ status: "ForIncompleteDocuments", comments: trimmed });
         } else {
             // Both recommended and notRecommended go to ForApproval
             const finalComments =
@@ -361,12 +404,21 @@ export function LoanEvaluationPage() {
         );
     }
 
-    // Only Evaluators may act, and only while the application is still in ForChecking.
+    // Only Evaluators may act, and only while the application is still in ForChecking
+    // or ForIncompleteDocuments (reviewer discretion to proceed with justification).
     const isEvaluator = user?.role === "Evaluator";
     const isForChecking = detail.status === "ForChecking";
-    const showEvaluatorActions = isEvaluator && isForChecking && !frozen;
+    const isForIncompleteDocuments = detail.status === "ForIncompleteDocuments";
+    const showEvaluatorActions = isEvaluator && (isForChecking || isForIncompleteDocuments) && !frozen;
 
-    const commentsRequired = pendingAction === "pushback" || pendingAction === "notRecommended" || pendingAction === "incompleteDocuments";
+    const flagAction = useMemo(
+        () => detail?.actions ? [...detail.actions].reverse().find((a) => a.toStatus === "ForIncompleteDocuments") : undefined,
+        [detail?.actions]
+    );
+
+    const canProceedFromFlagged = isForIncompleteDocuments && (user?.role === "Evaluator" || user?.role === "Admin");
+
+    const commentsRequired = pendingAction === "pushback" || pendingAction === "notRecommended";
     const canAct =
         (!commentsRequired || comments.trim().length >= 10) && !updateStatus.isPending;
 
@@ -421,6 +473,13 @@ export function LoanEvaluationPage() {
             </header>
 
             <div className="container mx-auto px-6 py-8">
+                <div className="mb-6">
+                    <IncompleteDocumentsWarning
+                        status={detail.status}
+                        checklist={checklist.data}
+                        flagAction={flagAction ? { actionByUserName: flagAction.actionByUserName, actionDate: flagAction.actionDate } : null}
+                    />
+                </div>
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
                     {/* ── Document: fixed 800px sheet inside a zoomable viewport ── */}
                     <div className="space-y-4">
@@ -623,178 +682,152 @@ export function LoanEvaluationPage() {
 
                                     {showEvaluatorActions ? (
                                         <>
-                                            <Button
-                                                className="w-full gap-2"
-                                                size="lg"
-                                                onClick={() =>
-                                                    handleAction("recommended")
-                                                }
-                                                disabled={
-                                                    !canAct || pendingAction !== null
-                                                }
-                                            >
-                                                {updateStatus.isPending &&
-                                                pendingAction === "recommended" ? (
-                                                    <span className="animate-pulse">
-                                                        Processing...
-                                                    </span>
-                                                ) : (
-                                                    <>
-                                                        <ThumbsUp
-                                                            size={18}
-                                                            weight="bold"
-                                                        />
-                                                        Recommended for Approval
-                                                    </>
-                                                )}
-                                            </Button>
+                                            {isForIncompleteDocuments ? (
+                                                // ── ForIncompleteDocuments: proceed to approval or re-check ──
+                                                <>
+                                                    <Button
+                                                        className="w-full gap-2"
+                                                        size="lg"
+                                                        onClick={() => setProceedOpen(true)}
+                                                        disabled={updateStatus.isPending}
+                                                    >
+                                                        <CheckCircle size={18} weight="bold" />
+                                                        Proceed to Approval
+                                                    </Button>
 
-                                            <Button
-                                                variant="outline"
-                                                className="w-full gap-2"
-                                                onClick={() =>
-                                                    handleAction("notRecommended")
-                                                }
-                                                disabled={
-                                                    !canAct || pendingAction !== null
-                                                }
-                                            >
-                                                {updateStatus.isPending &&
-                                                pendingAction ===
-                                                    "notRecommended" ? (
-                                                    <span className="animate-pulse">
-                                                        Processing...
-                                                    </span>
-                                                ) : (
-                                                    <>
-                                                        <ThumbsDown size={16} />
-                                                        Not Recommended
-                                                    </>
-                                                )}
-                                            </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full gap-2"
+                                                        disabled={recheck.isPending}
+                                                        onClick={() => recheck.mutate()}
+                                                    >
+                                                        <ArrowCounterClockwise size={16} weight="bold" />
+                                                        Re-check documents now
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                // ── ForChecking: standard evaluation buttons ──
+                                                <>
+                                                    <Button
+                                                        className="w-full gap-2"
+                                                        size="lg"
+                                                        onClick={() =>
+                                                            handleAction("recommended")
+                                                        }
+                                                        disabled={
+                                                            !canAct || pendingAction !== null
+                                                        }
+                                                    >
+                                                        {updateStatus.isPending &&
+                                                        pendingAction === "recommended" ? (
+                                                            <span className="animate-pulse">
+                                                                Processing...
+                                                            </span>
+                                                        ) : (
+                                                            <>
+                                                                <ThumbsUp
+                                                                    size={18}
+                                                                    weight="bold"
+                                                                />
+                                                                Recommended for Approval
+                                                            </>
+                                                        )}
+                                                    </Button>
 
-                                            <AlertDialog>
-                                                <AlertDialogTrigger
-                                                    render={
-                                                        <Button
-                                                            variant="destructive"
-                                                            className="w-full gap-2"
-                                                            disabled={
-                                                                !canAct ||
-                                                                pendingAction !==
-                                                                    null
-                                                            }
-                                                        />
-                                                    }
-                                                >
-                                                    <ArrowCounterClockwise
-                                                        size={16}
-                                                    />
-                                                    Push Back to Encoder
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>
-                                                            Push back this
-                                                            application?
-                                                        </AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This returns the
-                                                            application to the
-                                                            encoder for revision.
-                                                            The encoder will be
-                                                            notified with your
-                                                            evaluation comments.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel
-                                                            disabled={
-                                                                updateStatus.isPending
-                                                            }
-                                                        >
-                                                            Cancel
-                                                        </AlertDialogCancel>
-                                                        <AlertDialogAction
-                                                            onClick={() =>
-                                                                handleAction(
-                                                                    "pushback"
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                updateStatus.isPending
-                                                            }
-                                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                                        >
-                                                            Confirm Pushback
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full gap-2"
+                                                        onClick={() =>
+                                                            handleAction("notRecommended")
+                                                        }
+                                                        disabled={
+                                                            !canAct || pendingAction !== null
+                                                        }
+                                                    >
+                                                        {updateStatus.isPending &&
+                                                        pendingAction ===
+                                                            "notRecommended" ? (
+                                                            <span className="animate-pulse">
+                                                                Processing...
+                                                            </span>
+                                                        ) : (
+                                                            <>
+                                                                <ThumbsDown size={16} />
+                                                                Not Recommended
+                                                            </>
+                                                        )}
+                                                    </Button>
 
-                                            <AlertDialog>
-                                                <AlertDialogTrigger
-                                                    render={
-                                                        <Button
-                                                            variant="outline"
-                                                            className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
-                                                            disabled={
-                                                                !canAct ||
-                                                                pendingAction !==
-                                                                    null
-                                                            }
-                                                        />
-                                                    }
-                                                >
-                                                    <WarningCircle
-                                                        size={16}
-                                                    />
-                                                    Incomplete Documents
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>
-                                                            Flag incomplete
-                                                            documents?
-                                                        </AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This moves the
-                                                            application to the
-                                                            Incomplete Documents
-                                                            queue. The encoder
-                                                            will be notified to
-                                                            submit the missing
-                                                            requirements. The
-                                                            file returns to
-                                                            Checking once all
-                                                            documents are
-                                                            verified complete.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel
-                                                            disabled={
-                                                                updateStatus.isPending
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger
+                                                            render={
+                                                                <Button
+                                                                    variant="destructive"
+                                                                    className="w-full gap-2"
+                                                                    disabled={
+                                                                        !canAct ||
+                                                                        pendingAction !==
+                                                                            null
+                                                                    }
+                                                                />
                                                             }
                                                         >
-                                                            Cancel
-                                                        </AlertDialogCancel>
-                                                        <AlertDialogAction
-                                                            onClick={() =>
-                                                                handleAction(
-                                                                    "incompleteDocuments"
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                updateStatus.isPending
-                                                            }
-                                                            className="bg-amber-600 text-white hover:bg-amber-700"
-                                                        >
-                                                            Confirm
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                                            <ArrowCounterClockwise
+                                                                size={16}
+                                                            />
+                                                            Push Back to Encoder
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>
+                                                                    Push back this
+                                                                    application?
+                                                                </AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This returns the
+                                                                    application to the
+                                                                    encoder for revision.
+                                                                    The encoder will be
+                                                                    notified with your
+                                                                    evaluation comments.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel
+                                                                    disabled={
+                                                                        updateStatus.isPending
+                                                                    }
+                                                                >
+                                                                    Cancel
+                                                                </AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    onClick={() =>
+                                                                        handleAction(
+                                                                            "pushback"
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        updateStatus.isPending
+                                                                    }
+                                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                                >
+                                                                    Confirm Pushback
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                                                        disabled={!canAct || pendingAction !== null}
+                                                        onClick={() => setFlagOpen(true)}
+                                                    >
+                                                        <WarningCircle size={16} />
+                                                        Flag as lacking documents
+                                                    </Button>
+                                                </>
+                                            )}
                                         </>
                                     ) : (
                                         !frozen && (
@@ -810,6 +843,60 @@ export function LoanEvaluationPage() {
                     </aside>
                 </div>
             </div>
+
+            {/* ── Flag Incomplete Documents dialog ─────────────────────────── */}
+            <FlagIncompleteDocumentsDialog
+                open={flagOpen}
+                onOpenChange={setFlagOpen}
+                items={checklist.data ?? []}
+                isSubmitting={updateStatus.isPending}
+                onSubmit={({ missingRequirementCodes, comments: flagComments }) =>
+                    updateStatus.mutate(
+                        { status: "ForIncompleteDocuments", comments: flagComments, missingRequirementCodes },
+                        { onSuccess: () => setFlagOpen(false) }
+                    )
+                }
+            />
+
+            {/* ── Proceed to Approval dialog ───────────────────────────────── */}
+            <AlertDialog open={proceedOpen} onOpenChange={setProceedOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Proceed to approval with missing documents?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This file is flagged as lacking documents. Proceeding to approval
+                            requires a written justification that will be recorded in the audit trail.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="proceed-reason">Justification *</Label>
+                        <Textarea
+                            id="proceed-reason"
+                            rows={3}
+                            placeholder="Explain why approval can proceed despite missing documents…"
+                            value={proceedReason}
+                            onChange={(e) => setProceedReason(e.target.value)}
+                            maxLength={2000}
+                        />
+                        <p className="text-[11px] text-muted-foreground tabular-nums">
+                            {proceedReason.trim().length}/2000 — minimum 10
+                        </p>
+                    </div>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => { setProceedOpen(false); setProceedReason(""); }}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            disabled={proceedReason.trim().length < 10 || proceedToApproval.isPending}
+                            onClick={() => proceedToApproval.mutate(proceedReason.trim())}
+                        >
+                            {proceedToApproval.isPending ? "Proceeding…" : "Proceed to Approval"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

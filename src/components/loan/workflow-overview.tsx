@@ -123,10 +123,9 @@ export function WorkflowOverview() {
             <footer className="flex items-start gap-2 border-t border-border bg-muted/30 px-4 py-3">
                 <Info size={14} weight="bold" className="mt-0.5 shrink-0 text-primary" aria-hidden />
                 <p className="text-xs text-muted-foreground">
-                    After submission, applications with missing requirements are placed in the{" "}
-                    <strong className="font-medium text-foreground">Incomplete Documents</strong>{" "}
-                    queue automatically and return to the review queue on their own once every
-                    document verifies — no manual follow-up needed.
+                    Reviewers may flag missing documents during review; the file returns to the
+                    review queue automatically once every requirement verifies complete on the
+                    document server. Missing documents do not block approval.
                 </p>
             </footer>
         </section>
