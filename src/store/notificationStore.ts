@@ -1,6 +1,6 @@
 import { create } from "zustand/react";
 
-import { DUMMY_NOTIFICATIONS, type AppNotification } from "@/src/lib/notifications";
+import type { AppNotification } from "@/src/lib/notifications";
 
 interface NotificationState {
     notifications: AppNotification[];
@@ -25,16 +25,14 @@ interface NotificationState {
  * In-memory like authStore (no localStorage — shared branch terminals).
  *
  * Hydration model:
- *   - Initial state is the dummy list (so the UI renders something
- *     before the first poll lands). Real backend data is pushed by
- *     `useNotifications` on the AppShell, and overrides the dummy list
- *     immediately on the first successful poll.
+ *   - Initial state is an empty array. The UI renders an empty-state
+ *     skeleton until the first successful poll from `useNotifications`.
  *   - Once a user is authenticated, `useNotifications` runs the query
  *     which calls `setNotifications(...)`. After that point the store is
  *     the live inbox.
  */
 export const useNotificationStore = create<NotificationState>((set) => ({
-    notifications: DUMMY_NOTIFICATIONS,
+    notifications: [],
 
     setNotifications: (rows) => set({ notifications: rows }),
 
