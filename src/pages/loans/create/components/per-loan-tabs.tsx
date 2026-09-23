@@ -71,7 +71,7 @@ export function PerLoanTabs({
                         role="tabpanel"
                         aria-labelledby={`${idPrefix}-tab-${loan.loanNo}`}
                         hidden={mountStrategy === "hidden" && i !== activeIndex}
-                        className="min-h-[22rem] pt-5"
+                        className="pt-5"
                     >
                         {renderPanel(loan, i)}
                     </div>
