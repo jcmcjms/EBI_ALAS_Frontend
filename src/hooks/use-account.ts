@@ -9,6 +9,7 @@ import {
     getAccountClients,
     updateAccountProfile,
     revokeAccountSession,
+    revokeOtherSessions,
     type PagedSessionsResponse,
 } from "@/src/lib/api/account";
 import { getErrorMessage } from "@/src/lib/apiClient";
@@ -79,6 +80,21 @@ export function useRevokeSession() {
         },
         onError: (error) => {
             toastError(getErrorMessage(error) || "Failed to revoke session");
+        },
+    });
+}
+
+export function useRevokeOtherSessions() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: revokeOtherSessions,
+        onSuccess: (revokedCount) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.account.all });
+            toastSuccess(`${revokedCount} other session${revokedCount === 1 ? "" : "s"} revoked`);
+        },
+        onError: (error) => {
+            toastError(getErrorMessage(error) || "Failed to revoke other sessions");
         },
     });
 }

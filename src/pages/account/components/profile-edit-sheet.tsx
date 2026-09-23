@@ -11,7 +11,7 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/src/components/ui/sheet";
-import { useAccountProfile, useUpdateProfile } from "@/src/hooks/useAccount";
+import { useAccountProfile, useUpdateProfile } from "@/src/hooks/use-account";
 
 // Mirrors EBI.ALAS.Api/Features/Account/AccountValidators.cs — keep in sync.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

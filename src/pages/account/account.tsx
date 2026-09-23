@@ -164,6 +164,7 @@ function SessionRow({
     onRevoke: (id: number) => void;
     isRevoking: boolean;
 }) {
+    // deviceInfo is a free-form UA-ish string, so mobile detection is a heuristic.
     const isMobile = /android|ios|mobile/i.test(session.deviceInfo ?? "");
     const Icon = isMobile ? DeviceMobile : Desktop;
     return (
@@ -207,6 +208,7 @@ export function AccountPage() {
     const [tab, setTab] = useState("overview");
 
     // ── Data hooks (real backend) ──
+    // Numeric args are preview caps for the overview cards, not full page sizes.
     const profileQuery = useAccountProfile();
     const sessionsQuery = useAccountSessions(1, 10);
     const activityQuery = useAccountActivity(10);
@@ -237,11 +239,9 @@ export function AccountPage() {
     const branchLabel = useMemo(() => {
         const code = profile?.branchId ?? user?.branchId;
         if (!code) return null;
-        // Resolve the branch code (e.g. "011") to its human-readable name
-        // (e.g. "Head Office Branch") via the static BRANCHES directory —
-        // same lookup used by dashboard.tsx and the admin users tables.
-        // Falls back to "Branch <code>" when the code isn't in the
-        // directory (e.g. a newly added branch not yet mirrored on the FE).
+        // Same lookup used by dashboard.tsx and the admin users tables — keep
+        // them consistent. Falls back to "Branch <code>" for codes not yet
+        // mirrored into the static BRANCHES directory on the FE.
         return BRANCHES.find((b) => b.code === code)?.name ?? `Branch ${code}`;
     }, [profile, user]);
 
@@ -322,7 +322,6 @@ export function AccountPage() {
     return (
         <div className="flex flex-1 flex-col bg-muted/40">
             <div className="container mx-auto w-full max-w-7xl flex-1 px-6 py-8">
-                {/* Page header */}
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold tracking-tight">My Account</h1>
                     <Button className="gap-2" onClick={() => setTab("security")}>
@@ -350,7 +349,6 @@ export function AccountPage() {
                     {/* ── Overview ─────────────────────────────────────── */}
                     <TabsContent value="overview">
                         <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-                            {/* Left column */}
                             <div className="space-y-6">
                                 <Card>
                                     <CardContent className="flex flex-col items-center pt-8 text-center">
@@ -445,7 +443,6 @@ export function AccountPage() {
                                 </Card>
                             </div>
 
-                            {/* Right column */}
                             <div className="space-y-6">
                                 <Card>
                                     <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
@@ -616,6 +613,7 @@ export function AccountPage() {
                                         <EmptyState message="No active sessions." />
                                     ) : (
                                         sessions.map((session: Session) => (
+                                            // One shared mutation for all rows; `variables` is the id in flight.
                                             <SessionRow
                                                 key={session.id}
                                                 session={session}

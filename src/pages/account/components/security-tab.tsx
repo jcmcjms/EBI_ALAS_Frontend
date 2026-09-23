@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { useAccountProfile, useAccountSessions, useRevokeOtherSessions, useRevokeSession } from "@/src/hooks/useAccount";
+import { useAccountProfile, useAccountSessions, useRevokeOtherSessions, useRevokeSession } from "@/src/hooks/use-account";
 import { formatRelativeTime } from "@/src/lib/notifications";
 import type { Session } from "@/src/lib/api/account";
 import { EmptyState, ErrorState, LoadingState } from "./account-states";

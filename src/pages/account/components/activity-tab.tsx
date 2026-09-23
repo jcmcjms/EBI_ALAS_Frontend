@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { useAccountActivity } from "@/src/hooks/useAccount";
+import { useAccountActivity } from "@/src/hooks/use-account";
 import { ActivityTimeline, toTimelineItems } from "./activity-timeline";
 import { EmptyState, ErrorState, LoadingState } from "./account-states";
 

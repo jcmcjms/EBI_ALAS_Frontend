@@ -19,7 +19,7 @@ import {
     useAccountClients,
     useAccountLoans,
     useAccountProfile,
-} from "@/src/hooks/useAccount";
+} from "@/src/hooks/use-account";
 import { BRANCHES } from "@/src/lib/api/types";
 import { LOAN_STATUS_META } from "@/src/lib/loan-status";
 import { initialsOf } from "@/src/lib/notifications";
@@ -38,6 +38,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
     const navigate = useNavigate();
     const user = useAuthStore((s) => s.user);
     const profileQuery = useAccountProfile();
+    // Numeric args are preview caps (items shown in the "Recent" cards), not page sizes.
     const activityQuery = useAccountActivity(3);
     const loansQuery = useAccountLoans(3);
     const clientsQuery = useAccountClients(5);
