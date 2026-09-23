@@ -1,4 +1,4 @@
-import { useFormContext } from "react-hook-form";
+﻿import { useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import {
@@ -13,6 +13,7 @@ import {
     Select,
     SelectContent,
     SelectItem,
+    SelectSeparator,
     SelectTrigger,
     SelectValue,
 } from "@/src/components/ui/select";
@@ -23,11 +24,16 @@ import type { LoanApplicationFormData } from "../schema";
 
 export function PersonalInfoSection() {
     const {
+        control,
         register,
         setValue,
         formState: { errors },
     } = useFormContext<LoanApplicationFormData>();
     const clientErrors = errors.client;
+
+    // Controlled from form state so CIS-sourced / draft-restored suffixes
+    // display correctly and programmatic clears (Change client) reach the trigger.
+    const suffix = useWatch({ control, name: "client.suffix" });
 
     /**
      * Returns common props for the manual-entry inputs (School / Referrer):
@@ -83,17 +89,28 @@ export function PersonalInfoSection() {
 
                     {/* Row 2 — Suffix, Birthdate, Employee ID */}
                     <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">Suffix</Label>
+                        <Label htmlFor="client-suffix" className="text-xs text-muted-foreground">
+                            Suffix
+                        </Label>
                         <Select
-                            {...register("client.suffix")}
+                            // Base UI contract: null = no selection; "" is a real item value here.
+                            value={suffix || null}
                             onValueChange={(value) =>
-                                setValue("client.suffix", value as string, { shouldValidate: true })
+                                setValue("client.suffix", value ?? "", {
+                                    shouldValidate: true,
+                                    shouldDirty: true,
+                                })
                             }
                         >
-                            <SelectTrigger className="h-9 w-full">
+                            <SelectTrigger id="client-suffix" className="h-9 w-full">
                                 <SelectValue placeholder="Select suffix" />
                             </SelectTrigger>
                             <SelectContent>
+                                {/* Explicit empty option — the accessible undo path. Base UI
+                                    Select has no built-in clear; without this, an accidental
+                                    selection is only reversible by reloading the page. */}
+                                <SelectItem value="">None</SelectItem>
+                                <SelectSeparator />
                                 <SelectItem value="Jr.">Jr.</SelectItem>
                                 <SelectItem value="Sr.">Sr.</SelectItem>
                                 <SelectItem value="II">II</SelectItem>
