@@ -1,4 +1,4 @@
-export type LoanStatus = "On Going" | "For Recommendation" | "For Checking" | "For Approval" | "Approved" | "Rejected" | "Cancelled" | "Expired" | "For Revision" | "For Disbursement" | "Disbursed";
+export type LoanStatus = "On Going" | "For Recommendation" | "For Checking" | "For Approval" | "Approved" | "Rejected" | "Cancelled" | "Expired" | "For Revision" | "For Disbursement" | "Disbursed" | "For Incomplete Documents";
 
 export interface PendingQueueItem {
     position: number;

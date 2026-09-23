@@ -24,6 +24,7 @@ const statusStyles: Record<LoanStatus, string> = {
     "For Revision": "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
     "For Disbursement": "bg-teal-500/10 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400",
     "Disbursed": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
+    "For Incomplete Documents": "bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400",
 };
 
 export function waitingMinutes(date: string): number {
