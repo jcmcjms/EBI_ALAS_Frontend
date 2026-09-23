@@ -121,12 +121,12 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
     // parent can pass `loanIndex` to render each selected loan's form.
     const primaryLoan = data?.loans?.[loanIndex];
     const params = primaryLoan?.parameters;
-    const verification = data?.verification;
-    const deviations = data?.deviations;
+    const verification = primaryLoan?.verification;
+    const deviations = primaryLoan?.deviations;
     const outstandingLoans = data?.outstandingLoans ?? [];
-    const ebiReloans = data?.ebiReloans ?? [];
-    const buyOuts = data?.buyOuts ?? [];
-    const incomingLoans = data?.incomingLoans ?? [];
+    const ebiReloans = primaryLoan?.ebiReloans ?? [];
+    const buyOuts = primaryLoan?.buyOuts ?? [];
+    const incomingLoans = primaryLoan?.incomingLoans ?? [];
 
     // Bail out cleanly when no loan is selected so the parent renders an
     // empty state instead of an explosion of `undefined.X` reads.
@@ -492,7 +492,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                         <div className="font-bold">Deviations:</div>
                         {deviations?.hasDeviations && deviations.deviationDetails.length > 0 ? (
                             <ol className="mt-1 space-y-0.5 list-none">
-                                {deviations.deviationDetails.map((reason, i) => (
+                                {deviations.deviationDetails.map((reason: string, i: number) => (
                                     <li key={reason}>
                                         {i + 1}) {reason}
                                     </li>

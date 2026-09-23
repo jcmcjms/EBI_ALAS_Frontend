@@ -61,6 +61,7 @@ import { CREATION_TYPE, type DeviationReason } from "../create/schema";
 
 type EvaluationAction = "recommended" | "notRecommended" | "pushback" | "incompleteDocuments";
 
+/** Statuses past which evaluation is closed — the page becomes read-only. */
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing"];
 
 /**
@@ -71,6 +72,7 @@ const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing"];
  * document renderer works identically in both contexts.
  */
 function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
+    // Detail API can report other creation types; unrecognized codes collapse to NEW_LOAN.
     const creationTypeCode: 0 | 1 | 2 | 6 =
         l.creationTypeCode === CREATION_TYPE.RELOAN
             ? CREATION_TYPE.RELOAN
@@ -80,6 +82,7 @@ function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
                 ? CREATION_TYPE.ADDITIONAL_LOAN
                 : CREATION_TYPE.NEW_LOAN;
 
+    // Detail API returns free-form deviation strings; narrow to the closed list typed as DeviationReason.
     const deviationDetails: DeviationReason[] = (l.deviationDetails ?? []).filter(
         (reason): reason is DeviationReason =>
             typeof reason === "string" &&
@@ -279,6 +282,7 @@ export function LoanEvaluationPage() {
                                 {details.map((d, i) => <li key={i}>{d}</li>)}
                             </ul>
                         </div>,
+                        // Longer than the default so multi-error lists can be read.
                         { timeout: 10_000 },
                     );
                 } else {
@@ -294,7 +298,6 @@ export function LoanEvaluationPage() {
     const handleAction = (action: EvaluationAction) => {
         const trimmed = comments.trim();
 
-        // Validation: pushback, notRecommended, and incompleteDocuments require comments
         if ((action === "pushback" || action === "notRecommended" || action === "incompleteDocuments") && trimmed.length < 10) {
             toastError("Comments are required (minimum 10 characters) for this action.");
             return;
@@ -353,11 +356,11 @@ export function LoanEvaluationPage() {
         );
     }
 
+    // Only Evaluators may act, and only while the application is still in ForChecking.
     const isEvaluator = user?.role === "Evaluator";
     const isForChecking = detail.status === "ForChecking";
     const showEvaluatorActions = isEvaluator && isForChecking && !frozen;
 
-    // Comments required for pushback, notRecommended, and incompleteDocuments
     const commentsRequired = pendingAction === "pushback" || pendingAction === "notRecommended" || pendingAction === "incompleteDocuments";
     const canAct =
         (!commentsRequired || comments.trim().length >= 10) && !updateStatus.isPending;
@@ -614,7 +617,6 @@ export function LoanEvaluationPage() {
 
                                     {showEvaluatorActions ? (
                                         <>
-                                            {/* Primary: Recommended */}
                                             <Button
                                                 className="w-full gap-2"
                                                 size="lg"
@@ -641,7 +643,6 @@ export function LoanEvaluationPage() {
                                                 )}
                                             </Button>
 
-                                            {/* Secondary: Not Recommended */}
                                             <Button
                                                 variant="outline"
                                                 className="w-full gap-2"
@@ -666,7 +667,6 @@ export function LoanEvaluationPage() {
                                                 )}
                                             </Button>
 
-                                            {/* Destructive: Push Back */}
                                             <AlertDialog>
                                                 <AlertDialogTrigger
                                                     render={
@@ -726,7 +726,6 @@ export function LoanEvaluationPage() {
                                                 </AlertDialogContent>
                                             </AlertDialog>
 
-                                            {/* Incomplete Documents */}
                                             <AlertDialog>
                                                 <AlertDialogTrigger
                                                     render={

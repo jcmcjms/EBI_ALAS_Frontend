@@ -44,6 +44,8 @@ export function GroupReviewSection({
     const [results, setResults] = useState<GroupStatusResponse | null>(null);
 
     const loans = group.data?.loans ?? [];
+    // Loans in the group other than the one currently open — the section is hidden
+    // when the group has only one loan.
     const siblings = useMemo(
         () => loans.filter((l) => l.id !== currentLoanId),
         [loans, currentLoanId]
@@ -76,6 +78,8 @@ export function GroupReviewSection({
         setTarget(t);
         setResults(null);
         setComments("");
+        // Pre-select only loans currently in the same status as the open one —
+        // the server rejects cross-status bundle moves.
         setPicked(
             Object.fromEntries(
                 loans

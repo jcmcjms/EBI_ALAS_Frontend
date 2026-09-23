@@ -138,9 +138,6 @@ export function CISLookup({
     // useFieldArray (single-writer rule); a full replace() there
     // is the canonical "clear picked loans" path.
     setValue("outstandingLoans", []);
-    setValue("ebiReloans", []);
-    setValue("buyOuts", []);
-    setValue("incomingLoans", []);
     setValue("preLoan", undefined);
     setLaiAccounts([]);
     setOutstandingCount(0);

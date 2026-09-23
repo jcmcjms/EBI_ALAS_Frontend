@@ -45,7 +45,6 @@ import {
     LOAN_SECTION_LABELS,
     mapToEbi,
     mapToOutstanding,
-    type LoanSection,
     type TransferSourceRow,
 } from "../utils/loan-transfer-utils";
 import type { LoanApplicationFormData, OutstandingLoan } from "../schema";

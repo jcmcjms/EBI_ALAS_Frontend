@@ -65,7 +65,7 @@ export function OtherObligationsSection() {
                     idPrefix="other-obligations"
                     ariaLabel="Obligations per loan"
                     mountStrategy="active-only"
-                    renderPanel={(loan, i) => <OtherObligationsFields loanIndex={i} />}
+                    renderPanel={(_loan, i) => <OtherObligationsFields loanIndex={i} />}
                 />
             )}
         </SectionCard>
@@ -154,11 +154,11 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
                                         className="h-8 text-right text-xs"
                                     />
                                 </TableCell>
-                                <TableCell className="text-right">
-                                    <TransferActionMenu
-                                        currentSection="ebi"
-                                        onTransfer={(target) => handleTransfer("ebi", i, target)}
-                                    />
+                                    <TableCell className="text-right">
+                                        <TransferActionMenu
+                                            currentSection="ebi"
+                                            onTransfer={(target) => handleTransfer("ebi", i, target as "outstanding" | "ebi")}
+                                        />
                                 </TableCell>
                             </TableRow>
                         ))}

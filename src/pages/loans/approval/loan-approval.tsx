@@ -72,6 +72,7 @@ import type { LoanStatus } from "@/src/lib/loan-status";
 import type { LoanApplicationFormData } from "../create/schema";
 import { CREATION_TYPE, type DeviationReason } from "../create/schema";
 
+// End-state statuses — the page freezes (`frozen`) and all workflow actions disappear.
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing", "Cancelled"];
 const MIN_REMARKS = 10; // mirrors UpdateLoanStatusValidator
 
@@ -87,7 +88,7 @@ const WORKFLOW_ACTIONS: WorkflowAction[] = [
     { role: "Recommender", from: "ForRecommendation", to: "ForChecking", label: "Recommend for Checking", kind: "advance", remarksRequired: false },
     { role: "Recommender", from: "ForRecommendation", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
     { role: "Recommender", from: "ForRecommendation", to: "ForIncompleteDocuments", label: "Incomplete Documents", kind: "return", remarksRequired: true, confirm: true },
-    // ── Evaluator: three distinct decisions ──────────────────────────
+    // ── Evaluator ────────────────────────────────────────────────────
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Recommended", kind: "advance", verdict: "Recommended", remarksRequired: false },
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Not Recommended", kind: "advance", verdict: "NotRecommended", remarksRequired: true, confirm: true },
     { role: "Evaluator", from: "ForChecking", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
@@ -99,12 +100,8 @@ const WORKFLOW_ACTIONS: WorkflowAction[] = [
     { role: "Approver", from: "ForApproval", to: "ForIncompleteDocuments", label: "Incomplete Documents", kind: "return", remarksRequired: true, confirm: true },
 ];
 
-/**
- * Map the flattened `LoanDetailResponse` (returned by `GET /api/loans/{id}`)
- * into the nested `LoanApplicationFormData` shape the existing
- * `ApprovalFormDocument` consumes.
- */
 function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
+    // Codes outside the 0/1/2/6 enum silently collapse to NEW_LOAN.
     const creationTypeCode: 0 | 1 | 2 | 6 =
         l.creationTypeCode === CREATION_TYPE.RELOAN
             ? CREATION_TYPE.RELOAN
@@ -114,6 +111,8 @@ function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
                 ? CREATION_TYPE.ADDITIONAL_LOAN
                 : CREATION_TYPE.NEW_LOAN;
 
+    // Backend sends free-text deviation reasons; anything outside the schema
+    // enum is dropped here so the DeviationReason type holds.
     const deviationDetails: DeviationReason[] = (l.deviationDetails ?? []).filter(
         (reason): reason is DeviationReason =>
             typeof reason === "string" &&
@@ -142,6 +141,8 @@ function mapLoanToFormData(l: LoanDetailResponse): LoanApplicationFormData {
                 reason === "With past due account - performing")
     );
 
+    // Shape gap: optional DTO fields are defaulted above, so this is a
+    // deliberate double cast rather than an exact assignment.
     return {
         branchType: {
             creationTypeCode,
@@ -352,6 +353,8 @@ export function LoanApprovalPage() {
         onError: (e: Error) => toastError(e.message),
     });
 
+    // More than a dry check — when everything is present the hold is released
+    // and the application re-enters the review queue.
     const recheck = useMutation({
         mutationFn: async () => {
             const res = await apiClient.post<ApiResponse<{ complete: boolean; missing: string[] }>>(
@@ -459,6 +462,8 @@ export function LoanApprovalPage() {
                                 {deviationCount === 1 ? "" : "s"}
                             </Badge>
                         )}
+                        {/* NOTE: `evaluationVerdict` stores the action verb ("EvaluatedRecommended"),
+                            not the request verdict ("Recommended") sent by updateLoanStatus. */}
                         {detail.evaluationVerdict === "EvaluatedNotRecommended" && (
                             <Badge variant="secondary" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800">
                                 <ThumbsDown size={12} weight="fill" /> Evaluator: Not Recommended
@@ -513,6 +518,7 @@ export function LoanApprovalPage() {
                                     />
                                     Approval Form Document
                                 </CardTitle>
+                                {/* Zoom clamped to 60–150%; toFixed(2) absorbs float drift from ±0.1 steps. */}
                                 <div className="flex items-center gap-1.5">
                                     <Button
                                         size="icon"

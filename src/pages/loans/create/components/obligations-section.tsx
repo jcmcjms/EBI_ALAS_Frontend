@@ -139,7 +139,7 @@ export function ObligationsSection() {
                                                 // Pass the row index — `handleTransfer`
                                                 // now uses index-based lookup (controlled
                                                 // rows make index-keyed splice safe).
-                                                handleTransfer("outstanding", i, target)
+                                                handleTransfer("outstanding", i, target as "outstanding" | "ebi")
                                             }
                                         />
                                     </TableCell>

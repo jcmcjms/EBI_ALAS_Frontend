@@ -128,10 +128,13 @@ export function buildProductLine(
  */
 export function computeLoanMetrics(
     primaryLoan: SelectedLoan,
-    obligations: Pick<
-        LoanApplicationFormData,
-        "outstandingLoans" | "ebiReloans" | "buyOuts" | "incomingLoans" | "client"
-    >
+    obligations: {
+        outstandingLoans: LoanApplicationFormData["outstandingLoans"];
+        ebiReloans: SelectedLoan["ebiReloans"];
+        buyOuts: SelectedLoan["buyOuts"];
+        incomingLoans: SelectedLoan["incomingLoans"];
+        client: LoanApplicationFormData["client"];
+    }
 ) {
     const { outstandingLoans, ebiReloans, buyOuts, incomingLoans, client } = obligations;
     const params = primaryLoan.parameters;
