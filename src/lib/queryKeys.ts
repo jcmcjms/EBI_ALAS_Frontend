@@ -88,6 +88,8 @@ export const queryKeys = {
         documentChecklist: (loanId: number) => ["loans", "review", loanId, "document-checklist"] as const,
         /** Loan group (application bundle). */
         group: (groupNo: string) => ["loans", "group", groupNo] as const,
+        /** Review Desk — FIFO queue view for the current reviewer. */
+        desk: ["loans", "desk"] as const,
     },
 
     // ── WebLoans (CIS lookup / outstanding / pending) ──────────────────────

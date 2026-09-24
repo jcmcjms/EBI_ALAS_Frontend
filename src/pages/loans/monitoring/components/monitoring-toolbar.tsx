@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/src/components/ui/popover.tsx";
 import { Calendar } from "@/src/components/ui/calendar.tsx";
 import { Badge } from "@/src/components/ui/badge";
 import { Checkbox } from "@/src/components/ui/checkbox";
-import { MagnifyingGlass, CalendarBlank, Funnel, Export, X, UserCircle, CaretDown } from "@phosphor-icons/react";
+import { MagnifyingGlass, CalendarBlank, Funnel, Export, X, UserCircle, CaretDown, Tray } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import type { MonitoringFilters } from "../types";
 import type { LoanStatus } from "@/src/lib/loan-status";
 import { LOAN_STATUS_META, STATUS_FILTER_ORDER } from "@/src/lib/loan-status";
 import { sameStatusSet } from "@/src/lib/role-queues";
 import { cn } from "@/src/lib/utils";
+import { useAuthStore } from "@/src/store/authStore";
 
 interface ToolbarProps {
     filters: MonitoringFilters;
@@ -20,6 +22,8 @@ interface ToolbarProps {
 }
 
 export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: ToolbarProps) {
+    const navigate = useNavigate();
+    const role = useAuthStore((s) => s.user?.role);
     const [localSearch, setLocalSearch] = useState(filters.search);
 
     // Debounce search input
@@ -197,6 +201,18 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                     title="Show only the application currently assigned to you"
                 >
                     <UserCircle size={12} weight="bold" /> My turn
+                </Button>
+            )}
+
+            {/* Review Desk shortcut — visible only for reviewer roles */}
+            {(role === "Recommender" || role === "Evaluator" || role === "Approver") && (
+                <Button
+                    variant="default"
+                    size="sm"
+                    className="h-9 gap-1.5 text-xs"
+                    onClick={() => navigate("/loans/queue")}
+                >
+                    <Tray size={14} weight="bold" /> Open Review Desk
                 </Button>
             )}
 

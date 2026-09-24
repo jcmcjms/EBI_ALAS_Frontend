@@ -3,6 +3,7 @@ import {
     ChartBar,
     House,
     ListChecks,
+    Tray,
     Users,
     type Icon,
 } from "@phosphor-icons/react"
@@ -44,6 +45,12 @@ export const navMain: NavItem[] = [
         url: "/loans/monitoring",
         icon: ListChecks,
         requiredPermission: "loans.view",
+    },
+    {
+        title: "Review Desk",
+        url: "/loans/queue",
+        icon: Tray,
+        requiredPermission: "loans.recommend",
     },
     {
         title: "Loan Creation",

@@ -14,6 +14,7 @@ const LoanCreation = lazy(() => import("./pages/loans/create/index"));
 const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
 const LoanApproval = lazy(() => import("./pages/loans/approval/index"));
 const LoanEvaluation = lazy(() => import("./pages/loans/evaluation/index"));
+const ReviewDesk = lazy(() => import("./pages/loans/queue/index"));
 const AuditLogs = lazy(() => import("./pages/audit-logs/index").then(m => ({ default: m.default })));
 const WorkflowSettings = lazy(() => import("./pages/admin/workflow/workflow-settings").then(m => ({ default: m.WorkflowSettingsPage })));
 const Notifications = lazy(() => import("./pages/notifications/index"));
@@ -63,6 +64,16 @@ function App() {
                         <ProtectedRoute>
                             <FeatureErrorBoundary featureName="Loan Creation">
                                 <LoanCreation />
+                            </FeatureErrorBoundary>
+                        </ProtectedRoute>
+                    } />
+                    {/* /loans/queue — the reviewer's FIFO desk.
+                        Gated to Recommender/Evaluator/Approver by the backend
+                        endpoints; the frontend route only requires auth. */}
+                    <Route path="/loans/queue" element={
+                        <ProtectedRoute>
+                            <FeatureErrorBoundary featureName="Review Desk">
+                                <ReviewDesk />
                             </FeatureErrorBoundary>
                         </ProtectedRoute>
                     } />

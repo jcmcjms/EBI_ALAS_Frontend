@@ -70,9 +70,7 @@ export function FlagIncompleteDocumentsDialog({
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                         The file moves to the Incomplete Documents queue and the encoder is
-                        notified. It returns to your desk automatically once every selected
-                        requirement verifies complete on the document server — or you can
-                        proceed to approval at any time.
+                        notified.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
