@@ -1,0 +1,151 @@
+import { memo, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Badge } from "@/src/components/ui/badge";
+import { Button } from "@/src/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
+import { cn } from "@/src/lib/utils";
+import { initialsOf } from "@/src/lib/name-utils";
+import type { PendingQueueItem, LoanStatus } from "../types";
+import type { LoanStatus as LoanStatusKey } from "@/src/features/loans/utils/loan-status";
+import { assessAging, AGING_BADGE_CLASS } from "@/src/features/loans/utils/loan-aging";
+import { useSlaPolicy } from "@/src/features/loans/api/loan-review";
+import { useAuthStore } from "@/src/store/authStore";
+
+const statusStyles: Record<LoanStatus, string> = {
+    "On Going": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+    "For Recommendation": "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
+    "For Checking": "bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400",
+    "For Approval": "bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
+    "Approved": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
+    "Rejected": "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
+    "Cancelled": "bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400",
+    "Expired": "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
+    "For Revision": "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
+    "For Disbursement": "bg-teal-500/10 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400",
+    "Disbursed": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
+    "For Incomplete Documents": "bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400",
+};
+
+export function waitingMinutes(date: string): number {
+    return Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 60_000));
+}
+
+export function formatWaiting(mins: number): string {
+    const h = Math.floor(mins / 60);
+    return h > 0 ? `${h}h ${mins % 60}m` : `${mins}m`;
+}
+
+interface PendingQueueProps { data: PendingQueueItem[]; }
+
+/**
+ * Pending queue card showing the top 5 pending loan applications.
+ *
+ * Memoized to prevent re-renders when parent updates but data hasn't changed.
+ * The queue data changes infrequently (only on new submissions or status changes),
+ * so memoization significantly reduces unnecessary re-renders during real-time
+ * dashboard updates.
+ */
+export const PendingQueue = memo(function PendingQueue({ data }: PendingQueueProps) {
+    const navigate = useNavigate();
+    const user = useAuthStore((state) => state.user);
+    const displayData = useMemo(() => data.slice(0, 5), [data]);
+
+    // Collect the unique raw status keys across all pending items so the
+    // "View all" deep-link can jump straight into a filtered monitoring view.
+    const pendingStatuses = useMemo(
+        () => [...new Set(data.map((d) => d.statusKey))].join(","),
+        [data],
+    );
+
+    // SLA policy — fetched once per session (staleTime: Infinity).
+    // Falls back to built-in defaults from LOAN_STATUS_META when the
+    // endpoint is unreachable.
+    const slaPolicy = useSlaPolicy();
+
+    return (
+        <Card id="pending-queue" className="scroll-mt-24 flex flex-col">
+            <CardHeader className="flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                    Pending Queue
+                    {data.length > 0 && <Badge variant="secondary" className="tabular-nums">{data.length}</Badge>}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 flex-1">
+                {data.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                        <p className="text-sm text-muted-foreground mb-4">Queue is clear — no pending applications.</p>
+                        {user?.role === "Encoder" && (
+                            <Button variant="outline" size="sm" onClick={() => navigate("/loans/create")}>Create New Loan</Button>
+                        )}
+                    </div>
+                ) : (
+                    <ul className="divide-y">
+                        {displayData.map((item) => {
+                            const mins = waitingMinutes(item.date);
+                            // SLA-driven urgency: green → amber → red as the
+                            // elapsed time consumes the stage's handling SLA.
+                            // Terminal stages get a neutral pill.
+                            const assessment = assessAging(
+                                item.statusKey as LoanStatusKey,
+                                item.date,
+                                Date.now(),
+                                slaPolicy.data ?? null,
+                            );
+                            return (
+                                <li
+                                    key={item.lamId}
+                                    onClick={() => navigate(`/loans/monitoring?status=${pendingStatuses}`)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/loans/monitoring?status=${pendingStatuses}`); } }}
+                                    tabIndex={0}
+                                    role="link"
+                                    className={cn("flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", item.position === 1 && "bg-primary/[0.04]")}
+                                >
+                                    <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">#{item.position}</span>
+                                    <Avatar size="sm" className="border"><AvatarFallback>{initialsOf(item.clientName)}</AvatarFallback></Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <p className="text-sm font-medium truncate">{item.lamId}</p>
+                                            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-4 font-normal", statusStyles[item.status])}>{item.status}</Badge>
+                                        </div>
+                                        <p
+                                            className="text-xs truncate"
+                                            title={`${item.clientName} · encoded by ${item.encoderName} · ${item.branch}`}
+                                        >
+                                            <span className="font-medium text-foreground/90">{item.clientName}</span>
+                                            <span className="text-muted-foreground"> · by {item.encoderName}</span>
+                                        </p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <span className="text-sm font-medium tabular-nums">{formatWaiting(mins)}</span>
+                                        {assessment.tier === "warning" && (
+                                            <Badge
+                                                variant="outline"
+                                                className={cn("ml-2 text-[10px] h-4 px-1.5", AGING_BADGE_CLASS.warning)}
+                                            >
+                                                Watch
+                                            </Badge>
+                                        )}
+                                        {assessment.tier === "breach" && (
+                                            <Badge
+                                                variant="outline"
+                                                className={cn("ml-2 text-[10px] h-4 px-1.5", AGING_BADGE_CLASS.breach)}
+                                            >
+                                                Aging
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </CardContent>
+            {data.length > 5 && (
+                <CardFooter className="border-t p-3 justify-center">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/loans/monitoring?status=${pendingStatuses}`)} className="w-full text-sm">View all {data.length} pending loans</Button>
+                </CardFooter>
+            )}
+        </Card>
+    );
+});

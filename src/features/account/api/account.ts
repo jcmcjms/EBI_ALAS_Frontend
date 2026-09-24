@@ -1,0 +1,129 @@
+/**
+ * Account API layer — types and fetchers co-located.
+ *
+ * Types mirror EBI.ALAS.Api/Features/Account/AccountDtos.cs.
+ * Every function returns unwrapped data (the `ApiResponse<T>.data` layer
+ * is stripped here so hooks receive clean domain objects).
+ */
+
+import { apiClient } from "@/src/lib/apiClient";
+import type { PagedResult } from "@/src/lib/api/types";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+export interface AccountProfile {
+    id: number;
+    username: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    branchId: string;
+    role: string;
+    email?: string;
+    phone?: string;
+    emergencyContact?: string;
+    profilePhotoUrl?: string;
+    createdAt: string;
+    passwordChangedAt?: string;
+    stats: AccountStats;
+}
+
+export interface AccountStats {
+    processedLoans: number;
+    pendingLoans: number;
+    approvalRate: number;
+}
+
+export interface Session {
+    id: number;
+    /**
+     * User-Agent string captured at login/refresh. May be `null` for refresh
+     * tokens issued before device capture was wired in — callers should
+     * render an "Unknown Device" fallback rather than assume a string.
+     */
+    deviceInfo: string | null;
+    createdAt: string;
+    expiresAt: string;
+    isCurrent: boolean;
+}
+
+export type PagedSessionsResponse = PagedResult<Session>;
+
+export interface Activity {
+    id: number;
+    /** Loan Application Management number (e.g. "LA-2026-08-9942"). */
+    lamId: string;
+    action: string;
+    fromStatus?: string;
+    toStatus?: string;
+    comments?: string;
+    actionDate: string;
+    loanClientName: string;
+}
+
+export interface ProcessedLoan {
+    id: number;
+    lamId: string;
+    clientName: string;
+    status: string;
+    applicationDate: string;
+    proposedAmount: number;
+}
+
+export interface UpdateProfilePayload {
+    email: string | null;
+    phone: string | null;
+    emergencyContact: string | null;
+}
+
+export interface RecentClient {
+    cisId: string;
+    name: string;
+    agency: string;
+    lastInteraction: string;
+}
+
+// ─── API Functions ──────────────────────────────────────────────────────────
+
+export async function getAccountProfile(): Promise<AccountProfile> {
+    const response = await apiClient.get("/api/account/me");
+    return response.data.data;
+}
+
+export async function updateAccountProfile(data: UpdateProfilePayload): Promise<void> {
+    await apiClient.put("/api/account/me", data);
+}
+
+export async function getAccountSessions(
+    pageNumber = 1,
+    pageSize = 10,
+): Promise<PagedSessionsResponse> {
+    const response = await apiClient.get(
+        `/api/account/me/sessions?pageNumber=${pageNumber}&pageSize=${pageSize}`,
+    );
+    return response.data.data;
+}
+
+export async function revokeAccountSession(sessionId: number): Promise<void> {
+    await apiClient.delete(`/api/account/me/sessions/${sessionId}`);
+}
+
+export async function revokeOtherSessions(): Promise<number> {
+    const response = await apiClient.delete("/api/account/me/sessions/others");
+    return response.data.data?.revokedCount ?? 0;
+}
+
+export async function getAccountActivity(limit = 10): Promise<Activity[]> {
+    const response = await apiClient.get(`/api/account/me/activity?limit=${limit}`);
+    return response.data.data;
+}
+
+export async function getAccountLoans(limit = 10): Promise<ProcessedLoan[]> {
+    const response = await apiClient.get(`/api/account/me/loans?limit=${limit}`);
+    return response.data.data;
+}
+
+export async function getAccountClients(limit = 5): Promise<RecentClient[]> {
+    const response = await apiClient.get(`/api/account/me/clients?limit=${limit}`);
+    return response.data.data;
+}
