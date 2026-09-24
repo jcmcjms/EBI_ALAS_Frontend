@@ -1,7 +1,7 @@
 import { Users } from "@phosphor-icons/react";
 
 import { useAuthStore } from "@/src/store/authStore";
-import { useOnlineUsers } from "@/src/hooks/use-presence";
+import { useOnlineUsers } from "@/src/lib/signalr/use-presence";
 import { PresenceDot } from "@/src/components/system/presence-dot";
 import { Avatar, AvatarFallback, AvatarGroup } from "@/src/components/ui/avatar";
 import { Badge } from "@/src/components/ui/badge";
