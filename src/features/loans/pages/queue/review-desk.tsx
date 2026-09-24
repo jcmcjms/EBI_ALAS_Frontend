@@ -26,21 +26,12 @@ export function ReviewDeskPage() {
         }
     }, [desk?.currentClaim, navigate]);
 
-    if (isLoading) {
-        return (
-            <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
-                <Spinner className="size-8" />
-            </div>
-        );
-    }
-
-    // Show nothing while redirecting (effect will fire on next render)
-    if (desk?.currentClaim) {
-        return null;
-    }
-
-    return (
-        <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40">
+    const body = isLoading ? (
+        <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
+            <Spinner className="size-8" />
+        </div>
+    ) : desk?.currentClaim ? null : (
+        <>
             <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
                 <div className="container mx-auto flex h-16 items-center gap-3 px-6">
                     <Button
@@ -101,6 +92,12 @@ export function ReviewDeskPage() {
                     </Card>
                 )}
             </div>
+        </>
+    );
+
+    return (
+        <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40">
+            {body}
         </div>
     );
 }
