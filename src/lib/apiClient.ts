@@ -289,7 +289,7 @@ apiClient.interceptors.response.use(
 function getStatusFallbackMessage(status: number): string {
     if (status === 400) return "The request was invalid. Please check your input and try again.";
     if (status === 401) return "Authentication failed. Please check your credentials and try again.";
-    if (status === 403) return "You do not have permission to perform this action.";
+    if (status === 403) return "You don't have permission to access this. Please contact your administrator if you need access.";
     if (status === 404) return "The requested resource was not found.";
     if (status === 409) return "The operation conflicts with the current state. Please refresh and try again.";
     if (status === 429) return "Too many attempts. Please wait a moment and try again.";
