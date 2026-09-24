@@ -44,7 +44,7 @@ import {
     DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
 
-import { LOAN_SECTION_LABELS, type LoanSection } from "../utils/loan-transfer-utils";
+import { LOAN_SECTION_LABELS, type LoanSection } from "@/src/features/loans/utils/loan-transfer-utils";
 
 interface TransferActionMenuProps {
     /**
