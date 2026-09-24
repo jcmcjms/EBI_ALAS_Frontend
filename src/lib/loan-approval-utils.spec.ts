@@ -6,7 +6,7 @@ import {
     buildProductLine,
     DAYS_PER_MONTH,
     GRACE_TOLERANCE_DAYS,
-} from "./loan-approval-utils";
+} from "@/src/features/loans/utils/loan-approval-utils";
 
 /**
  * Shared case table for approval-form convention rules. These tests are

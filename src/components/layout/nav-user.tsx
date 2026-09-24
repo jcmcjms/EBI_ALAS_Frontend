@@ -10,7 +10,7 @@ import {
     AvatarFallback,
     AvatarImage,
 } from "@/src/components/ui/avatar"
-import { initialsOf } from "@/src/lib/notifications"
+import { initialsOf } from "@/src/features/notifications/types"
 import {
     DropdownMenu,
     DropdownMenuContent,

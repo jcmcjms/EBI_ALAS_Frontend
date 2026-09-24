@@ -5,7 +5,7 @@ import { SiteHeader } from "@/src/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
 import { useApprovalRealtime } from "@/src/hooks/useApprovalRealtime";
 import { useDashboardRealtime } from "@/src/hooks/useDashboardRealtime";
-import { useNotifications } from "@/src/hooks/use-notifications";
+import { useNotifications } from "@/src/features/notifications/hooks/use-notifications";
 import { usePresenceSync } from "@/src/hooks/use-presence";
 import { useSignalR } from "@/src/hooks/useSignalR";
 import { useAuthStore } from "@/src/store/authStore";

@@ -1,4 +1,4 @@
-import type { LoanStatus } from "./loan-status";
+import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 
 /**
  * Mirror of backend Common/Constants/RoleQueues.cs (same pattern as

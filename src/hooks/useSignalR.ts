@@ -3,8 +3,8 @@ import * as signalR from "@microsoft/signalr";
 import { toastInfo } from "@/src/components/ui/toast";
 
 import { useAuthStore } from "@/src/store/authStore";
-import { useNotificationStore } from "@/src/store/notificationStore";
-import { classifyNotification, type AppNotification } from "@/src/lib/notifications";
+import { useNotificationStore } from "@/src/features/notifications/store/notification-store";
+import { classifyNotification, type AppNotification } from "@/src/features/notifications/types";
 import { getSharedConnection, getStartingPromise, setStartingPromise } from "@/src/lib/signalr/connection";
 
 /**

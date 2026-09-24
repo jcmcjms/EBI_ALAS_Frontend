@@ -5,20 +5,20 @@ import { ProtectedRoute } from "@/src/components/auth/ProtectedRoute";
 import { FeatureErrorBoundary } from "@/src/components/system/FeatureErrorBoundary";
 import { PERMISSIONS } from "@/src/lib/api/types";
 
-const Login = lazy(() => import("./pages/auth/login"));
-const ChangePassword = lazy(() => import("./pages/auth/change-password"));
-const Dashboard = lazy(() => import("./pages/dashboard").then(m => ({ default: m.Dashboard })));
-const UsersPage = lazy(() => import("./pages/admin/users/index").then(m => ({ default: m.UsersPage })));
-const LoanProductsPage = lazy(() => import("./pages/admin/loan-products/index").then(m => ({ default: m.LoanProductsPage })));
-const LoanCreation = lazy(() => import("./pages/loans/create/index"));
-const LoanMonitoring = lazy(() => import("./pages/loans/monitoring/index"));
-const LoanApproval = lazy(() => import("./pages/loans/approval/index"));
-const LoanEvaluation = lazy(() => import("./pages/loans/evaluation/index"));
-const ReviewDesk = lazy(() => import("./pages/loans/queue/index"));
-const AuditLogs = lazy(() => import("./pages/audit-logs/index").then(m => ({ default: m.default })));
-const WorkflowSettings = lazy(() => import("./pages/admin/workflow/workflow-settings").then(m => ({ default: m.WorkflowSettingsPage })));
-const Notifications = lazy(() => import("./pages/notifications/index"));
-const Account = lazy(() => import("./pages/account/index"));
+const Login = lazy(() => import("./features/auth/pages/login"));
+const ChangePassword = lazy(() => import("./features/auth/pages/change-password"));
+const Dashboard = lazy(() => import("./features/dashboard/pages/index").then(m => ({ default: m.Dashboard })));
+const UsersPage = lazy(() => import("./features/admin/users/pages/index").then(m => ({ default: m.UsersPage })));
+const LoanProductsPage = lazy(() => import("./features/admin/loan-products/pages/index").then(m => ({ default: m.LoanProductsPage })));
+const LoanCreation = lazy(() => import("./features/loans/pages/create/index"));
+const LoanMonitoring = lazy(() => import("./features/loans/pages/monitoring/index"));
+const LoanApproval = lazy(() => import("./features/loans/pages/approval/index"));
+const LoanEvaluation = lazy(() => import("./features/loans/pages/evaluation/index"));
+const ReviewDesk = lazy(() => import("./features/loans/pages/queue/index"));
+const AuditLogs = lazy(() => import("./features/audit-logs/pages/index").then(m => ({ default: m.default })));
+const WorkflowSettings = lazy(() => import("./features/admin/workflow/pages/index").then(m => ({ default: m.WorkflowSettingsPage })));
+const Notifications = lazy(() => import("./features/notifications/pages/index"));
+const Account = lazy(() => import("./features/account/pages/index"));
 const Forbidden = lazy(() => import("./pages/errors/Forbidden"));
 
 function App() {
