@@ -9,7 +9,7 @@ import { SignaturePad } from "@/src/components/ui/signature-pad";
 import { BranchMultiSelect } from "@/src/components/ui/branch-multi-select";
 import { toastError } from "@/src/components/ui/toast";
 import { BRANCHES, type UserResponse } from "@/src/lib/api/types";
-import { stripRoleDisplayName } from "@/src/lib/role-badges";
+import { stripRoleDisplayName } from "@/src/features/admin/users/components/role-badges";
 import { useRoles } from "../hooks/use-roles";
 import { useApprovalAuthorities } from "../hooks/use-approval-authorities";
 

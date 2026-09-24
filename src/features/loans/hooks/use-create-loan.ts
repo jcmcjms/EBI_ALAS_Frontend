@@ -7,7 +7,7 @@ import { loanApi } from "@/src/features/loans/api/loans";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { queryKeys } from "@/src/lib/queryKeys";
 import { generateUUID } from "@/src/lib/utils";
-import { workflowKeys, type WorkflowConfigurationDto } from "@/src/lib/api/workflow";
+import { workflowKeys, type WorkflowConfigurationDto } from "@/src/features/admin/workflow/api/workflow";
 import type { CreateLoanPayload, LoanSubmissionResponse } from "@/src/lib/api/types";
 
 /**

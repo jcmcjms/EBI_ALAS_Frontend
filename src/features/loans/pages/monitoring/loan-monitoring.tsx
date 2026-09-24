@@ -23,7 +23,7 @@ import type { LoanMonitoringRecord } from "./types";
 import { useSlaPolicy, useQueueDefault } from "@/src/features/loans/api/loan-review";
 import { cancelLoanApplication } from "@/src/features/loans/api/loan-review";
 import { useAuthStore } from "@/src/store/authStore";
-import { queueDefaultForRole, sameStatusSet } from "@/src/lib/role-queues";
+import { queueDefaultForRole, sameStatusSet } from "@/src/features/loans/constants/role-queues";
 import { queryKeys } from "@/src/lib/queryKeys";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 import { LOAN_STATUS_META } from "@/src/features/loans/utils/loan-status";

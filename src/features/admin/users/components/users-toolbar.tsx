@@ -13,7 +13,7 @@ import {
     SelectValue,
 } from "@/src/components/ui/select";
 import { BRANCHES } from "@/src/lib/api/types";
-import { stripRoleDisplayName } from "@/src/lib/role-badges";
+import { stripRoleDisplayName } from "@/src/features/admin/users/components/role-badges";
 import type { RoleInfo } from "@/src/lib/api/types";
 
 interface UsersToolbarProps {
