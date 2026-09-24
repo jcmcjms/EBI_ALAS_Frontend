@@ -4,6 +4,7 @@ import {
     type ActiveLoansResponse,
     type ApiResponse,
     type CatLoanClassResponse,
+    type CocreeStatusResponse,
     type OutstandingLoansResponse,
     type PendingLoanResponse,
     type PreLoansQuery,
@@ -184,6 +185,28 @@ export async function getCatLoanClass(
     const res = await apiClient.get<ApiResponse<CatLoanClassResponse>>(
         "/api/webloans/loan-class",
         { params: { bch, loanNo, loanProduct } }
+    );
+    return unwrapApiData(res.data);
+}
+
+/**
+ * GET /api/webloans/cis/{cisNo}/cocree-status
+ *
+ * Returns the COCREE completion status for a CIS number. The frontend
+ * calls this during loan creation to block applications for CIS numbers
+ * with incomplete COCREE (check_list_data items CCR01–CCR11).
+ *
+ * A CIS with zero checklist rows returns `isComplete: false` with all
+ * items having `submitted: null` — this is NOT a 404.
+ *
+ * No caching: checklist data changes as officers submit items; stale
+ * cache would incorrectly block valid applications.
+ */
+export async function getCocreeStatus(
+    cisNo: string
+): Promise<CocreeStatusResponse> {
+    const res = await apiClient.get<ApiResponse<CocreeStatusResponse>>(
+        `/api/webloans/cis/${encodeURIComponent(cisNo)}/cocree-status`
     );
     return unwrapApiData(res.data);
 }

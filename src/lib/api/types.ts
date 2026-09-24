@@ -752,6 +752,41 @@ export interface CatLoanClassResponse {
     catLoanClass: string | null;
 }
 
+// ─── COCREE Completion Status ────────────────────────────────────────────────
+
+/**
+ * One COCREE checklist item (CCR01–CCR11) from
+ * GET /api/webloans/cis/{cisNo}/cocree-status.
+ *
+ * Mirrors `CocreeItemStatus` on the backend.
+ */
+export interface CocreeItemStatus {
+    /** Checklist item code (e.g. "CCR01", "CCR11"). */
+    itemCode: string;
+    /** ISO 8601 datetime when the item was submitted. Null = incomplete. */
+    submitted: string | null;
+    /** Item description from check_list_data.description. */
+    description: string | null;
+    /** Expiration date from check_list_data.expiration. */
+    expiration: string | null;
+}
+
+/**
+ * Response from GET /api/webloans/cis/{cisNo}/cocree-status.
+ *
+ * Mirrors `CocreeStatusResponse` on the backend.
+ * A CIS with zero checklist rows returns isComplete=false with all
+ * items having submitted=null.
+ */
+export interface CocreeStatusResponse {
+    /** CIS number echoed from the URL. */
+    cisNo: string;
+    /** True only when ALL 11 items have a non-null submitted date. */
+    isComplete: boolean;
+    /** Full 11-item list with per-item completion state. */
+    items: CocreeItemStatus[];
+}
+
 // ─── Audit Logs ─────────────────────────────────────────────────────────────────
 
 /** Audit log record returned by GET /api/audit-logs (AuditLogResponse). */

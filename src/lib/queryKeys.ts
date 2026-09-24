@@ -107,6 +107,10 @@ export const queryKeys = {
         // (bch, loan_no, loan_product); mirrors GET /api/webloans/loan-class.
         loanClass: (bch: string, loanNo: string, loanProduct: string) =>
             ["webloans", "loan-class", bch, loanNo, loanProduct] as const,
+        // COCREE completion status for a CIS — mirrors
+        // GET /api/webloans/cis/{cisNo}/cocree-status.
+        cocreeStatus: (cisNo: string) =>
+            ["webloans", "cocree-status", cisNo] as const,
     },
 
     // ── Dashboard ───────────────────────────────────────────────────────────
