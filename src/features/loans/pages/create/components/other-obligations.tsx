@@ -39,9 +39,9 @@ import { useLoanTransfersContext } from "../loan-transfers-provider";
 import { TransferActionMenu } from "./transfer-action-menu";
 import { SectionCard, SubSectionHeading } from "./section-card";
 import { PerLoanTabs } from "./per-loan-tabs";
-import { getSection } from "../sections";
+import { getSection } from "@/src/features/loans/constants/sections";
 import { useActiveLoan } from "../active-loan-context";
-import type { LoanApplicationFormData, EbiReloan, BuyOut, IncomingLoan } from "../schema";
+import type { LoanApplicationFormData, EbiReloan, BuyOut, IncomingLoan } from "@/src/features/loans/schemas/schema";
 
 export function OtherObligationsSection() {
     const { loans } = useActiveLoan();

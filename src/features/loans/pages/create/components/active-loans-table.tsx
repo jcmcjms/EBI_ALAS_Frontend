@@ -35,8 +35,8 @@ import { getErrorMessage } from "@/src/lib/apiClient";
 import { getOutstandingLoans, getPendingLoan } from "@/src/features/loans/api/webloans";
 import type { OutstandingLoan, PendingLoan, WebLoanAccount } from "@/src/lib/api/types";
 
-import type { LoanApplicationFormData, CreationTypeCode } from "../schema";
-import { CREATION_TYPE, createPerLoanSectionDefaults } from "../schema";
+import type { LoanApplicationFormData, CreationTypeCode } from "@/src/features/loans/schemas/schema";
+import { CREATION_TYPE, createPerLoanSectionDefaults } from "@/src/features/loans/schemas/schema";
 import type { PreLoanItem } from "@/src/lib/api/types";
 
 interface ActiveLoansTableProps {

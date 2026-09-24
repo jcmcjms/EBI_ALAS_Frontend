@@ -1,5 +1,5 @@
 import type { LoanSubmissionPayload } from "@/src/lib/api/types";
-import type { LoanApplicationFormData } from "../schema";
+import type { LoanApplicationFormData } from "../schemas/schema";
 
 /**
  * Pure form→wire mapper. Strips RHF-internal fields (`loans[].id`) and keeps

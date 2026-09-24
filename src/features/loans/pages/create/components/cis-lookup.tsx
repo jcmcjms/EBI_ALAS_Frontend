@@ -29,8 +29,8 @@ import {
   SectionCard,
   SubSectionHeading,
 } from "./section-card";
-import { getSection } from "../sections";
-import type { LoanApplicationFormData } from "../schema";
+import { getSection } from "@/src/features/loans/constants/sections";
+import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
 
 /** Formats an ISO datetime as yyyy-MM-dd for <input type="date"> fields. */
 function toDateInput(iso?: string | null): string {

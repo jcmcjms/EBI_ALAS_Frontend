@@ -29,7 +29,7 @@ import {
   loanApplicationSchema,
   HidesOutstandingLoans,
   type LoanApplicationFormData,
-} from "./schema";
+} from "@/src/features/loans/schemas/schema";
 import { ActiveLoanProvider } from "./active-loan-context";
 import { LoanTransfersProvider } from "./loan-transfers-provider";
 import { CISLookup } from "./components/cis-lookup";
@@ -42,13 +42,13 @@ import { DeviationsSection } from "./components/deviations-section";
 import { ApprovalFormPreview } from "./components/approval-form-preview";
 import { WorkflowOverview } from "@/src/features/loans/components/workflow-overview";
 import { useCreateLoan } from "@/src/features/loans/hooks/use-create-loan";
-import { mapFormToSubmissionPayload } from "./utils/map-form-to-request";
+import { mapFormToSubmissionPayload } from "@/src/features/loans/utils/map-form-to-request";
 
 // ── Section definitions ─────────────────────────────────────────
 // Sourced from ./sections so the stepper, mobile nav and every
 // section header derive their numbering from one place. Adding or
 // re-ordering sections is a single-file change.
-import { SECTIONS, type SectionId, type SectionDef } from "./sections";
+import { SECTIONS, type SectionId, type SectionDef } from "@/src/features/loans/constants/sections";
 
 const SCROLL_OFFSET_PX = 96;
 

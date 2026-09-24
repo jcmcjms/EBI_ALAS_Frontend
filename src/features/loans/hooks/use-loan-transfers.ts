@@ -47,7 +47,7 @@ import {
     mapToOutstanding,
     type TransferSourceRow,
 } from "../utils/loan-transfer-utils";
-import type { LoanApplicationFormData, OutstandingLoan } from "../schema";
+import type { LoanApplicationFormData, OutstandingLoan } from "../schemas/schema";
 
 export type PerLoanArrayKind = "ebiReloans" | "buyOuts" | "incomingLoans";
 

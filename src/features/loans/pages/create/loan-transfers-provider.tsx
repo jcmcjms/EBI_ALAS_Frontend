@@ -15,7 +15,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 
 import { useActiveLoan } from "./active-loan-context";
-import { useLoanTransfers } from "./hooks/useLoanTransfers";
+import { useLoanTransfers } from "@/src/features/loans/hooks/use-loan-transfers";
 
 type LoanTransfersContextValue = ReturnType<typeof useLoanTransfers>;
 

@@ -8,8 +8,8 @@ import { cn } from "@/src/lib/utils";
 import { ApprovalFormSheet } from "@/src/features/loans/components/approval-form-sheet";
 
 import { SectionCard } from "./section-card";
-import { getSection } from "../sections";
-import type { ClientFormData, LoanApplicationFormData, LoanParameters, SelectedLoan } from "../schema";
+import { getSection } from "@/src/features/loans/constants/sections";
+import type { ClientFormData, LoanApplicationFormData, LoanParameters, SelectedLoan } from "@/src/features/loans/schemas/schema";
 import { useCatLoanClass } from "@/src/features/loans/hooks/use-cat-loan-class";
 import {
     parseProductCode,

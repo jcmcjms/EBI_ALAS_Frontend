@@ -5,7 +5,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { useLoanTransfersContext } from "../loan-transfers-provider";
 import { TransferActionMenu } from "./transfer-action-menu";
 import { SectionCard } from "./section-card";
-import { getSection } from "../sections";
+import { getSection } from "@/src/features/loans/constants/sections";
 
 export function ObligationsSection() {
     const { control } = useFormContext();

@@ -1,6 +1,6 @@
 import { CurrencyDollar } from "@phosphor-icons/react";
 import { SectionCard } from "./section-card";
-import { getSection } from "../sections";
+import { getSection } from "@/src/features/loans/constants/sections";
 import { LoanParametersFields } from "./loan-parameters-fields";
 
 interface LoanParametersSectionProps {

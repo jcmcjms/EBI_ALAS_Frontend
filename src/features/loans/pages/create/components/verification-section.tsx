@@ -5,9 +5,9 @@ import { CheckCircle } from "@phosphor-icons/react";
 
 import { SectionCard } from "./section-card";
 import { PerLoanTabs } from "./per-loan-tabs";
-import { getSection } from "../sections";
+import { getSection } from "@/src/features/loans/constants/sections";
 import { useActiveLoan } from "../active-loan-context";
-import type { LoanApplicationFormData } from "../schema";
+import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
 
 export function VerificationSection() {
     const { loans } = useActiveLoan();

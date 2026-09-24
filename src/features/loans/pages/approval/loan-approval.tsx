@@ -71,8 +71,8 @@ import { cn } from "@/src/lib/utils";
 import { apiClient, getErrorMessage } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
-import type { LoanApplicationFormData } from "../create/schema";
-import { CREATION_TYPE, type DeviationReason } from "../create/schema";
+import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
+import { CREATION_TYPE, type DeviationReason } from "@/src/features/loans/schemas/schema";
 
 // End-state statuses — the page freezes (`frozen`) and all workflow actions disappear.
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing", "Cancelled"];

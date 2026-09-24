@@ -7,7 +7,7 @@ import type {
     LoanSubmissionResponse,
     PagedResult,
 } from "@/src/lib/api/types";
-import type { LoanMonitoringRecord, MonitoringFilters, QueueStage } from "@/src/features/loans/pages/monitoring/types";
+import type { LoanMonitoringRecord, MonitoringFilters, QueueStage } from "@/src/features/loans/types/monitoring";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 
 interface PaginationState { pageIndex: number; pageSize: number; }

@@ -1,4 +1,4 @@
-﻿import { useFormContext, useWatch } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import {
@@ -19,8 +19,8 @@ import {
 } from "@/src/components/ui/select";
 
 import { SectionCard } from "./section-card";
-import { getSection } from "../sections";
-import type { LoanApplicationFormData } from "../schema";
+import { getSection } from "@/src/features/loans/constants/sections";
+import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
 
 export function PersonalInfoSection() {
     const {
@@ -59,9 +59,9 @@ export function PersonalInfoSection() {
             icon={<LockSimple size={20} weight="bold" className="text-primary" />}
         >
             <div className="space-y-6">
-                {/* ── System Verified Section ─────────────────────────── */}
+                {/* -- System Verified Section --------------------------- */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    {/* Row 1 — Names */}
+                    {/* Row 1 � Names */}
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">First Name</Label>
                         <Input
@@ -87,7 +87,7 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 2 — Suffix, Birthdate, Employee ID */}
+                    {/* Row 2 � Suffix, Birthdate, Employee ID */}
                     <div className="space-y-1.5">
                         <Label htmlFor="client-suffix" className="text-xs text-muted-foreground">
                             Suffix
@@ -106,7 +106,7 @@ export function PersonalInfoSection() {
                                 <SelectValue placeholder="Select suffix" />
                             </SelectTrigger>
                             <SelectContent>
-                                {/* Explicit empty option — the accessible undo path. Base UI
+                                {/* Explicit empty option � the accessible undo path. Base UI
                                     Select has no built-in clear; without this, an accidental
                                     selection is only reversible by reloading the page. */}
                                 <SelectItem value="">None</SelectItem>
@@ -137,7 +137,7 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 3 — Address (full width) */}
+                    {/* Row 3 � Address (full width) */}
                     <div className="space-y-1.5 md:col-span-3">
                         <Label className="text-xs text-muted-foreground">Address</Label>
                         <Input
@@ -147,7 +147,7 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 4 — Agency Type, Position */}
+                    {/* Row 4 � Agency Type, Position */}
                     <div className="space-y-1.5 md:col-span-2">
                         <Label className="text-xs text-muted-foreground">Agency Type</Label>
                         <Input
@@ -165,7 +165,7 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 5 — MIS Agency, Length of Service, NTHP */}
+                    {/* Row 5 � MIS Agency, Length of Service, NTHP */}
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">MIS Agency</Label>
                         <Input
@@ -193,7 +193,7 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 6 — Region, Division Code, Station Code */}
+                    {/* Row 6 � Region, Division Code, Station Code */}
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">Region</Label>
                         <Input
@@ -220,7 +220,7 @@ export function PersonalInfoSection() {
                     </div>
                 </div>
 
-                {/* ── Divider & Manual Entry Section ──────────────────── */}
+                {/* -- Divider & Manual Entry Section -------------------- */}
                 <div className="border-t pt-6">
                     <div className="mb-4 flex items-center gap-2">
                         <Buildings size={20} weight="bold" className="text-primary" />

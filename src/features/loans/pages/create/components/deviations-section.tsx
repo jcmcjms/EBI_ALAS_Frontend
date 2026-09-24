@@ -5,11 +5,11 @@ import { Checkbox } from "@/src/components/ui/checkbox";
 import { Badge } from "@/src/components/ui/badge";
 import { Warning, Check, Receipt } from "@phosphor-icons/react";
 
-import { DEVIATION_REASONS, type DeviationReason } from "../schema";
-import type { LoanApplicationFormData } from "../schema";
+import { DEVIATION_REASONS, type DeviationReason } from "@/src/features/loans/schemas/schema";
+import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
 import { SectionCard } from "./section-card";
 import { PerLoanTabs } from "./per-loan-tabs";
-import { getSection } from "../sections";
+import { getSection } from "@/src/features/loans/constants/sections";
 import { useActiveLoan } from "../active-loan-context";
 
 // Typed view of the deviations error subtree returned by RHF's

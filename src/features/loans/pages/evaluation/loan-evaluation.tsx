@@ -57,8 +57,8 @@ import {
 } from "@/src/features/loans/api/loan-review";
 import { queryKeys } from "@/src/lib/queryKeys";
 import { useLoanSignatureChain, signatureKeys } from "@/src/features/loans/api/signatures";
-import type { LoanApplicationFormData } from "../create/schema";
-import { CREATION_TYPE, type DeviationReason } from "../create/schema";
+import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
+import { CREATION_TYPE, type DeviationReason } from "@/src/features/loans/schemas/schema";
 import { FlagIncompleteDocumentsDialog } from "../approval/components/flag-incomplete-documents-dialog";
 import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
 import { getChecklistDocuments } from "@/src/features/loans/api/loan-review";

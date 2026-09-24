@@ -14,7 +14,7 @@ import { ApprovalFormSheet } from "@/src/features/loans/components/approval-form
 import type {
     ClientFormData,
     LoanApplicationFormData,
-} from "../../create/schema";
+} from "@/src/features/loans/schemas/schema";
 import type { SignatureSlotDto } from "@/src/features/loans/api/signatures";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
