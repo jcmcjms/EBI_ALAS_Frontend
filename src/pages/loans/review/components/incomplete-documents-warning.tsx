@@ -37,7 +37,7 @@ export function IncompleteDocumentsWarning({ status, checklist, flagAction }: Pr
             <AlertDescription className="space-y-1">
                 <p>
                     {parked
-                        ? "The file returns to the review desk automatically once every requirement verifies complete on the document server, or the evaluator may proceed to approval with justification."
+                        ? "The file returns to the review desk automatically once every requirement verifies complete on the document server. Reviewers can still route the file — recommend, not recommend, or push back — while documents are being completed."
                         : "A file with any pending requirement is incomplete. Verify uploads before forwarding to the next stage."}
                 </p>
                 {pending.length > 0 && (
