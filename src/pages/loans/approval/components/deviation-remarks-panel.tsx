@@ -7,6 +7,7 @@ import {
     Receipt,
 } from "@phosphor-icons/react";
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
+import { getErrorMessage } from "@/src/lib/apiClient";
 
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
@@ -100,7 +101,7 @@ function ThreadComposer({
                 queryKey: queryKeys.loans.review.deviations(loanId),
             });
         },
-        onError: (e: Error) => toastError(e.message),
+        onError: (e: unknown) => toastError(getErrorMessage(e)),
     });
 
     if (!canWrite) return null;

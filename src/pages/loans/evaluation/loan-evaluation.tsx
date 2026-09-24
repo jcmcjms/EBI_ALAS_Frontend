@@ -326,7 +326,7 @@ export function LoanEvaluationPage() {
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
-        onError: (e: Error) => toastError(e.message),
+        onError: (e: unknown) => toastError(getErrorMessage(e)),
     });
 
     const handleAction = (action: EvaluationAction) => {
@@ -376,11 +376,21 @@ export function LoanEvaluationPage() {
     }
 
     if (loan.isError || !detail || !formData) {
+        const isForbidden = loan.error && typeof loan.error === 'object' && 'response' in loan.error
+            && (loan.error as { response?: { status?: number } }).response?.status === 403;
+
         return (
             <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
-                <div className="text-center space-y-4">
+                <div className="text-center space-y-4 max-w-md">
                     <WarningCircle size={48} className="mx-auto text-destructive" />
-                    <h2 className="text-xl font-semibold">Failed to Load Application</h2>
+                    <h2 className="text-xl font-semibold">
+                        {isForbidden ? "Access Denied" : "Failed to Load Application"}
+                    </h2>
+                    <p className="text-muted-foreground">
+                        {isForbidden
+                            ? "You don't have permission to view this loan application. This may be because your account doesn't have the required role, or the application belongs to a different branch. Please contact your administrator if you believe this is a mistake."
+                            : "We couldn't load this loan application. Please try again or return to the monitoring page."}
+                    </p>
                     <Button onClick={() => navigate("/loans/monitoring")}>
                         Return to Monitoring
                     </Button>
