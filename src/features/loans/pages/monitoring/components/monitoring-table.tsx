@@ -373,7 +373,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
 
     return (
         <SharedTimerProvider>
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/* Refetch banner — subtle indicator that a background refresh
                 is in flight (e.g. after returning from another page). */}
             {isFetching && !isLoading && (
@@ -382,7 +382,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                 </div>
             )}
 
-            <div className="flex-1 overflow-auto">
+            <div className="min-h-0 flex-1 overflow-auto">
                 <Table>
                     <TableHeader className="bg-muted/40 sticky top-0 z-20">
                         {table.getHeaderGroups().map((headerGroup) => (

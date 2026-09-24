@@ -105,7 +105,7 @@ export function LoanMonitoringPage() {
     }>({ open: false, record: null, reason: "", pending: false });
 
     return (
-        <div className="flex min-w-0 flex-col h-full">
+        <div className="flex min-w-0 flex-1 min-h-0 flex-col">
             <Card className="flex-1 flex flex-col overflow-hidden border-0 shadow-none rounded-none">
                 <MonitoringToolbar
                     filters={filters}

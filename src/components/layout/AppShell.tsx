@@ -54,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <AppSidebar variant="inset" />
             <SidebarInset className="min-w-0">
                 <SiteHeader />
-                <main className="flex min-w-0 flex-1 flex-col overflow-x-clip">{children}</main>
+                <main className="flex min-w-0 flex-1 min-h-0 flex-col overflow-x-clip">{children}</main>
             </SidebarInset>
         </SidebarProvider>
     );
