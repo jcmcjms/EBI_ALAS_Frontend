@@ -2,7 +2,7 @@ import axios from "axios";
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { toastError } from "@/src/components/ui/toast";
 import { useAuthStore } from "../store/authStore.ts";
-import { decodeJwtPayload } from "./jwt.ts";
+import { decodeJwtPayload } from "@/src/shared/lib/jwt.ts";
 
 // In development, Vite proxy forwards /api/* to the backend.
 // In production, use the explicit base URL.
