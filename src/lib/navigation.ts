@@ -31,6 +31,8 @@ export type NavItem = {
     }[]
     /** Permission required to see this item. Omit to make it public. */
     requiredPermission?: string
+    /** ANY-of gate: item is visible when the user holds at least one listed permission. */
+    requiredPermissions?: string[]
 }
 
 export const navMain: NavItem[] = [
@@ -50,7 +52,7 @@ export const navMain: NavItem[] = [
         title: "Review Desk",
         url: "/loans/queue",
         icon: Tray,
-        requiredPermission: "loans.recommend",
+        requiredPermissions: ["loans.recommend", "loans.evaluate", "loans.approve"],
     },
     {
         title: "Loan Creation",

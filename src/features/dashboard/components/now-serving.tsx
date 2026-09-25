@@ -18,7 +18,7 @@ export function NowServing({ data, pendingCount }: NowServingProps) {
             <CardContent className="p-0 flex-1">
                 {data.length === 0 ? (
                     <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-                        No one is serving right now{pendingCount != null ? ` — ${pendingCount} file${pendingCount === 1 ? "" : "s"} wait in queue.` : "."}
+                        No one is serving right now{pendingCount != null ? ` — ${pendingCount} file${pendingCount === 1 ? "" : "s"} waiting in queue.` : "."}
                     </p>
                 ) : (
                     <ul className="divide-y">

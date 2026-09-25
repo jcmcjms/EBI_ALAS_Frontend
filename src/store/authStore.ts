@@ -32,6 +32,8 @@ interface AuthState {
     clearSession: () => void;
     setInitializing: (value: boolean) => void;
     hasPermission: (permission: string | string[]) => boolean;
+    /** ANY-of gate — for surfaces served by several roles (Review Desk). */
+    hasAnyPermission: (permissions: string[]) => boolean;
 }
 // store token in memory instead of localstorage to prevent XSS theft
 
@@ -60,5 +62,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         const requiredArray = Array.isArray(required) ? required : [required];
         return requiredArray.every((p) => user.permissions.includes(p));
+    },
+
+    hasAnyPermission: (required) => {
+        const { user } = get();
+        if (!user) return false;
+
+        if (user.permissions.includes("*")) return true;
+
+        return required.some((p) => user.permissions.includes(p));
     },
 }));

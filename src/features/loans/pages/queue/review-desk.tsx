@@ -32,7 +32,19 @@ export function ReviewDeskPage() {
         <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
             <Spinner className="size-8" />
         </div>
-    ) : desk?.currentClaim ? null : (
+    ) : !desk || (!desk.deskLabel && desk.items.length === 0 && !desk.currentClaim) ? (
+        <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center px-6 text-center">
+            <div className="max-w-md space-y-3">
+                <h2 className="text-xl font-semibold tracking-tight">Review Desk</h2>
+                <p className="text-sm text-muted-foreground">
+                    Your role works from Loan Monitoring — the Review Desk serves Recommender, Evaluator and Approver queues.
+                </p>
+                <Button onClick={() => navigate("/loans/monitoring")}>
+                    Go to Loan Monitoring
+                </Button>
+            </div>
+        </div>
+    ) : desk.currentClaim ? null : (
         <>
             <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
                 <div className="container mx-auto flex h-16 items-center gap-3 px-6">
@@ -49,7 +61,7 @@ export function ReviewDeskPage() {
                         Review Desk
                     </h1>
                     <Badge variant="outline" className="text-xs">
-                        {desk?.deskLabel ?? "Review"}
+                        {desk.deskLabel}
                     </Badge>
                 </div>
             </header>
@@ -57,10 +69,10 @@ export function ReviewDeskPage() {
             <div className="container mx-auto max-w-3xl space-y-6 px-6 py-10">
                 <div className="space-y-1">
                     <h2 className="text-2xl font-semibold tracking-tight">
-                        {desk?.deskLabel ?? "Review"} desk
+                        {desk.deskLabel} desk
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        {desk?.items.length
+                        {desk.items.length
                             ? `${desk.items.length} file${desk.items.length === 1 ? "" : "s"} waiting — oldest first.`
                             : "Queue is clear — nothing waiting at your desk."}
                     </p>
@@ -70,12 +82,12 @@ export function ReviewDeskPage() {
                     size="lg"
                     className="gap-2"
                     disabled={
-                        !desk?.items.length ||
+                        !desk.items.length ||
                         claim.isPending ||
-                        (!!desk?.items[0]?.ownerUserId && desk.items[0].ownerUserId !== currentUserId)
+                        (!!desk.items[0]?.ownerUserId && desk.items[0].ownerUserId !== currentUserId)
                     }
                     title={
-                        desk?.items[0]?.ownerName && desk.items[0].ownerUserId !== currentUserId
+                        desk.items[0]?.ownerName && desk.items[0].ownerUserId !== currentUserId
                             ? `Currently with ${desk.items[0].ownerName} — frees after the lease expires`
                             : undefined
                     }
@@ -91,7 +103,7 @@ export function ReviewDeskPage() {
                 </Button>
 
                 {/* Transparency: what's coming, who holds what — no surprises. */}
-                {desk && desk.items.length > 0 && (
+                {desk.items.length > 0 && (
                     <Card>
                         <CardContent className="p-0">
                             <ul className="divide-y">

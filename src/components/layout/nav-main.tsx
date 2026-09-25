@@ -22,10 +22,14 @@ export function NavMain({
 }) {
     const location = useLocation()
     const hasPermission = useAuthStore((state) => state.hasPermission)
+    const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission)
 
     // Filter nav items based on user permissions
     const filteredItems = items.filter((item) => {
-        // If item has a required permission, check it
+        if (item.requiredPermissions?.length) {
+            return hasAnyPermission(item.requiredPermissions)
+        }
+
         if (item.requiredPermission && !hasPermission(item.requiredPermission)) {
             return false
         }
