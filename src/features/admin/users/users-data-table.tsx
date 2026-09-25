@@ -285,6 +285,7 @@ export function UsersDataTable() {
                 description={actions.confirmAction?.description ?? ""}
                 actionLabel={actions.confirmAction?.actionLabel ?? ""}
                 destructive={actions.confirmAction?.destructive}
+                isPending={actions.isResetPasswordPending}
                 onConfirm={actions.confirmAction?.onConfirm ?? (() => {})}
             />
             <AuditLogModal

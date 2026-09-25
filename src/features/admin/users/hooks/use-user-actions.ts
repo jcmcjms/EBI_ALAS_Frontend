@@ -108,14 +108,17 @@ export function useUserActions() {
             onConfirm: () => {
                 resetUserPasswordMutation.mutate(user.id, {
                     onSuccess: (res) => {
+                        closeConfirm();
                         setTempCred({
                             username: res.username,
                             temporaryPassword: res.temporaryPassword,
                         });
                     },
-                    onError: (e) => toastError(getErrorMessage(e)),
+                    onError: (e) => {
+                        closeConfirm();
+                        toastError(getErrorMessage(e));
+                    },
                 });
-                closeConfirm();
             },
         });
     }
@@ -238,5 +241,6 @@ export function useUserActions() {
         handleViewAuditLog,
         handleCreateUser,
         handleUpdateUser,
+        isResetPasswordPending: resetUserPasswordMutation.isPending,
     };
 }

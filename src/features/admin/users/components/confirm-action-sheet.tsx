@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/src/components/ui/sheet";
 import { Button } from "@/src/components/ui/button";
-import { WarningCircle } from "@phosphor-icons/react";
+import { CircleNotch, WarningCircle } from "@phosphor-icons/react";
 
 interface ConfirmActionSheetProps {
     open: boolean;
@@ -10,6 +10,8 @@ interface ConfirmActionSheetProps {
     actionLabel: string;
     /** Renders destructive styling and a warning icon. */
     destructive?: boolean;
+    /** Shows a spinner on the confirm button and disables it. */
+    isPending?: boolean;
     onConfirm: () => void;
 }
 
@@ -20,10 +22,11 @@ export function ConfirmActionSheet({
     description,
     actionLabel,
     destructive = false,
+    isPending = false,
     onConfirm,
 }: ConfirmActionSheetProps) {
     return (
-        <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
+        <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
             <SheetContent side="right" showCloseButton={false} className="flex flex-col p-0 sm:max-w-[420px]">
                 <SheetHeader className={destructive ? "p-6 pb-4" : "p-6 pb-4 border-b bg-muted/30"}>
                     <div className="flex items-start gap-3">
@@ -40,13 +43,16 @@ export function ConfirmActionSheet({
                 </SheetHeader>
 
                 <SheetFooter className="flex flex-row gap-2 border-t bg-muted/10 p-4">
-                    <Button variant="outline" className="h-9" onClick={onClose}>Cancel</Button>
+                    <Button variant="outline" className="h-9" onClick={onClose} disabled={isPending}>Cancel</Button>
                     <Button
                         variant={destructive ? "destructive" : "default"}
-                        className="h-9"
+                        className="h-9 gap-2"
                         onClick={onConfirm}
+                        disabled={isPending}
                     >
-                        {actionLabel}
+                        {isPending
+                            ? <><CircleNotch size={14} weight="bold" className="animate-spin" /> Generating credential…</>
+                            : actionLabel}
                     </Button>
                 </SheetFooter>
             </SheetContent>
