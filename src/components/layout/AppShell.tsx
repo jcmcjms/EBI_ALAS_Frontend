@@ -2,12 +2,12 @@ import * as React from "react";
 
 import { AppSidebar } from "@/src/components/layout/app-sidebar";
 import { SiteHeader } from "@/src/components/layout/site-header";
-import { SidebarInset, SidebarProvider } from "@/src/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/src/shared/components/layout/sidebar";
 import { useApprovalRealtime } from "@/src/features/loans/hooks/use-approval-realtime";
 import { useDashboardRealtime } from "@/src/features/dashboard/hooks/use-dashboard-realtime";
 import { useNotifications } from "@/src/features/notifications/hooks/use-notifications";
-import { usePresenceSync } from "@/src/lib/signalr/use-presence";
-import { useSignalR } from "@/src/lib/signalr/use-signalr";
+import { usePresenceSync } from "@/src/shared/lib/signalr/use-presence";
+import { useSignalR } from "@/src/shared/lib/signalr/use-signalr";
 import { useAuthStore } from "@/src/store/authStore";
 
 /**

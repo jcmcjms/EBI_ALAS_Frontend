@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom"
 import { Bell } from "@phosphor-icons/react"
 import { Separator } from "@/src/components/ui/separator"
-import { SidebarTrigger } from "@/src/components/ui/sidebar"
-import { getActiveNavTitle } from "@/src/lib/navigation"
+import { SidebarTrigger } from "@/src/shared/components/layout/sidebar"
+import { getActiveNavTitle } from "@/src/shared/lib/navigation"
 import { useNotificationStore } from "@/src/features/notifications/store/notification-store"
 import { OnlineUsers } from "@/src/components/layout/online-users"
 

@@ -25,7 +25,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
-} from "@/src/components/ui/sidebar"
+} from "@/src/shared/components/layout/sidebar"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuthStore } from "@/src/store/authStore"
 import { apiClient } from "@/src/lib/apiClient"

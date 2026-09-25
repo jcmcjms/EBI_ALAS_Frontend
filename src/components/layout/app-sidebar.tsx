@@ -2,7 +2,7 @@ import * as React from "react"
 
 import { NavMain } from "@/src/components/layout/nav-main"
 import { NavUser } from "@/src/components/layout/nav-user"
-import { navMain } from "@/src/lib/navigation"
+import { navMain } from "@/src/shared/lib/navigation"
 import {
     Sidebar,
     SidebarContent,
@@ -11,7 +11,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from "@/src/components/ui/sidebar"
+} from "@/src/shared/components/layout/sidebar"
 import { useAuthStore } from "@/src/store/authStore"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

@@ -1,5 +1,5 @@
-import { cn } from "@/src/lib/utils";
-import { useUserPresence } from "@/src/lib/signalr/use-presence";
+import { cn } from "@/src/shared/lib/utils";
+import { useUserPresence } from "@/src/shared/lib/signalr/use-presence";
 import {
     Tooltip,
     TooltipContent,

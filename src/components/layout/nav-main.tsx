@@ -11,8 +11,8 @@ import {
     SidebarMenuSub,
     SidebarMenuSubItem,
     SidebarMenuSubButton
-} from "@/src/components/ui/sidebar"
-import type { NavItem } from "@/src/lib/navigation"
+} from "@/src/shared/components/layout/sidebar"
+import type { NavItem } from "@/src/shared/lib/navigation"
 import { useAuthStore } from "@/src/store/authStore"
 
 export function NavMain({

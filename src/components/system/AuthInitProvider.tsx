@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { useAuthInit } from "@/src/hooks/use-auth-init";
+import { useAuthInit } from "@/src/features/auth/hooks/use-auth-init";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useAuthStore } from "@/src/store/authStore";
 
