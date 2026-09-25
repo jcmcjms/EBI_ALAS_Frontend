@@ -1,0 +1,150 @@
+/**
+ * Canonical TanStack Query key factory.
+ *
+ * Why centralize keys:
+ *  - One place to grep for "what queries do we have?"
+ *  - Keys are typed tuples (not bare strings), so invalidation is
+ *    structurally safe (`queryKeys.users.all` vs ad-hoc strings).
+ *  - Invalidation is partial-match safe: invalidating `users.all` covers
+ *    `users.list(...)`, `users.detail(id)`, and `users.stats.*` in one call.
+ *
+ * Conventions:
+ *  - `all` = the broadest prefix for invalidation.
+ *  - `list(filters)` and `detail(id)` = concrete leaf keys.
+ *  - Add new domains here when introducing a new reference dataset.
+ */
+export const queryKeys = {
+    // ── Reference data (rarely changes) ──────────────────────────────────────
+    branches: {
+        all: ["branches"] as const,
+        list: (params: { isActive?: boolean; search?: string } = {}) =>
+            ["branches", "list", params] as const,
+        detail: (id: number) => ["branches", "detail", id] as const,
+    },
+    loanProducts: {
+        all: ["loan-products"] as const,
+        list: (params: { isActive?: boolean; code?: string } = {}) =>
+            ["loan-products", "list", params] as const,
+        // Single-product fetch (GET /api/loan-products/{code}). Keyed by
+        // the natural-key `code` (string) — same value used in the URL.
+        detail: (code: string) => ["loan-products", "detail", code] as const,
+    },
+    loanStatuses: {
+        all: ["loan-statuses"] as const,
+        list: () => ["loan-statuses", "list"] as const,
+    },
+
+    // ── Auth ────────────────────────────────────────────────────────────────
+    me: ["auth", "me"] as const,
+
+    // ── Roles ───────────────────────────────────────────────────────────────
+    roles: {
+        all: ["roles"] as const,
+    },
+
+    // ── Users (transactional) ───────────────────────────────────────────────
+    users: {
+        all: ["users"] as const,
+        // Generic params: accept any structurally-shaped query filter object.
+        // The list hook (`useUsers`) passes `UserQueryParams`; we accept the
+        // shape at the key layer so it stays decoupled from the type module.
+        list: <T extends object>(params: T) => ["users", "list", params] as const,
+        detail: (id: number) => ["users", "detail", id] as const,
+        stats: () => ["users", "stats"] as const,
+        auditLog: (id: number) => ["users", id, "audit-log"] as const,
+    },
+
+    // ── Loans (transactional — always fresh by default) ─────────────────────
+    loans: {
+        // Broadest prefix — invalidating this clears every loan query
+        // (monitoring, admin lists, future detail views). Use from any
+        // mutation that creates / updates / deletes a loan row.
+        all: ["loans"] as const,
+        // Generic params shape: accepts any structurally-shaped filter
+        // object (MonitoringFilters, future filter variants) without
+        // coupling the key layer to the type module.
+        lists: <T extends object>(params?: T) =>
+            ["loans", "list", params ?? {}] as const,
+        monitoring: <F, P, S>(filters: F, pagination: P, sorting: S) =>
+            ["loans", "monitoring", filters, pagination, sorting] as const,
+        /** SLA policy — fetched once per session, staleTime: Infinity. */
+        slaPolicy: ["loans", "sla-policy"] as const,
+        /** Role-based queue default — fetched once per session, staleTime: Infinity. */
+        queueDefault: ["loans", "queue-default"] as const,
+        // ── Loan Review (approval/evaluation detail views) ──────────────────
+        review: {
+            detail: (id: number) => ["loans", "review", id, "detail"] as const,
+            history: (id: number) => ["loans", "review", id, "history"] as const,
+            timeline: (id: number) => ["loans", "review", id, "timeline"] as const,
+            attachments: (id: number) => ["loans", "review", id, "attachments"] as const,
+            checklistDocuments: (id: number) => ["loans", "review", id, "checklist-documents"] as const,
+            deviations: (id: number) => ["loans", "review", id, "deviations"] as const,
+        },
+        /** Loan history/timeline for a specific application. */
+        history: (id: number) => ["loans", id, "history"] as const,
+        /** Document remarks per loan. */
+        documentRemarks: (loanId: number) => ["loans", "review", loanId, "document-remarks"] as const,
+        /** Document checklist per loan. */
+        documentChecklist: (loanId: number) => ["loans", "review", loanId, "document-checklist"] as const,
+        /** Loan group (application bundle). */
+        group: (groupNo: string) => ["loans", "group", groupNo] as const,
+        /** Review Desk — FIFO queue view for the current reviewer. */
+        desk: ["loans", "desk"] as const,
+    },
+
+    // ── WebLoans (CIS lookup / outstanding / pending) ──────────────────────
+    webLoans: {
+        cis: (cisNo: string) => ["webloans", "cis", cisNo] as const,
+        activeLoans: (cisNo: string, accountId: string) =>
+            ["webloans", "active-loans", cisNo, accountId] as const,
+        // `accountId` is the combined "<branchCode>-<accountNo>" form
+        // (e.g. "011-05-13081-1") — same value passed to the
+        // outstanding-loans / pending-loan route params. Mirrors
+        // `WebLoanAccount.accountId` in `lib/api/types.ts`.
+        outstandingLoans: (cisNo: string, accountId: string) =>
+            ["webloans", "outstanding-loans", cisNo, accountId] as const,
+        pendingLoan: (cisNo: string, accountId: string) =>
+            ["webloans", "pending-loan", cisNo, accountId] as const,
+        // cat_loan_class of the selected preloan — composite key
+        // (bch, loan_no, loan_product); mirrors GET /api/webloans/loan-class.
+        loanClass: (bch: string, loanNo: string, loanProduct: string) =>
+            ["webloans", "loan-class", bch, loanNo, loanProduct] as const,
+        // COCREE completion status for a CIS — mirrors
+        // GET /api/webloans/cis/{cisNo}/cocree-status.
+        cocreeStatus: (cisNo: string) =>
+            ["webloans", "cocree-status", cisNo] as const,
+    },
+
+    // ── Dashboard ───────────────────────────────────────────────────────────
+    dashboard: {
+        summary: ["dashboard", "summary"] as const,
+        full: ["dashboard"] as const,
+    },
+
+    // ── Audit Logs ─────────────────────────────────────────────────────────
+    auditLogs: {
+        all: ["auditLogs"] as const,
+        list: <T extends object>(params: T) =>
+            ["auditLogs", "list", params] as const,
+        detail: (id: number) => ["auditLogs", "detail", id] as const,
+    },
+
+    // ── Account ─────────────────────────────────────────────────────────────
+    account: {
+        all: ["account"] as const,
+        profile: ["account-profile"] as const,
+        sessionsAll: ["account-sessions"] as const,
+        sessions: (page: number, pageSize: number) =>
+            ["account-sessions", page, pageSize] as const,
+        activity: (limit: number) => ["account-activity", limit] as const,
+        loans: (limit: number) => ["account-loans", limit] as const,
+        clients: (limit: number) => ["account-clients", limit] as const,
+    },
+
+    // ── Notifications (header bell) ───────────────────────────────────
+    // Single key — the bell always wants the same "most-recent N"
+    // payload. Polling is enabled by the hook (refetchInterval), no
+    // caller-specific params. Invalidating this key refreshes the bell
+    // everywhere in the app that reads the store.
+    notifications: ["notifications"] as const,
+} as const;

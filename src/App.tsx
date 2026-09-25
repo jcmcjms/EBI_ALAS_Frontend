@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Spinner } from "@/src/components/ui/spinner";
-import { ProtectedRoute } from "@/src/components/auth/ProtectedRoute";
+import { ProtectedRoute } from "@/src/features/auth/components/ProtectedRoute";
 import { FeatureErrorBoundary } from "@/src/components/system/FeatureErrorBoundary";
 import { AppShell } from "@/src/components/layout/AppShell";
 import { PERMISSIONS } from "@/src/lib/api/types";
@@ -20,7 +20,7 @@ const AuditLogs = lazy(() => import("./features/audit-logs/pages/index").then(m 
 const WorkflowSettings = lazy(() => import("./features/admin/workflow/pages/index").then(m => ({ default: m.WorkflowSettingsPage })));
 const Notifications = lazy(() => import("./features/notifications/pages/index"));
 const Account = lazy(() => import("./features/account/pages/index"));
-const Forbidden = lazy(() => import("./pages/errors/Forbidden"));
+const Forbidden = lazy(() => import("./features/auth/pages/Forbidden"));
 
 /**
  * Layout route for all authenticated pages — provides sidebar + header chrome.
