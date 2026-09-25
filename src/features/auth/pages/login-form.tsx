@@ -7,13 +7,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { CircleNotch, Eye, EyeSlash } from "@phosphor-icons/react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { Field, FieldGroup, FieldLabel } from "@/src/components/ui/field";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { useAuthStore } from "@/src/store/authStore";
 import { apiClient, getErrorMessage } from "@/src/lib/apiClient";
-import { extractUserFromToken } from "@/src/lib/jwt";
+import { extractUserFromToken } from "@/src/shared/lib/jwt";
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
 import { loginSchema, type LoginFormData } from "../schemas";
 

@@ -1,5 +1,5 @@
 import { create } from "zustand/react";
-import { dropSharedConnection } from "@/src/lib/signalr/connection";
+import { dropSharedConnection } from "@/src/shared/lib/signalr/connection";
 
 interface UserSession {
     userId: string;
