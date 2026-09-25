@@ -30,7 +30,7 @@ import {
     UserCircle,
     WarningCircle,
 } from "@phosphor-icons/react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import type { AuditLogRecord } from "@/src/lib/api/types";
 import { useAuditLogs } from "../hooks/use-audit-logs";
 import {

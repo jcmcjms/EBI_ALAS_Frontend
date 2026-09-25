@@ -3,7 +3,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import type { AuditLogQueryParams } from "@/src/lib/api/types";
 import { getAuditLog, listAuditLogs } from "../api/audit-logs";
 
