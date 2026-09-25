@@ -53,6 +53,13 @@ export interface LoanMonitoringRecord {
     queueOwnerName: string | null;
     /** True when this file is at position 1 — the "head" of the queue. */
     isQueueHead: boolean;
+    /** Document flag state. Null when no active flag. */
+    documentFlag: {
+        flaggedAt: string;
+        flaggedById: number | null;
+        reason: string | null;
+        missingCount: number;
+    } | null;
 }
 
 export interface MonitoringFilters {

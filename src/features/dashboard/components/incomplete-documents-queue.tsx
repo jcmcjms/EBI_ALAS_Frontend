@@ -7,8 +7,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/comp
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { cn } from "@/src/lib/utils";
 import { initialsOf } from "@/src/lib/name-utils";
-import { assessAging, AGING_BADGE_CLASS } from "@/src/features/loans/utils/loan-aging";
-import { useSlaPolicy } from "@/src/features/loans/api/loan-review";
 import { formatWaiting, waitingMinutes } from "./pending-queue";
 import type { IncompleteDocsQueueItem } from "../types";
 
@@ -17,21 +15,20 @@ interface Props {
 }
 
 /**
- * "Queue for Incomplete Documents (to be added to checking)" from the workflow
- * sketch: files flagged by reviewers while requirements are completed. They
- * re-enter the review queue tail once documents verify complete.
+ * "Flagged Documents" — files flagged by reviewers while requirements are
+ * completed. The flag is a data fact, not a routing status. Flagged files
+ * stay at their real desk; this widget surfaces them for encoder attention.
  */
 export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({ data }: Props) {
     const navigate = useNavigate();
     const display = useMemo(() => data.slice(0, 5), [data]);
-    const slaPolicy = useSlaPolicy();
 
     return (
         <Card id="incomplete-docs-queue" className="scroll-mt-24 flex flex-col">
             <CardHeader className="flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-xl">
                     <WarningCircle className="size-5 text-amber-600 dark:text-amber-400" aria-hidden />
-                    Incomplete Documents
+                    Flagged Documents
                     {data.length > 0 && (
                         <Badge variant="secondary" className="tabular-nums">
                             {data.length}
@@ -53,12 +50,6 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                     <ul className="divide-y">
                         {display.map((item) => {
                             const mins = waitingMinutes(item.waitingSinceUtc);
-                            const assessment = assessAging(
-                                "ForIncompleteDocuments",
-                                item.waitingSinceUtc,
-                                Date.now(),
-                                slaPolicy.data ?? null
-                            );
                             return (
                                 <li key={item.lamId}>
                                     <button
@@ -103,17 +94,6 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                                         </div>
                                         <span className="shrink-0 text-right text-sm font-medium tabular-nums">
                                             {formatWaiting(mins)}
-                                            {assessment.tier === "breach" && (
-                                                <Badge
-                                                    variant="outline"
-                                                    className={cn(
-                                                        "ml-2 h-4 px-1.5 text-[10px]",
-                                                        AGING_BADGE_CLASS.breach
-                                                    )}
-                                                >
-                                                    Aging
-                                                </Badge>
-                                            )}
                                         </span>
                                     </button>
                                 </li>
@@ -129,10 +109,10 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                         size="sm"
                         className="w-full text-sm"
                         onClick={() =>
-                            navigate("/loans/monitoring?status=ForIncompleteDocuments")
+                            navigate("/loans/monitoring?flagged=true")
                         }
                     >
-                        View all {data.length} waiting files
+                        View all {data.length} flagged files
                     </Button>
                 </CardFooter>
             )}

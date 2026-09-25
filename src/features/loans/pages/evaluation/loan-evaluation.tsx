@@ -53,6 +53,7 @@ import {
     getLoanDetail,
     getLoanHistory,
     updateLoanStatus,
+    flagDocuments,
     type LoanDetailResponse,
 } from "@/src/features/loans/api/loan-review";
 import { queryKeys } from "@/src/lib/queryKeys";
@@ -261,17 +262,15 @@ export function LoanEvaluationPage() {
     );
 
     const updateStatus = useMutation({
-        mutationFn: ({ status, comments, verdict, missingRequirementCodes }: { status: string; comments: string; verdict?: string; missingRequirementCodes?: string[] }) =>
-            updateLoanStatus(id, status, comments, verdict as "Recommended" | "NotRecommended" | undefined, missingRequirementCodes ? { missingRequirementCodes } : undefined),
+        mutationFn: ({ status, comments, verdict }: { status: string; comments: string; verdict?: string }) =>
+            updateLoanStatus(id, status, comments, verdict as "Recommended" | "NotRecommended" | undefined),
         onSuccess: (_data, { status, verdict }) => {
             const actionLabel =
                 status === "ForApproval"
                     ? verdict === "NotRecommended"
                         ? "Not Recommended (forwarded to Approver)"
                         : "Recommended (forwarded to Approver)"
-                    : status === "ForIncompleteDocuments"
-                        ? "flagged as having incomplete documents"
-                        : "Pushed back to Encoder";
+                    : "Pushed back to Encoder";
             toastSuccess(`Application ${actionLabel}.`);
             setComments("");
             setPendingAction(null);
@@ -320,10 +319,25 @@ export function LoanEvaluationPage() {
         },
         onSuccess: (r) => {
             toastSuccess(r.complete
-                ? "All requirements uploaded — application released to the review queue."
+                ? "All requirements uploaded — flag cleared."
                 : `Still missing: ${r.missing.join(", ")}`);
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+        },
+        onError: (e: unknown) => toastError(getErrorMessage(e)),
+    });
+
+    const flagDocs = useMutation({
+        mutationFn: ({ codes, reason }: { codes: string[]; reason: string }) =>
+            flagDocuments(id, { missingRequirementCodes: codes, reason }),
+        onSuccess: () => {
+            toastSuccess("Documents flagged — the encoder has been notified. Review continues.");
+            setFlagOpen(false);
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
+            qc.invalidateQueries({ queryKey: queryKeys.dashboard.full });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
         },
         onError: (e: unknown) => toastError(getErrorMessage(e)),
@@ -399,17 +413,12 @@ export function LoanEvaluationPage() {
         );
     }
 
-    // Only Evaluators may act, and only while the application is still in ForChecking
-    // or ForIncompleteDocuments (both are evaluator desks with identical actions).
+    // Only Evaluators may act, and only while the application is still in ForChecking.
     const isEvaluator = user?.role === "Evaluator";
     const isForChecking = detail.status === "ForChecking";
-    const isForIncompleteDocuments = detail.status === "ForIncompleteDocuments";
-    const showEvaluatorActions = isEvaluator && (isForChecking || isForIncompleteDocuments) && !frozen;
+    const showEvaluatorActions = isEvaluator && isForChecking && !frozen;
 
-    const flagAction = useMemo(
-        () => detail?.actions ? [...detail.actions].reverse().find((a) => a.toStatus === "ForIncompleteDocuments") : undefined,
-        [detail?.actions]
-    );
+    const hasDocumentFlag = detail.documentFlag != null;
 
     const commentsRequired = pendingAction === "pushback" || pendingAction === "notRecommended";
     const canAct =
@@ -470,9 +479,9 @@ export function LoanEvaluationPage() {
                     <IncompleteDocumentsWarning
                         status={detail.status}
                         checklist={checklist.data}
-                        flagAction={flagAction ? { actionByUserName: flagAction.actionByUserName, actionDate: flagAction.actionDate } : null}
+                        documentFlag={detail.documentFlag}
                     />
-                    {isForIncompleteDocuments && !frozen && (
+                    {hasDocumentFlag && !frozen && (
                         <Button
                             type="button"
                             variant="outline"
@@ -689,7 +698,7 @@ export function LoanEvaluationPage() {
 
                                     {showEvaluatorActions ? (
                                         <>
-                                            {/* ── Evaluator actions (identical for ForChecking and ForIncompleteDocuments) ── */}
+                                            {/* ── Evaluator actions ── */}
                                             <Button
                                                 className="w-full gap-2"
                                                 size="lg"
@@ -829,11 +838,10 @@ export function LoanEvaluationPage() {
                 open={flagOpen}
                 onOpenChange={setFlagOpen}
                 items={checklist.data ?? []}
-                isSubmitting={updateStatus.isPending}
+                isSubmitting={flagDocs.isPending}
                 onSubmit={({ missingRequirementCodes, comments: flagComments }) =>
-                    updateStatus.mutate(
-                        { status: "ForIncompleteDocuments", comments: flagComments, missingRequirementCodes },
-                        { onSuccess: () => setFlagOpen(false) }
+                    flagDocs.mutate(
+                        { codes: missingRequirementCodes, reason: flagComments },
                     )
                 }
             />

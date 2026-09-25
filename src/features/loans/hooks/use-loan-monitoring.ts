@@ -87,6 +87,7 @@ function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
         queueLength: loan.queueLength ?? null,
         queueOwnerName: loan.queueOwnerName ?? null,
         isQueueHead: loan.isQueueHead ?? false,
+        documentFlag: loan.documentFlag ?? null,
     };
 }
 

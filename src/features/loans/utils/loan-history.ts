@@ -134,6 +134,18 @@ export function describeHistoryEntry(entry: LoanHistoryEntry): HistoryEntryMeta 
                 category: "remark",
                 tone: "teal",
             };
+        case "DocumentsFlagged":
+            return {
+                title: "Flagged missing documents",
+                category: "file",
+                tone: "warning",
+            };
+        case "DocumentFlagCleared":
+            return {
+                title: "Document flag cleared",
+                category: "file",
+                tone: "success",
+            };
         default:
             // Future verbs degrade gracefully instead of showing camelCase.
             return {

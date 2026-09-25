@@ -73,7 +73,12 @@ export interface LoanDetailResponse {
         actionByUserName: string;
     }[];
     evaluationVerdict: string | null;
-    incompleteReturnStatus: string | null;
+    documentFlag: {
+        flaggedAt: string;
+        flaggedById: number | null;
+        reason: string | null;
+        missingCount: number;
+    } | null;
     outstandingLoans: {
         id: number;
         pn: string;
@@ -194,7 +199,6 @@ export interface SlaPolicy {
     ForRecommendation: number;
     ForChecking: number;
     ForApproval: number;
-    ForIncompleteDocuments: number;
 }
 
 // ── Unified Loan Timeline ────────────────────────────────────────────────
@@ -377,8 +381,31 @@ export const CANCELLABLE_STATUSES: LoanStatus[] = [
     "ForChecking",
     "ForApproval",
     "ForRevision",
-    "ForIncompleteDocuments",
 ];
+
+// ── Document Flag ───────────────────────────────────────────────────────
+
+/** Flag documents as missing (POST /api/loans/{id}/document-flag). */
+export async function flagDocuments(
+    loanId: number,
+    payload: { missingRequirementCodes: string[]; reason: string },
+): Promise<void> {
+    const res = await apiClient.post<ApiResponse<null>>(
+        `/api/loans/${loanId}/document-flag`,
+        payload,
+    );
+    if (!res.data.success)
+        throw new Error(res.data.message || "Failed to flag documents");
+}
+
+/** Clear the document flag (DELETE /api/loans/{id}/document-flag). */
+export async function clearDocumentFlag(loanId: number): Promise<void> {
+    const res = await apiClient.delete<ApiResponse<null>>(
+        `/api/loans/${loanId}/document-flag`,
+    );
+    if (!res.data.success)
+        throw new Error(res.data.message || "Failed to clear document flag");
+}
 
 /** SLA policy — fetched once per session. */
 export async function getSlaPolicy(): Promise<Record<string, number>> {

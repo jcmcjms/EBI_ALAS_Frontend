@@ -76,10 +76,9 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                 </PopoverContent>
             </Popover>
 
-            {/* Status Filter — multi-select: role queues can span several stages
-                (Evaluator = ForChecking + ForIncompleteDocuments), and dashboard
-                deep-links arrive comma-joined. A single-value Select silently
-                dropped everything after the first status. */}
+            {/* Status Filter — multi-select: role queues can span several stages,
+                and dashboard deep-links arrive comma-joined. A single-value Select
+                silently dropped everything after the first status. */}
             <Popover>
                 <PopoverTrigger className="inline-flex h-9 min-w-[180px] cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-accent hover:text-accent-foreground">
                     <span className="flex items-center gap-2 truncate">

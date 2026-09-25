@@ -4,21 +4,28 @@ import type { LoanChecklistDocumentDto } from "@/src/features/loans/api/loan-rev
 
 const MAX_LISTED = 6;
 
+interface DocumentFlag {
+    flaggedAt: string;
+    flaggedById: number | null;
+    reason: string | null;
+    missingCount: number;
+}
+
 interface Props {
     status: string;
     checklist: LoanChecklistDocumentDto[] | undefined;
-    flagAction?: { actionByUserName: string; actionDate: string } | null;
+    documentFlag?: DocumentFlag | null;
 }
 
 /**
  * Application-level completeness: ANY pending requirement ⇒ incomplete file.
- * Shown parked (ForIncompleteDocuments) or whenever a reviewer has the file
- * with requirements still pending (e.g. returned to Checking mid-sync).
+ * Shown when a reviewer has flagged the file with missing documents.
+ * The flag is a data fact, not a routing status — the file stays at its desk.
  */
-export function IncompleteDocumentsWarning({ status, checklist, flagAction }: Props) {
+export function IncompleteDocumentsWarning({ status, checklist, documentFlag }: Props) {
     const pending = (checklist ?? []).filter((i) => i.uploadStatus !== "Uploaded");
-    const parked = status === "ForIncompleteDocuments";
-    if (!parked && pending.length === 0) return null;
+    const hasFlag = documentFlag != null;
+    if (!hasFlag && pending.length === 0) return null;
 
     const listed = pending.slice(0, MAX_LISTED);
     return (
@@ -30,16 +37,19 @@ export function IncompleteDocumentsWarning({ status, checklist, flagAction }: Pr
         >
             <Warning />
             <AlertTitle>
-                {parked
-                    ? `Incomplete documents — flagged by ${flagAction?.actionByUserName ?? "a reviewer"}${flagAction?.actionDate ? ` on ${new Date(flagAction.actionDate).toLocaleDateString()}` : ""} `
+                {hasFlag
+                    ? `Documents flagged — ${documentFlag.missingCount} requirement(s) missing`
                     : `Incomplete documents — ${pending.length} requirement(s) pending`}
             </AlertTitle>
             <AlertDescription className="space-y-1">
-                <p>
-                    {parked
-                        ? "The file returns to the review desk automatically once every requirement verifies complete on the document server. Reviewers can still route the file — recommend, not recommend, or push back — while documents are being completed."
-                        : null}
-                </p>
+                {hasFlag && (
+                    <p>
+                        Flagged on {new Date(documentFlag.flaggedAt).toLocaleDateString()}.
+                        {documentFlag.reason ? ` Reason: ${documentFlag.reason}` : ""}
+                        {" "}The workflow is not blocked. The flag clears automatically once every
+                        requirement verifies complete on the document server.
+                    </p>
+                )}
                 {pending.length > 0 && (
                     <p className="text-xs">
                         {listed.map((p) => p.checklistDescription ?? p.idCode).join(" · ")}

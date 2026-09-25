@@ -69,8 +69,8 @@ export function FlagIncompleteDocumentsDialog({
                         Flag as lacking documents
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                        The file moves to the Incomplete Documents queue and the encoder is
-                        notified.
+                        The workflow is not blocked. The encoder is notified and the flag
+                        clears automatically once every requirement verifies complete.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 

@@ -62,6 +62,7 @@ import {
     getChecklistDocuments,
     updateLoanStatus,
     cancelLoanApplication,
+    flagDocuments,
     CANCELLABLE_STATUSES,
     type LoanDetailResponse,
     type EvaluationVerdict,
@@ -93,10 +94,6 @@ const WORKFLOW_ACTIONS: WorkflowAction[] = [
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Recommended", kind: "advance", verdict: "Recommended", remarksRequired: false },
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Not Recommended", kind: "advance", verdict: "NotRecommended", remarksRequired: true, confirm: true },
     { role: "Evaluator", from: "ForChecking", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
-    // ── Evaluator (flagged desk — identical to ForChecking) ─────────
-    { role: "Evaluator", from: "ForIncompleteDocuments", to: "ForApproval", label: "Recommended", kind: "advance", verdict: "Recommended", remarksRequired: false },
-    { role: "Evaluator", from: "ForIncompleteDocuments", to: "ForApproval", label: "Not Recommended", kind: "advance", verdict: "NotRecommended", remarksRequired: true, confirm: true },
-    { role: "Evaluator", from: "ForIncompleteDocuments", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
     // ── Approver ─────────────────────────────────────────────────────
     { role: "Approver", from: "ForApproval", to: "Approved", label: "Approve Loan", kind: "advance", remarksRequired: false },
     { role: "Approver", from: "ForApproval", to: "ForRevision", label: "Return to Encoder", kind: "return", remarksRequired: true, confirm: true },
@@ -339,9 +336,11 @@ export function LoanApprovalPage() {
     ) : false;
 
     const flagAction = useMemo(
-        () => detail?.actions ? [...detail.actions].reverse().find((a) => a.toStatus === "ForIncompleteDocuments") : undefined,
+        () => detail?.actions ? [...detail.actions].reverse().find((a) => a.action === "DocumentsFlagged") : undefined,
         [detail?.actions]
     );
+
+    const hasDocumentFlag = detail?.documentFlag != null;
 
     const act = useMutation({
         mutationFn: (a: WorkflowAction) =>
@@ -364,9 +363,9 @@ export function LoanApprovalPage() {
 
     const pushBackDocs = useMutation({
         mutationFn: ({ codes, text }: { codes: string[]; text: string }) =>
-            updateLoanStatus(id, "ForIncompleteDocuments", text, undefined, { missingRequirementCodes: codes }),
+            flagDocuments(id, { missingRequirementCodes: codes, reason: text }),
         onSuccess: () => {
-            toastSuccess("File flagged as lacking documents.");
+            toastSuccess("Documents flagged — the encoder has been notified. Review continues.");
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
@@ -548,7 +547,7 @@ export function LoanApprovalPage() {
                     <IncompleteDocumentsWarning
                         status={detail.status}
                         checklist={checklist.data}
-                        flagAction={flagAction ? { actionByUserName: flagAction.actionByUserName, actionDate: flagAction.actionDate } : null}
+                        documentFlag={detail.documentFlag}
                     />
                 </div>
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
@@ -759,13 +758,11 @@ export function LoanApprovalPage() {
                                                             <AlertDialogHeader>
                                                                 <AlertDialogTitle>Confirm: {a.label}</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    {a.to === "ForIncompleteDocuments"
-                                                                        ? "Applications with missing requirements are held automatically on entry. Use this only when the document server disagrees with the file."
-                                                                        : a.kind === "return"
-                                                                            ? "The application returns to the ENCODER (not the recommender) for revision. They will be notified with your remarks."
-                                                                            : a.verdict === "NotRecommended"
-                                                                                ? "The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached."
-                                                                                : "This terminates the loan process and notifies the encoder."}
+                                                                    {a.kind === "return"
+                                                                        ? "The application returns to the ENCODER (not the recommender) for revision. They will be notified with your remarks."
+                                                                        : a.verdict === "NotRecommended"
+                                                                            ? "The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached."
+                                                                            : "This terminates the loan process and notifies the encoder."}
                                                                     {remarks.trim() && (
                                                                         <span className="mt-2 block border-l-2 border-border pl-2 italic">
                                                                             &ldquo;{remarks.trim()}&rdquo;

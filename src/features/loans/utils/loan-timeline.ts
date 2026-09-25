@@ -24,10 +24,10 @@ export function describeEvent(e: TimelineEvent): TimelineSentence {
     const { action, fromStatus, toStatus } = e;
     if (action === "Created")
         return { headline: "Created the loan application" };
-    if (toStatus === "ForIncompleteDocuments")
-        return { headline: "Placed the file on hold — missing requirements" };
-    if (fromStatus === "ForIncompleteDocuments")
-        return { headline: `Requirements completed — returned to ${statusLabel(toStatus)}` };
+    if (action === "DocumentsFlagged")
+        return { headline: "Flagged missing documents" };
+    if (action === "DocumentFlagCleared")
+        return { headline: "Document flag cleared — all requirements uploaded" };
     if (action === "PushedBack" || toStatus === "ForRevision")
         return { headline: "Returned the application to the encoder for revision" };
     if (action === "EvaluatedRecommended")

@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { ApplicationTimeline } from "@/src/features/loans/components/application-timeline";
+import { DocumentFlagBadge } from "@/src/features/loans/components/document-flag-badge";
 import { queueDeskSentence } from "@/src/features/loans/utils/loan-timeline";
 import { cn } from "@/src/lib/utils";
 import { getLoanById } from "@/src/features/loans/api/loans";
@@ -87,6 +88,12 @@ export function LoanDetailsDrawer({
                             </>
                         ) : (
                             "Audit trail & history"
+                        )}
+                        {/* Document flag badge — shows next to status badge */}
+                        {(detail.data?.documentFlag ?? record?.documentFlag) && (
+                            <DocumentFlagBadge
+                                flag={detail.data?.documentFlag ?? record?.documentFlag ?? null}
+                            />
                         )}
                     </SheetDescription>
                 </SheetHeader>

@@ -19,7 +19,6 @@ export type LoanStatus =
     | "ForChecking"
     | "ForApproval"
     | "ForRevision"
-    | "ForIncompleteDocuments"
     | "Approved"
     | "ForDisbursement"
     | "Disbursed"
@@ -73,13 +72,6 @@ export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
         className:
             "border-orange-300 bg-orange-50 text-orange-800 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-400",
     },
-    ForIncompleteDocuments: {
-        label: "For Incomplete Documents",
-        defaultSlaHours: 48,
-        hint: "Reviewer-flagged missing documents — with encoder for completion",
-        className:
-            "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400",
-    },
     Approved: {
         label: "Approved",
         defaultSlaHours: null,
@@ -130,7 +122,6 @@ export const STATUS_FILTER_ORDER: LoanStatus[] = [
     "ForChecking",
     "ForApproval",
     "ForRevision",
-    "ForIncompleteDocuments",
     "ForDisbursement",
     "Draft",
     "OnGoing",

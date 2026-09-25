@@ -19,7 +19,6 @@ const STATUS_LABELS: Record<string, LoanStatus> = {
     ForChecking: "For Checking",
     ForApproval: "For Approval",
     ForRevision: "For Revision",
-    ForIncompleteDocuments: "For Incomplete Documents",
     ForDisbursement: "For Disbursement",
     Disbursed: "Disbursed",
     OnGoing: "On Going",
