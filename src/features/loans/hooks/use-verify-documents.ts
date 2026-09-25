@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import { loanReviewKeys } from "@/src/features/loans/api/loan-review";
 import { approvalMatrixKeys } from "@/src/features/admin/users/api/approval-matrix";
 

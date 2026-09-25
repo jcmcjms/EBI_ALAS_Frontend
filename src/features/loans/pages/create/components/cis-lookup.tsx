@@ -21,7 +21,7 @@ import {
   type WebLoanAccount,
   type WebLoanCisSearchResponse,
 } from "@/src/lib/api/types";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 
 import { ActiveLoansTable } from "./active-loans-table";
 import {

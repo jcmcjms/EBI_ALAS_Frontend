@@ -20,7 +20,7 @@ import { toastError } from "@/src/components/ui/toast";
 
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { useAuthStore } from "@/src/store/authStore";
 import { WEBLOAN_BRANCHES } from "@/src/lib/api/types";
 import type { PreLoanItem } from "@/src/lib/api/types";

@@ -56,7 +56,7 @@ import {
     flagDocuments,
     type LoanDetailResponse,
 } from "@/src/features/loans/api/loan-review";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import { useLoanSignatureChain, signatureKeys } from "@/src/features/loans/api/signatures";
 import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
 import { CREATION_TYPE, type DeviationReason } from "@/src/features/loans/schemas/schema";

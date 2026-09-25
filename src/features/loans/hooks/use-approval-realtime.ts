@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEscalationStore } from "@/src/store/escalationStore";
+import { useEscalationStore } from "@/src/features/loans/store/escalationStore";
 
 /**
  * Subscribes to SignalR events from the NotificationHub for real-time

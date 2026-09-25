@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 
 import { getCatLoanClass } from "@/src/features/loans/api/webloans";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 
 /**
  * Resolves `loan_data.cat_loan_class` for the selected preloan via

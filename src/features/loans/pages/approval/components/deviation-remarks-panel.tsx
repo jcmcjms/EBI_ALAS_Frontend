@@ -20,7 +20,7 @@ import {
     type DeviationRemarkDto,
     type LoanDeviationDto,
 } from "@/src/features/loans/api/loan-review";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 
 const ROLE_BADGE: Record<string, string> = {
     Encoder: "border-slate-300 bg-slate-100 text-slate-700",

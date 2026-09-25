@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 
 /**
  * Print geometry of the LOAN APPROVAL FORM sheet. Both the create-page

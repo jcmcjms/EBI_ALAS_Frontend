@@ -11,7 +11,7 @@ import {
 } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { canPreviewInline, fetchChecklistDocument } from "@/src/features/loans/api/loan-review";
 
 interface DocumentPreviewDialogProps {

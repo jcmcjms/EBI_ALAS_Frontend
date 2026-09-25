@@ -19,7 +19,7 @@ import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/features/loans/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { LOAN_STATUS_META } from "@/src/features/loans/utils/loan-status";
 import { AGING_BADGE_CLASS, assessAging } from "@/src/features/loans/utils/loan-aging";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";

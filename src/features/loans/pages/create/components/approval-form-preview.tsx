@@ -4,7 +4,7 @@ import { FilePdf, Printer, CaretLeft, CaretRight } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
 import { FormTabStrip } from "@/src/components/ui/form-tab-strip";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { ApprovalFormSheet } from "@/src/features/loans/components/approval-form-sheet";
 
 import { SectionCard } from "./section-card";

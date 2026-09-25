@@ -11,9 +11,9 @@ import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/src/components/ui/alert";
 import { getLoanTimeline, type TimelineEvent } from "../api/loan-review";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import { describeEvent, relativeTime } from "../utils/loan-timeline";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 
 const PAGE_SIZE = 15;
 

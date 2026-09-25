@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import { getLoanGroup, updateGroupStatus, type LoanGroupResponse, type GroupStatusResponse } from "@/src/features/loans/api/loan-groups";
 
 export function useLoanGroup(groupNo: string | undefined, enabled = true) {

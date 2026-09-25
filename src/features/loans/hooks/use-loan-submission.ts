@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef } from "react";
 
 import { submitLoanApplication } from "@/src/features/loans/api/loans";
-import { generateUUID } from "@/src/lib/utils";
+import { generateUUID } from "@/src/shared/lib/utils";
 import type { LoanSubmissionPayload, LoanSubmissionResponse } from "@/src/lib/api/types";
 
 /**

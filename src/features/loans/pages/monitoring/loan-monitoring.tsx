@@ -24,7 +24,7 @@ import { useSlaPolicy, useQueueDefault } from "@/src/features/loans/api/loan-rev
 import { cancelLoanApplication } from "@/src/features/loans/api/loan-review";
 import { useAuthStore } from "@/src/store/authStore";
 import { queueDefaultForRole, sameStatusSet } from "@/src/features/loans/constants/role-queues";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 import { LOAN_STATUS_META } from "@/src/features/loans/utils/loan-status";
 

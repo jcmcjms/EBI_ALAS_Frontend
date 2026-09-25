@@ -13,7 +13,7 @@ import { Button } from "@/src/components/ui/button";
 import { ApplicationTimeline } from "@/src/features/loans/components/application-timeline";
 import { DocumentFlagBadge } from "@/src/features/loans/components/document-flag-badge";
 import { queueDeskSentence } from "@/src/features/loans/utils/loan-timeline";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { getLoanById } from "@/src/features/loans/api/loans";
 import { LOAN_STATUS_META, type LoanStatus } from "@/src/features/loans/utils/loan-status";
 import type { LoanMonitoringRecord } from "../types";

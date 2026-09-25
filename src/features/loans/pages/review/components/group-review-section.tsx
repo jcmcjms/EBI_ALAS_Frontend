@@ -14,7 +14,7 @@ import {
 } from "@/src/components/ui/dialog";
 import { Textarea } from "@/src/components/ui/textarea";
 import { toastSuccess, toastWarning } from "@/src/components/ui/toast";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { useLoanGroup, useUpdateGroupStatus } from "@/src/features/loans/hooks/use-loan-group";
 import type { GroupLoanResult, GroupStatusResponse } from "@/src/features/loans/api/loan-groups";
 

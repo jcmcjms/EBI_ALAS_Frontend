@@ -30,7 +30,7 @@ import {
 } from "@/src/components/ui/tooltip";
 import axios from "axios";
 
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import { getOutstandingLoans, getPendingLoan } from "@/src/features/loans/api/webloans";
 import type { OutstandingLoan, PendingLoan, WebLoanAccount } from "@/src/lib/api/types";

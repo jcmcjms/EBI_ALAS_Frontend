@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient, getErrorMessage } from "@/src/lib/apiClient";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 import { toastError, toastSuccess, toastInfo } from "@/src/components/ui/toast";
 

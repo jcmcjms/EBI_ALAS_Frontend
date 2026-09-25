@@ -12,7 +12,7 @@ import type { MonitoringFilters } from "../types";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 import { LOAN_STATUS_META, STATUS_FILTER_ORDER } from "@/src/features/loans/utils/loan-status";
 import { sameStatusSet } from "@/src/features/loans/constants/role-queues";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { useAuthStore } from "@/src/store/authStore";
 
 interface ToolbarProps {

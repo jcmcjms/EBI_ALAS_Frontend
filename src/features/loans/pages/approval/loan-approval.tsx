@@ -69,8 +69,8 @@ import {
     type EvaluationVerdict,
     type WorkflowAction,
 } from "@/src/features/loans/api/loan-review";
-import { queryKeys } from "@/src/lib/queryKeys";
-import { cn } from "@/src/lib/utils";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
+import { cn } from "@/src/shared/lib/utils";
 import { apiClient, getErrorMessage } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
