@@ -14,7 +14,7 @@ import {
 import { Spinner } from "@/src/components/ui/spinner";
 import { downloadImportTemplate, importUsers, type UserImportResult } from "../api/users";
 import { getErrorMessage } from "@/src/lib/apiClient";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 /** Error list cap — the full set is always available via the CSV report. */

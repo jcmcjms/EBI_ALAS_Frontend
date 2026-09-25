@@ -33,7 +33,7 @@ import {
     DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
 import { BRANCHES, type UserResponse } from "@/src/lib/api/types";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

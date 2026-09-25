@@ -33,7 +33,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/src/components/ui/table";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { getErrorMessage } from "@/src/lib/apiClient";
 import {
     PERMISSIONS,

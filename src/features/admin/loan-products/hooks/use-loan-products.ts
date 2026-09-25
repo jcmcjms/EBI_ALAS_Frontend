@@ -3,7 +3,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import type {
     LoanProductImportResult,
     LoanProductResponse,
