@@ -5,8 +5,8 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
-import { cn } from "@/src/lib/utils";
-import { initialsOf } from "@/src/lib/name-utils";
+import { cn } from "@/src/shared/lib/utils";
+import { initialsOf } from "@/src/shared/lib/name-utils";
 import { formatWaiting, waitingMinutes } from "./pending-queue";
 import type { IncompleteDocsQueueItem } from "../types";
 

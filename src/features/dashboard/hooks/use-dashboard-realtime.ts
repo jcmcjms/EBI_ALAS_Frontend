@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 
 /**
  * Subscribes to SignalR `DashboardUpdated` events and invalidates the

@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { ArrowArcLeft, ArrowUpRight, CheckCircle, ClipboardText, TrendDown, TrendUp, UserCircleCheck, WarningCircle } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import type { DashboardSummary as DashboardSummaryType } from "../types";
 
 interface DashboardSummaryProps {
