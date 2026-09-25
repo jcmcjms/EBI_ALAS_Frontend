@@ -24,6 +24,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: "/avatars/shadcn.jpg",
     }
 
+    const filteredNav = navMain.filter((item) => {
+        if (item.title === "Review Desk" && user?.role && !["Recommender", "Evaluator", "Approver"].includes(user.role)) {
+            return false
+        }
+        return true
+    })
+
     return (
         <Sidebar collapsible="offcanvas" {...props}>
             <SidebarHeader>
@@ -39,7 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={navMain} />
+                <NavMain items={filteredNav} />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser user={userData} />

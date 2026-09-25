@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/src/components/auth/ProtectedRoute";
 import { FeatureErrorBoundary } from "@/src/components/system/FeatureErrorBoundary";
 import { AppShell } from "@/src/components/layout/AppShell";
 import { PERMISSIONS } from "@/src/lib/api/types";
+import { useAuthStore } from "@/src/store/authStore";
 
 const Login = lazy(() => import("./features/auth/pages/login"));
 const ChangePassword = lazy(() => import("./features/auth/pages/change-password"));
@@ -34,6 +35,16 @@ function AuthedShell() {
             <Outlet />
         </AppShell>
     );
+}
+
+const DESK_ROLES = new Set(["Recommender", "Evaluator", "Approver"]);
+
+function DeskRoute({ children }: { children: React.ReactNode }) {
+    const role = useAuthStore((s) => s.user?.role);
+    if (role && !DESK_ROLES.has(role)) {
+        return <Navigate to="/loans/monitoring" replace />;
+    }
+    return <>{children}</>;
 }
 
 function App() {
@@ -90,9 +101,11 @@ function App() {
                             endpoints; the frontend route only requires auth. */}
                         <Route path="/loans/queue" element={
                             <ProtectedRoute>
-                                <FeatureErrorBoundary featureName="Review Desk">
-                                    <ReviewDesk />
-                                </FeatureErrorBoundary>
+                                <DeskRoute>
+                                    <FeatureErrorBoundary featureName="Review Desk">
+                                        <ReviewDesk />
+                                    </FeatureErrorBoundary>
+                                </DeskRoute>
                             </ProtectedRoute>
                         } />
                         {/* /loans/approval/:loanId is reachable by every workflow role

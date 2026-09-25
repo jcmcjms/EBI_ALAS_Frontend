@@ -4,9 +4,9 @@ import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { initialsOf } from "@/src/features/notifications/types";
 import type { NowServingItem } from "../types";
 
-interface NowServingProps { data: NowServingItem[]; }
+interface NowServingProps { data: NowServingItem[]; pendingCount?: number; }
 
-export function NowServing({ data }: NowServingProps) {
+export function NowServing({ data, pendingCount }: NowServingProps) {
     return (
         <Card id="now-serving" className="scroll-mt-24 flex flex-col">
             <CardHeader>
@@ -17,7 +17,9 @@ export function NowServing({ data }: NowServingProps) {
             </CardHeader>
             <CardContent className="p-0 flex-1">
                 {data.length === 0 ? (
-                    <p className="px-4 py-10 text-center text-sm text-muted-foreground">No checkers are serving right now.</p>
+                    <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                        No one is serving right now{pendingCount != null ? ` — ${pendingCount} file${pendingCount === 1 ? "" : "s"} wait in queue.` : "."}
+                    </p>
                 ) : (
                     <ul className="divide-y">
                         {data.map((item) => (

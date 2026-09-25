@@ -12,12 +12,14 @@ import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useDeskQueue, useClaimNext, type QueuedLoanDto } from "@/src/features/loans/hooks/use-desk-queue";
+import { useAuthStore } from "@/src/store/authStore";
 import { formatWaiting, waitingMinutes } from "@/src/features/dashboard/components/pending-queue";
 
 export function ReviewDeskPage() {
     const navigate = useNavigate();
     const { data: desk, isLoading } = useDeskQueue();
     const claim = useClaimNext();
+    const currentUserId = useAuthStore((s) => s.user?.userId ? Number(s.user.userId) : undefined);
 
     // Resume: a lease survived a refresh / crash — pick up where we left off.
     useEffect(() => {
@@ -67,7 +69,16 @@ export function ReviewDeskPage() {
                 <Button
                     size="lg"
                     className="gap-2"
-                    disabled={!desk?.items.length || claim.isPending}
+                    disabled={
+                        !desk?.items.length ||
+                        claim.isPending ||
+                        (!!desk?.items[0]?.ownerUserId && desk.items[0].ownerUserId !== currentUserId)
+                    }
+                    title={
+                        desk?.items[0]?.ownerName && desk.items[0].ownerUserId !== currentUserId
+                            ? `Currently with ${desk.items[0].ownerName} — frees after the lease expires`
+                            : undefined
+                    }
                     onClick={() => claim.mutate()}
                     aria-keyshortcuts="Enter"
                 >
@@ -104,6 +115,8 @@ export function ReviewDeskPage() {
 
 function DeskQueueRow({ item }: { item: QueuedLoanDto }) {
     const mins = waitingMinutes(item.enqueuedAt);
+    const currentUserId = useAuthStore((s) => s.user?.userId ? Number(s.user.userId) : undefined);
+    const isMine = item.ownerUserId != null && item.ownerUserId === currentUserId;
 
     return (
         <li className="flex items-center gap-3 px-4 py-3 text-sm">
@@ -113,14 +126,22 @@ function DeskQueueRow({ item }: { item: QueuedLoanDto }) {
             <span className="font-mono text-xs">{item.lamId}</span>
             <span className="min-w-0 flex-1 truncate">{item.clientName}</span>
             {item.ownerName ? (
-                <Badge variant="secondary" className="gap-1">
-                    <UserCircle size={12} /> {item.ownerName}
-                </Badge>
+                isMine ? (
+                    <Badge variant="secondary" className="gap-1">
+                        <PlayCircle size={12} weight="bold" /> serving — resume
+                    </Badge>
+                ) : (
+                    <Badge variant="secondary" className="gap-1">
+                        <UserCircle size={12} /> {item.ownerName}
+                    </Badge>
+                )
             ) : item.isHead ? (
                 <Badge variant="outline" className="text-primary">
                     next up
                 </Badge>
-            ) : null}
+            ) : (
+                <span className="text-xs text-muted-foreground">waiting</span>
+            )}
             <span className="flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
                 <Clock size={12} /> {formatWaiting(mins)}
             </span>

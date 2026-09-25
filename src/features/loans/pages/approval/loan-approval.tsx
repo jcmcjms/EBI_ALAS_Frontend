@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useClaimById, useDeskQueue } from "@/src/features/loans/hooks/use-desk-queue";
 import { keepPreviousData } from "@tanstack/react-query";
 import {
     CheckCircle,
@@ -324,6 +325,27 @@ export function LoanApprovalPage() {
         () => (detail ? mapLoanToFormData(detail) : null),
         [detail]
     );
+
+    const claimById = useClaimById();
+    const { data: desk } = useDeskQueue();
+    const queueItem = desk?.items.find((i) => i.loanId === id);
+    const queueState = queueItem
+        ? {
+            isHead: queueItem.isHead,
+            ownerUserId: queueItem.ownerUserId,
+            ownerName: queueItem.ownerName,
+            isMine: queueItem.ownerUserId != null && queueItem.ownerUserId === (user?.userId ? Number(user.userId) : undefined),
+            position: queueItem.position,
+        }
+        : undefined;
+
+    const needsDeskGate = detail ? (
+        (detail.status === "ForRecommendation" && user?.role === "Recommender") ||
+        (detail.status === "ForChecking" && user?.role === "Evaluator") ||
+        (detail.status === "ForApproval" && user?.role === "Approver")
+    ) : false;
+
+    const canAct = !needsDeskGate || queueState?.isMine || user?.role === "Admin";
 
     const actions = WORKFLOW_ACTIONS.filter((a) => a.role === user?.role && a.from === detail?.status);
 
@@ -701,6 +723,24 @@ export function LoanApprovalPage() {
 
                                         {/* ── Action buttons ── */}
                                         <div className="space-y-2">
+                                            {needsDeskGate && !canAct && (
+                                                queueState?.isHead && !queueState.ownerName ? (
+                                                    <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 p-3 text-sm">
+                                                        <span>You're next in the queue.</span>
+                                                        <Button onClick={() => claimById.mutate(id)} disabled={claimById.isPending} className="gap-2">
+                                                            Claim &amp; review
+                                                        </Button>
+                                                    </div>
+                                                ) : queueState?.ownerName ? (
+                                                    <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                                                        Currently with {queueState.ownerName}. You have view-only access until the lease is released.
+                                                    </div>
+                                                ) : (
+                                                    <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                                                        Queued #{queueState?.position} — serve files in order from the Review Desk.
+                                                    </div>
+                                                )
+                                            )}
                                             {canCancel && (
                                                 <Button
                                                     variant="destructive"
@@ -721,7 +761,7 @@ export function LoanApprovalPage() {
                                                 </p>
                                             )}
                                             {actions.map((a) => {
-                                                const blocked = act.isPending || (a.remarksRequired && remarks.trim().length < MIN_REMARKS);
+                                                const blocked = act.isPending || (a.remarksRequired && remarks.trim().length < MIN_REMARKS) || !canAct;
                                                 const icon =
                                                     a.kind === "reject" ? <XCircle size={16} /> :
                                                     a.kind === "return" ? <ArrowCounterClockwise size={16} /> :

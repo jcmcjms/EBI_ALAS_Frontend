@@ -102,3 +102,31 @@ export function useReleaseClaim() {
         onError: (e: unknown) => toastError(getErrorMessage(e)),
     });
 }
+
+export interface ClaimByIdResponse {
+    loanId: number;
+    lamId: string;
+    clientName: string;
+    status: string;
+    leasedAt: string;
+}
+
+export function useClaimById() {
+    const qc = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (loanId: number): Promise<ClaimByIdResponse> => {
+            const { data: envelope } = await apiClient.post<ApiResponse<ClaimByIdResponse>>(
+                `/api/loans/queue/${loanId}/claim`,
+            );
+            return unwrapApiData(envelope);
+        },
+        onSuccess: (result) => {
+            toastSuccess(`Serving ${result.lamId} — ${result.clientName}.`);
+            qc.invalidateQueries({ queryKey: queryKeys.loans.desk });
+            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+            qc.invalidateQueries({ queryKey: queryKeys.dashboard.full });
+        },
+        onError: (e: unknown) => toastError(getErrorMessage(e)),
+    });
+}

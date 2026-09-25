@@ -101,7 +101,7 @@ export function Dashboard() {
                             />
                         </div>
                         <div className="flex flex-col gap-6">
-                            <NowServing data={data.nowServing} />
+                            <NowServing data={data.nowServing} pendingCount={data.summary.totalPending} />
                             <WeeklyTrend data={data.weeklyTrend} />
                         </div>
                     </div>
