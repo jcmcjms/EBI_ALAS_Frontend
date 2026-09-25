@@ -67,6 +67,7 @@ import {
     CANCELLABLE_STATUSES,
     type LoanDetailResponse,
     type EvaluationVerdict,
+    type WorkflowAction,
 } from "@/src/features/loans/api/loan-review";
 import { queryKeys } from "@/src/lib/queryKeys";
 import { cn } from "@/src/lib/utils";
@@ -80,7 +81,22 @@ import { CREATION_TYPE, type DeviationReason } from "@/src/features/loans/schema
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing", "Cancelled"];
 const MIN_REMARKS = 10; // mirrors UpdateLoanStatusValidator
 
-type WorkflowAction = {
+const WORKFLOW_ACTION_MAP: Record<string, WorkflowAction> = {
+    "ForChecking": "Recommend",
+    "ForApproval": "Recommend",
+    "ForRevision": "PushBack",
+    "Approved": "Approve",
+    "Rejected": "Reject",
+};
+
+function deriveWorkflowAction(def: WorkflowButtonDef): WorkflowAction {
+    const base = WORKFLOW_ACTION_MAP[def.to];
+    if (base === "Recommend" && def.verdict === "NotRecommended") return "NotRecommend";
+    if (def.from === "ForApproval" && def.to === "ForRevision") return "ReturnForRevision";
+    return base;
+}
+
+type WorkflowButtonDef = {
     role: string; from: string; to: string; label: string;
     kind: "advance" | "return" | "reject";
     verdict?: EvaluationVerdict;
@@ -88,7 +104,7 @@ type WorkflowAction = {
     confirm?: boolean;
 };
 
-const WORKFLOW_ACTIONS: WorkflowAction[] = [
+const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     { role: "Recommender", from: "ForRecommendation", to: "ForChecking", label: "Recommend for Checking", kind: "advance", remarksRequired: false },
     { role: "Recommender", from: "ForRecommendation", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
     // ── Evaluator ────────────────────────────────────────────────────
@@ -365,22 +381,25 @@ export function LoanApprovalPage() {
     const hasDocumentFlag = detail?.documentFlag != null;
 
     const act = useMutation({
-        mutationFn: (a: WorkflowAction) =>
-            updateLoanStatus(id, a.to, remarks.trim(), a.verdict),
-        onSuccess: (_d, a) => {
+        mutationFn: (payload: { action: WorkflowAction; kind: WorkflowButtonDef["kind"] }) =>
+            updateLoanStatus(id, { action: payload.action, comments: remarks.trim() }),
+        onSuccess: (_d, payload) => {
             toastSuccess(
-                a.verdict === "NotRecommended"
+                payload.action === "NotRecommend"
                     ? "Evaluation recorded as Not Recommended — forwarded to Approver."
-                    : a.kind === "return"
+                    : payload.kind === "return"
                         ? "Application pushed back to the encoder."
-                        : `Application moved to ${a.to}.`);
+                        : `Application moved successfully.`);
             setRemarks("");
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
             qc.invalidateQueries({ queryKey: signatureKeys.loan(id) });
         },
-        onError: (e: unknown) => toastError(getErrorMessage(e)),
+        onError: (e: unknown) => {
+            const data = (e as { response?: { data?: { message?: string; errors?: string[] } } })?.response?.data;
+            toastError(data?.message ?? getErrorMessage(e));
+        },
     });
 
     const pushBackDocs = useMutation({
@@ -783,7 +802,7 @@ export function LoanApprovalPage() {
                                                             : a.kind === "return" || a.verdict === "NotRecommended" ? "outline"
                                                             : "default"}
                                                         disabled={blocked}
-                                                        onClick={() => !a.confirm && act.mutate(a)}
+                                                        onClick={() => !a.confirm && act.mutate({ action: deriveWorkflowAction(a), kind: a.kind })}
                                                     >
                                                         {icon} {a.label}
                                                     </Button>
@@ -816,7 +835,7 @@ export function LoanApprovalPage() {
                                                                     className={a.kind === "return" || a.kind === "reject"
                                                                         ? "bg-destructive text-destructive-foreground"
                                                                         : "bg-amber-600 text-white hover:bg-amber-700"}
-                                                                    onClick={() => act.mutate(a)}
+                                                                    onClick={() => act.mutate({ action: deriveWorkflowAction(a), kind: a.kind })}
                                                                 >
                                                                     Confirm
                                                                 </AlertDialogAction>

@@ -63,6 +63,7 @@ import { CREATION_TYPE, type DeviationReason } from "@/src/features/loans/schema
 import { FlagIncompleteDocumentsDialog } from "../approval/components/flag-incomplete-documents-dialog";
 import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
 import { getChecklistDocuments } from "@/src/features/loans/api/loan-review";
+import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 
@@ -262,14 +263,12 @@ export function LoanEvaluationPage() {
     );
 
     const updateStatus = useMutation({
-        mutationFn: ({ status, comments, verdict }: { status: string; comments: string; verdict?: string }) =>
-            updateLoanStatus(id, status, comments, verdict as "Recommended" | "NotRecommended" | undefined),
-        onSuccess: (_data, { status, verdict }) => {
+        mutationFn: ({ status, comments }: { status: string; comments: string }) =>
+            updateLoanStatus(id, { status: status as LoanStatus, comments }),
+        onSuccess: (_data, { status }) => {
             const actionLabel =
                 status === "ForApproval"
-                    ? verdict === "NotRecommended"
-                        ? "Not Recommended (forwarded to Approver)"
-                        : "Recommended (forwarded to Approver)"
+                    ? "forwarded to Approver"
                     : "Pushed back to Encoder";
             toastSuccess(`Application ${actionLabel}.`);
             setComments("");
@@ -357,12 +356,11 @@ export function LoanEvaluationPage() {
             updateStatus.mutate({ status: "ForRevision", comments: trimmed });
         } else {
             // Both recommended and notRecommended go to ForApproval with verdict
-            const verdict = action === "notRecommended" ? "NotRecommended" : "Recommended";
             const finalComments =
                 action === "notRecommended"
                     ? trimmed
                     : trimmed || "Recommended for approval.";
-            updateStatus.mutate({ status: "ForApproval", comments: finalComments, verdict });
+            updateStatus.mutate({ status: "ForApproval", comments: finalComments });
         }
     };
 

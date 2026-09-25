@@ -346,19 +346,20 @@ export async function postDeviationRemark(
     return unwrapApiData(res.data);
 }
 
+export type WorkflowAction =
+    | "Recommend" | "NotRecommend" | "PushBack"
+    | "Approve" | "Reject" | "ReturnForRevision";
+
+/** Desk intents carry an action; only ops/admin paths carry a raw status. */
+export type UpdateStatusPayload =
+    | { action: WorkflowAction; comments: string }
+    | { status: LoanStatus; comments: string };
+
 export async function updateLoanStatus(
     id: number,
-    toStatus: string,
-    remarks: string,
-    verdict?: EvaluationVerdict,
-    extra?: Record<string, unknown>,
+    payload: UpdateStatusPayload,
 ): Promise<void> {
-    const res = await apiClient.put<ApiResponse<null>>(`/api/loans/${id}/status`, {
-        toStatus,
-        remarks,
-        verdict,
-        ...extra,
-    });
+    const res = await apiClient.put<ApiResponse<null>>(`/api/loans/${id}/status`, payload);
     if (!res.data.success)
         throw new Error(res.data.message || "Failed to update status");
 }
