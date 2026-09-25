@@ -49,16 +49,18 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/forbidden" element={<Forbidden />} />
 
+                    {/* Gate pages — chromeless by design. A user mid-forced-change must never
+                        see app navigation; keep these OUTSIDE the AuthedShell layout route. */}
+                    <Route path="/change-password" element={
+                        <ProtectedRoute>
+                            <ChangePassword />
+                        </ProtectedRoute>
+                    } />
+
                     {/* All authenticated routes share the AppShell layout.
                         The shell provides sidebar, header, SignalR, presence,
                         and notification hooks — mounted once per session. */}
                     <Route element={<AuthedShell />}>
-                        {/* Change Password — requires auth but accessible even when mustChangePassword is true */}
-                        <Route path="/change-password" element={
-                            <ProtectedRoute>
-                                <ChangePassword />
-                            </ProtectedRoute>
-                        } />
 
                         <Route path="/dashboard" element={
                             <ProtectedRoute>
