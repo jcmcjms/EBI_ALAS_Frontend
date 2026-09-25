@@ -292,6 +292,33 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                 const row = info.row.original;
                 const mine = row.isQueueHead && row.queueOwnerName === currentUser?.name;
 
+                // ForApproval: show the actual approver or no-authority state
+                if (row.status === "ForApproval") {
+                    if (row.assignedApproverName) {
+                        return (
+                            <div className="flex items-center gap-1.5">
+                                <div className="relative">
+                                    <UserCircle size={16} className="text-muted-foreground" />
+                                    <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-background" />
+                                </div>
+                                <span className="text-xs font-medium">{row.assignedApproverName}</span>
+                            </div>
+                        );
+                    }
+                    if (row.noAuthorityReason) {
+                        return (
+                            <Badge
+                                variant="outline"
+                                className="border-amber-300 bg-amber-50 text-amber-800 text-[10px] font-normal"
+                                title={row.noAuthorityReason}
+                            >
+                                No approver configured · Tier {row.requiredApprovalTier}
+                            </Badge>
+                        );
+                    }
+                }
+
+                // Queue head (non-ForApproval stages)
                 if (row.isQueueHead) {
                     return (
                         <div className="flex items-center gap-1.5">
@@ -300,7 +327,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                                 <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-background" />
                             </div>
                             <span className="text-xs font-medium">
-                                {row.queueOwnerName ?? info.getValue() ?? "Unassigned desk"}
+                                {row.queueOwnerName ?? info.getValue() ?? "—"}
                             </span>
                             {mine && (
                                 <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px] font-normal">

@@ -42,6 +42,8 @@ export interface LoanMonitoringRecord {
     assignedApproverName: string | null;
     /** Required approval tier (1-5), or null if not yet routed. */
     requiredApprovalTier: number | null;
+    /** Reason routing failed. Null when routing succeeded. */
+    noAuthorityReason: string | null;
     // ── Workflow queue fields ──────────────────────────────────────────
     /** Current queue stage (Recommendation / Evaluation / Approval), or null if not queued. */
     queueStage: QueueStage | null;

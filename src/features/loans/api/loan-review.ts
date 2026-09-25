@@ -201,6 +201,37 @@ export interface SlaPolicy {
     ForApproval: number;
 }
 
+// ── Loan Routing ──────────────────────────────────────────────────────
+
+export interface RoutingEvaluatedInputs {
+    cycle: string;
+    severity: string;
+    exposure: number;
+}
+
+export interface LoanRoutingResponse {
+    loanId: number;
+    requiredApprovalTier: number | null;
+    deviationSeverity: number;
+    totalExposure: number;
+    loanType: string;
+    matchedRule: string | null;
+    documentsComplete: boolean;
+    missingDocuments: string[];
+    assignedApproverId: number | null;
+    assignedApproverName: string | null;
+    escalatedFromTier: number | null;
+    noAuthorityReason: string | null;
+    evaluated: RoutingEvaluatedInputs | null;
+}
+
+export async function getLoanRouting(id: number): Promise<LoanRoutingResponse> {
+    const res = await apiClient.get<ApiResponse<LoanRoutingResponse>>(
+        `/api/loans/${id}/routing`,
+    );
+    return unwrapApiData(res.data);
+}
+
 // ── Unified Loan Timeline ────────────────────────────────────────────────
 
 export interface TimelineEvent {
@@ -222,6 +253,7 @@ export interface TimelineEvent {
 export const loanReviewKeys = {
     detail: (id: number) => ["loans", "review", id, "detail"] as const,
     history: (id: number) => ["loans", "review", id, "history"] as const,
+    routing: (id: number) => ["loans", "review", id, "routing"] as const,
     timeline: (id: number) => ["loans", "review", id, "timeline"] as const,
     checklistDocuments: (id: number) =>
         ["loans", "review", id, "checklist-documents"] as const,

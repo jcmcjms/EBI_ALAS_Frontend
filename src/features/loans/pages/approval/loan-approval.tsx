@@ -51,6 +51,8 @@ import { ApprovalFormDocument } from "./components/approval-form-document";
 import { AttachmentsPanel } from "./components/attachments-panel";
 import { DeviationRemarksPanel } from "./components/deviation-remarks-panel";
 import { ApplicationTimeline } from "@/src/features/loans/components/application-timeline";
+import { RoutingChip } from "./components/routing-chip";
+import { useEscalationStore } from "@/src/features/loans/store/escalationStore";
 import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
 import { GroupReviewSection } from "../review/components/group-review-section";
 import { ApprovalGroupTabs } from "./components/approval-group-tabs";
@@ -530,6 +532,7 @@ export function LoanApprovalPage() {
                             <Clock size={12} weight="fill" />
                             {detail.status}
                         </Badge>
+                        <RoutingChip loanId={id} />
                         {detail.hasDeviations && (
                             <Badge
                                 variant="secondary"
@@ -538,6 +541,11 @@ export function LoanApprovalPage() {
                                 <WarningCircle size={12} weight="fill" />{" "}
                                 {deviationCount} deviation
                                 {deviationCount === 1 ? "" : "s"}
+                            </Badge>
+                        )}
+                        {useEscalationStore.getState().isEscalated(id) && (
+                            <Badge variant="secondary" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800">
+                                <WarningCircle size={12} weight="fill" /> Escalated
                             </Badge>
                         )}
                         {/* NOTE: `evaluationVerdict` stores the action verb ("EvaluatedRecommended"),
