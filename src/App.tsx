@@ -37,7 +37,7 @@ function AuthedShell() {
     );
 }
 
-const DESK_ROLES = new Set(["Recommender", "Evaluator", "Approver"]);
+const DESK_ROLES = new Set(["Recommender", "Evaluator", "Approver", "Admin"]);
 
 function DeskRoute({ children }: { children: React.ReactNode }) {
     const role = useAuthStore((s) => s.user?.role);

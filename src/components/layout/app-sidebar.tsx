@@ -25,7 +25,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     const filteredNav = navMain.filter((item) => {
-        if (item.title === "Review Desk" && user?.role && !["Recommender", "Evaluator", "Approver"].includes(user.role)) {
+        if (item.title === "Review Desk" && user?.role && !["Recommender", "Evaluator", "Approver", "Admin"].includes(user.role)) {
             return false
         }
         return true
