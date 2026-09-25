@@ -6,6 +6,8 @@ import {
     ArrowLeft,
     Clock,
     UserCircle,
+    Globe,
+    ArrowClockwise,
 } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
@@ -17,7 +19,7 @@ import { formatWaiting, waitingMinutes } from "@/src/features/dashboard/componen
 
 export function ReviewDeskPage() {
     const navigate = useNavigate();
-    const { data: desk, isLoading } = useDeskQueue();
+    const { data: desk, isLoading, refetch } = useDeskQueue();
     const claim = useClaimNext();
     const currentUserId = useAuthStore((s) => s.user?.userId ? Number(s.user.userId) : undefined);
 
@@ -76,7 +78,18 @@ export function ReviewDeskPage() {
                             ? `${desk.items.length} file${desk.items.length === 1 ? "" : "s"} waiting — oldest first.`
                             : "Queue is clear — nothing waiting at your desk."}
                     </p>
+                    {desk.scopeDescription && (
+                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Globe size={12} weight="bold" /> {desk.scopeDescription}
+                        </p>
+                    )}
                 </div>
+
+                {!isLoading && !desk.items.length && (
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => refetch()}>
+                        <ArrowClockwise size={14} weight="bold" /> Refresh
+                    </Button>
+                )}
 
                 <Button
                     size="lg"

@@ -22,6 +22,7 @@ export interface DeskQueueResponse {
     deskLabel: string;
     items: QueuedLoanDto[];
     currentClaim: QueuedLoanDto | null;
+    scopeDescription: string;
 }
 
 export interface ClaimResponse {

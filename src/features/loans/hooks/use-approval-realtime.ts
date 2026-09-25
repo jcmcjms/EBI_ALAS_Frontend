@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEscalationStore } from "@/src/features/loans/store/escalationStore";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 
 /**
  * Subscribes to SignalR events from the NotificationHub for real-time
@@ -33,10 +34,18 @@ export function useApprovalRealtime(getConnection: () => import("@microsoft/sign
             qc.invalidateQueries({ queryKey: ["loans"] });
         };
 
+        const onDashboardUpdated = () => {
+            // A loan status change (promotion into ForApproval elsewhere)
+            // should populate the approver's desk within seconds.
+            qc.invalidateQueries({ queryKey: queryKeys.loans.desk });
+        };
+
         conn.on("LoanAssigned", onAssigned);
+        conn.on("DashboardUpdated", onDashboardUpdated);
 
         return () => {
             conn.off("LoanAssigned", onAssigned);
+            conn.off("DashboardUpdated", onDashboardUpdated);
         };
     }, [getConnection, qc, markEscalated]);
 }
