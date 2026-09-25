@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toastError } from "@/src/components/ui/toast";
 import { getErrorMessage } from "@/src/lib/apiClient";
-import { queryKeys } from "@/src/lib/queryKeys";
+import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import {
     getNotifications,
     getNotificationInbox,

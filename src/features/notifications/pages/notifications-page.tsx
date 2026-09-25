@@ -31,9 +31,9 @@ import {
 } from "@/src/components/ui/dropdown-menu";
 import { Input } from "@/src/components/ui/input";
 import { formatRelativeTime, initialsOf, type NotificationType } from "../types";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { useNotificationInbox, useMarkNotificationRead, useMarkAllNotificationsRead } from "../hooks/use-notifications";
-import { useDebouncedValue } from "@/src/hooks/use-debounced";
+import { useDebouncedValue } from "@/src/shared/hooks/use-debounced";
 import { useNotificationStore } from "../store/notification-store";
 
 const PAGE_SIZE = 10;
