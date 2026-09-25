@@ -3,7 +3,7 @@ import { ArrowsClockwise, WarningCircle } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 
 /**
  * Bank-grade PHP currency input.

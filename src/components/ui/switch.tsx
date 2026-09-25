@@ -1,5 +1,5 @@
 import { Switch as SwitchPrimitive } from "@base-ui/react/switch"
-import { cn } from "@/src/lib/utils"
+import { cn } from "@/src/shared/lib/utils"
 
 function Switch({ className, ...props }: SwitchPrimitive.Root.Props) {
   return (

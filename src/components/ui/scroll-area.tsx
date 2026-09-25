@@ -1,5 +1,5 @@
 import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area"
-import { cn } from "@/src/lib/utils"
+import { cn } from "@/src/shared/lib/utils"
 
 function ScrollArea({
   className,

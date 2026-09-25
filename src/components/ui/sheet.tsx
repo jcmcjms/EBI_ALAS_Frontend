@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 
-import { cn } from "@/src/lib/utils"
+import { cn } from "@/src/shared/lib/utils"
 import { Button } from "@/src/components/ui/button"
 import { XIcon } from "@phosphor-icons/react"
 

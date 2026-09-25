@@ -2,7 +2,7 @@ import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import type { VariantProps } from "class-variance-authority"
 
-import { cn } from "@/src/lib/utils"
+import { cn } from "@/src/shared/lib/utils"
 import { badgeVariants } from "./badge.variants"
 
 // Re-export the CVA variants so existing imports (`import { badgeVariants } from "./badge"`) keep working.

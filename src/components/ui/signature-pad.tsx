@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Eraser, Path } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 
 /**
  * Lightweight HTML5 Canvas signature pad.

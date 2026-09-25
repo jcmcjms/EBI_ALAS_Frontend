@@ -1,7 +1,7 @@
 import { Toggle as TogglePrimitive } from "@base-ui/react/toggle"
 import type { VariantProps } from "class-variance-authority"
 
-import { cn } from "@/src/lib/utils"
+import { cn } from "@/src/shared/lib/utils"
 import { toggleVariants } from "./toggle.variants"
 
 // Re-export so existing imports keep working. The variant declaration

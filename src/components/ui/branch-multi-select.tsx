@@ -4,7 +4,7 @@ import { Button } from "@/src/components/ui/button";
 import { Checkbox } from "@/src/components/ui/checkbox";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import { Badge } from "@/src/components/ui/badge";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 import { CaretDown, X } from "@phosphor-icons/react";
 
 interface BranchMultiSelectProps {

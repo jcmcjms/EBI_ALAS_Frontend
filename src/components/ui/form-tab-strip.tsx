@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "@/src/shared/lib/utils";
 
 export interface FormTabItem {
   value: string;
