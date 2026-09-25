@@ -15,7 +15,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle, UserCircle, FileWarning } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle, UserCircle, FileDashed } from "@phosphor-icons/react";
 import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
 import { useLoanMonitoring } from "@/src/features/loans/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
@@ -244,7 +244,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                                 title={`${flag.missingCount} document(s) flagged: ${flag.reason ?? "no reason provided"}`}
                                 className="h-5 gap-0.5 border-amber-300 bg-amber-50 px-1 text-[10px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
                             >
-                                <FileWarning size={10} weight="bold" />
+                                <FileDashed size={10} weight="bold" />
                                 {flag.missingCount}
                             </Badge>
                         )}

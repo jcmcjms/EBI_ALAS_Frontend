@@ -1,4 +1,4 @@
-import { FileWarning } from "@phosphor-icons/react";
+import { FileDashed } from "@phosphor-icons/react";
 import { Badge } from "@/src/components/ui/badge";
 import {
     Popover,
@@ -43,7 +43,7 @@ export function DocumentFlagBadge({ flag, compact }: DocumentFlagBadgeProps) {
                             variant="outline"
                             className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 cursor-pointer"
                         >
-                            <FileWarning size={12} weight="bold" />
+                            <FileDashed size={12} weight="bold" />
                             {flag.missingCount}
                         </Badge>
                     }
@@ -73,7 +73,7 @@ export function DocumentFlagBadge({ flag, compact }: DocumentFlagBadgeProps) {
                         variant="outline"
                         className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 cursor-pointer"
                     >
-                        <FileWarning size={14} weight="bold" />
+                        <FileDashed size={14} weight="bold" />
                         {flag.missingCount} doc(s) flagged
                     </Badge>
                 }
