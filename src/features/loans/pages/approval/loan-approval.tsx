@@ -382,7 +382,12 @@ export function LoanApprovalPage() {
 
     const act = useMutation({
         mutationFn: (payload: { action: WorkflowAction; kind: WorkflowButtonDef["kind"] }) =>
-            updateLoanStatus(id, { action: payload.action, comments: remarks.trim() }),
+            updateLoanStatus(id, {
+                action: payload.action,
+                comments: (payload.kind === "return" || payload.action === "NotRecommend" || payload.action === "Reject" || payload.action === "ReturnForRevision")
+                    ? remarks.trim()
+                    : remarks.trim() || undefined,
+            }),
         onSuccess: (_d, payload) => {
             toastSuccess(
                 payload.action === "NotRecommend"
