@@ -706,16 +706,20 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                 </section>
 
                 {/* ══ PAGE 3 — Application history / audit trail ══
-                    Rendered only when the parent passes actions.
-                    `break-before-page` starts a fresh physical sheet;
-                    `break-inside-avoid` keeps each date-group atomic so
-                    no row is torn between pages. Continuation header
+                    Print-only sheet. On-screen reviewers read the LIVE
+                    ApplicationTimeline in the Workflow rail; the frozen audit
+                    trail must not compete with it on the screen sheet, so it
+                    ships only in the printed pack. `hidden print:block` keeps
+                    the DOM for the print pass while removing it from the
+                    on-screen preview; `break-before-page` starts a fresh
+                    physical sheet; `break-inside-avoid` keeps each date-group
+                    atomic so no row is torn between pages. Continuation header
                     mirrors page 2 so a separated sheet is attributable. */}
                 {actions && actions.length > 0 && (
-                    <section className="break-before-page">
+                    <section className="hidden break-before-page print:block">
                         <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
                             <span className="text-sm font-bold underline">
-                                LOAN APPROVAL FORM (Continuation)
+                                LOAN APPROVAL FORM
                             </span>
                             <span className="tabular-nums">
                                 {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{" "}

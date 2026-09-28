@@ -136,6 +136,14 @@ function SignatureBlock({ slot }: { slot: SignatureSlotDto }) {
  * Renders the approval form for a single loan. This is extracted into
  * a separate component so it can be mapped over the loans array with
  * proper print page breaks between each form.
+ *
+ * Audit-trail contract: the preview — create-page screen, its browser
+ * print pack, and the html2canvas PDF — NEVER renders the Application
+ * History / audit-trail sheet. That sheet is a print-only artifact of
+ * the approval document (approval-form-document.tsx, page 3), sourced
+ * from the frozen LoanDetailResponse.actions of the system of record.
+ * Drafts have no server actions yet, and post-submission prints must
+ * come from the approval page. Do not mirror page 3 into this file.
  */
 interface SingleLoanApprovalFormProps {
     loan: SelectedLoan;
