@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { Label } from "@/src/components/ui/label";
 import { Checkbox } from "@/src/components/ui/checkbox";
 import { Badge } from "@/src/components/ui/badge";
@@ -9,6 +9,7 @@ import { DEVIATION_REASONS, type DeviationReason } from "@/src/features/loans/sc
 import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
 import { SectionCard } from "./section-card";
 import { PerLoanTabs } from "./per-loan-tabs";
+import { RichTextEditor } from "@/src/components/ui/rich-text-editor";
 import { getSection } from "@/src/features/loans/constants/sections";
 import { useActiveLoan } from "../active-loan-context";
 import { useDeviationCatalog, type DeviationCatalogItemDto } from "@/src/features/admin/users/hooks/use-deviation-catalog";
@@ -269,7 +270,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
                     <div className="flex items-center gap-2 text-sm text-amber-700">
                         <Warning size={14} weight="fill" />
                         <span className="font-medium">
-                            Select all deviations that apply. Each selected reason requires a written justification for the audit trail.
+                            Select all deviations that apply. Each selected reason requires a written justification.
                         </span>
                     </div>
 
@@ -392,19 +393,19 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
                         </span>
                     )}
                 </div>
-                <textarea
-                    {...register(`${path}.otherRemarks`)}
-                    placeholder="Any other notes or special instructions for this application..."
-                    rows={3}
-                    aria-invalid={!!otherRemarksError}
-                    className={
-                        "w-full rounded-md border bg-transparent px-3 py-2 text-sm " +
-                        "placeholder:text-muted-foreground focus-visible:border-ring " +
-                        "focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y " +
-                        (otherRemarksError
-                            ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50"
-                            : "border-input")
-                    }
+                <Controller
+                    control={control}
+                    name={`${path}.otherRemarks`}
+                    render={({ field }) => (
+                        <RichTextEditor
+                            value={field.value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            invalid={!!otherRemarksError}
+                            ariaLabel={`Other remarks for loan ${loanIndex + 1}`}
+                            placeholder="Any other notes or special instructions for this application..."
+                        />
+                    )}
                 />
             </div>
         </div>

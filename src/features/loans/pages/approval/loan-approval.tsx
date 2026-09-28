@@ -30,6 +30,7 @@ import {
 } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { Textarea } from "@/src/components/ui/textarea";
+import { RichTextEditor } from "@/src/components/ui/rich-text-editor";
 import { Label } from "@/src/components/ui/label";
 import { Badge } from "@/src/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
@@ -739,17 +740,12 @@ export function LoanApprovalPage() {
                                                 Remarks / Conditions
                                                 {actions.some((a) => a.remarksRequired) && <span className="text-destructive">*</span>}
                                             </Label>
-                                            <Textarea
-                                                id="remarks"
-                                                rows={4}
-                                                disabled={
-                                                    frozen || act.isPending
-                                                }
-                                                placeholder="Comments, conditions, or reasons — stored with the workflow action…"
+                                            <RichTextEditor
                                                 value={remarks}
-                                                onChange={(e) =>
-                                                    setRemarks(e.target.value)
-                                                }
+                                                onChange={setRemarks}
+                                                disabled={frozen || act.isPending}
+                                                ariaLabel="Workflow remarks"
+                                                placeholder="Comments, conditions, or reasons — stored with the workflow action…"
                                             />
                                             {remarks.trim().length < MIN_REMARKS && !frozen && (
                                                 <p className="flex items-center gap-1 text-[11px] text-muted-foreground">

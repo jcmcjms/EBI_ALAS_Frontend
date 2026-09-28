@@ -24,6 +24,7 @@ interface RichTextEditorProps {
     onBlur?: () => void;
     placeholder?: string;
     invalid?: boolean;
+    disabled?: boolean;
     ariaLabel?: string;
     className?: string;
 }
@@ -34,6 +35,7 @@ export function RichTextEditor({
     onBlur,
     placeholder,
     invalid,
+    disabled,
     ariaLabel,
     className,
 }: RichTextEditorProps) {
@@ -51,6 +53,7 @@ export function RichTextEditor({
             Placeholder.configure({ placeholder }),
         ],
         content: toRichText(value),
+        editable: !disabled,
         editorProps: {
             attributes: {
                 class: "rich-text min-h-24 px-3 py-2 text-sm outline-none",
@@ -61,6 +64,7 @@ export function RichTextEditor({
             },
         },
         onUpdate: ({ editor: instance }) => {
+            if (disabled) return;
             const html = sanitizeRichText(instance.getHTML());
             onChange(isRichTextEmpty(html) ? "" : html);
         },
@@ -112,6 +116,7 @@ export function RichTextEditor({
                 invalid
                     ? "border-destructive focus-within:border-destructive focus-within:ring-destructive/50"
                     : "border-input",
+                disabled && "opacity-50 cursor-not-allowed",
                 className
             )}
         >
@@ -124,6 +129,7 @@ export function RichTextEditor({
                     label="Bold"
                     pressed={toolbar.bold}
                     onPressedChange={() => editor.chain().focus().toggleBold().run()}
+                    disabled={disabled}
                 >
                     <TextB weight="bold" />
                 </ToolbarToggle>
@@ -131,6 +137,7 @@ export function RichTextEditor({
                     label="Italic"
                     pressed={toolbar.italic}
                     onPressedChange={() => editor.chain().focus().toggleItalic().run()}
+                    disabled={disabled}
                 >
                     <TextItalic weight="bold" />
                 </ToolbarToggle>
@@ -139,6 +146,7 @@ export function RichTextEditor({
                     label="Bulleted list"
                     pressed={toolbar.bulletList}
                     onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
+                    disabled={disabled}
                 >
                     <ListBullets weight="bold" />
                 </ToolbarToggle>
@@ -146,6 +154,7 @@ export function RichTextEditor({
                     label="Numbered list"
                     pressed={toolbar.orderedList}
                     onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
+                    disabled={disabled}
                 >
                     <ListNumbers weight="bold" />
                 </ToolbarToggle>
@@ -154,7 +163,7 @@ export function RichTextEditor({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    disabled={!toolbar.canUndo}
+                    disabled={!toolbar.canUndo || disabled}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => editor.chain().focus().undo().run()}
                     aria-label="Undo"
@@ -166,7 +175,7 @@ export function RichTextEditor({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    disabled={!toolbar.canRedo}
+                    disabled={!toolbar.canRedo || disabled}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => editor.chain().focus().redo().run()}
                     aria-label="Redo"
@@ -186,15 +195,17 @@ interface ToolbarToggleProps {
     label: string;
     pressed: boolean;
     onPressedChange: () => void;
+    disabled?: boolean;
     children: ReactNode;
 }
 
-function ToolbarToggle({ label, pressed, onPressedChange, children }: ToolbarToggleProps) {
+function ToolbarToggle({ label, pressed, onPressedChange, disabled, children }: ToolbarToggleProps) {
     return (
         <Toggle
             size="sm"
             pressed={pressed}
             onPressedChange={onPressedChange}
+            disabled={disabled}
             onMouseDown={(event) => event.preventDefault()}
             aria-label={label}
             title={label}
