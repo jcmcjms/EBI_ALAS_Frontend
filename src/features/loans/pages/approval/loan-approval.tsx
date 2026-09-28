@@ -671,6 +671,7 @@ export function LoanApprovalPage() {
                                         data={formData}
                                         catLoanClass={null}
                                         signatureSlots={signatureSlots ?? undefined}
+                                        actions={detail?.actions}
                                     />
                                 </ApprovalFormViewport>
                             </CardContent>

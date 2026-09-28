@@ -1,4 +1,4 @@
-import { forwardRef, memo } from "react";
+import React, { forwardRef, memo } from "react";
 import { RichText } from "@/src/components/ui/rich-text";
 import { cn } from "@/src/shared/lib/utils";
 import {
@@ -52,6 +52,86 @@ function ageFrom(isoDateStr?: string): string {
     const m = now.getMonth() - birth.getMonth();
     if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
     return String(age);
+}
+
+/**
+ * Canonical audit-trail action as returned by `LoanDetailResponse.actions`.
+ * Kept inline rather than imported from `loan-review` to avoid pulling the
+ * full review API surface into a pure presentational component.
+ */
+export interface ApprovalFormActionEntry {
+    id: number;
+    action: string;
+    fromStatus: string | null;
+    toStatus: string | null;
+    comments: string | null;
+    actionDate: string;
+    actionByUserName: string;
+}
+
+/**
+ * Group actions by local calendar date for the printed audit trail.
+ * Newest-first so the most recent state change sits at the top of the
+ * printout — mirrors how the on-screen ApplicationTimeline defaults.
+ */
+function groupActionsByDate(
+    actions: ApprovalFormActionEntry[],
+): Array<{ date: string; dateLabel: string; entries: ApprovalFormActionEntry[] }> {
+    const map = new Map<string, ApprovalFormActionEntry[]>();
+    for (const a of actions) {
+        const iso = a.actionDate;
+        const dayKey = iso ? iso.slice(0, 10) : "unknown";
+        const bucket = map.get(dayKey);
+        if (bucket) bucket.push(a);
+        else map.set(dayKey, [a]);
+    }
+    return Array.from(map.entries())
+        .sort((a, b) => (a[0] > b[0] ? -1 : a[0] < b[0] ? 1 : 0))
+        .map(([date, entries]) => {
+            const d = new Date(date);
+            const dateLabel = Number.isNaN(d.getTime())
+                ? date
+                : d.toLocaleDateString("en-PH", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                  });
+            return {
+                date,
+                dateLabel,
+                entries: [...entries].sort((a, b) =>
+                    (a.actionDate ?? "") > (b.actionDate ?? "") ? -1 : 1,
+                ),
+            };
+        });
+}
+
+function formatActionTime(iso: string): string {
+    if (!iso) return "-";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "-";
+    return d.toLocaleTimeString("en-PH", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+    });
+}
+
+/**
+ * Render the status transition string for an audit entry.
+ *   "ForRecommendation → ForChecking"
+ *   "ForApproval → Approved"
+ * `null` on either side renders as "—" so the column never collapses.
+ */
+function formatTransition(
+    from: string | null,
+    to: string | null,
+): string {
+    const f = from?.trim() || "—";
+    const t = to?.trim() || "—";
+    return `${f} → ${t}`;
 }
 
 const BLUE = "bg-[#d9eaf7]";
@@ -157,9 +237,15 @@ interface ApprovalFormDocumentProps {
     catLoanClass?: string | null;
     /** Server-resolved signature chain (page 2). Omitted → section hidden. */
     signatureSlots?: SignatureSlotDto[];
+    /**
+     * Canonical audit-trail actions for this loan application. Rendered on
+     * page 3 of the printed form. `undefined` or empty → section hidden.
+     * Sourced from `LoanDetailResponse.actions` by the parent page.
+     */
+    actions?: ApprovalFormActionEntry[];
 }
 
-const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, loanIndex = 0, catLoanClass, signatureSlots }, ref) => {
+const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, loanIndex = 0, catLoanClass, signatureSlots, actions }, ref) => {
     const client = data?.client ?? ({} as LoanApplicationFormData["client"]);
     const branchType = data?.branchType ?? ({} as LoanApplicationFormData["branchType"]);
     // Multi-loan: the printed approval form is scoped to one loan. The
@@ -618,6 +704,104 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                         )}
                     </div>
                 </section>
+
+                {/* ══ PAGE 3 — Application history / audit trail ══
+                    Rendered only when the parent passes actions.
+                    `break-before-page` starts a fresh physical sheet;
+                    `break-inside-avoid` keeps each date-group atomic so
+                    no row is torn between pages. Continuation header
+                    mirrors page 2 so a separated sheet is attributable. */}
+                {actions && actions.length > 0 && (
+                    <section className="break-before-page">
+                        <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
+                            <span className="text-sm font-bold underline">
+                                LOAN APPROVAL FORM (Continuation)
+                            </span>
+                            <span className="tabular-nums">
+                                {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{" "}
+                                {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}
+                            </span>
+                        </div>
+
+                        <div className="border-2 border-t-0 border-black print:border-t-2">
+                            <div className={cn(B, "text-center font-bold")}>APPLICATION HISTORY</div>
+
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th
+                                            colSpan={4}
+                                            className="border border-black bg-[#d9eaf7] px-1.5 py-1 text-left text-xs font-bold uppercase tracking-wider"
+                                        >
+                                            Audit trail recorded by the system
+                                        </th>
+                                    </tr>
+                                    <tr className="[&>th]:border-b [&>th]:border-black [&>th]:px-1.5 [&>th]:py-1 [&>th]:text-left [&>th]:text-xs [&>th]:font-bold">
+                                        <th className="w-[15%]">Date / Time</th>
+                                        <th className="w-[20%]">Actor</th>
+                                        <th className="w-[25%]">Action · Status</th>
+                                        <th>Remarks / Conditions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {groupActionsByDate(actions).map((group) => (
+                                        <React.Fragment key={group.date}>
+                                            <tr className="break-inside-avoid align-top">
+                                                <td
+                                                    colSpan={4}
+                                                    className="border border-black border-b-0 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-slate-700"
+                                                >
+                                                    {group.dateLabel}
+                                                </td>
+                                            </tr>
+                                            {group.entries.map((entry) => (
+                                                <tr
+                                                    key={entry.id}
+                                                    className="break-inside-avoid [&>td]:border [&>td]:border-black [&>td]:px-1.5 [&>td]:py-1 [&>td]:align-top"
+                                                >
+                                                    <td className="whitespace-nowrap tabular-nums">
+                                                        <div className="text-[10px]">{isoDate(entry.actionDate)}</div>
+                                                        <div className="text-[10px] text-slate-600">
+                                                            {formatActionTime(entry.actionDate)}
+                                                        </div>
+                                                    </td>
+                                                    <td className="text-xs">
+                                                        {dash(entry.actionByUserName)}
+                                                    </td>
+                                                    <td className="text-xs">
+                                                        <div className="font-medium">
+                                                            {dash(entry.action)}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-600">
+                                                            {formatTransition(
+                                                                entry.fromStatus,
+                                                                entry.toStatus,
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="text-xs whitespace-pre-line">
+                                                        {entry.comments?.trim() || (
+                                                            <span className="text-slate-400">—</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            <div className="mt-4 px-2 pb-3 text-[10px] italic text-slate-600">
+                                End of application history for LAM {dash(branchType.lai)} · PN{" "}
+                                {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}.
+                                Generated {new Date().toLocaleString("en-PH", {
+                                    dateStyle: "medium",
+                                    timeStyle: "short",
+                                })}.
+                            </div>
+                        </div>
+                    </section>
+                )}
             </ApprovalFormSheet>
         </div>
     );
