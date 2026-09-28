@@ -49,6 +49,10 @@ export function useDeskQueue() {
             return unwrapApiData(envelope);
         },
         staleTime: 30_000, // 30s — desk state changes infrequently
+        // Polling fallback alongside the SignalR invalidation in
+        // useApprovalRealtime: if the socket drops, the desk still
+        // converges within 30s (paused while the tab is hidden).
+        refetchInterval: 30_000,
     });
 }
 
