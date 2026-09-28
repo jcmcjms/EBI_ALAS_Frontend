@@ -145,7 +145,11 @@ interface TimeLapsedIndicatorProps {
 function TimeLapsedIndicator({ lastActionDate, status, slaPolicy }: TimeLapsedIndicatorProps) {
     const now = useContext(SharedTimerContext);
 
-    const assessment = assessAging(status, lastActionDate, now, slaPolicy);
+    // Freeze the timer for terminal statuses — the clock stops at the
+    // moment of the last action so the displayed elapsed time never grows.
+    const effectiveNow = status === "Cancelled" ? new Date(lastActionDate).getTime() : now;
+
+    const assessment = assessAging(status, lastActionDate, effectiveNow, slaPolicy);
 
     return (
         <span
@@ -154,13 +158,13 @@ function TimeLapsedIndicator({ lastActionDate, status, slaPolicy }: TimeLapsedIn
                     ? "No handling SLA for this stage"
                     : `${assessment.label} — ${assessment.pctOfSla?.toFixed(0)}% consumed`
             }
-            aria-label={`Time in stage ${formatElapsed(now - new Date(lastActionDate).getTime())}, ${assessment.label}`}
+            aria-label={`Time in stage ${formatElapsed(effectiveNow - new Date(lastActionDate).getTime())}, ${assessment.label}`}
             className={cn(
                 "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium tabular-nums",
                 AGING_BADGE_CLASS[assessment.tier],
             )}
         >
-            {formatElapsed(now - new Date(lastActionDate).getTime())}
+            {formatElapsed(effectiveNow - new Date(lastActionDate).getTime())}
         </span>
     );
 }
