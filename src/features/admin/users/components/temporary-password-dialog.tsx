@@ -49,8 +49,23 @@ export function TemporaryPasswordDialog({
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
-            // Clipboard blocked (permissions/iframe): fall back to reveal
-            setRevealed(true);
+            // navigator.clipboard can fail when the dialog steals focus or
+            // the page isn't in a secure context. Fall back to a temporary
+            // textarea + execCommand which works regardless of focus state.
+            try {
+                const textarea = document.createElement("textarea");
+                textarea.value = credential.temporaryPassword;
+                textarea.style.position = "fixed";
+                textarea.style.opacity = "0";
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textarea);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } catch {
+                setRevealed(true);
+            }
         }
     };
 
