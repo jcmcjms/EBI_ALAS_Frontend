@@ -1,10 +1,11 @@
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import { Label } from "@/src/components/ui/label";
 import { Badge } from "@/src/components/ui/badge";
 import { CheckCircle } from "@phosphor-icons/react";
 
 import { SectionCard } from "./section-card";
 import { PerLoanTabs } from "./per-loan-tabs";
+import { RichTextEditor } from "@/src/components/ui/rich-text-editor";
 import { getSection } from "@/src/features/loans/constants/sections";
 import { useActiveLoan } from "../active-loan-context";
 import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
@@ -40,7 +41,7 @@ export function VerificationSection() {
 }
 
 function VerificationFields({ loanIndex }: { loanIndex: number }) {
-    const { register, formState } = useFormContext<LoanApplicationFormData>();
+    const { control, formState } = useFormContext<LoanApplicationFormData>();
     const findingsError = formState.errors.loans?.[loanIndex]?.verification?.findings?.message;
 
     return (
@@ -49,17 +50,19 @@ function VerificationFields({ loanIndex }: { loanIndex: number }) {
                 <Label className="text-xs text-muted-foreground">Findings / Notes</Label>
                 {findingsError && <span className="text-xs text-destructive font-medium">{findingsError}</span>}
             </div>
-            <textarea
-                {...register(`loans.${loanIndex}.verification.findings`)}
-                placeholder="Document any findings from verification (e.g., employment confirmed, payslip validated, collateral inspected)..."
-                rows={3}
-                aria-invalid={!!findingsError}
-                className={
-                    "w-full rounded-md border bg-transparent px-3 py-2 text-sm " +
-                    "placeholder:text-muted-foreground focus-visible:border-ring " +
-                    "focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y " +
-                    (findingsError ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50" : "border-input")
-                }
+            <Controller
+                control={control}
+                name={`loans.${loanIndex}.verification.findings`}
+                render={({ field }) => (
+                    <RichTextEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        invalid={!!findingsError}
+                        ariaLabel={`Verification findings for loan ${loanIndex + 1}`}
+                        placeholder="Document any findings from verification (e.g., employment confirmed, payslip validated, collateral inspected)..."
+                    />
+                )}
             />
         </div>
     );

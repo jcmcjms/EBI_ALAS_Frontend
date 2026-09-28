@@ -4,6 +4,7 @@ import { FilePdf, Printer, CaretLeft, CaretRight } from "@phosphor-icons/react";
 
 import { Button } from "@/src/components/ui/button";
 import { FormTabStrip } from "@/src/components/ui/form-tab-strip";
+import { RichText } from "@/src/components/ui/rich-text";
 import { cn } from "@/src/shared/lib/utils";
 import { ApprovalFormSheet } from "@/src/features/loans/components/approval-form-sheet";
 
@@ -632,10 +633,7 @@ function SingleLoanApprovalForm({
                             </div>
                             <div className={cn(B, "min-h-40 p-1.5")}>
                                 <div className="font-bold">Verifications Conducted:</div>
-                                <ol className="mt-1 space-y-0.5">
-                                    {verification?.findings && <li>1) {verification.findings}</li>}
-                                    {!verification?.findings && <li>-</li>}
-                                </ol>
+                                <RichText value={verification?.findings} className="mt-1" />
                                 <div className="mt-4 font-bold">Other Remarks</div>
                                 <div className="mt-1">REMARKS:</div>
                                 <ol className="space-y-0.5">

@@ -1,4 +1,5 @@
 import { forwardRef, memo } from "react";
+import { RichText } from "@/src/components/ui/rich-text";
 import { cn } from "@/src/shared/lib/utils";
 import {
     parseProductCode,
@@ -547,10 +548,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                             </div>
                             <div className={cn(B, "min-h-40 p-1.5")}>
                                 <div className="font-bold">Verifications Conducted:</div>
-                                <ol className="mt-1 space-y-0.5">
-                                    {verification?.findings && <li>1) {verification.findings}</li>}
-                                    {!verification?.findings && <li>-</li>}
-                                </ol>
+                                <RichText value={verification?.findings} className="mt-1" />
                                 <div className="mt-4 font-bold">Other Remarks</div>
                                 <div className="mt-1">REMARKS:</div>
                                 <ol className="space-y-0.5">

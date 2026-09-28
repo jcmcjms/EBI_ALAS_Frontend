@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isRichTextEmpty, RICH_TEXT_MAX_CHARS, richTextToPlainText } from "@/src/shared/lib/rich-text";
 
 /**
  * Typed view of the backend's `loan_data.creation_type` byte — the
@@ -239,14 +240,17 @@ export const loanParametersSchema = z.object({
 });
 
 // ── Verification Conducted ─────────────────────────────────────
-// `findings` is required: the AO must record what was verified
-// (employment, payslip, collateral, etc.) before the application can
-// be submitted. Empty/whitespace-only input is rejected.
+// `findings` now carries a sanitized HTML subset (bold/italic/lists) from the
+// rich-text editor, so "required" and length rules run against the *text
+// content*: `<p></p>` is an empty document, not findings.
 export const verificationSchema = z.object({
     findings: z
         .string()
-        .trim()
-        .min(1, "Findings are required. Document what was verified."),
+        .refine((html) => !isRichTextEmpty(html), "Findings are required. Document what was verified.")
+        .refine(
+            (html) => richTextToPlainText(html).length <= RICH_TEXT_MAX_CHARS,
+            `Findings must be ${RICH_TEXT_MAX_CHARS} characters or fewer.`
+        ),
 });
 
 // ── Deviations / Remarks ───────────────────────────────────────
