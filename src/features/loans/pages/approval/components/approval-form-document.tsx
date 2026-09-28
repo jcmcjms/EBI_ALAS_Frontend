@@ -10,6 +10,10 @@ import {
     resolveApprovalTermDays,
     toAnnualRatePercent,
     buildProductLine,
+    isBlankReloan,
+    isBlankBuyOut,
+    isBlankIncomingLoan,
+    printableObligationRows,
 } from "@/src/features/loans/utils/loan-approval-utils";
 import { ApprovalFormSheet } from "@/src/features/loans/components/approval-form-sheet";
 import type {
@@ -75,6 +79,19 @@ function L({ children, className, colSpan, rowSpan }: TableCellProps) {
 function V({ children, blue, className, colSpan, rowSpan }: TableCellProps) {
     return (
         <td colSpan={colSpan} rowSpan={rowSpan} className={cn(B, "px-1.5 py-0.5", blue && BLUE, className)}>
+            {children}
+        </td>
+    );
+}
+
+/**
+ * Right rail (col 5) of the obligations matrix. The legacy layout drew it
+ * as a single rowSpan=21 cell; per-row cells keep the vertical rule intact
+ * while the conditional reloan/buy-out/incoming blocks above come and go.
+ */
+function RailCell({ children }: { children?: React.ReactNode }) {
+    return (
+        <td className="border-l border-black px-1.5 py-0.5 text-center tabular-nums">
             {children}
         </td>
     );
@@ -155,6 +172,12 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
     const ebiReloans = primaryLoan?.ebiReloans ?? [];
     const buyOuts = primaryLoan?.buyOuts ?? [];
     const incomingLoans = primaryLoan?.incomingLoans ?? [];
+
+    // Printed obligation rows: blank wizard placeholders are dropped so an
+    // empty matrix collapses instead of printing the legacy fixed dash rows.
+    const reloanRows = printableObligationRows(ebiReloans, isBlankReloan);
+    const buyOutRows = printableObligationRows(buyOuts, isBlankBuyOut);
+    const incomingRows = printableObligationRows(incomingLoans, isBlankIncomingLoan);
 
     // Bail out cleanly when no loan is selected so the parent renders an
     // empty state instead of an explosion of `undefined.X` reads.
@@ -394,11 +417,14 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                 </div>
 
                 {/* ── EBI / Buy-Out / Incoming ──
-                    Mirrors loan_approval_template.pdf: one fixed grid,
-                    matrix columns end at ~71% (empty right cell holds the
-                    incoming-loan dash column), and the summary stack
-                    reuses the matrix columns below the buy-out total. */}
-                <table className={cn(B, "w-full table-fixed border-collapse border-t-0")}>
+                    Mirrors loan_approval_template.pdf: one fixed grid whose
+                    matrix columns end at ~71%; the right rail holds the
+                    incoming-loan column and the summary stack reuses the
+                    matrix columns. Each obligation block renders only when
+                    it carries values — the legacy fixed blank rows wasted
+                    half a sheet and cut the page. `break-inside-avoid`
+                    keeps the compact grid whole near page boundaries. */}
+                <table className={cn(B, "w-full table-fixed border-collapse border-t-0 break-inside-avoid")}>
                     <colgroup>
                         <col className="w-[22%]" />
                         <col className="w-[13%]" />
@@ -407,53 +433,62 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                         <col className="w-[29%]" />
                     </colgroup>
                     <tbody>
-                        <tr>
-                            <td colSpan={4} className="px-1.5 py-0.5 font-bold">Add: EBI Accounts for reloans</td>
-                            <td rowSpan={21} className="border-l border-black px-1.5 py-0.5" />
-                        </tr>
-                        <tr>
-                            <td className="px-1.5 py-0.5 font-bold underline">Name of Financial Institution</td>
-                            <td className="px-1.5 py-0.5 text-right font-bold underline">Deductions</td>
-                            <td className="px-1.5 py-0.5 text-right font-bold underline">OB to be paid/closed</td>
-                            <td className="px-1.5 py-0.5 font-bold underline">PN Number</td>
-                        </tr>
-                        {Array.from({ length: 6 }).map((_, i) => {
-                            const r = ebiReloans[i];
-                            return (
-                                <tr key={`reloan-${i}`}>
-                                    <td className="px-1.5 py-0.5">{r ? r.name || r.pn : ""}</td>
-                                    <td className="px-1.5 py-0.5 text-center tabular-nums">{r ? num(r.existingDeduction) : "-"}</td>
-                                    <td className="px-1.5 py-0.5 text-center tabular-nums">{r ? num(r.outstandingBalance) : "-"}</td>
-                                    <td className="px-1.5 py-0.5">{r ? r.pn : ""}</td>
+                        {reloanRows.length > 0 && (
+                            <>
+                                <tr>
+                                    <td colSpan={4} className="px-1.5 py-0.5 font-bold">Add: EBI Accounts for reloans</td>
+                                    <RailCell />
                                 </tr>
-                            );
-                        })}
-                        <tr>
-                            <td className="px-1.5 py-0.5 font-bold">Total Accounts for reloans</td>
-                            <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={TOP_DOUBLE}>{num(c.ebiDeductions)}</td>
-                            <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={TOP_DOUBLE}>{num(c.ebiOb)}</td>
-                            <td />
-                        </tr>
-                        <tr>
-                            <td colSpan={4} className="px-1.5 py-0.5 font-bold">Add: Buy-Out Accounts from other FI's</td>
-                        </tr>
-                        {Array.from({ length: 6 }).map((_, i) => {
-                            const b = buyOuts[i];
-                            return (
-                                <tr key={`buyout-${i}`}>
-                                    <td className="px-1.5 py-0.5">{b ? b.name || b.pn : ""}</td>
-                                    <td className="px-1.5 py-0.5 text-center tabular-nums">{b ? num(b.amortization) : "-"}</td>
-                                    <td className="px-1.5 py-0.5 text-center tabular-nums">{b ? num(b.outstandingBalance) : "-"}</td>
-                                    <td className="px-1.5 py-0.5">{b ? b.pn : ""}</td>
+                                <tr>
+                                    <td className="px-1.5 py-0.5 font-bold underline">Name of Financial Institution</td>
+                                    <td className="px-1.5 py-0.5 text-right font-bold underline">Deductions</td>
+                                    <td className="px-1.5 py-0.5 text-right font-bold underline">OB to be paid/closed</td>
+                                    <td className="px-1.5 py-0.5 font-bold underline">PN Number</td>
+                                    <RailCell />
                                 </tr>
-                            );
-                        })}
-                        <tr>
-                            <td className="px-1.5 py-0.5 font-bold">Total Accounts for Buy-out</td>
-                            <td className="px-1.5 py-0.5 text-center tabular-nums" style={TOP_DOUBLE}>-</td>
-                            <td className="px-1.5 py-0.5 text-center tabular-nums" style={TOP_DOUBLE}>-</td>
-                            <td />
-                        </tr>
+                                {reloanRows.map((r, i) => (
+                                    <tr key={`reloan-${i}`}>
+                                        <td className="px-1.5 py-0.5">{r.name || r.pn}</td>
+                                        <td className="px-1.5 py-0.5 text-center tabular-nums">{num(r.existingDeduction)}</td>
+                                        <td className="px-1.5 py-0.5 text-center tabular-nums">{num(r.outstandingBalance)}</td>
+                                        <td className="px-1.5 py-0.5">{r.pn}</td>
+                                        <RailCell />
+                                    </tr>
+                                ))}
+                                <tr>
+                                    <td className="px-1.5 py-0.5 font-bold">Total Accounts for reloans</td>
+                                    <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={TOP_DOUBLE}>{num(c.ebiDeductions)}</td>
+                                    <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={TOP_DOUBLE}>{num(c.ebiOb)}</td>
+                                    <td />
+                                    <RailCell />
+                                </tr>
+                            </>
+                        )}
+
+                        {buyOutRows.length > 0 && (
+                            <>
+                                <tr>
+                                    <td colSpan={4} className="px-1.5 py-0.5 font-bold">Add: Buy-Out Accounts from other FI's</td>
+                                    <RailCell />
+                                </tr>
+                                {buyOutRows.map((b, i) => (
+                                    <tr key={`buyout-${i}`}>
+                                        <td className="px-1.5 py-0.5">{b.name || b.pn}</td>
+                                        <td className="px-1.5 py-0.5 text-center tabular-nums">{num(b.amortization)}</td>
+                                        <td className="px-1.5 py-0.5 text-center tabular-nums">{num(b.outstandingBalance)}</td>
+                                        <td className="px-1.5 py-0.5">{b.pn}</td>
+                                        <RailCell />
+                                    </tr>
+                                ))}
+                                <tr>
+                                    <td className="px-1.5 py-0.5 font-bold">Total Accounts for Buy-out</td>
+                                    <td className="px-1.5 py-0.5 text-center tabular-nums" style={TOP_DOUBLE}>-</td>
+                                    <td className="px-1.5 py-0.5 text-center tabular-nums" style={TOP_DOUBLE}>-</td>
+                                    <td />
+                                    <RailCell />
+                                </tr>
+                            </>
+                        )}
 
                         {/* ── summary stack: reuses the matrix columns ── */}
                         <tr>
@@ -461,47 +496,55 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                             <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={TOP_DOUBLE}>{num(c.ebiDeductions)}</td>
                             <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={TOP_DOUBLE}>{num(c.ebiOb)}</td>
                             <td />
+                            <RailCell />
                         </tr>
                         <tr>
                             <td className="px-1.5 py-0.5 font-bold">Total Disposable</td>
                             <td className="px-1.5 py-0.5 text-right tabular-nums" style={DOUBLE_UNDERLINE}>{num(c.totalDisposableGross)}</td>
                             <td />
                             <td />
+                            <RailCell />
                         </tr>
                         <tr>
                             <td className="px-1.5 py-0.5 font-bold">Less: Minimum NTHP</td>
                             <td className="px-1.5 py-0.5 text-right tabular-nums">{num(c.minimumNthp)}</td>
                             <td />
                             <td />
+                            <RailCell />
                         </tr>
-                        <tr>
-                            <td className="px-1.5 py-0.5 font-bold">Incoming/undeducted Loans:</td>
-                            <td />
-                            <td colSpan={2} className="px-1.5 py-0.5 font-bold underline">Remarks on Incoming/Unded Loans</td>
-                        </tr>
-                        {Array.from({ length: 5 }).map((_, i) => {
-                            const inc = incomingLoans[i];
-                            return (
-                                <tr key={`incoming-${i}`}>
+
+                        {incomingRows.length > 0 && (
+                            <>
+                                <tr>
+                                    <td className="px-1.5 py-0.5 font-bold">Incoming/undeducted Loans:</td>
                                     <td />
-                                    <td className="px-1.5 py-0.5 text-center tabular-nums">{inc ? num(inc.deductions) : "-"}</td>
-                                    <td colSpan={2} className="px-1.5 py-0.5">{inc ? inc.remarks : ""}</td>
-                                    <td className="px-1.5 py-0.5 text-center">{inc ? "" : "-"}</td>
+                                    <td colSpan={2} className="px-1.5 py-0.5 font-bold underline">Remarks on Incoming/Unded Loans</td>
+                                    <RailCell />
                                 </tr>
-                            );
-                        })}
+                                {incomingRows.map((inc, i) => (
+                                    <tr key={`incoming-${i}`}>
+                                        <td className="px-1.5 py-0.5">{inc.name}</td>
+                                        <td className="px-1.5 py-0.5 text-center tabular-nums">{num(inc.deductions)}</td>
+                                        <td colSpan={2} className="px-1.5 py-0.5">{inc.remarks}</td>
+                                        <RailCell />
+                                    </tr>
+                                ))}
+                            </>
+                        )}
+
                         <tr>
                             <td className="px-1.5 py-0.5 font-bold">Total Deductions</td>
                             <td className="px-1.5 py-0.5 text-right tabular-nums" style={TOP_DOUBLE}>{num(c.totalDeductionsFinal)}</td>
                             <td />
                             <td />
-                            <td rowSpan={3} className="border-l border-black px-1.5 py-0.5" />
+                            <RailCell />
                         </tr>
                         <tr>
                             <td className="px-1.5 py-0.5 font-bold">Total Disposable</td>
                             <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={DOUBLE_UNDERLINE}>{num(c.totalDisposableNet)}</td>
                             <td />
                             <td />
+                            <RailCell />
                         </tr>
                         <tr>
                             <td className="px-1.5 py-0.5 font-bold">Maximum Loanable Amount</td>
@@ -512,6 +555,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                             </td>
                             <td />
                             <td />
+                            <RailCell />
                         </tr>
                     </tbody>
                 </table>

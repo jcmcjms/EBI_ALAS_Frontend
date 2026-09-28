@@ -20,6 +20,9 @@
 import { parseProductCode } from "./loan-product-display";
 import { computeMaximumLoanableAmount } from "./loan-computations";
 import type {
+    BuyOut,
+    EbiReloan,
+    IncomingLoan,
     LoanApplicationFormData,
     SelectedLoan,
 } from "../schemas/schema";
@@ -215,4 +218,51 @@ export function computeLoanMetrics(
         totalDisposableNet,
         maximumLoanableAmount,
     };
+}
+
+// ── Printed obligation rows ─────────────────────────────────────────
+// The legacy Excel template reserved fixed blank rows for the reloan /
+// buy-out / incoming matrices. Printing those placeholders on the digital
+// form wasted half a sheet and pushed the page-1 grid across the page
+// boundary (the "page is cut" defect). Both print surfaces
+// (`approval-form-document.tsx`, `approval-form-preview.tsx`) therefore
+// render an obligation block only when it carries at least one row with
+// values.
+
+/** A reloan row prints nothing when it has no identifier and no amounts. */
+export function isBlankReloan(row: EbiReloan): boolean {
+    return (
+        !row.name?.trim() &&
+        !row.pn?.trim() &&
+        !row.existingDeduction &&
+        !row.outstandingBalance
+    );
+}
+
+/** A buy-out row prints nothing when it has no identifier and no amounts. */
+export function isBlankBuyOut(row: BuyOut): boolean {
+    return (
+        !row.name?.trim() &&
+        !row.pn?.trim() &&
+        !row.amortization &&
+        !row.outstandingBalance
+    );
+}
+
+/** An incoming row prints nothing when it has no name/remarks and no deduction. */
+export function isBlankIncomingLoan(row: IncomingLoan): boolean {
+    return !row.name?.trim() && !row.remarks?.trim() && !row.deductions;
+}
+
+/**
+ * Rows worth printing for an obligation matrix. Blank wizard placeholders
+ * are dropped so empty sections collapse instead of printing dash rows.
+ * Total-safe: every dropped field is zero/empty, so `computeLoanMetrics`
+ * sums are unchanged whether it sees the raw or the filtered list.
+ */
+export function printableObligationRows<T>(
+    rows: readonly T[] | undefined,
+    isBlank: (row: T) => boolean,
+): T[] {
+    return (rows ?? []).filter((row) => !isBlank(row));
 }
