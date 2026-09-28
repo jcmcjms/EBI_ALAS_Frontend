@@ -534,6 +534,14 @@ export function LoanCreationPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Scope ALL browser printing (Print button and Ctrl+P alike) to the
+  // approval form preview while this page is mounted — see the print-scope
+  // block in index.css. Removed on unmount so other pages print normally.
+  useEffect(() => {
+    document.body.classList.add("print-form-only");
+    return () => document.body.classList.remove("print-form-only");
+  }, []);
+
   const scrollToSection = useCallback((id: SectionId) => {
     const element = sectionRefs.current[id];
     if (!element) return;

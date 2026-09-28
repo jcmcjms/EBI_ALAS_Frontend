@@ -146,3 +146,57 @@
     color: var(--muted-foreground);
     pointer-events: none;
 }
+
+/* ── Print scoping: emit ONLY the approval-form sheet ──────────────────
+   While a page opts in via `body.print-form-only`, printing emits only
+   the subtree marked [data-print-root] (the 800px LOAN APPROVAL FORM
+   sheet):
+   1. everything outside the root's ancestor chain is display:none
+      (shell, sidebar, headers, right rail, toast/dialog portals);
+   2. chrome *ancestors* (card, grid, scroll/zoom viewport, shell) are
+      neutralized — block flow, no clipping, zoom/transform reset — so
+      the sheet paginates at true size;
+   3. the root itself loses screen padding; @page margins provide the
+      paper whitespace.
+   Descendants of the root keep their own print: utilities, so page 2's
+   break-before-page and the print-only continuation header now work as
+   designed instead of being buried under app chrome. */
+@media print {
+    body.print-form-only :not([data-print-root], [data-print-root] *, :has([data-print-root])) {
+        display: none !important;
+    }
+
+    body.print-form-only :has([data-print-root]) {
+        display: block !important;
+        position: static !important;
+        overflow: visible !important;
+        zoom: 1 !important;
+        transform: none !important;
+        filter: none !important;
+        backdrop-filter: none !important;
+        contain: none !important;
+        width: auto !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    [data-print-root] {
+        padding: 0 !important;
+        background: white !important;
+        color: black !important;
+    }
+}
+
+/* Paper whitespace for bank documents. Deliberately no `size:` — the
+   branch's paper choice (Letter vs A4) stays under the user's control in
+   the print dialog; the sheet's max-w-full adapts to either. */
+@page {
+    margin: 10mm;
+}

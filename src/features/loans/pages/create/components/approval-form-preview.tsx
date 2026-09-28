@@ -771,6 +771,7 @@ export const ApprovalFormPreview = forwardRef<
                 <div
                     ref={ref}
                     id="approval-form-preview"
+                    data-print-root
                     className="bg-white text-black print:bg-white"
                 >
                     {/* Empty state */}

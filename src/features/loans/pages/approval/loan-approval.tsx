@@ -337,6 +337,14 @@ export function LoanApprovalPage() {
         }
     }, [groupLoans, id, qc]);
 
+    // Scope ALL browser printing (Print button and Ctrl+P alike) to the
+    // approval sheet while this page is mounted — see the print-scope
+    // block in index.css. Removed on unmount so other pages print normally.
+    useEffect(() => {
+        document.body.classList.add("print-form-only");
+        return () => document.body.classList.remove("print-form-only");
+    }, []);
+
     const detail = loan.data;
     const frozen = detail ? TERMINAL.includes(detail.status) : false;
     const formData = useMemo(
