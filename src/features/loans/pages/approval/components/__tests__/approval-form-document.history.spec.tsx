@@ -125,4 +125,25 @@ describe("ApprovalFormDocument — application history (page 3)", () => {
         const dayHeaders = screen.getAllByText(/September 2[78], 2026/);
         expect(dayHeaders.length).toBe(2);
     });
+
+    it("renders history comments as paragraph elements", () => {
+        const actions: ApprovalFormActionEntry[] = [
+            {
+                id: 1,
+                action: "Recommended",
+                fromStatus: "ForRecommendation",
+                toStatus: "ForChecking",
+                comments: "<p>First history note</p><p>Second history note</p>",
+                actionDate: "2026-09-28T09:30:00Z",
+                actionByUserName: "Pedro Recommender",
+            },
+        ];
+
+        render(<ApprovalFormDocument data={stubForm} actions={actions} />);
+        const first = screen.getByText("First history note");
+        const second = screen.getByText("Second history note");
+        expect(first.tagName).toBe("P");
+        expect(second.tagName).toBe("P");
+        expect(first.parentElement).toBe(second.parentElement);
+    });
 });

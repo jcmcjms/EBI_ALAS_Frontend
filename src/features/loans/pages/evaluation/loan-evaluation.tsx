@@ -17,6 +17,7 @@ import {
     MagnifyingGlassPlus,
 } from "@phosphor-icons/react";
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
+import { RichText } from "@/src/components/ui/rich-text";
 import axios from "axios";
 import { getErrorMessage } from "@/src/lib/apiClient";
 
@@ -481,11 +482,9 @@ export function LoanEvaluationPage() {
                                                             ).toLocaleString()}
                                                         </p>
                                                         {h.comments && (
-                                                            <p className="mt-1 border-l-2 border-border pl-2 italic text-muted-foreground">
-                                                                &ldquo;
-                                                                {h.comments}
-                                                                &rdquo;
-                                                            </p>
+                                                            <div className="mt-1 border-l-2 border-border pl-2 italic text-muted-foreground">
+                                                                <RichText value={h.comments} emptyFallback={null} />
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </li>

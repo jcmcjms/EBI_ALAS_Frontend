@@ -10,6 +10,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/src/components/ui/alert";
+import { RichText } from "@/src/components/ui/rich-text";
 import { getLoanTimeline, type TimelineEvent } from "../api/loan-review";
 import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import { describeEvent, relativeTime } from "../utils/loan-timeline";
@@ -173,7 +174,7 @@ export function ApplicationTimeline({ loanId, variant = "panel" }: ApplicationTi
                                         </p>
                                         {e.comment && (
                                             <blockquote className="border-l-2 border-border pl-2 text-xs italic text-muted-foreground">
-                                                &ldquo;{e.comment}&rdquo;
+                                                <RichText value={e.comment} emptyFallback={null} />
                                             </blockquote>
                                         )}
                                     </div>

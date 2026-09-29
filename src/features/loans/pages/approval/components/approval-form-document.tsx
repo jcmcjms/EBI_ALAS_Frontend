@@ -778,8 +778,10 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                                                             )}
                                                         </div>
                                                     </td>
-                                                    <td className="text-xs whitespace-pre-line">
-                                                        {entry.comments?.trim() || (
+                                                    <td className="text-xs">
+                                                        {entry.comments?.trim() ? (
+                                                            <RichText value={entry.comments} emptyFallback={<span className="text-slate-400">—</span>} />
+                                                        ) : (
                                                             <span className="text-slate-400">—</span>
                                                         )}
                                                     </td>

@@ -31,6 +31,7 @@ import {
 import { Button } from "@/src/components/ui/button";
 import { Textarea } from "@/src/components/ui/textarea";
 import { RichTextEditor } from "@/src/components/ui/rich-text-editor";
+import { RichText } from "@/src/components/ui/rich-text";
 import { Label } from "@/src/components/ui/label";
 import { Badge } from "@/src/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
@@ -690,7 +691,7 @@ export function LoanApprovalPage() {
                                                                             : "This terminates the loan process and notifies the encoder."}
                                                                     {remarks.trim() && (
                                                                         <span className="mt-2 block border-l-2 border-border pl-2 italic">
-                                                                            &ldquo;{remarks.trim()}&rdquo;
+                                                                            <RichText value={remarks} emptyFallback={null} />
                                                                         </span>
                                                                     )}
                                                                 </AlertDialogDescription>
