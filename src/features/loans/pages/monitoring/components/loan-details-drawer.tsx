@@ -89,7 +89,10 @@ export function LoanDetailsDrawer({
                         ) : (
                             "Audit trail & history"
                         )}
-                        {/* Document flag badge — shows next to status badge */}
+                        {/* Document flag badge — shows next to status badge.
+                         * The `?? record` fallback covers query-latency only;
+                         * once the detail query resolves, its count is the
+                         * source of truth (SQL COUNT, not in-memory nav). */}
                         {(detail.data?.documentFlag ?? record?.documentFlag) && (
                             <DocumentFlagBadge
                                 flag={detail.data?.documentFlag ?? record?.documentFlag ?? null}
