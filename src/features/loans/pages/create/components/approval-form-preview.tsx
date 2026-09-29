@@ -200,7 +200,7 @@ function SingleLoanApprovalForm({
     // Single source of truth for the printed numbers (6% deduction plug,
     // frozen-first term/rate, PMT, capacity/MLA) — shared with
     // approval-form-document.tsx so preview and document cannot diverge.
-    const c = computeLoanMetrics(loan, {
+    const c = computeLoanMetrics({ ...loan, parameters }, {
         outstandingLoans,
         ebiReloans,
         buyOuts,
