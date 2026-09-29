@@ -11,6 +11,7 @@ import {
     LEGACY_DOC_STAMP_RATE,
     LEGACY_NOTARIAL_FEE,
 } from "@/src/features/loans/utils/loan-approval-utils";
+import { computeMonthlyAmortization } from "@/src/features/loans/utils/loan-computations";
 
 /**
  * Shared case table for approval-form convention rules. These tests are
@@ -152,8 +153,11 @@ describe("computeLoanMetrics deduction convention", () => {
         creationTypeCode: 0,
         creationTypeLabel: "New Loan",
         branchCode: "B1",
-        approvalTermDays: 1800,
-        annualRatePercent: 7.5,
+        // Frozen values DIVERGE from the re-derived ones
+        // (resolveApprovalTermDays(1856, 60) === 1800; toAnnualRatePercent(7.5) === 7.5)
+        // so an always-re-derive implementation cannot pass the preference test.
+        approvalTermDays: 2160,
+        annualRatePercent: 9.66,
         parameters: {
             product: "APDS - RPSU",
             purpose: "Salary",
@@ -208,8 +212,15 @@ describe("computeLoanMetrics deduction convention", () => {
 
     it("prefers frozen approvalTermDays and annualRatePercent", () => {
         const c = computeLoanMetrics(loan, obligations);
-        expect(c.approvalTermDays).toBe(1800);
-        expect(c.annualRatePercent).toBe(7.5);
+        // Frozen values (2160 / 9.66) diverge from the re-derived ones
+        // (1800 / 7.5) — this test fails if frozen fields are ignored.
+        expect(c.approvalTermDays).toBe(2160);
+        expect(c.annualRatePercent).toBe(9.66);
+        // PMT is locked to the frozen/resolved term and rate.
+        expect(c.amortization).toBeCloseTo(
+            computeMonthlyAmortization(322000, 9.66, 2160),
+            2,
+        );
     });
 
     it("re-derives term/rate when frozen fields are absent", () => {

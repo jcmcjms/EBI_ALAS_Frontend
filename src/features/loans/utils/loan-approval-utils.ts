@@ -167,7 +167,7 @@ export function computeLoanMetrics(
     const termDays = params.term || 0;
     const approvalTermDays =
         primaryLoan.approvalTermDays
-        ?? resolveApprovalTermDays(params.term || 0, params.policyTermMonths);
+        ?? resolveApprovalTermDays(termDays, params.policyTermMonths);
     const annualRatePercent =
         primaryLoan.annualRatePercent
         ?? toAnnualRatePercent(params.interestRate);
