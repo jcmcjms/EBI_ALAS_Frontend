@@ -16,6 +16,15 @@ export interface QueuedLoanDto {
     ownerName: string | null;
     enqueuedAt: string;
     status: string;
+    branchCode: string;
+    productCode: string;
+    product: string;
+    loanType: string | null;
+    purpose: string | null;
+    proposedAmount: number;
+    termDays: number;
+    applicationDate: string;
+    hasDeviations: boolean;
 }
 
 export interface DeskQueueResponse {
