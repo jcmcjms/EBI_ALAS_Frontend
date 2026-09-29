@@ -71,6 +71,9 @@ export function FlagIncompleteDocumentsDialog({
                     <AlertDialogDescription>
                         The workflow is not blocked. The encoder is notified and the flag
                         clears automatically once every requirement verifies complete.
+                        <span className="mt-1 block text-foreground">
+                            You retain ownership — continue with Recommend, Not Recommend, or Push Back.
+                        </span>
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
