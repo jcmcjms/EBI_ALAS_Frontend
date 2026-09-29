@@ -8,7 +8,6 @@ import {
     DAYS_PER_MONTH,
     GRACE_TOLERANCE_DAYS,
     LEGACY_TOTAL_DEDUCTION_RATE,
-    LEGACY_DOC_STAMP_RATE,
     LEGACY_NOTARIAL_FEE,
 } from "@/src/features/loans/utils/loan-approval-utils";
 import { computeMonthlyAmortization } from "@/src/features/loans/utils/loan-computations";
@@ -200,7 +199,6 @@ describe("computeLoanMetrics deduction convention", () => {
         const c = computeLoanMetrics(loan, obligations);
         const principal = 322000;
         expect(c.deductionsSubtotal).toBeCloseTo(principal * LEGACY_TOTAL_DEDUCTION_RATE, 2);
-        expect(c.docStamp).toBeCloseTo(principal * LEGACY_DOC_STAMP_RATE, 2);
         expect(c.notarialFee).toBe(LEGACY_NOTARIAL_FEE);
         expect(c.applicationCharge).toBeCloseTo(
             c.deductionsSubtotal - c.docStamp - c.notarialFee,
@@ -208,6 +206,30 @@ describe("computeLoanMetrics deduction convention", () => {
         );
         expect(c.deductionPct).toBeCloseTo(6, 5);
         expect(c.grossProceeds).toBeCloseTo(principal - c.deductionsSubtotal, 2);
+    });
+
+    it("uses frozen cDocStamp as Doc. Stamp (no 0.75% generation)", () => {
+        const c = computeLoanMetrics(
+            { ...loan, cDocStamp: 3000 } as Parameters<typeof computeLoanMetrics>[0],
+            obligations,
+        );
+        expect(c.docStamp).toBe(3000);
+        expect(c.applicationCharge).toBeCloseTo(322000 * 0.06 - 3000 - 500, 2);
+    });
+
+    it("prints Doc. Stamp 0 when cDocStamp is missing or zero", () => {
+        const missing = computeLoanMetrics(
+            { ...loan, cDocStamp: undefined } as Parameters<typeof computeLoanMetrics>[0],
+            obligations,
+        );
+        expect(missing.docStamp).toBe(0);
+        expect(missing.applicationCharge).toBeCloseTo(322000 * 0.06 - 500, 2);
+
+        const zero = computeLoanMetrics(
+            { ...loan, cDocStamp: 0 } as Parameters<typeof computeLoanMetrics>[0],
+            obligations,
+        );
+        expect(zero.docStamp).toBe(0);
     });
 
     it("prefers frozen approvalTermDays and annualRatePercent", () => {

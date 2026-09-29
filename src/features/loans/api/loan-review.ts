@@ -49,6 +49,8 @@ export interface LoanDetailResponse {
     approvalTermDays: number | null;
     /** Frozen annual rate percent — prefer over re-derivation. */
     annualRatePercent: number | null;
+    /** Frozen webloan c_doc_stamp used as approval-form Doc. Stamp. */
+    cDocStamp: number | null;
     nthpDate: string | null;
     notarialFee: number;
     docStamps: number;

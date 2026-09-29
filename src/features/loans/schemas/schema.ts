@@ -449,6 +449,11 @@ export const selectedLoanSchema = z.object({
      * review/approval pages that receive data from the backend.
      */
     annualRatePercent: z.number().optional(),
+    /**
+     * webloan loan_data.c_doc_stamp captured when the loan was selected.
+     * Approval form Doc. Stamp = this value (0 when null) — never 0.75% of principal.
+     */
+    cDocStamp: z.number().optional(),
 
     // ── §5 obligations declared against this loan only ──────────
     ebiReloans: z.array(ebiReloanSchema).default([]),

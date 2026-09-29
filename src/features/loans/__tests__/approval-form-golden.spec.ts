@@ -11,11 +11,11 @@ import { computeLoanMetrics } from "../utils/loan-approval-utils";
  * 322,000 with one reloan row under loans[0] so a future drift in either
  * `mapLoanDetailToFormData` or `computeLoanMetrics` fails here first.
  *
- * Money expectations are derived from the legacy deduction convention:
+ * Money expectations use frozen webloan c_doc_stamp (not 0.75% × principal):
  *   Total Deductions  = 6% of proposed          = 19,320.00
- *   Doc. Stamp        = 0.75% of proposed       =  2,415.00
+ *   Doc. Stamp        = c_doc_stamp             =  3,000.00  (not 2,415 = 0.75%)
  *   Notarial Fee      = flat                    =    500.00
- *   Application Charge= plug to 6%              = 16,405.00
+ *   Application Charge= plug to 6%              = 15,820.00
  *   Gross Proceeds    = proposed − deductions   = 302,680.00
  */
 function goldenDetail(): LoanDetailResponse {
@@ -56,6 +56,7 @@ function goldenDetail(): LoanDetailResponse {
         policyTermMonths: 60,
         approvalTermDays: 1800,
         annualRatePercent: 7.5,
+        cDocStamp: 3000,
         nthpDate: null,
         notarialFee: 500,
         docStamps: 2415,
@@ -118,8 +119,9 @@ describe("approval form golden figures (LAM-20260929-000001)", () => {
         expect(c.approvalTermDays).toBe(1800);
 
         // 2. Application Charge plugs Total Deductions to exactly 6%.
-        //    0.06*322000 − 0.0075*322000 − 500 = 19320 − 2415 − 500
-        expect(c.applicationCharge).toBeCloseTo(16405, 2);
+        //    0.06*322000 − cDocStamp − 500 = 19320 − 3000 − 500
+        expect(c.docStamp).toBe(3000);
+        expect(c.applicationCharge).toBeCloseTo(15820, 2);
 
         // 3. Total Deductions fixed at 6% of proposed.
         expect(c.deductionsSubtotal).toBeCloseTo(19320, 2);

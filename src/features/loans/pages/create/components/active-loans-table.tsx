@@ -359,6 +359,7 @@ export function ActiveLoansTable({
             creationTypeCode: code,
             creationTypeLabel: loan.creationTypeLabel ?? "",
             branchCode,
+            cDocStamp: loan.cDocStamp ?? undefined,
             parameters: {
                 product: loan.productWithDescription ?? "",
                 purpose: loan.loanPurpose ?? "",

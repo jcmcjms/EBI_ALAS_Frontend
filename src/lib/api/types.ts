@@ -677,6 +677,8 @@ export interface PendingLoan {
      * acct_no, loan_no) tuple.
      */
     policyTermMonths: number | null;
+    /** webloan loan_data.c_doc_stamp — documentary stamp for the approval form. */
+    cDocStamp: number | null;
     /**
      * "<loan_product> - <description>" display string, pre-joined on the
      * backend (e.g. "PL - Payroll Loan"). Falls back to the bare product
@@ -991,6 +993,7 @@ export interface LoanSubmissionPayload {
             notarialFee: number; docStamps: number; insurance: number;
             standardFeesSnapshot: { notarialFee: number; docStamps: number; insurance: number };
         };
+        cDocStamp?: number | null;
         ebiReloans: Array<{ pn: string; name: string; existingDeduction: number; outstandingBalance: number; payToClose: number }>;
         buyOuts: Array<{ pn: string; name: string; amortization: number; outstandingBalance: number }>;
         incomingLoans: Array<{ name: string; deductions: number; remarks: string }>;

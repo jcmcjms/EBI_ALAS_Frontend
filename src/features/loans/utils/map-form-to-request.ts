@@ -25,6 +25,7 @@ export function mapFormToSubmissionPayload(
             creationTypeCode: loan.creationTypeCode,
             creationTypeLabel: loan.creationTypeLabel,
             branchCode: loan.branchCode,
+            cDocStamp: loan.cDocStamp,
             parameters: loan.parameters,
             ebiReloans: loan.ebiReloans.map((row) => ({ ...row })),
             buyOuts: loan.buyOuts.map((row) => ({ ...row })),

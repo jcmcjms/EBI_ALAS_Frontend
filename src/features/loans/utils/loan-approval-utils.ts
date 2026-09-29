@@ -52,11 +52,10 @@ export const GRACE_TOLERANCE_DAYS = 120;
 /**
  * Legacy deduction convention printed on the Approval Form: Total
  * Deductions is fixed at 6% of the proposed amount. Application Charge
- * is the plug after Doc. Stamp (0.75%) and the Notarial Fee (₱500) so
- * the column foots to exactly 6.00%.
+ * is the plug after Doc. Stamp (webloan c_doc_stamp) and the Notarial
+ * Fee (₱500) so the column foots to exactly 6.00%.
  */
 export const LEGACY_TOTAL_DEDUCTION_RATE = 0.06;
-export const LEGACY_DOC_STAMP_RATE = 0.0075;
 export const LEGACY_NOTARIAL_FEE = 500;
 
 // ── Approval-form boundary normalization ─────────────────────────────
@@ -173,7 +172,8 @@ export function computeLoanMetrics(
         ?? toAnnualRatePercent(params.interestRate);
 
     const principal = params.proposedAmount || 0;
-    const docStamp = principal * LEGACY_DOC_STAMP_RATE;
+    // Doc. Stamp is the frozen webloan c_doc_stamp — never regenerate at 0.75%.
+    const docStamp = primaryLoan.cDocStamp ?? 0;
     const notarialFee = LEGACY_NOTARIAL_FEE;
     const deductionsSubtotal = principal * LEGACY_TOTAL_DEDUCTION_RATE;
     const applicationCharge = deductionsSubtotal - docStamp - notarialFee;

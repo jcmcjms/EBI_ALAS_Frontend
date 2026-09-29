@@ -44,6 +44,7 @@ function baseDetail(): LoanDetailResponse {
         policyTermMonths: 60,
         approvalTermDays: 1800,
         annualRatePercent: 7.5,
+        cDocStamp: 300,
         nthpDate: "2024-01-15",
         notarialFee: 500,
         docStamps: 300,
@@ -162,6 +163,7 @@ describe("mapLoanDetailToFormData", () => {
 
         expect(loan.approvalTermDays).toBe(1800);
         expect(loan.annualRatePercent).toBe(7.5);
+        expect(loan.cDocStamp).toBe(300);
         expect(loan.parameters.policyTermMonths).toBe(60);
     });
 
@@ -170,12 +172,14 @@ describe("mapLoanDetailToFormData", () => {
         detail.policyTermMonths = null;
         detail.approvalTermDays = null;
         detail.annualRatePercent = null;
+        detail.cDocStamp = null;
 
         const form = mapLoanDetailToFormData(detail);
         const loan = form.loans[0];
 
         expect(loan.approvalTermDays).toBeUndefined();
         expect(loan.annualRatePercent).toBeUndefined();
+        expect(loan.cDocStamp).toBeUndefined();
         expect(loan.parameters.policyTermMonths).toBeUndefined();
     });
 });

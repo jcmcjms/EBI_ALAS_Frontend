@@ -98,6 +98,7 @@ export function mapLoanDetailToFormData(
                 },
                 approvalTermDays: l.approvalTermDays ?? undefined,
                 annualRatePercent: l.annualRatePercent ?? undefined,
+                cDocStamp: l.cDocStamp ?? undefined,
                 ebiReloans: l.ebiReloans.map((e) => ({
                     pn: e.pn,
                     name: e.name,
