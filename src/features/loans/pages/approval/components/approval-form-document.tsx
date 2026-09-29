@@ -7,8 +7,6 @@ import {
 } from "@/src/features/loans/utils/loan-product-display";
 import {
     computeLoanMetrics,
-    resolveApprovalTermDays,
-    toAnnualRatePercent,
     buildProductLine,
     isBlankReloan,
     isBlankBuyOut,
@@ -294,15 +292,10 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
     const productCode = parseProductCode(params.product);
     const productDisplay = resolveLoanProductDisplayName(params.product, catLoanClass);
 
-    // ── Approval-form boundary normalization ───────────────────────
-    // Prefer frozen server values (signed-document integrity); fall
-    // back to re-derivation for legacy rows that predate the freeze.
-    const approvalTermDays =
-        primaryLoan.approvalTermDays                          // frozen at submission
-        ?? resolveApprovalTermDays(params.term || 0, params.policyTermMonths);
-    const annualRatePercent =
-        primaryLoan.annualRatePercent                         // frozen at submission
-        ?? toAnnualRatePercent(params.interestRate);
+    // Frozen-first term/rate from shared metrics — keeps the printed
+    // form aligned with the preview (see computeLoanMetrics).
+    const approvalTermDays = c.approvalTermDays;
+    const annualRatePercent = c.annualRatePercent;
 
     const productLine = params.product
         ? buildProductLine(productCode, productDisplay, approvalTermDays, params.policyTermMonths, annualRatePercent)
