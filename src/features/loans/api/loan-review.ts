@@ -43,6 +43,12 @@ export interface LoanDetailResponse {
     proposedAmount: number;
     termDays: number;
     interestRate: number;
+    /** Amortization period count frozen at submission (60 for monthly products). */
+    policyTermMonths: number | null;
+    /** Frozen TERM (Days) quoted by the approval form — prefer over re-derivation. */
+    approvalTermDays: number | null;
+    /** Frozen annual rate percent — prefer over re-derivation. */
+    annualRatePercent: number | null;
     nthpDate: string | null;
     notarialFee: number;
     docStamps: number;
