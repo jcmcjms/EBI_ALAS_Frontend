@@ -1,11 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
+    computeLoanMetrics,
     resolveApprovalTermDays,
     toAnnualRatePercent,
     formatRatePercent,
     buildProductLine,
     DAYS_PER_MONTH,
     GRACE_TOLERANCE_DAYS,
+    LEGACY_TOTAL_DEDUCTION_RATE,
+    LEGACY_DOC_STAMP_RATE,
+    LEGACY_NOTARIAL_FEE,
 } from "@/src/features/loans/utils/loan-approval-utils";
 
 /**
@@ -137,5 +141,85 @@ describe("constants", () => {
 
     it("GRACE_TOLERANCE_DAYS is 120", () => {
         expect(GRACE_TOLERANCE_DAYS).toBe(120);
+    });
+});
+
+describe("computeLoanMetrics deduction convention", () => {
+    const loan = {
+        loanNo: "PN-1",
+        productCode: "A16",
+        productDescription: "APDS",
+        creationTypeCode: 0,
+        creationTypeLabel: "New Loan",
+        branchCode: "B1",
+        approvalTermDays: 1800,
+        annualRatePercent: 7.5,
+        parameters: {
+            product: "APDS - RPSU",
+            purpose: "Salary",
+            proposedAmount: 322000,
+            term: 1856,
+            policyTermMonths: 60,
+            interestRate: 7.5,
+            notarialFee: 500,
+            docStamps: 2415,
+            insurance: 0,
+            standardFeesSnapshot: { notarialFee: 500, docStamps: 2415, insurance: 0 },
+        },
+        ebiReloans: [],
+        buyOuts: [],
+        incomingLoans: [],
+        verification: { findings: "" },
+        deviations: {
+            hasDeviations: false,
+            deviationDetails: [],
+            deviationJustifications: {},
+            otherRemarks: "",
+        },
+    } as Parameters<typeof computeLoanMetrics>[0];
+
+    const obligations = {
+        outstandingLoans: [],
+        ebiReloans: [],
+        buyOuts: [],
+        incomingLoans: [],
+        client: {
+            cisId: "CIS-1",
+            firstName: "Juan",
+            lastName: "Dela Cruz",
+            agency: "DepEd",
+            netTakeHomePay: 15000,
+        },
+    } as Parameters<typeof computeLoanMetrics>[1];
+
+    it("fixes Total Deductions at 6% and plugs Application Charge", () => {
+        const c = computeLoanMetrics(loan, obligations);
+        const principal = 322000;
+        expect(c.deductionsSubtotal).toBeCloseTo(principal * LEGACY_TOTAL_DEDUCTION_RATE, 2);
+        expect(c.docStamp).toBeCloseTo(principal * LEGACY_DOC_STAMP_RATE, 2);
+        expect(c.notarialFee).toBe(LEGACY_NOTARIAL_FEE);
+        expect(c.applicationCharge).toBeCloseTo(
+            c.deductionsSubtotal - c.docStamp - c.notarialFee,
+            2,
+        );
+        expect(c.deductionPct).toBeCloseTo(6, 5);
+        expect(c.grossProceeds).toBeCloseTo(principal - c.deductionsSubtotal, 2);
+    });
+
+    it("prefers frozen approvalTermDays and annualRatePercent", () => {
+        const c = computeLoanMetrics(loan, obligations);
+        expect(c.approvalTermDays).toBe(1800);
+        expect(c.annualRatePercent).toBe(7.5);
+    });
+
+    it("re-derives term/rate when frozen fields are absent", () => {
+        const legacy = {
+            ...loan,
+            approvalTermDays: undefined,
+            annualRatePercent: undefined,
+        } as Parameters<typeof computeLoanMetrics>[0];
+        const c = computeLoanMetrics(legacy, obligations);
+        expect(c.approvalTermDays).toBe(1800);
+        expect(c.annualRatePercent).toBe(7.5);
     });
 });

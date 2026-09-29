@@ -18,7 +18,10 @@
  */
 
 import { parseProductCode } from "./loan-product-display";
-import { computeMaximumLoanableAmount } from "./loan-computations";
+import {
+    computeMaximumLoanableAmount,
+    computeMonthlyAmortization,
+} from "./loan-computations";
 import type {
     BuyOut,
     EbiReloan,
@@ -45,6 +48,16 @@ export const DEFAULT_MINIMUM_NTHP = 5_000;
  * gap exceeds this tolerance.
  */
 export const GRACE_TOLERANCE_DAYS = 120;
+
+/**
+ * Legacy deduction convention printed on the Approval Form: Total
+ * Deductions is fixed at 6% of the proposed amount. Application Charge
+ * is the plug after Doc. Stamp (0.75%) and the Notarial Fee (₱500) so
+ * the column foots to exactly 6.00%.
+ */
+export const LEGACY_TOTAL_DEDUCTION_RATE = 0.06;
+export const LEGACY_DOC_STAMP_RATE = 0.0075;
+export const LEGACY_NOTARIAL_FEE = 500;
 
 // ── Approval-form boundary normalization ─────────────────────────────
 // These functions are the single source of truth for how raw webloan
@@ -149,24 +162,29 @@ export function computeLoanMetrics(
     const buyOutBalance = buyOuts.reduce((s, b) => s + (b.outstandingBalance || 0), 0);
     const incomingTotal = incomingLoans.reduce((s, i) => s + (i.deductions || 0), 0);
 
+    // `termDays` is the raw feed value; `approvalTermDays` is the
+    // frozen-or-resolved value used for all PMT / MLA math.
     const termDays = params.term || 0;
-    const termMonths = Math.floor(termDays / 30);
-    const monthlyRate = (params.interestRate || 0) / 100 / 12;
-    const amortization =
-        termMonths > 0 && monthlyRate > 0
-            ? (params.proposedAmount * (monthlyRate * (1 + monthlyRate) ** termMonths)) / ((1 + monthlyRate) ** termMonths - 1)
-            : 0;
+    const approvalTermDays =
+        primaryLoan.approvalTermDays
+        ?? resolveApprovalTermDays(params.term || 0, params.policyTermMonths);
+    const annualRatePercent =
+        primaryLoan.annualRatePercent
+        ?? toAnnualRatePercent(params.interestRate);
 
-    const applicationCharge = params.proposedAmount * 0.0504;
-    const docStamp = params.proposedAmount * 0.0075;
-    const notarialFee = 500;
-    const deductionsSubtotal = applicationCharge + docStamp + notarialFee;
-    const deductionPct = params.proposedAmount > 0 ? (deductionsSubtotal / params.proposedAmount) * 100 : 0;
+    const principal = params.proposedAmount || 0;
+    const docStamp = principal * LEGACY_DOC_STAMP_RATE;
+    const notarialFee = LEGACY_NOTARIAL_FEE;
+    const deductionsSubtotal = principal * LEGACY_TOTAL_DEDUCTION_RATE;
+    const applicationCharge = deductionsSubtotal - docStamp - notarialFee;
+    const deductionPct = principal > 0 ? (deductionsSubtotal / principal) * 100 : 0;
 
-    const grossProceeds = params.proposedAmount - deductionsSubtotal;
+    const grossProceeds = principal - deductionsSubtotal;
     const netProceedsDs = grossProceeds - ebiOb;
     const netProceedsClient = netProceedsDs - buyOutBalance;
-    const totalExposure = params.proposedAmount + totalPrincipal;
+    const totalExposure = principal + totalPrincipal;
+
+    const amortization = computeMonthlyAmortization(principal, annualRatePercent, approvalTermDays);
 
     const nthp = client.netTakeHomePay || 0;
     const netPayAfterDeduction = nthp - amortization + ebiDeductions;
@@ -186,13 +204,15 @@ export function computeLoanMetrics(
     const productCode = parseProductCode(params.product);
     const maximumLoanableAmount = computeMaximumLoanableAmount(
         totalDisposableNet,
-        params.interestRate || 0,
-        termDays,
+        annualRatePercent,
+        approvalTermDays,
         productCode
     );
 
     return {
         termDays,
+        approvalTermDays,
+        annualRatePercent,
         amortization,
         applicationCharge,
         docStamp,
