@@ -17,14 +17,8 @@ import {
     resolveLoanProductDisplayName,
 } from "@/src/features/loans/utils/loan-product-display";
 import {
-    computeMaximumLoanableAmount,
-    computeMonthlyAmortization,
-} from "@/src/features/loans/utils/loan-computations";
-import {
-    resolveApprovalTermDays,
-    toAnnualRatePercent,
     buildProductLine,
-    DEFAULT_MINIMUM_NTHP,
+    computeLoanMetrics,
     isBlankReloan,
     isBlankBuyOut,
     isBlankIncomingLoan,
@@ -198,85 +192,51 @@ function SingleLoanApprovalForm({
         loanClass?.catLoanClass
     );
 
-    // ── Term normalization (approval-form boundary only) ────────────
-    // `parameters.term` is the calendar day-count to maturity (2,587 —
-    // includes grace past the amortization schedule);
-    // `parameters.policyTermMonths` is the amortization period count
-    // (84 for monthly products), which is what the LAM template quotes
-    // as TERM (Days) in 30-day months.
-    //
-    // Guard: for single-payment products (C02 Lumpsum AdvInt) the
-    // amortization count is 1, so policyTermMonths × 30 (30d) diverges
-    // from the real term (720d) by far more than any grace period —
-    // there the policy term does not describe the term, and the form
-    // must quote the feed's term days verbatim.
-    const approvalTermDays = resolveApprovalTermDays(
-        parameters.term || 0,
-        parameters.policyTermMonths,
-    );
-    const annualRatePercent = toAnnualRatePercent(parameters.interestRate);
-
-    const principal = parameters.proposedAmount || 0;
-
-    // ── Upfront deductions ──────────────────────────────────────────
-    // Total Deductions is policy-fixed at 6%; Application Charge is the
-    // residual so the block foots to the printed 6.00% line.
-    const docStamp = principal * LEGACY_DOC_STAMP_RATE;
-    const notarialFee = LEGACY_NOTARIAL_FEE;
-    const deductionsSubtotal = principal * LEGACY_TOTAL_DEDUCTION_RATE;
-    const applicationCharge = deductionsSubtotal - docStamp - notarialFee;
-    const deductionPct = principal > 0 ? (deductionsSubtotal / principal) * 100 : 0;
-
     const outstandingLoans = form?.outstandingLoans ?? [];
     const ebiReloans = loan.ebiReloans ?? [];
     const buyOuts = loan.buyOuts ?? [];
     const incomingLoans = loan.incomingLoans ?? [];
+
+    // Single source of truth for the printed numbers (6% deduction plug,
+    // frozen-first term/rate, PMT, capacity/MLA) — shared with
+    // approval-form-document.tsx so preview and document cannot diverge.
+    const c = computeLoanMetrics(loan, {
+        outstandingLoans,
+        ebiReloans,
+        buyOuts,
+        incomingLoans,
+        client,
+    });
+    const approvalTermDays = c.approvalTermDays;
+    const annualRatePercent = c.annualRatePercent;
+    const monthlyAmortization = c.amortization;
+    const applicationCharge = c.applicationCharge;
+    const docStamp = c.docStamp;
+    const notarialFee = c.notarialFee;
+    const deductionsSubtotal = c.deductionsSubtotal;
+    const deductionPct = c.deductionPct;
+    const grossProceeds = c.grossProceeds;
+    const netProceedsDs = c.netProceedsDs;
+    const netProceedsClient = c.netProceedsClient;
+    const totalExposure = c.totalExposure;
+    const totalPrincipal = c.totalPrincipal;
+    const ebiDeductions = c.ebiDeductions;
+    const ebiOb = c.ebiOb;
+    const buyOutBalance = c.buyOutBalance;
+    const nthp = c.nthp;
+    const netPayAfterDeduction = c.netPayAfterDeduction;
+    const totalMonthlyIncome = c.totalMonthlyIncome;
+    const totalDisposableGross = c.totalDisposableGross;
+    const minimumNthp = c.minimumNthp;
+    const totalDeductionsFinal = c.totalDeductionsFinal;
+    const totalDisposableNet = c.totalDisposableNet;
+    const maximumLoanableAmount = c.maximumLoanableAmount;
 
     // Printed obligation rows: blank wizard placeholders are dropped so an
     // empty matrix collapses instead of printing the legacy fixed dash rows.
     const reloanRows = printableObligationRows(ebiReloans, isBlankReloan);
     const buyOutRows = printableObligationRows(buyOuts, isBlankBuyOut);
     const incomingRows = printableObligationRows(incomingLoans, isBlankIncomingLoan);
-
-    const totalPrincipal = outstandingLoans.reduce((s, l) => s + (l.principalBalance || 0), 0);
-    const ebiDeductions = ebiReloans.reduce((s, r) => s + (r.existingDeduction || 0), 0);
-    const ebiOb = ebiReloans.reduce((s, r) => s + (r.outstandingBalance || 0), 0);
-    const buyOutBalance = buyOuts.reduce((s, b) => s + (b.outstandingBalance || 0), 0);
-    const incomingTotal = incomingLoans.reduce((s, i) => s + (i.deductions || 0), 0);
-
-    const grossProceeds = principal - deductionsSubtotal;
-    const netProceedsDs = grossProceeds - ebiOb;
-    const netProceedsClient = netProceedsDs - buyOutBalance;
-    const totalExposure = principal + totalPrincipal;
-
-    // PMT at the policy term (84 periods), not the calendar day-count.
-    const monthlyAmortization = computeMonthlyAmortization(
-        principal,
-        annualRatePercent,
-        approvalTermDays,
-    );
-
-    const nthp = client.netTakeHomePay || 0;
-    // NTHP + deductions released by settling the reloan − new amortization.
-    const netPayAfterDeduction = nthp - monthlyAmortization + ebiDeductions;
-    const totalMonthlyIncome = netPayAfterDeduction; // Other Income: NONE
-
-    // Capacity-to-pay block, mirroring the legacy template:
-    //   Total Disposable   = NTHP + reloan deductions released
-    //   Less: Minimum NTHP = policy floor the borrower retains (₱5,000)
-    //   Total Deductions   = that floor + incoming/undeducted deductions
-    //   Total Disposable   = net capacity feeding the MLA PV
-    const totalDisposableGross = nthp + ebiDeductions;
-    const minimumNthp = DEFAULT_MINIMUM_NTHP;
-    const totalDeductionsFinal = minimumNthp + incomingTotal;
-    const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
-
-    const maximumLoanableAmount = computeMaximumLoanableAmount(
-        totalDisposableNet,
-        annualRatePercent,
-        approvalTermDays,
-        productCode
-    );
 
     const productLine = parameters.product
         ? buildProductLine(productCode, productDisplay, approvalTermDays, parameters.policyTermMonths, annualRatePercent)
@@ -669,20 +629,7 @@ function SingleLoanApprovalForm({
     );
 }
 
-/* ── Legacy template constants ─────────────────────────────────────
- *
- * The LAM template fixes Total Deductions at 6% of the proposed amount;
- * the Application Charge line is the *plug* (residual after Doc. Stamp
- * and Notarial Fee) so the column always foots to the 6% line. Doc.
- * Stamp (0.75%) and Notarial Fee (₱500) are template values kept inline
- * so the PDF export matches the legacy spreadsheet line-for-line.
- *
- * DEFAULT_MINIMUM_NTHP is imported from loan-approval-utils.ts.
- * DAYS_PER_MONTH is the legacy "1 month = 30 days" convention.
- */
-const LEGACY_TOTAL_DEDUCTION_RATE = 0.06;
-const LEGACY_DOC_STAMP_RATE = 0.0075;
-const LEGACY_NOTARIAL_FEE = 500;
+/* ── Legacy template layout constants ─────────────────────────────── */
 
 /* Fixed row counts of the legacy Excel grid were removed when the
  * reloan / buy-out / incoming matrices moved to dynamic rows derived
