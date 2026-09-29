@@ -18,8 +18,8 @@ import {
     AlertDialogCancel,
     AlertDialogAction,
 } from "@/src/components/ui/alert-dialog";
-import type { MonitoringFilters } from "./types";
-import type { LoanMonitoringRecord } from "./types";
+import type { MonitoringFilters } from "@/src/features/loans/types/monitoring";
+import type { LoanMonitoringRecord } from "@/src/features/loans/types/monitoring";
 import { useSlaPolicy, useQueueDefault } from "@/src/features/loans/api/loan-review";
 import { cancelLoanApplication } from "@/src/features/loans/api/loan-review";
 import { useAuthStore } from "@/src/store/authStore";
@@ -67,7 +67,7 @@ export function LoanMonitoringPage() {
     useEffect(() => {
         const policy = queueDefault.data;
         if (!policy || touchedRef.current || urlStatus !== null) return;
-        setFilters((f) =>
+        setFilters((f: MonitoringFilters) =>
             sameStatusSet(f.status, policy) ? f : { ...f, status: policy },
         );
     }, [queueDefault.data, urlStatus]);

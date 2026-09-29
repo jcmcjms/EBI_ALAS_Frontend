@@ -16,7 +16,7 @@ import { queueDeskSentence } from "@/src/features/loans/utils/loan-timeline";
 import { cn } from "@/src/shared/lib/utils";
 import { getLoanById } from "@/src/features/loans/api/loans";
 import { LOAN_STATUS_META, type LoanStatus } from "@/src/features/loans/utils/loan-status";
-import type { LoanMonitoringRecord } from "../types";
+import type { LoanMonitoringRecord } from "@/src/features/loans/types/monitoring";
 
 interface LoanDetailsDrawerProps {
     applicationId: number | null;

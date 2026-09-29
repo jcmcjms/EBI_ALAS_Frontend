@@ -22,7 +22,7 @@ interface Props {
  * Shown when a reviewer has flagged the file with missing documents.
  * The flag is a data fact, not a routing status — the file stays at its desk.
  */
-export function IncompleteDocumentsWarning({ status, checklist, documentFlag }: Props) {
+export function IncompleteDocumentsWarning({ checklist, documentFlag }: Props) {
     const pending = (checklist ?? []).filter((i) => i.uploadStatus !== "Uploaded");
     const hasFlag = documentFlag != null;
     if (!hasFlag && pending.length === 0) return null;

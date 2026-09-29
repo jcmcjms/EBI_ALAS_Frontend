@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import type { SelectedLoan } from "./schema";
+import type { SelectedLoan } from "@/src/features/loans/schemas/schema";
 
 interface ActiveLoanContextValue {
     loans: SelectedLoan[];

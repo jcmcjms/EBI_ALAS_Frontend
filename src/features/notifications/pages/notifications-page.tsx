@@ -34,7 +34,6 @@ import { formatRelativeTime, initialsOf, type NotificationType } from "../types"
 import { cn } from "@/src/shared/lib/utils";
 import { useNotificationInbox, useMarkNotificationRead, useMarkAllNotificationsRead } from "../hooks/use-notifications";
 import { useDebouncedValue } from "@/src/shared/hooks/use-debounced";
-import { useNotificationStore } from "../store/notification-store";
 
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -108,6 +107,7 @@ export function NotificationsPage() {
             description: n.description,
             createdAt: n.createdAt,
             read: n.isRead,
+            actor: undefined,
             link: n.link ?? undefined,
         }));
     }, [data?.items]);
@@ -119,9 +119,6 @@ export function NotificationsPage() {
     // Mutations
     const markReadMutation = useMarkNotificationRead();
     const markAllMutation = useMarkAllNotificationsRead();
-
-    // Bell store (for optimistic badge updates)
-    const addNotification = useNotificationStore((s) => s.addNotification);
 
     const openNotification = (id: string, link?: string) => {
         if (autoRead) {

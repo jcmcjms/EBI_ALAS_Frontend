@@ -233,20 +233,13 @@ export function LoanApprovalPage() {
         (detail.status === "ForApproval" && user?.role === "Approver")
     ) : false;
 
-    const flagAction = useMemo(
-        () => detail?.actions ? [...detail.actions].reverse().find((a) => a.action === "DocumentsFlagged") : undefined,
-        [detail?.actions]
-    );
-
-    const hasDocumentFlag = detail?.documentFlag != null;
-
     const act = useMutation({
         mutationFn: (payload: { action: WorkflowAction; kind: WorkflowButtonDef["kind"] }) =>
             updateLoanStatus(id, {
                 action: payload.action,
                 comments: (payload.kind === "return" || payload.action === "NotRecommend" || payload.action === "Reject" || payload.action === "ReturnForRevision")
                     ? remarks.trim()
-                    : remarks.trim() || undefined,
+                    : remarks.trim() || "",
             }),
         onSuccess: (_d, payload) => {
             toastSuccess(
@@ -254,7 +247,7 @@ export function LoanApprovalPage() {
                     ? "Evaluation recorded as Not Recommended — forwarded to Approver."
                     : payload.kind === "return"
                         ? "Application pushed back to the encoder."
-                        : `Application moved successfully.`);
+                        : "Application moved successfully.");
             setRemarks("");
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });

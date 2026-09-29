@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { CaretUp, CaretDown, CaretUpDown, WarningCircle, ArrowClockwise, XCircle, UserCircle, FileDashed } from "@phosphor-icons/react";
-import type { LoanMonitoringRecord, MonitoringFilters } from "../types";
+import type { LoanMonitoringRecord, MonitoringFilters } from "@/src/features/loans/types/monitoring";
 import { useLoanMonitoring } from "@/src/features/loans/hooks/use-loan-monitoring";
 import { BRANCHES } from "@/src/lib/api/types";
 import { cn } from "@/src/shared/lib/utils";
@@ -231,7 +231,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
             header: "Status",
             cell: (info) => {
                 const status = info.getValue();
-                const meta = LOAN_STATUS_META[status];
+                const meta = LOAN_STATUS_META[status as LoanStatus];
                 const flag = info.row.original.documentFlag;
                 return (
                     <div className="flex items-center gap-1.5">

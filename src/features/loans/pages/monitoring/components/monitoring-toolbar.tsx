@@ -8,7 +8,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { Checkbox } from "@/src/components/ui/checkbox";
 import { MagnifyingGlass, CalendarBlank, Funnel, Export, X, UserCircle, CaretDown, Tray } from "@phosphor-icons/react";
 import { format } from "date-fns";
-import type { MonitoringFilters } from "../types";
+import type { MonitoringFilters } from "@/src/features/loans/types/monitoring";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 import { LOAN_STATUS_META, STATUS_FILTER_ORDER } from "@/src/features/loans/utils/loan-status";
 import { sameStatusSet } from "@/src/features/loans/constants/role-queues";
@@ -86,7 +86,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                         {filters.status.length === 0 ? (
                             <span className="text-muted-foreground">All Statuses</span>
                         ) : filters.status.length === 1 ? (
-                            LOAN_STATUS_META[filters.status[0]].label
+                            LOAN_STATUS_META[filters.status[0] as LoanStatus].label
                         ) : (
                             `${filters.status.length} statuses`
                         )}
@@ -116,7 +116,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                                             status:
                                                 v === true
                                                     ? [...filters.status, s]
-                                                    : filters.status.filter((x) => x !== s),
+                                                    : filters.status.filter((x: LoanStatus) => x !== s),
                                         })
                                     }
                                 />

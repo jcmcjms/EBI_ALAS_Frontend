@@ -641,7 +641,6 @@ function SingleLoanApprovalForm({
 /* Column bands of the legacy sheet: computations and the reloan band
  * split 58/42; the deviations band splits 62/38. */
 const BAND_MAIN = "grid grid-cols-[58%_42%]";
-const BAND_FOOT = "grid grid-cols-[62%_38%]";
 
 /* ── main component ── */
 
