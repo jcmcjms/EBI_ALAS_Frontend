@@ -9,7 +9,7 @@ const phpFormatter = new Intl.NumberFormat("en-PH", {
 });
 
 export function formatPhp(amount: number): string {
-    return phpFormatter.format(amount);
+    return Number.isFinite(amount) ? phpFormatter.format(amount) : "\u2014";
 }
 
 export function minutesSince(iso: string, now: number): number {
@@ -37,7 +37,7 @@ export function summarizeDeskQueue(
         if (assessAging(item.status as LoanStatus, item.enqueuedAt, now).tier === "breach") {
             slaBreachCount += 1;
         }
-        totalExposure += item.proposedAmount;
+        totalExposure += Number.isFinite(item.proposedAmount) ? item.proposedAmount : 0;
     }
 
     return { fileCount: items.length, longestWaitMinutes, slaBreachCount, totalExposure };

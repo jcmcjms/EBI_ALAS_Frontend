@@ -309,10 +309,10 @@ function NextUpCard({ item, canServe, claiming, onServe, currentUserId, slaPolic
 
                 <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
                     <Fact label="Amount" value={formatPhp(item.proposedAmount)} strong />
-                    <Fact label="Product" value={item.product} title={`${item.productCode} — ${item.product}`} />
-                    <Fact label="Loan type" value={item.loanType ?? "—"} />
-                    <Fact label="Branch" value={item.branchCode} />
-                    <Fact label="Term" value={`${item.termDays} d`} />
+                    <Fact label="Product" value={item.product || "\u2014"} title={`${item.productCode} \u2014 ${item.product}`} />
+                    <Fact label="Loan type" value={item.loanType ?? "\u2014"} />
+                    <Fact label="Branch" value={item.branchCode || "\u2014"} />
+                    <Fact label="Term" value={item.termDays != null ? `${item.termDays} d` : "\u2014"} />
                     <Fact
                         label="Waiting"
                         value={formatWaiting(waitingMinutes(item.enqueuedAt))}
