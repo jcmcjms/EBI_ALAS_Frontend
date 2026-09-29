@@ -301,9 +301,10 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
         ? buildProductLine(productCode, productDisplay, approvalTermDays, params.policyTermMonths, annualRatePercent)
         : "-";
 
-    const remarksLines = [deviations?.remarks, deviations?.aoRecommendation, deviations?.otherRemarks].filter(
+    const remarksLines = [deviations?.remarks, deviations?.aoRecommendation].filter(
         (x): x is string => !!x
     );
+    const otherRemarks = deviations?.otherRemarks;
 
     return (
         <div
@@ -677,11 +678,12 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                                 <div className="mt-4 font-bold">Other Remarks</div>
                                 <div className="mt-1">REMARKS:</div>
                                 <ol className="space-y-0.5">
-                                    {remarksLines.length === 0 && <li>-</li>}
+                                    {remarksLines.length === 0 && !otherRemarks && <li>-</li>}
                                     {remarksLines.map((line, i) => (
                                         <li key={i}>{i + 1}) {line}</li>
                                     ))}
                                 </ol>
+                                {otherRemarks ? <RichText value={otherRemarks} className="mt-1" /> : null}
                             </div>
                         </div>
 
