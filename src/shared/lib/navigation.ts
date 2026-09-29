@@ -1,12 +1,12 @@
 import {
-    Bell,
-    ChartBar,
-    House,
-    ListChecks,
-    Tray,
-    Users,
-    type Icon,
-} from "@phosphor-icons/react"
+  Bell,
+  ChartBar,
+  House,
+  ListChecks,
+  Tray,
+  Users,
+  type Icon,
+} from "@phosphor-icons/react";
 
 /**
  * Single source of truth for the app's primary navigation.
@@ -20,80 +20,79 @@ import {
  * the sidebar entirely — no "forbidden" fallback is shown.
  */
 export type NavItem = {
-    title: string
-    url: string
-    icon?: Icon
-    items?: {
-        title: string
-        url: string
-        /** Permission required to see this sub-item. Omit to make it public. */
-        requiredPermission?: string
-    }[]
-    /** Permission required to see this item. Omit to make it public. */
-    requiredPermission?: string
-    /** ANY-of gate: item is visible when the user holds at least one listed permission. */
-    requiredPermissions?: string[]
-}
+  title: string;
+  url: string;
+  icon?: Icon;
+  items?: {
+    title: string;
+    url: string;
+    /** Permission required to see this sub-item. Omit to make it public. */
+    requiredPermission?: string;
+  }[];
+  /** Permission required to see this item. Omit to make it public. */
+  requiredPermission?: string;
+  /** ANY-of gate: item is visible when the user holds at least one listed permission. */
+  requiredPermissions?: string[];
+};
 
 export const navMain: NavItem[] = [
-    {
-        title: "Dashboard",
-        url: "/dashboard",
-        icon: House,
-        requiredPermission: "loans.view",
-    },
-    {
-        title: "Loan Monitoring",
-        url: "/loans/monitoring",
-        icon: ListChecks,
-        requiredPermission: "loans.view",
-    },
-    {
-        title: "Review Desk",
-        url: "/loans/queue",
-        icon: Tray,
-        requiredPermissions: ["loans.recommend", "loans.evaluate", "loans.approve"],
-    },
-    {
-        title: "Loan Creation",
-        url: "/loans/create",
-        icon: ChartBar,
-        requiredPermission: "loans.create",
-    },
-    {
-        title: "Notifications",
-        url: "/notifications",
-        icon: Bell,
-    },
-    {
-        title: "Administration",
-        url: "#",
-        icon: Users,
-        items: [
-            {
-                title: "Users",
-                url: "/admin/users",
-                requiredPermission: "user.view",
-            },
-            {
-                title: "Loan Products",
-                url: "/admin/loan-products",
-                requiredPermission: "loan_product.view",
-            },
-            {
-                title: "Audit Logs",
-                url: "/admin/audit-logs",
-                requiredPermission: "auditLogs.view",
-            },
-            {
-                title: "Workflow",
-                url: "/admin/workflow",
-                requiredPermission: "workflow.manage",
-            },
-
-        ],
-    },
-]
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: House,
+    requiredPermission: "loans.view",
+  },
+   {
+    title: "Loan Creation",
+    url: "/loans/create",
+    icon: ChartBar,
+    requiredPermission: "loans.create",
+  },
+  {
+    title: "Review Desk",
+    url: "/loans/queue",
+    icon: Tray,
+    requiredPermissions: ["loans.recommend", "loans.evaluate", "loans.approve"],
+  },
+  {
+    title: "Loan Monitoring",
+    url: "/loans/monitoring",
+    icon: ListChecks,
+    requiredPermission: "loans.view",
+  },
+  {
+    title: "Notifications",
+    url: "/notifications",
+    icon: Bell,
+  },
+  {
+    title: "Administration",
+    url: "#",
+    icon: Users,
+    items: [
+      {
+        title: "Users",
+        url: "/admin/users",
+        requiredPermission: "user.view",
+      },
+      {
+        title: "Loan Products",
+        url: "/admin/loan-products",
+        requiredPermission: "loan_product.view",
+      },
+      {
+        title: "Audit Logs",
+        url: "/admin/audit-logs",
+        requiredPermission: "auditLogs.view",
+      },
+      {
+        title: "Workflow",
+        url: "/admin/workflow",
+        requiredPermission: "workflow.manage",
+      },
+    ],
+  },
+];
 
 /**
  * Resolves the display title for a pathname by walking the nav tree
@@ -101,11 +100,11 @@ export const navMain: NavItem[] = [
  * route has no nav entry — callers decide how to render that case.
  */
 export function getActiveNavTitle(pathname: string): string | null {
-    for (const item of navMain) {
-        if (item.url === pathname) return item.title
-        for (const sub of item.items ?? []) {
-            if (sub.url === pathname) return sub.title
-        }
+  for (const item of navMain) {
+    if (item.url === pathname) return item.title;
+    for (const sub of item.items ?? []) {
+      if (sub.url === pathname) return sub.title;
     }
-    return null
+  }
+  return null;
 }
