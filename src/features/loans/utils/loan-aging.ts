@@ -46,7 +46,7 @@ export function assessAging(
     const sla = slaPolicy?.[status] ?? meta?.defaultSlaHours ?? null;
 
     if (sla === null || sla <= 0) {
-        return { tier: "none", slaHours: null, pctOfSla: null, label: "No handling SLA" };
+        return { tier: "none", slaHours: null, pctOfSla: null, label: "No deadline set" };
     }
 
     const elapsedH = (now - new Date(lastActionIso).getTime()) / 3_600_000;
@@ -60,10 +60,10 @@ export function assessAging(
         pctOfSla: pct,
         label:
             tier === "breach"
-                ? `SLA breached (${sla}h)`
+                ? `Past deadline (${sla}h)`
                 : tier === "warning"
-                  ? `Approaching SLA (${sla}h)`
-                  : `Within SLA (${sla}h)`,
+                  ? `Approaching deadline (${sla}h)`
+                  : `On track (${sla}h)`,
     };
 }
 

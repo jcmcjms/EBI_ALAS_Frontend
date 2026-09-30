@@ -85,7 +85,7 @@ export function ReviewDeskPage() {
             icon={<WarningCircle size={22} weight="bold" />}
             tone="destructive"
             title="Couldn't load your desk"
-            description="The queue service didn't respond. Your queue is unchanged on the server — try again."
+            description="Your queue is unchanged — try again in a moment."
             action={
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => refetch()}>
                     <ArrowClockwise size={14} weight="bold" /> Retry
@@ -154,7 +154,7 @@ export function ReviewDeskPage() {
                                     </span>
                                 </h2>
                                 <p className="text-xs text-muted-foreground">
-                                    Served oldest first · last checked {formatClock(dataUpdatedAt)} · auto-refreshes every 30s
+                                    Oldest file first · last checked {formatClock(dataUpdatedAt)} · auto-refreshes every 30s
                                 </p>
                             </div>
                             <Button variant="outline" size="icon-sm" onClick={() => refetch()} disabled={isFetching} aria-label="Refresh queue">
@@ -168,16 +168,17 @@ export function ReviewDeskPage() {
                                 <StatCard icon={<Queue size={16} weight="bold" />} label="In queue" value={String(stats.fileCount)} />
                                 <StatCard icon={<Timer size={16} weight="bold" />} label="Longest wait" value={formatWaiting(stats.longestWaitMinutes)} />
                                 <StatCard
-                                    icon={<WarningCircle size={16} weight="bold" />}
-                                    label="SLA breached"
+                                    icon={<Clock size={16} weight="bold" />}
+                                    label="Overdue files"
                                     value={String(stats.slaBreachCount)}
+                                    hint="Files past their handling deadline"
                                     tone={stats.slaBreachCount > 0 ? "destructive" : "default"}
                                 />
                                 <StatCard
                                     icon={<CurrencyCircleDollar size={16} weight="bold" />}
-                                    label="Pipeline value"
+                                    label="Loan value"
                                     value={formatPhp(stats.totalExposure)}
-                                    hint="Sum of proposed amounts in this desk"
+                                    hint="Total proposed loan amounts in this desk"
                                 />
                             </div>
                         )}
@@ -221,7 +222,7 @@ export function ReviewDeskPage() {
                         </Card>
 
                         <p className="text-xs text-muted-foreground">
-                            Files lease exclusively while being reviewed — the holder's name stays on the file until the lease expires.
+                            Files are locked to one reviewer at a time — the holder's name stays on the file until the lock expires.
                         </p>
                     </div>
                 )}
@@ -263,7 +264,7 @@ function NextUpCard({ item, canServe, claiming, onServe, currentUserId, slaPolic
                                 <StatusBadge status={item.status} />
                                 {item.hasDeviations && (
                                     <Badge variant="outline" className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
-                                        <WarningCircle size={12} weight="bold" /> deviations
+                                        <WarningCircle size={12} weight="bold" /> warnings
                                     </Badge>
                                 )}
                             </div>
@@ -277,7 +278,7 @@ function NextUpCard({ item, canServe, claiming, onServe, currentUserId, slaPolic
                         {item.ownerName ? (
                             isMine ? (
                                 <Badge variant="secondary" className="gap-1">
-                                    <PlayCircle size={12} weight="bold" /> serving — resume
+                                    <PlayCircle size={12} weight="bold" /> handling — resume
                                 </Badge>
                             ) : (
                                 <Badge variant="secondary" className="gap-1">
@@ -294,7 +295,7 @@ function NextUpCard({ item, canServe, claiming, onServe, currentUserId, slaPolic
                             aria-keyshortcuts="Enter"
                             title={
                                 heldByOther
-                                    ? `Currently with ${item.ownerName} — frees after the lease expires`
+                                    ? `Currently with ${item.ownerName} — available after the lock expires`
                                     : undefined
                             }
                         >
@@ -358,7 +359,7 @@ const DeskQueueRow = memo(function DeskQueueRow({ item, slaPolicy, now }: DeskQu
                     <span className="font-mono text-xs font-medium">{item.lamId}</span>
                     <StatusBadge status={item.status} />
                     {item.hasDeviations && (
-                        <WarningCircle size={12} weight="bold" className="text-amber-600 dark:text-amber-400" aria-label="Has deviations" />
+                        <WarningCircle size={12} weight="bold" className="text-amber-600 dark:text-amber-400" aria-label="Has warnings" />
                     )}
                 </div>
                 <p className="truncate text-xs text-muted-foreground" title={`${item.clientName} · ${item.product} · Branch ${item.branchCode}`}>
@@ -395,7 +396,7 @@ function AgingPill({ assessment }: { assessment: ReturnType<typeof assessAging> 
     if (assessment.tier !== "warning" && assessment.tier !== "breach") return null;
     return (
         <Badge variant="outline" className={cn("h-4 px-1.5 text-[10px] font-normal", AGING_BADGE_CLASS[assessment.tier])}>
-            {assessment.tier === "breach" ? "Aging" : "Watch"}
+            {assessment.tier === "breach" ? "Overdue" : "Watch"}
         </Badge>
     );
 }
