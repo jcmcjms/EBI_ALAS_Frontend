@@ -18,6 +18,7 @@ import {
 } from "@/src/features/loans/utils/loan-product-display";
 import {
     buildProductLine,
+    buildPrintableDeviationEntries,
     computeLoanMetrics,
     isBlankReloan,
     isBlankBuyOut,
@@ -258,6 +259,7 @@ function SingleLoanApprovalForm({
         : "-";
 
     const deviations = loan.deviations;
+    const deviationEntries = buildPrintableDeviationEntries(deviations);
     const verification = loan.verification;
     const remarksLines = [deviations?.remarks, deviations?.aoRecommendation].filter(
         (x): x is string => !!x
@@ -602,11 +604,12 @@ function SingleLoanApprovalForm({
                         <div className="grid grid-cols-2">
                             <div className={cn(B, "min-h-40 border-r-0 p-1.5")}>
                                 <div className="font-bold">Deviations:</div>
-                                {deviations?.hasDeviations && deviations.deviationDetails.length > 0 ? (
-                                    <ol className="mt-1 space-y-0.5 list-none">
-                                        {deviations.deviationDetails.map((reason, i) => (
-                                            <li key={reason}>
-                                                {i + 1}) {reason}
+                                {deviationEntries.length > 0 ? (
+                                    <ol className="mt-1 space-y-1 list-none">
+                                        {deviationEntries.map((entry, i) => (
+                                            <li key={`${entry.reason}-${i}`}>
+                                                <div>{i + 1}) {entry.reason}</div>
+                                                <div className="pl-4">Remark: {dash(entry.remark)}</div>
                                             </li>
                                         ))}
                                     </ol>

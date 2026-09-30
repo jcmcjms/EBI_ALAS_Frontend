@@ -8,6 +8,7 @@ import {
 import {
     computeLoanMetrics,
     buildProductLine,
+    buildPrintableDeviationEntries,
     isBlankReloan,
     isBlankBuyOut,
     isBlankIncomingLoan,
@@ -254,6 +255,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
     const params = primaryLoan?.parameters;
     const verification = primaryLoan?.verification;
     const deviations = primaryLoan?.deviations;
+    const deviationEntries = buildPrintableDeviationEntries(deviations);
     const outstandingLoans = data?.outstandingLoans ?? [];
     const ebiReloans = primaryLoan?.ebiReloans ?? [];
     const buyOuts = primaryLoan?.buyOuts ?? [];
@@ -675,11 +677,12 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                         <div className="grid grid-cols-2">
                             <div className={cn(B, "min-h-40 border-r-0 p-1.5")}>
                                 <div className="font-bold">Deviations:</div>
-                                {deviations?.hasDeviations && deviations.deviationDetails.length > 0 ? (
-                                    <ol className="mt-1 space-y-0.5 list-none">
-                                        {deviations.deviationDetails.map((reason: string, i: number) => (
-                                            <li key={reason}>
-                                                {i + 1}) {reason}
+                                {deviationEntries.length > 0 ? (
+                                    <ol className="mt-1 space-y-1 list-none">
+                                        {deviationEntries.map((entry, i) => (
+                                            <li key={`${entry.reason}-${i}`}>
+                                                <div>{i + 1}) {entry.reason}</div>
+                                                <div className="pl-4">Remark: {dash(entry.remark)}</div>
                                             </li>
                                         ))}
                                     </ol>

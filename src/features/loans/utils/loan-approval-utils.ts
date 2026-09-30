@@ -336,3 +336,74 @@ export function printableObligationRows<T>(
 ): T[] {
     return (rows ?? []).filter((row) => !isBlank(row));
 }
+
+// ── Printed deviation entries ───────────────────────────────────────
+// The approval form's "Deviations:" box now prints each declared reason
+// with its per-deviation remark underneath. The fee-override deviation
+// (synthetic — originates from fee fields, not catalog checkboxes) is
+// appended last.
+
+/**
+ * Mirror of the backend's `LoanDeviation.FeeOverrideReason`
+ * (EBI.ALAS.Api/Features/Loans/LoanDeviation.cs). The fee override is a
+ * synthetic deviation — it originates from the fee fields, not the catalog
+ * checkboxes — but it prints and routes as a deviation, so both stacks must
+ * spell it identically.
+ */
+export const FEE_OVERRIDE_REASON =
+    "Fee override (notarial / doc stamps / insurance)";
+
+export interface PrintableDeviationEntry {
+    reason: string;
+    /** The specific remark for THIS deviation (trimmed); "" when none captured. */
+    remark: string;
+    isFeeOverride: boolean;
+}
+
+/** Structural view of `DeviationsData` — keeps this util free of schema imports. */
+export interface PrintableDeviationSource {
+    hasDeviations?: boolean;
+    deviationDetails?: string[];
+    deviationJustifications?: Record<string, string>;
+    feeDeviationJustification?: string;
+}
+
+/**
+ * Assembles the "Deviations:" box of the printed approval form: one entry per
+ * declared deviation, each carrying its specific remark, with the synthetic
+ * fee-override deviation appended last. Mirrors the backend's
+ * `LoanSubmissionService.BuildDeviationRows` so the create-page preview, the
+ * approval-page document, and the stored `LoanDeviation` rows never disagree.
+ *
+ * `hasDeviations` is deliberately ignored — same as the backend: the rows are
+ * derived from the declared reasons + fee justification, so a tampered flag
+ * cannot hide a deviation from the printout.
+ */
+export function buildPrintableDeviationEntries(
+    deviations: PrintableDeviationSource | undefined,
+): PrintableDeviationEntry[] {
+    if (!deviations) return [];
+
+    const seen = new Set<string>();
+    const entries: PrintableDeviationEntry[] = [];
+    for (const reason of deviations.deviationDetails ?? []) {
+        if (seen.has(reason)) continue; // tolerate dupes in legacy snapshots
+        seen.add(reason);
+        entries.push({
+            reason,
+            remark: (deviations.deviationJustifications?.[reason] ?? "").trim(),
+            isFeeOverride: false,
+        });
+    }
+
+    const feeRemark = (deviations.feeDeviationJustification ?? "").trim();
+    if (feeRemark.length > 0) {
+        entries.push({
+            reason: FEE_OVERRIDE_REASON,
+            remark: feeRemark,
+            isFeeOverride: true,
+        });
+    }
+
+    return entries;
+}

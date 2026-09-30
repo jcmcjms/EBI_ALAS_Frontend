@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+    buildPrintableDeviationEntries,
+    FEE_OVERRIDE_REASON,
     isBlankBuyOut,
     isBlankIncomingLoan,
     isBlankReloan,
@@ -55,5 +57,80 @@ describe("printableObligationRows", () => {
 
     it("tolerates an undefined list", () => {
         expect(printableObligationRows(undefined, isBlankBuyOut)).toEqual([]);
+    });
+});
+
+describe("buildPrintableDeviationEntries", () => {
+    it("returns an empty list when no deviations bucket exists", () => {
+        expect(buildPrintableDeviationEntries(undefined)).toEqual([]);
+    });
+
+    it("pairs each declared reason with its trimmed remark, in declaration order", () => {
+        const entries = buildPrintableDeviationEntries({
+            hasDeviations: true,
+            deviationDetails: [
+                "Age not within the prescribed parameters",
+                "Lacking CIBI",
+            ],
+            deviationJustifications: {
+                "Age not within the prescribed parameters": "  Borrower is 66 with strong co-maker.  ",
+                "Lacking CIBI": "CIBI requested, pending release.",
+            },
+        });
+
+        expect(entries).toEqual([
+            {
+                reason: "Age not within the prescribed parameters",
+                remark: "Borrower is 66 with strong co-maker.",
+                isFeeOverride: false,
+            },
+            { reason: "Lacking CIBI", remark: "CIBI requested, pending release.", isFeeOverride: false },
+        ]);
+    });
+
+    it("leaves the remark empty when none was captured (legacy snapshot)", () => {
+        const [entry] = buildPrintableDeviationEntries({
+            hasDeviations: true,
+            deviationDetails: ["Lacking CIBI"],
+        });
+        expect(entry.remark).toBe("");
+    });
+
+    it("appends the fee-override deviation last with its justification", () => {
+        const entries = buildPrintableDeviationEntries({
+            hasDeviations: true,
+            deviationDetails: ["Lacking CIBI"],
+            deviationJustifications: { "Lacking CIBI": "Pending release." },
+            feeDeviationJustification: "Notary charged ₱750 (4-page docs).",
+        });
+
+        expect(entries).toHaveLength(2);
+        expect(entries[1]).toEqual({
+            reason: FEE_OVERRIDE_REASON,
+            remark: "Notary charged ₱750 (4-page docs).",
+            isFeeOverride: true,
+        });
+    });
+
+    it("prints the fee-override deviation even when the deviations flag is off", () => {
+        // Mirrors the backend: rows derive from declared data, not the flag.
+        const entries = buildPrintableDeviationEntries({
+            hasDeviations: false,
+            deviationDetails: [],
+            feeDeviationJustification: "Doc stamps adjusted per BIR ruling.",
+        });
+
+        expect(entries).toHaveLength(1);
+        expect(entries[0].isFeeOverride).toBe(true);
+    });
+
+    it("drops duplicate reasons from legacy snapshots", () => {
+        const entries = buildPrintableDeviationEntries({
+            hasDeviations: true,
+            deviationDetails: ["Lacking CIBI", "Lacking CIBI"],
+            deviationJustifications: { "Lacking CIBI": "Pending release." },
+        });
+
+        expect(entries).toHaveLength(1);
     });
 });
