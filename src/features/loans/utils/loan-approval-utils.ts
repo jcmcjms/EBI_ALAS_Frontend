@@ -1,20 +1,8 @@
 /**
- * Loan Approval Utilities
- * ------------------------
- * Pure helpers shared between the approval-form preview
- * (`approval-form-preview.tsx`), the standalone document
- * (`approval-form-document.tsx`), and any future unit tests. Kept
- * out of `approval-form-document.tsx` so the file continues to
- * export *only* the component (React Refresh / HMR contract).
- *
- * The export shape mirrors the values `approval-form-document.tsx`
- * renders inline; if those change, this module must change too.
+ * Shared helpers for approval-form preview and document.
  *
  * IMPORTANT: `resolveApprovalTermDays`, `toAnnualRatePercent`, and
- * `buildProductLine` are the single source of truth for the approval-
- * form boundary normalization. The backend mirrors these in
- * `ApprovalFormConventions.cs` — do not "fix" one side without the
- * other. The shared case table in both test suites keeps them identical.
+ * `buildProductLine` must stay in sync with `ApprovalFormConventions.cs`.
  */
 
 import { parseProductCode } from "./loan-product-display";
@@ -62,11 +50,7 @@ export const GRACE_TOLERANCE_DAYS = 120;
 export const LEGACY_TOTAL_DEDUCTION_RATE = 0.06;
 export const LEGACY_NOTARIAL_FEE = 500;
 
-/**
- * Product-specific fee configuration from the LoanProduct table.
- * When provided to `computeLoanMetrics`, overrides the legacy hardcoded
- * defaults so the approval form matches the product's actual policy.
- */
+/** Fee configuration from LoanProduct table. */
 export interface ProductFeeConfig {
     /** Application charge rate as decimal (e.g. 0.065 for 6.5%). */
     applicationChargeRate: number;
@@ -81,10 +65,8 @@ export interface ProductFeeConfig {
 }
 
 // ── Approval-form boundary normalization ─────────────────────────────
-// These functions are the single source of truth for how raw webloan
-// feed values are normalized for the printed approval form. Both
-// `approval-form-preview.tsx` (create page) and
-// `approval-form-document.tsx` (review page) MUST import from here.
+// Source of truth for normalizing webloan values for the printed form.
+// Both approval-form-preview.tsx and approval-form-document.tsx import from here.
 
 /**
  * Resolves the TERM (Days) value printed on the approval form.

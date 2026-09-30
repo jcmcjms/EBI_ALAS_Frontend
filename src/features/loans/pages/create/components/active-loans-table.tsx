@@ -43,11 +43,8 @@ interface ActiveLoansTableProps {
     /** CIS number whose pending loans to display. */
     cisNo: string;
     /**
-     * Accounts (LAI rows) attached to the borrower — sourced from
-     * `WebLoanCisSearchResponse.accounts`. Each entry carries both the
-     * bare `accountNo` and the combined `accountId` ("<branchCode>-<accountNo>")
-     * the two drill-down endpoints expect on their route. Empty list =
-     * component is idle.
+     * Accounts (LAI rows) attached to the borrower.
+     * Empty list = component is idle.
      */
     accounts: WebLoanAccount[];
     /**
@@ -72,33 +69,10 @@ function extractProductCode(desc: string | undefined): string | null {
 }
 
 /**
- * "Account & Preloan" — once the AO picks an LAI (account), this island
- * fans out two parallel reads against the WebLoan API and lets the AO
- * pick which in-flight loan number they want to base the new application
- * on.
+ * "Account & Preloan" — fetches outstanding loans and pending preloans
+ * for the selected account, lets the AO pick a loan number.
  *
- * **Endpoint fan-out (parallel via `Promise.allSettled`):**
- *  - `GET .../outstanding-loans` — every active `loan_data` row for the
- *    (CIS, account) pair. Pre-fills the "Outstanding Loans" table on the
- *     new-loan form (the obligations section in step 4). The route
- *     parameter is the combined `accountId` ("<branchCode>-<accountNo>");
- *     the branch is part of the account identity.
- *  - `GET .../pending-loan` — in-flight `pre_loan_data` rows for the same
- *    pair, joined with `loan_data` so the AO sees product / purpose /
- *    rate / creation-type. Drives the loan-number picker; also carries
- *    the CIS-level NTHP + NTHP-date (CCR07 row) which we hydrate into
- *    the form.
- *
- * The two endpoints are independent (different tables, different key
- * columns) so we fire them in parallel and tolerate one failing while
- * the other succeeds — `/pending-loan` 404 is the same anti-enumeration
- * guard as `/outstanding-loans`, so a single toast covers both.
- *
- * The component uses `useFieldArray` to manage the selected loans array,
- * which enables:
- *  - O(1) lookup for preventing duplicate products via Set
- *  - Proper RHF integration for form state management
- *  - Automatic cleanup when loans are deselected
+ * Fires outstanding-loans and pending-loan in parallel via Promise.allSettled.
  */
 export function ActiveLoansTable({
     cisNo,
@@ -117,8 +91,7 @@ export function ActiveLoansTable({
     // Watch loans array for O(1) product code lookup
     const watchedLoans = useWatch({ control, name: "loans" }) ?? [];
 
-    // Captures the CIS-level NTHP date from /pending-loan so it can be
-    // stamped onto each loan's parameters when the AO toggles them on.
+    // Stores the NTHP date from /pending-loan to apply when loans are selected.
     const [pendingNthpDate, setPendingNthpDate] = useState("");
     const selectedProductCodes = new Set(
         watchedLoans.map((f) => f.productCode).filter(Boolean)
@@ -150,12 +123,7 @@ export function ActiveLoansTable({
             replace([]);
             onPreLoanChange("", null);
 
-            // Wipe any obligations row that came from a previous account — the
-            // outstanding balance is loan-specific and must not leak across
-            // account switches. We also wipe the CIS-level NTHP / NTHP-date
-            // and any previously-picked loan parameters so a stale balance
-            // from the previous (cis, account) pair can't leak through either;
-            // the fresh fetch below re-hydrates them from the response.
+            // Wipe stale data from previous account before re-fetching.
             setValue("outstandingLoans", []);
             setValue("client.netTakeHomePay", 0);
             setPendingNthpDate("");
@@ -168,19 +136,13 @@ export function ActiveLoansTable({
         setIsLoading(true);
         setLoadError(null);
 
-        // Fire both reads in parallel. The endpoints are independent
-        // (different tables, different key columns) and each carries its
-        // own (cisNo, accountId) anti-enumeration guard, so we tolerate
-        // either failing alone without losing the data from the other.
-        // Both endpoints take the combined `accountId` ("<bch>-<acctNo>").
+        // Fetch outstanding loans and pending preloan in parallel.
         const [outstandingResult, pendingResult] = await Promise.allSettled([
             getOutstandingLoans(cisNo, accountId),
             getPendingLoan(cisNo, accountId),
         ]);
 
-        // Surface the first error we see — both endpoints share the same
-        // 404 semantics (account↔CIS pair unknown), so one toast covers
-        // either failure and the caller treats it as "fetch failed".
+        // Surface the first rejection as a toast.
         const firstRejection =
             (outstandingResult.status === "rejected"
                 ? outstandingResult.reason
@@ -250,20 +212,12 @@ export function ActiveLoansTable({
             );
         }
 
-        // ── Hydrate picker + CIS-level fields from /pending-loan ───────
+        // ── Populate picker + CIS-level fields from /pending-loan ───────
         if (pendingResult.status === "fulfilled") {
             const pending = pendingResult.value;
             setLoans(pending.loans ?? []);
 
-            // NTHP + NTHP date live at the response root on this endpoint
-            // (CIS-level, joined from check_list_data WHERE item='CCR07').
-            // The form's `client.netTakeHomePay` is `number`, so we coerce
-            // the backend's decimal-string into a number before setValue;
-            // an empty/invalid value leaves the field at its cleared 0.
-            //
-            // The backend ships the NTHP as a *formatted* decimal string
-            // (e.g. `"5,000.00"` — thousands-separator with a comma), so
-            // a raw `Number(...)` would yield NaN. Strip commas first.
+            // NTHP is a formatted decimal string (e.g. "5,000.00") — strip commas before parsing.
             const nthpValue = Number(pending.nthp?.replace(/,/g, "") ?? "");
             if (pending.nthp && Number.isFinite(nthpValue)) {
                 setValue("client.netTakeHomePay", nthpValue, {

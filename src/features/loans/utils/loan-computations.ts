@@ -1,47 +1,12 @@
 /**
- * Pure utility functions for EBI ALAS loan computations.
+ * Loan computation utilities (PMT, minimum amortization, net proceeds).
  *
- * Mirrors the logic from the legacy LAM Excel templates:
- *   • `computeMonthlyAmortization` — standard amortizing-loan payment
- *     formula (PMT), used both for the real-time validation gate and
- *     for the Approval Form preview's `Monthly Amortization` line.
- *   • `getMinimumRequiredAmortization` — the tiered minimum-payment
- *     table the AO is checked against before submission. Encoded
- *     verbatim from the spreadsheet so the wizard's error message
- *     matches the printed form 1:1.
- *   • `computeLoanMetrics` — orchestration of the above plus the
- *     "Total Disposable" / "Net Proceeds" derivations, exposed
- *     through `useLoanComputations` to the form and the preview.
- *
- * ─── Banking rigor ────────────────────────────────────────────────────
- * JavaScript's `Number` is IEEE 754 double-precision. `Math.round` to
- * 2dp is **sufficient for UI projections** but **must not** be used for
- * the final promissory note or ledger entry on the backend — the .NET
- * API uses `decimal` for all financial math, and is the authoritative
- * source of truth (see `OutstandingLoansResponse.amortAmount`). The
- * frontend's role is strictly validation, preview, and capacity-to-pay
- * hints.
- *
- * The functions here are deliberately dependency-free so they are
- * trivial to unit test under Vitest and can be reused inside Zod
- * `superRefine` schemas (the validator must not pull React).
+ * Note: These are UI projections only. Backend uses decimal precision
+ * and is the source of truth for ledger entries.
  */
 
-// ── Cross-file type boundary ──────────────────────────────────────────
-//
-// We deliberately do NOT import types from `@/pages/loans/create/schema`
-// here, even though this file is consumed by that schema's
-// `superRefine`. The reason is a circular import under
-// `verbatimModuleSyntax`: the schema imports the engine for its
-// validation rules, and the engine would import the schema for its
-// type definitions. The TS resolver collapses the cycle into "module
-// not found" at build time. Defining the types locally below keeps the
-// dependency graph acyclic at the type level while the runtime call
-// stays identical.
-//
-// The structural types here mirror the schema fields the math reads.
-// Any drift between these and the schema is caught at the call site
-// (the snapshot builder's `Pick`-style access will fail to type-check).
+// Types defined locally to avoid circular import with schema.ts
+// (schema → computations → schema cycle breaks under verbatimModuleSyntax).
 
 /** Minimal structural view of `client.netTakeHomePay`. */
 export type NthpCarrier = { netTakeHomePay?: number };
@@ -123,13 +88,9 @@ export interface LoanComputationInputs {
 }
 
 /**
- * Aggregated "per-cycle" obligations that the AO declares on the form.
- *
- * `otherMonthlyObligations` is the AO's hand-keyed catch-all for any
- * recurring monthly obligation that isn't already captured by an EBI
- * reloan, buy-out, or incoming/undeducted row. It exists on the form
- * to make the capacity-to-pay math match what the AO actually sees in
- * their underwriting notes.
+ * Per-cycle obligations declared by the AO on the form.
+ * `otherMonthlyObligations` is the hand-keyed catch-all for recurring
+ * monthly obligations not captured by EBI reloan, buy-out, or incoming rows.
  */
 export interface DisposableIncomeInputs {
     /** Net Take-Home Pay in PHP. */

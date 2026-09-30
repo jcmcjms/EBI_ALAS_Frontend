@@ -1,30 +1,10 @@
 /**
- * Loan Transfer Utilities
- * ------------------------
- * Pure mapping functions used by `useLoanTransfers` to "translate" a row's
- * schema when it is moved between the four loan sections in the loan
- * creation wizard:
+ * Maps loan rows between sections (Outstanding ↔ EBI ↔ BuyOut ↔ Incoming).
  *
- *   - outstanding  (Outstanding Loans)
- *   - ebi          (EBI Reloans)
- *   - buyout       (Buy-Outs from other FIs)
- *   - incoming     (Incoming / Undeducted)
- *
- * The mapping rules deliberately mirror the way a loan officer would
- * classify the same obligation on paper: when a row is moved from
- * "Outstanding" to "EBI Reloans", the **product description** (e.g.
- * "C35 - Quick Loan" — the backend's pre-joined
- * `OutstandingLoanDto.productWithDescription`) becomes the EBI row's
- * `name`. The loan's *status* label (`<productCode> - <status label>`,
- * e.g. "C35 - Active") is *not* what the AO expects to see on an EBI
- * reloan row — the EBI reloan name is a description of the underlying
- * loan product, not its current state. `amortization` becomes
- * `existingDeduction`. The intent is to lose the minimum amount of
- * information possible while producing a valid record for the target
- * section.
- *
- * These functions are intentionally pure and side-effect free so they
- * can be unit-tested without a React tree.
+ * Key rules:
+ * - Product description becomes the row name (not status)
+ * - Amortization maps to existingDeduction
+ * - Preserves data for round-trip transfers
  */
 
 export type LoanSection = "outstanding" | "ebi" | "buyout" | "incoming";
@@ -38,17 +18,9 @@ export type OutstandingFormRow = {
     dateMaturity: string;
     status: string;
     /**
-     * Frontend carry-over of the backend's
-     * `OutstandingLoanDto.productWithDescription` (e.g.
-     * "C35 - Quick Loan"). This is the *product description* — what the
-     * AO expects to see as the EBI reloan's `name` after an
-     * Outstanding → EBI transfer — and is intentionally distinct from
-     * `status` (the loan's current *status* label, e.g. "C35 - Active").
-     *
-     * Empty string when the backend couldn't resolve a description
-     * (orphaned/retired product code); `mapToEbi` falls back to
-     * `status` in that case so the EBI row still has a human-readable
-     * `name` rather than an empty cell.
+     * Product description (e.g. "C35 - Quick Loan") — distinct from
+     * `status` (e.g. "C35 - Active"). Used as EBI reloan `name` on
+     * transfer. Falls back to `status` if empty.
      */
     productWithDescription: string;
 };
@@ -58,13 +30,8 @@ export type EbiReloanFormRow = {
     name: string;
     existingDeduction: number;
     outstandingBalance: number;
-    // `payToClose` is the amount the AO intends to settle on this EBI
-    // loan. It is hand-keyed in the table cell (not auto-populated by
-    // a transfer), but the `ebiReloanSchema.superRefine` rule compares
-    // it against `outstandingBalance`. We seed it with `0` in the
-    // mapped defaults so the value is never `undefined` between the
-    // append and the input mounting; otherwise the first render of
-    // the row would briefly fail `payToClose <= outstandingBalance`
+    // AO-entered settlement amount. Seeded with 0 so payToClose <=
+    // outstandingBalance validation passes on first render.
     // because `undefined > 0` is `false`, masking the schema's
     // intended UX signal for the AO's first keystroke.
     payToClose: number;
@@ -261,28 +228,8 @@ export function mapToEbi(row: TransferSourceRow, source: LoanSection): EbiReloan
     };
 
     if (source === "outstanding") {
-        // ── `name` source: product description (NOT status) ───────────
-        // The EBI reloan's `name` column is the loan product's
-        // *description* (e.g. "C35 - Quick Loan"), not the loan's
-        // current *status* label (e.g. "C35 - Active"). They were
-        // previously conflated because `mapToEbi` used to read
-        // `row.status`, which carries the backend's pre-joined
-        // `<code> - <status label>` string. The fix: the Outstanding
-        // row now carries the backend's pre-joined
-        // `OutstandingLoanDto.productWithDescription` as
-        // `row.productWithDescription` (see `active-loans-table.tsx`),
-        // and we read THAT here.
-        //
-        // When `productWithDescription` is empty (orphaned/retired
-        // product code on the backend, no description resolved), we
-        // fall back to `status` so the EBI row still has a
-        // human-readable `name` rather than an empty cell. The
-        // fallback is a *defensive* path — every row hydrated from
-        // the live /outstanding-loans endpoint now carries
-        // `productWithDescription`, so the fallback only kicks in
-        // for legacy rows (e.g. the dummy-data seeded in
-        // approval/dummy-data.ts) or any row that predates this
-        // change.
+        // Use product description (not status) as EBI name.
+        // Falls back to status for orphaned/retired product codes.
         const productDesc = safeString(row?.productWithDescription);
         const fallbackStatus = safeString(row?.status);
 

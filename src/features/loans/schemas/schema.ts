@@ -1,14 +1,7 @@
 import { z } from "zod";
 import { isRichTextEmpty, RICH_TEXT_MAX_CHARS, richTextToPlainText } from "@/src/shared/lib/rich-text";
 
-/**
- * Typed view of the backend's `loan_data.creation_type` byte — the
- * canonical list is a hard-coded `CASE` block on the .NET side (see
- * `WebLoanRegions.CreationTypeLabel`), not driven by any lookup
- * table. We mirror it here so the form has a single typed source
- * for the codes (schema, label map, and "should-hide-Section-4"
- * predicate all consume these constants).
- */
+/** Backend `loan_data.creation_type` byte codes. */
 export const CREATION_TYPE = {
     NEW_LOAN: 0,
     RELOAN: 1,
@@ -28,21 +21,9 @@ export const CREATION_TYPE_LABELS: Record<
 };
 
 /**
- * True when the picked preloan's creation type means the borrower's
- * existing loan portfolio has *not* been acquired by another FI —
- * i.e. the new application is a fresh acquisition (new loan) or
- * sits alongside an existing one (additional loan). In both cases
- * the AO should not be asked to re-list the borrower's outstanding
- * obligations from the WebLoan feed, and Section 4 ("Outstanding
- * Loans") is hidden in the wizard.
- *
- * The codes live on the backend as a `byte?`; the frontend
- * narrows them via `creationTypeCodeSchema` so this predicate
- * receives a typed value (or `null`).
- *
- * `null` (no preloan picked yet, or the joined `loan_data` row
- * was missing on the backend) defaults to **showing** Section 4 —
- * the conservative behavior the wizard had before this change.
+ * True when Section 4 (Outstanding Loans) should be hidden:
+ * New Loan and Additional Loan types don't require re-listing obligations.
+ * Defaults to showing Section 4 when code is null.
  */
 export const HidesOutstandingLoans = (
     code: CreationTypeCode | null | undefined
@@ -126,22 +107,9 @@ export const clientSchema = z.object({
 });
 
 // ── Outstanding Loan (existing obligation) ─────────────────────
-//
-// `productWithDescription` is a frontend-only carry-over: the backend's
-// `OutstandingLoanDto.productWithDescription` (e.g. "C35 - Quick Loan")
-// is the *product description* we want to surface as the EBI reloan's
-// `name` when a row is transferred from Outstanding → EBI Reloans.
-// We persist it on the row so the transfer in `mapToEbi` has access to
-// it without a re-fetch; it is optional because:
-//   1. manually-added outstanding rows (none today, but possible) may
-//      not have a product description attached, and
-//   2. Zod's default object() strips unknown keys at parse time, so
-//      making the field declared-but-optional is required to survive a
-//      round-trip through `zodResolver` for any submit / reset cycle.
-//
-// `status` is kept as a separate field for the existing "Status" column
-// in the obligations table — it is the loan's *status* label
-// (e.g. "Active"), distinct from the *product description*.
+// `productWithDescription`: product description (e.g. "C35 - Quick Loan"),
+// distinct from `status` (e.g. "Active"). Optional because Zod strips
+// unknown keys at parse time.
 export const outstandingLoanSchema = z.object({
     pn: z.string(),
     principalBalance: z.number().default(0),
@@ -199,22 +167,9 @@ export const incomingLoanSchema = z.object({
 
 // ── Loan Parameters ────────────────────────────────────────────
 //
-// The fee fields (notarial / doc stamps / insurance) implement the
-// "Smart Default with Editable Override" pattern:
-//   - `max()` bounds are *sanity* checks (catch fat-finger ₱50000 vs ₱500),
-//     not policy limits. The bank policy lives in `LoanProductResponse.fees[]`
-//     and is enforced server-side — the schema can't know per-product
-//     thresholds at parse time, so the *deviation-justification* rule
-//     below catches the policy breach instead.
-//   - `deviationJustification` lives at the *form* level (not per-field)
-//     because the AO typically has one reason for any/all overrides
-//     ("notary charged ₱750 because the docs were 4 pages instead of 2").
-//   - The `standardFeesSnapshot` is *derived*, not entered — written by
-//     the wizard from `computeExpectedFees(product, principal)` at the
-//     moment the AO picks a product / changes the principal, so the
-//     audit trail captures what the bank policy said *at that moment*.
-//     The backend stores both numbers so Compliance can run "AO
-//     override frequency" reports.
+// Bank-fee fields: smart defaults with editable override.
+// - max() bounds are sanity checks (fat-finger prevention), not policy limits
+// - standardFeesSnapshot captures policy at selection time for audit trail
 export const loanParametersSchema = z.object({
     product: z.string(),
     purpose: z.string(),
@@ -254,40 +209,13 @@ export const verificationSchema = z.object({
 });
 
 // ── Deviations / Remarks ───────────────────────────────────────
-//
-// `hasDeviations` is the user-controlled toggle. When it is `true`,
-// `deviationDetails` must contain at least one selected reason from
-// the fixed catalogue — we enforce that with a `superRefine` rather
-// than a plain `.min(1)` so a user who legitimately ticks the flag
-// and then unticks it does not see a stale required-error on the
-// (now empty) selection.
-//
-// `deviationJustifications` is a relational map keyed by the same
-// `DeviationReason` enum used by `deviationDetails`. It carries the
-// per-reason justification the AO must write for each selected
-// deviation (e.g. "Borrower is 66 but has strong co-maker and
-// collateral"). The schema's `superRefine` enforces the relational
-// invariant: every reason present in `deviationDetails` MUST have a
-// non-empty, ≥5-char justification in the map. This guarantees the
-// audit trail is complete *before* the application is submitted —
-// Compliance can later query "every loan that deviated on X came
-// with this justification", which a flat `string[]` of free-form
-// reasons could never support.
-//
-// Justifications for *unchecked* reasons are tolerated (carried as
-// stale entries until the AO clears the toggle / unchecks the row
-// — see `deviations-section.tsx`'s `toggleReason` which prunes them
-// on uncheck so the payload doesn't ship with orphaned keys).
-//
-// `otherRemarks` is always required, even when there are no
-// deviations, so the AO leaves a trace for downstream reviewers.
-//
-// `feeDeviationJustification` is conditionally required at the root
-// schema's `superRefine` (see below) — *only* when one of the fee
-// fields deviates from `standardFeesSnapshot` by more than the per-fee
-// `maxAllowedDeviation` stored on the product rule. We mark it
-// optional here so the per-field error path stays clean; the root
-// superRefine attaches the cross-field error.
+// - hasDeviations: toggle for deviation section
+// - deviationDetails: selected reasons (required if true, via superRefine
+//   to avoid stale errors when unticking)
+// - deviationJustifications: per-reason text (≥5 chars per checked reason;
+//   stale entries tolerated, pruned on uncheck)
+// - otherRemarks: always required (even without deviations)
+// - feeDeviationJustification: conditional (only when fee deviates from standard)
 export const DEVIATION_REASONS = [
     "Age not within the prescribed parameters",
     "Discounted Application Fee",
@@ -324,21 +252,10 @@ const MIN_JUSTIFICATION_LENGTH = 5;
 export const deviationsSchema = z
     .object({
         hasDeviations: z.boolean().default(false),
-        // Free-form string → fixed enum[] of deviation reasons. The
-        // wizard now surfaces a checkbox group from `DEVIATION_REASONS`
-        // and stores the selected reasons verbatim so the printed
-        // approval form renders them as a numbered list (1:, 2:, …)
-        // rather than whatever the AO happened to type.
         deviationDetails: z
             .array(z.enum(DEVIATION_REASONS))
             .default([]),
-        /**
-         * Relational map: each selected `DeviationReason` keys a free-
-         * text justification (≥MIN_JUSTIFICATION_LENGTH chars after
-         * trim). The map is optional so an empty form on first mount
-         * passes parsing; the relational `superRefine` below upgrades
-         * it to required *per checked reason*.
-         */
+        /** Maps each checked deviation reason to its justification text. */
         deviationJustifications: z
             .record(z.string(), z.string().trim())
             .default({}),
