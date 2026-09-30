@@ -11,6 +11,7 @@ import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/src/components/ui/alert";
 import { RichText } from "@/src/components/ui/rich-text";
+import { EmptyState } from "@/src/components/ui/empty-state";
 import { getLoanTimeline, type TimelineEvent } from "../api/loan-review";
 import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import { describeEvent, relativeTime } from "../utils/loan-timeline";
@@ -37,9 +38,8 @@ const matchesFilter = (e: TimelineEvent, f: Filter) =>
 interface ApplicationTimelineProps {
     loanId: number;
     /**
-     * "panel"  — review page: own bounded scroll region + sticky controls,
-     *            so a long history never stretches the page.
-     * "inline" — monitoring drawer: flows inside the drawer's own scroll.
+     * "panel"  — bounded scroll with sticky controls (review page)
+     * "inline" — flows inside parent scroll (monitoring drawer)
      */
     variant?: "panel" | "inline";
 }
@@ -131,7 +131,7 @@ export function ApplicationTimeline({ loanId, variant = "panel" }: ApplicationTi
                     </AlertDescription>
                 </Alert>
             ) : events.length === 0 ? (
-                <p className="p-6 text-center text-xs text-muted-foreground">Nothing recorded for this filter yet.</p>
+                <EmptyState title="No activity yet" hint="Nothing recorded for this filter." />
             ) : (
                 <ol className="relative space-y-5 p-4 before:absolute before:bottom-4 before:left-[31px] before:top-4 before:w-px before:bg-border">
                     {events.map((e, i) => {
