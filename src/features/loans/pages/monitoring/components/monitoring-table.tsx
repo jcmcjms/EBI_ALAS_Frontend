@@ -147,7 +147,8 @@ function TimeLapsedIndicator({ lastActionDate, status, slaPolicy }: TimeLapsedIn
 
     // Freeze the timer for terminal statuses — the clock stops at the
     // moment of the last action so the displayed elapsed time never grows.
-    const effectiveNow = status === "Cancelled" ? new Date(lastActionDate).getTime() : now;
+    const TERMINAL_STATUSES = new Set(["Cancelled", "Disbursed", "OnGoing"]);
+    const effectiveNow = TERMINAL_STATUSES.has(status) ? new Date(lastActionDate).getTime() : now;
 
     const assessment = assessAging(status, lastActionDate, effectiveNow, slaPolicy);
 
