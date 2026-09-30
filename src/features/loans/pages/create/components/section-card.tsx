@@ -65,7 +65,7 @@ export function SectionCard({
           {systemSourced && (
             <Badge variant="outline" className="gap-1 text-xs font-normal">
               <CloudCheck size={12} weight="bold" />
-              System sourced
+              Auto-filled
             </Badge>
           )}
           {badge}

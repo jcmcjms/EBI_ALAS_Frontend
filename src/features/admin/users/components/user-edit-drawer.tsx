@@ -343,7 +343,7 @@ export function UserEditDrawer({
                             <p className="text-xs text-muted-foreground">
                                 {isApprover
                                     ? "Determines which loans this approver can authorize (delegation of authority)."
-                                    : "Complements the workflow role and shows up on audit trails."}
+                                    : "Complements the workflow role and appears in loan history."}
                             </p>
                         </div>
 

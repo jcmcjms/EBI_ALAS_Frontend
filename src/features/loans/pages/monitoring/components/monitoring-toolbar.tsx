@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/src/components/ui/popover.tsx";
 import { Calendar } from "@/src/components/ui/calendar.tsx";
 import { Badge } from "@/src/components/ui/badge";
 import { Checkbox } from "@/src/components/ui/checkbox";
-import { MagnifyingGlass, CalendarBlank, Funnel, Export, X, UserCircle, CaretDown, Tray } from "@phosphor-icons/react";
+import { MagnifyingGlass, CalendarBlank, Funnel, X, UserCircle, CaretDown } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import type { MonitoringFilters } from "@/src/features/loans/types/monitoring";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
@@ -22,7 +21,6 @@ interface ToolbarProps {
 }
 
 export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: ToolbarProps) {
-    const navigate = useNavigate();
     const role = useAuthStore((s) => s.user?.role);
     const [localSearch, setLocalSearch] = useState(filters.search);
 
@@ -42,7 +40,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
             <div className="relative flex-1 max-w-sm">
                 <MagnifyingGlass size={16} className="absolute left-3 top-2.5 text-muted-foreground" weight="bold" />
                 <Input
-                    placeholder="Search LAM ID, Name, or Product..."
+                    placeholder="Search applications..."
                     value={localSearch}
                     onChange={(e) => setLocalSearch(e.target.value)}
                     className="pl-9 h-9 bg-background"
@@ -62,7 +60,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                             format(filters.dateRange.from, "LLL dd, y")
                         )
                     ) : (
-                        <span className="text-muted-foreground">Application Date Range</span>
+                        <span className="text-muted-foreground">Date range</span>
                     )}
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -203,21 +201,6 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                 </Button>
             )}
 
-            {/* Review Desk shortcut — visible only for reviewer roles */}
-            {(role === "Recommender" || role === "Evaluator" || role === "Approver") && (
-                <Button
-                    variant="default"
-                    size="sm"
-                    className="h-9 gap-1.5 text-xs"
-                    onClick={() => navigate("/loans/queue")}
-                >
-                    <Tray size={14} weight="bold" /> Open Review Desk
-                </Button>
-            )}
-
-            <Button variant="outline" size="sm" className="h-9 ml-auto gap-1.5 text-xs">
-                <Export size={14} weight="bold" /> Export CSV
-            </Button>
         </div>
     );
 }

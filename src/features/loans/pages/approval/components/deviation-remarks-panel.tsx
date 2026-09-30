@@ -134,7 +134,7 @@ function ThreadComposer({
                 rows={2}
                 value={body}
                 maxLength={2000}
-                placeholder="Add a remark on this deviation…"
+                placeholder="Add a remark…"
                 onChange={(e) => setBody(e.target.value)}
             />
             <div className="flex items-center justify-between">

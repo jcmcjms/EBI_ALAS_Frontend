@@ -199,7 +199,7 @@ export function DocumentRemarksThread({
                         rows={2}
                         maxLength={2000}
                         value={body}
-                        placeholder="Add a remark on this document…"
+                        placeholder="Add a remark…"
                         onChange={(e) => setBody(e.target.value)}
                     />
                     <div className="flex items-center justify-between">

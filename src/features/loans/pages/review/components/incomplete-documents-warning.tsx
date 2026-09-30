@@ -46,8 +46,8 @@ export function IncompleteDocumentsWarning({ checklist, documentFlag }: Props) {
                     <p>
                         Flagged on {new Date(documentFlag.flaggedAt).toLocaleDateString()}.
                         {documentFlag.reason ? ` Reason: ${documentFlag.reason}` : ""}
-                        {" "}The workflow is not blocked. The flag clears automatically once every
-                        requirement verifies complete on the document server.
+                        {" "}This does not block the workflow. The flag clears
+                        when all documents are uploaded.
                     </p>
                 )}
                 {pending.length > 0 && (

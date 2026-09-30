@@ -342,7 +342,7 @@ export function LoanEvaluationPage() {
                             className="gap-1.5 shrink-0"
                             onClick={() => recheck.mutate()}
                             disabled={recheck.isPending}
-                            title="Ask the document server to re-verify completeness now"
+                            title="Re-verify document completeness"
                         >
                             <ArrowCounterClockwise size={14} weight="bold" />
                             Re-check documents
@@ -434,7 +434,7 @@ export function LoanEvaluationPage() {
                                 {/* ── Audit Trail ── */}
                                 <div className="space-y-3">
                                     <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        <Clock size={12} /> Audit Trail
+                                        <Clock size={12} /> History
                                     </h3>
                                     {history.isLoading ? (
                                         <div className="flex justify-center py-4">

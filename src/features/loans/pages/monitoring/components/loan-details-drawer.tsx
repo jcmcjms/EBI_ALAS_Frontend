@@ -87,7 +87,7 @@ export function LoanDetailsDrawer({
                                 </Badge>
                             </>
                         ) : (
-                            "Audit trail & history"
+                            "Select an application to view its details."
                         )}
                         {/* Document flag badge — shows next to status badge.
                          * The `?? record` fallback covers query-latency only;
@@ -100,30 +100,6 @@ export function LoanDetailsDrawer({
                         )}
                     </SheetDescription>
                 </SheetHeader>
-
-                {/* Entry point into the approval workflow.
-                 *
-                 * Only shown when an application is actually selected (the
-                 * `applicationId &&` guard short-circuits when the drawer is
-                 * closed or the row click was missing an id). We hand the
-                 * numeric id through `?id=` so the approval page can use
-                 * `useSearchParams` to hydrate the page without a route-param
-                 * refactor. The button is full-width to draw attention to
-                 * it as the primary action of the drawer — the timeline
-                 * below is supporting context, not the drawer's purpose. */}
-                {applicationId && (
-                    <div className="px-6 py-3 border-b bg-muted/20">
-                        <Button
-                            className="w-full gap-2"
-                            onClick={() =>
-                                navigate(`/loans/approval/${applicationId}`)
-                            }
-                        >
-                            <ArrowRight size={16} weight="bold" />
-                            Review &amp; Process Application
-                        </Button>
-                    </div>
-                )}
 
                 {/* Queue position banner — human-readable desk sentence */}
                 {deskSentence && (
@@ -154,6 +130,20 @@ export function LoanDetailsDrawer({
                         </div>
                     )}
                 </div>
+
+                {applicationId && (
+                    <div className="border-t bg-background p-4">
+                        <Button
+                            className="w-full gap-2"
+                            onClick={() =>
+                                navigate(`/loans/approval/${applicationId}`)
+                            }
+                        >
+                            <ArrowRight size={16} weight="bold" />
+                            Review application
+                        </Button>
+                    </div>
+                )}
             </SheetContent>
         </Sheet>
     );

@@ -123,9 +123,9 @@ export function WorkflowOverview() {
             <footer className="flex items-start gap-2 border-t border-border bg-muted/30 px-4 py-3">
                 <Info size={14} weight="bold" className="mt-0.5 shrink-0 text-primary" aria-hidden />
                 <p className="text-xs text-muted-foreground">
-                    Reviewers may flag missing documents during review; the file returns to the
-                    review queue automatically once every requirement verifies complete on the
-                    document server. Missing documents do not block approval.
+                    Reviewers may flag missing documents during review. The flag
+                    clears automatically once all documents are uploaded. Missing
+                    documents do not block approval.
                 </p>
             </footer>
         </section>

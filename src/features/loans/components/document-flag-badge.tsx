@@ -60,8 +60,8 @@ export function DocumentFlagBadge({ flag, compact }: DocumentFlagBadgeProps) {
                         <p className="text-muted-foreground">{flag.reason}</p>
                     )}
                     <p className="text-muted-foreground">
-                        The workflow is not blocked. The flag clears automatically once
-                        every requirement verifies complete on the document server.
+                        This does not block the workflow. The flag clears
+                        when all documents are uploaded.
                     </p>
                 </PopoverContent>
             </Popover>

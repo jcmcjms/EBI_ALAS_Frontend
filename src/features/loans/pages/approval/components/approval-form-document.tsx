@@ -814,7 +814,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                                                 colSpan={5}
                                                 className="border border-black bg-[#d9eaf7] px-1.5 py-1 text-left text-xs font-bold uppercase tracking-wider"
                                             >
-                                                Audit trail recorded by the system
+                                                History recorded by the system
                                             </th>
                                         </tr>
                                         <tr className="[&>th]:border-b [&>th]:border-black [&>th]:px-1.5 [&>th]:py-1 [&>th]:text-left [&>th]:text-xs [&>th]:font-bold">

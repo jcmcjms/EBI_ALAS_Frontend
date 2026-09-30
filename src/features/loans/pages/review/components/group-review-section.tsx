@@ -202,9 +202,9 @@ export function GroupReviewSection({
                                 to the bundle
                             </DialogTitle>
                             <DialogDescription>
-                                Each loan is validated independently (state machine,
-                                queue turn, document completeness). Loans that fail
-                                stay untouched and are listed in the result.
+                                Some loans may not meet the requirements for
+                                this action. Loans that fail stay untouched
+                                and are listed in the result.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -260,7 +260,7 @@ export function GroupReviewSection({
                                 <Textarea
                                     rows={3}
                                     maxLength={1000}
-                                    placeholder="Comments (written to each loan's audit trail)..."
+                                    placeholder="Comments (added to each loan's history)..."
                                     value={comments}
                                     onChange={(e) =>
                                         setComments(e.target.value)

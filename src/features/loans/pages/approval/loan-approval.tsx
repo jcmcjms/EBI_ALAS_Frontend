@@ -774,7 +774,7 @@ export function LoanApprovalPage() {
                                                 Document Requirements
                                             </CardTitle>
                                             <CardDescription className="pt-1 text-xs">
-                                                Checklist synced from the document server. Missing documents do not
+                                                Checklist of required documents. Missing documents do not
                                                 block review — a reviewer may flag the file or proceed to approval.
                                             </CardDescription>
                                         </div>
@@ -785,7 +785,7 @@ export function LoanApprovalPage() {
                                             className="gap-1.5"
                                             onClick={() => recheck.mutate()}
                                             disabled={recheck.isPending}
-                                            title="Ask the document server to re-verify completeness now"
+                                            title="Re-verify document completeness"
                                         >
                                             <ArrowCounterClockwise size={14} weight="bold" />
                                             Re-check documents

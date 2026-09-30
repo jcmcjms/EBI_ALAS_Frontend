@@ -24,6 +24,7 @@ import { LOAN_STATUS_META } from "@/src/features/loans/utils/loan-status";
 import { AGING_BADGE_CLASS, assessAging } from "@/src/features/loans/utils/loan-aging";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 import { CANCELLABLE_STATUSES } from "@/src/features/loans/api/loan-review";
+import { EmptyState } from "@/src/components/ui/empty-state";
 
 /** Per-column Tailwind classes surfaced through `meta.className`. */
 type MonitoringColumnMeta = {
@@ -302,11 +303,14 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                     if (row.assignedApproverName) {
                         return (
                             <div className="flex items-center gap-1.5">
-                                <div className="relative">
-                                    <UserCircle size={16} className="text-muted-foreground" />
-                                    <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-background" />
-                                </div>
+                                <UserCircle size={16} className="text-muted-foreground" />
                                 <span className="text-xs font-medium">{row.assignedApproverName}</span>
+                                {mine && (
+                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">(you)</span>
+                                )}
+                                {row.queuePosition != null && (
+                                    <span className="text-[10px] text-muted-foreground">#{row.queuePosition}/{row.queueLength}</span>
+                                )}
                             </div>
                         );
                     }
@@ -317,7 +321,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                                 className="border-amber-300 bg-amber-50 text-amber-800 text-[10px] font-normal"
                                 title={row.noAuthorityReason}
                             >
-                                No approver configured · Tier {row.requiredApprovalTier}
+                                No approver configured
                             </Badge>
                         );
                     }
@@ -327,17 +331,15 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                 if (row.isQueueHead) {
                     return (
                         <div className="flex items-center gap-1.5">
-                            <div className="relative">
-                                <UserCircle size={16} className="text-muted-foreground" />
-                                <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-background" />
-                            </div>
+                            <UserCircle size={16} className="text-muted-foreground" />
                             <span className="text-xs font-medium">
                                 {row.queueOwnerName ?? info.getValue() ?? "—"}
                             </span>
                             {mine && (
-                                <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px] font-normal">
-                                    Your turn
-                                </Badge>
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">(you)</span>
+                            )}
+                            {row.queuePosition != null && (
+                                <span className="text-[10px] text-muted-foreground">#{row.queuePosition}/{row.queueLength}</span>
                             )}
                         </div>
                     );
@@ -345,13 +347,13 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
 
                 if (row.queuePosition != null) {
                     return (
-                        <Badge
-                            variant="outline"
-                            className="text-xs font-normal text-muted-foreground"
-                            title={`Waiting for ${row.queueStage} — ${row.queueOwnerName ?? "the designated reviewer"} is on the current file`}
-                        >
-                            Queue #{row.queuePosition} of {row.queueLength}
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                            <UserCircle size={16} className="text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">
+                                Waiting — {row.queueOwnerName ?? "reviewer"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">#{row.queuePosition}/{row.queueLength}</span>
+                        </div>
                     );
                 }
 
@@ -371,7 +373,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                         aria-label={`Cancel application ${row.formNumber}`}
                         onClick={(e) => { e.stopPropagation(); onCancel(row); }}
                     >
@@ -480,15 +482,15 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                             </TableRow>
                         ) : showEmpty ? (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                                    No loan applications match the current filters.
+                                <TableCell colSpan={columns.length}>
+                                    <EmptyState title="No applications found" hint="Try adjusting your filters." />
                                 </TableCell>
                             </TableRow>
                         ) : (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
-                                    className="hover:bg-muted/30 transition-colors cursor-pointer"
+                                    className="group hover:bg-muted/30 transition-colors cursor-pointer"
                                     onClick={() => onRowClick(row.original)}
                                 >
                                     {row.getAllCells().map((cell) => (
