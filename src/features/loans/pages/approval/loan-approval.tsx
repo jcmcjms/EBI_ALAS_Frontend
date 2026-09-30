@@ -65,6 +65,8 @@ import { useLoanSignatureChain, signatureKeys } from "@/src/features/loans/api/s
 import {
     getLoanDetail,
     getChecklistDocuments,
+    getDocumentRemarks,
+    getLoanDeviations,
     updateLoanStatus,
     cancelLoanApplication,
     flagDocuments,
@@ -158,6 +160,23 @@ export function LoanApprovalPage() {
     // Signature chain — resolved from LoanActions audit trail.
     const { data: signatureSlots } = useLoanSignatureChain(id);
 
+    // ── Remarks for print audit trail ─────────────────────────────────────
+    // Fetched in parallel with the detail query; staleTime matches the detail
+    // cache so the print pack stays in sync. `enabled` gates on a valid id.
+    const { data: deviationsData } = useQuery({
+        queryKey: queryKeys.loans.review.deviations(id),
+        queryFn: () => getLoanDeviations(id),
+        enabled: Number.isFinite(id) && id > 0,
+        staleTime: 30_000,
+    });
+
+    const { data: documentRemarksData } = useQuery({
+        queryKey: queryKeys.loans.documentRemarks(id),
+        queryFn: () => getDocumentRemarks(id),
+        enabled: Number.isFinite(id) && id > 0,
+        staleTime: 30_000,
+    });
+
     // Group membership drives the sticky tab strip. Same query key as
     // GroupReviewSection's internal useLoanGroup — React Query dedupes,
     // so this costs zero extra requests.
@@ -247,7 +266,7 @@ export function LoanApprovalPage() {
                     ? "Evaluation recorded as Not Recommended — forwarded to Approver."
                     : payload.kind === "return"
                         ? "Application pushed back to the encoder."
-                        : "Application moved successfully.");
+                        : "Application moved.");
             setRemarks("");
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
             qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
@@ -325,12 +344,12 @@ export function LoanApprovalPage() {
                 <div className="text-center space-y-4 max-w-md">
                     <WarningCircle size={48} className="mx-auto text-destructive" />
                     <h2 className="text-xl font-semibold">
-                        {isForbidden ? "Access Denied" : "Failed to Load Application"}
+                        {isForbidden ? "Access Denied" : "Couldn't Load Application"}
                     </h2>
                     <p className="text-muted-foreground">
                         {isForbidden
-                            ? "You don't have permission to view this loan application. This may be because your account doesn't have the required role, or the application belongs to a different branch. Please contact your administrator if you believe this is a mistake."
-                            : "We couldn't load this loan application. Please try again or return to the monitoring page."}
+                            ? "You don't have permission to view this loan application. This may be because your account doesn't have the required role, or the application belongs to a different branch. Contact your administrator if you believe this is a mistake."
+                            : "We couldn't load this loan application. Try again or return to the monitoring page."}
                     </p>
                     <Button onClick={() => navigate("/loans/monitoring")}>
                         Return to Monitoring
@@ -515,6 +534,8 @@ export function LoanApprovalPage() {
                                         catLoanClass={null}
                                         signatureSlots={signatureSlots ?? undefined}
                                         actions={detail?.actions}
+                                        deviations={deviationsData}
+                                        documentRemarks={documentRemarksData}
                                     />
                                 </ApprovalFormViewport>
                             </CardContent>

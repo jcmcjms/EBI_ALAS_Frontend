@@ -22,6 +22,10 @@ import type {
     LoanApplicationFormData,
 } from "@/src/features/loans/schemas/schema";
 import type { SignatureSlotDto } from "@/src/features/loans/api/signatures";
+import type {
+    LoanDeviationDto,
+    DocumentRemarkDto,
+} from "@/src/features/loans/api/loan-review";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
 
@@ -70,44 +74,6 @@ export interface ApprovalFormActionEntry {
     actionByUserName: string;
 }
 
-/**
- * Group actions by local calendar date for the printed audit trail.
- * Newest-first so the most recent state change sits at the top of the
- * printout — mirrors how the on-screen ApplicationTimeline defaults.
- */
-function groupActionsByDate(
-    actions: ApprovalFormActionEntry[],
-): Array<{ date: string; dateLabel: string; entries: ApprovalFormActionEntry[] }> {
-    const map = new Map<string, ApprovalFormActionEntry[]>();
-    for (const a of actions) {
-        const iso = a.actionDate;
-        const dayKey = iso ? iso.slice(0, 10) : "unknown";
-        const bucket = map.get(dayKey);
-        if (bucket) bucket.push(a);
-        else map.set(dayKey, [a]);
-    }
-    return Array.from(map.entries())
-        .sort((a, b) => (a[0] > b[0] ? -1 : a[0] < b[0] ? 1 : 0))
-        .map(([date, entries]) => {
-            const d = new Date(date);
-            const dateLabel = Number.isNaN(d.getTime())
-                ? date
-                : d.toLocaleDateString("en-PH", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                  });
-            return {
-                date,
-                dateLabel,
-                entries: [...entries].sort((a, b) =>
-                    (a.actionDate ?? "") > (b.actionDate ?? "") ? -1 : 1,
-                ),
-            };
-        });
-}
-
 function formatActionTime(iso: string): string {
     if (!iso) return "-";
     const d = new Date(iso);
@@ -133,6 +99,99 @@ function formatTransition(
     const f = from?.trim() || "—";
     const t = to?.trim() || "—";
     return `${f} → ${t}`;
+}
+
+/**
+ * Unified audit-trail entry for the printed pack. Merges workflow actions,
+ * deviation remark threads, and document remark threads into a single
+ * chronological stream. `type` distinguishes the source so the printed
+ * sheet shows what kind of event each row represents.
+ */
+interface UnifiedAuditEntry {
+    id: string;
+    type: "action" | "deviation-remark" | "document-remark";
+    /** Workflow action verb or "Deviation Remark" / "Document Remark". */
+    label: string;
+    /** Status transition (actions only) or deviation/document context. */
+    context: string | null;
+    /** Actor name (actions) or author name (remarks). */
+    actor: string;
+    /** ISO timestamp (actionDate for actions, createdAt for remarks). */
+    timestamp: string;
+    /** The content: action comments, or remark body. */
+    content: string;
+}
+
+/**
+ * Merges workflow actions, deviation remarks, and document remarks into a
+ * single chronological stream for the printed audit trail. Each entry carries
+ * a type discriminator so the sheet can render different visual cues for
+ * workflow events vs. conversation threads.
+ */
+function buildUnifiedAuditTrail(
+    actions: ApprovalFormActionEntry[] | undefined,
+    deviations: LoanDeviationDto[] | undefined,
+    documentRemarks: DocumentRemarkDto[] | undefined,
+): UnifiedAuditEntry[] {
+    const entries: UnifiedAuditEntry[] = [];
+
+    // Workflow actions
+    if (actions) {
+        for (const a of actions) {
+            entries.push({
+                id: `action-${a.id}`,
+                type: "action",
+                label: a.action,
+                context: formatTransition(a.fromStatus, a.toStatus),
+                actor: a.actionByUserName,
+                timestamp: a.actionDate,
+                content: a.comments?.trim() ?? "",
+            });
+        }
+    }
+
+    // Deviation remarks (flatten the threads)
+    if (deviations) {
+        for (const dev of deviations) {
+            for (const remark of dev.remarks) {
+                entries.push({
+                    id: `dev-remark-${remark.id}`,
+                    type: "deviation-remark",
+                    label: "Deviation Remark",
+                    context: dev.reasonText,
+                    actor: remark.authorName,
+                    timestamp: remark.createdAt,
+                    content: remark.body,
+                });
+            }
+        }
+    }
+
+    // Document remarks
+    if (documentRemarks) {
+        for (const remark of documentRemarks) {
+            entries.push({
+                id: `doc-remark-${remark.id}`,
+                type: "document-remark",
+                label: "Document Remark",
+                context: remark.checklistIdCode,
+                actor: remark.authorName,
+                timestamp: remark.createdAt,
+                content: remark.body,
+            });
+        }
+    }
+
+    // Sort chronologically (oldest first, newest last) so the printed trail
+    // reads top-down as a timeline.
+    return entries.sort((a, b) => {
+        const ta = new Date(a.timestamp).getTime();
+        const tb = new Date(b.timestamp).getTime();
+        if (Number.isNaN(ta) && Number.isNaN(tb)) return 0;
+        if (Number.isNaN(ta)) return 1;
+        if (Number.isNaN(tb)) return -1;
+        return ta - tb;
+    });
 }
 
 const BLUE = "bg-[#d9eaf7]";
@@ -244,9 +303,19 @@ interface ApprovalFormDocumentProps {
      * Sourced from `LoanDetailResponse.actions` by the parent page.
      */
     actions?: ApprovalFormActionEntry[];
+    /**
+     * Deviation remark threads (per-deviation conversation). Merged into the
+     * page 3 audit trail. `undefined` or empty → no deviation remarks printed.
+     */
+    deviations?: LoanDeviationDto[];
+    /**
+     * Document remark threads (per-document conversation). Merged into the
+     * page 3 audit trail. `undefined` or empty → no document remarks printed.
+     */
+    documentRemarks?: DocumentRemarkDto[];
 }
 
-const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, loanIndex = 0, catLoanClass, signatureSlots, actions }, ref) => {
+const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, loanIndex = 0, catLoanClass, signatureSlots, actions, deviations: deviationThreads, documentRemarks }, ref) => {
     const client = data?.client ?? ({} as LoanApplicationFormData["client"]);
     const branchType = data?.branchType ?? ({} as LoanApplicationFormData["branchType"]);
     // Multi-loan: the printed approval form is scoped to one loan. The
@@ -718,109 +787,109 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                     </div>
                 </section>
 
-                {/* ══ PAGE 3 — Application history / audit trail ══
-                    Print-only sheet. On-screen reviewers read the LIVE
-                    ApplicationTimeline in the Workflow rail; the frozen audit
-                    trail must not compete with it on the screen sheet, so it
-                    ships only in the printed pack. `hidden print:block` keeps
-                    the DOM for the print pass while removing it from the
-                    on-screen preview; `break-before-page` starts a fresh
-                    physical sheet; `break-inside-avoid` keeps each date-group
-                    atomic so no row is torn between pages. Continuation header
-                    mirrors page 2 so a separated sheet is attributable. */}
-                {actions && actions.length > 0 && (
-                    <section className="hidden break-before-page print:block">
-                        <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
-                            <span className="text-sm font-bold underline">
-                                LOAN APPROVAL FORM
-                            </span>
-                            <span className="tabular-nums">
-                                {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{" "}
-                                {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}
-                            </span>
-                        </div>
+                {/* ══ PAGE 3 — Unified audit trail (actions + remarks) ══ */}
+                {(() => {
+                    const unifiedTrail = buildUnifiedAuditTrail(actions, deviationThreads, documentRemarks);
+                    if (unifiedTrail.length === 0) return null;
 
-                        <div className="border-2 border-t-0 border-black print:border-t-2">
-                            <div className={cn(B, "text-center font-bold")}>APPLICATION HISTORY</div>
+                    return (
+                        <section className="hidden break-before-page print:block">
+                            <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
+                                <span className="text-sm font-bold underline">
+                                    LOAN APPROVAL FORM
+                                </span>
+                                <span className="tabular-nums">
+                                    {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{" "}
+                                    {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}
+                                </span>
+                            </div>
 
-                            <table className="w-full border-collapse">
-                                <thead>
-                                    <tr>
-                                        <th
-                                            colSpan={4}
-                                            className="border border-black bg-[#d9eaf7] px-1.5 py-1 text-left text-xs font-bold uppercase tracking-wider"
-                                        >
-                                            Audit trail recorded by the system
-                                        </th>
-                                    </tr>
-                                    <tr className="[&>th]:border-b [&>th]:border-black [&>th]:px-1.5 [&>th]:py-1 [&>th]:text-left [&>th]:text-xs [&>th]:font-bold">
-                                        <th className="w-[15%]">Date / Time</th>
-                                        <th className="w-[20%]">Actor</th>
-                                        <th className="w-[25%]">Action · Status</th>
-                                        <th>Remarks / Conditions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {groupActionsByDate(actions).map((group) => (
-                                        <React.Fragment key={group.date}>
-                                            <tr className="break-inside-avoid align-top">
-                                                <td
-                                                    colSpan={4}
-                                                    className="border border-black border-b-0 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-slate-700"
-                                                >
-                                                    {group.dateLabel}
-                                                </td>
-                                            </tr>
-                                            {group.entries.map((entry) => (
+                            <div className="border-2 border-t-0 border-black print:border-t-2">
+                                <div className={cn(B, "text-center font-bold")}>APPLICATION HISTORY &amp; REMARKS</div>
+
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th
+                                                colSpan={5}
+                                                className="border border-black bg-[#d9eaf7] px-1.5 py-1 text-left text-xs font-bold uppercase tracking-wider"
+                                            >
+                                                Audit trail recorded by the system
+                                            </th>
+                                        </tr>
+                                        <tr className="[&>th]:border-b [&>th]:border-black [&>th]:px-1.5 [&>th]:py-1 [&>th]:text-left [&>th]:text-xs [&>th]:font-bold">
+                                            <th className="w-[12%]">Date / Time</th>
+                                            <th className="w-[12%]">Type</th>
+                                            <th className="w-[15%]">Actor</th>
+                                            <th className="w-[20%]">Context</th>
+                                            <th>Content</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {unifiedTrail.map((entry) => {
+                                            const typeColor =
+                                                entry.type === "action"
+                                                    ? "bg-blue-100 text-blue-800"
+                                                    : entry.type === "deviation-remark"
+                                                      ? "bg-amber-100 text-amber-800"
+                                                      : "bg-emerald-100 text-emerald-800";
+
+                                            return (
                                                 <tr
                                                     key={entry.id}
                                                     className="break-inside-avoid [&>td]:border [&>td]:border-black [&>td]:px-1.5 [&>td]:py-1 [&>td]:align-top"
                                                 >
                                                     <td className="whitespace-nowrap tabular-nums">
-                                                        <div className="text-[10px]">{isoDate(entry.actionDate)}</div>
+                                                        <div className="text-[10px]">{isoDate(entry.timestamp)}</div>
                                                         <div className="text-[10px] text-slate-600">
-                                                            {formatActionTime(entry.actionDate)}
+                                                            {formatActionTime(entry.timestamp)}
                                                         </div>
                                                     </td>
-                                                    <td className="text-xs">
-                                                        {dash(entry.actionByUserName)}
+                                                    <td className="text-[10px]">
+                                                        <span className={`inline-block rounded px-1.5 py-0.5 font-medium ${typeColor}`}>
+                                                            {entry.type === "action" ? "Action" : entry.type === "deviation-remark" ? "Deviation" : "Document"}
+                                                        </span>
                                                     </td>
                                                     <td className="text-xs">
-                                                        <div className="font-medium">
-                                                            {dash(entry.action)}
-                                                        </div>
-                                                        <div className="text-[10px] text-slate-600">
-                                                            {formatTransition(
-                                                                entry.fromStatus,
-                                                                entry.toStatus,
-                                                            )}
-                                                        </div>
+                                                        {dash(entry.actor)}
+                                                    </td>
+                                                    <td className="text-[10px] text-slate-700">
+                                                        {entry.type === "action" ? (
+                                                            <>
+                                                                <div className="font-medium">{dash(entry.label)}</div>
+                                                                <div className="text-slate-500">{entry.context}</div>
+                                                            </>
+                                                        ) : (
+                                                            <div className="truncate" title={entry.context ?? ""}>
+                                                                {entry.context}
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     <td className="text-xs">
-                                                        {entry.comments?.trim() ? (
-                                                            <RichText value={entry.comments} emptyFallback={<span className="text-slate-400">—</span>} />
+                                                        {entry.content ? (
+                                                            <RichText value={entry.content} emptyFallback={<span className="text-slate-400">—</span>} />
                                                         ) : (
                                                             <span className="text-slate-400">—</span>
                                                         )}
                                                     </td>
                                                 </tr>
-                                            ))}
-                                        </React.Fragment>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
 
-                            <div className="mt-4 px-2 pb-3 text-[10px] italic text-slate-600">
-                                End of application history for LAM {dash(branchType.lai)} · PN{" "}
-                                {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}.
-                                Generated {new Date().toLocaleString("en-PH", {
-                                    dateStyle: "medium",
-                                    timeStyle: "short",
-                                })}.
+                                <div className="mt-4 px-2 pb-3 text-[10px] italic text-slate-600">
+                                    End of application history for LAM {dash(branchType.lai)} · PN{" "}
+                                    {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}.
+                                    Generated {new Date().toLocaleString("en-PH", {
+                                        dateStyle: "medium",
+                                        timeStyle: "short",
+                                    })}.
+                                </div>
                             </div>
-                        </div>
-                    </section>
-                )}
+                        </section>
+                    );
+                })()}
             </ApprovalFormSheet>
         </div>
     );
