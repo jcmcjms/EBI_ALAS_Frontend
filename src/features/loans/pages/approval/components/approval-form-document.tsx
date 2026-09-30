@@ -12,8 +12,10 @@ import {
     isBlankBuyOut,
     isBlankIncomingLoan,
     printableObligationRows,
+    type ProductFeeConfig,
 } from "@/src/features/loans/utils/loan-approval-utils";
 import { ApprovalFormSheet } from "@/src/features/loans/components/approval-form-sheet";
+import { useLoanProduct } from "@/src/features/admin/loan-products/hooks/use-loan-products";
 import type {
     ClientFormData,
     LoanApplicationFormData,
@@ -263,6 +265,19 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
     const buyOutRows = printableObligationRows(buyOuts, isBlankBuyOut);
     const incomingRows = printableObligationRows(incomingLoans, isBlankIncomingLoan);
 
+    // Fetch product fee config for accurate deduction computation.
+    const productCodeForLookup = params?.product ? parseProductCode(params.product) : null;
+    const { data: loanProduct } = useLoanProduct(productCodeForLookup);
+    const productFees: ProductFeeConfig | undefined = loanProduct
+        ? {
+              applicationChargeRate: loanProduct.applicationChargeRate,
+              notarialFee: loanProduct.notarialFee,
+              insuranceFee: loanProduct.insuranceFee,
+              chargeAdvanceInterest: loanProduct.chargeAdvanceInterest,
+              advanceInterestRate: loanProduct.advanceInterestRate,
+          }
+        : undefined;
+
     // Bail out cleanly when no loan is selected so the parent renders an
     // empty state instead of an explosion of `undefined.X` reads.
     if (!primaryLoan || !params) {
@@ -287,7 +302,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
         buyOuts,
         incomingLoans,
         client,
-    });
+    }, productFees);
 
     const productCode = parseProductCode(params.product);
     const productDisplay = resolveLoanProductDisplayName(params.product, catLoanClass);

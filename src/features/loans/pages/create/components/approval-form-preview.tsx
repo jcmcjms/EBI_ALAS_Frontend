@@ -23,9 +23,11 @@ import {
     isBlankBuyOut,
     isBlankIncomingLoan,
     printableObligationRows,
+    type ProductFeeConfig,
 } from "@/src/features/loans/utils/loan-approval-utils";
 import { useAuthStore } from "@/src/store/authStore";
 import { useSignatureChain, withDraftEncoder, type SignatureSlotDto } from "@/src/features/loans/api/signatures";
+import { useLoanProduct } from "@/src/features/admin/loan-products/hooks/use-loan-products";
 
 /* ── formatting helpers (match the template: plain comma numbers) ── */
 
@@ -187,6 +189,18 @@ function SingleLoanApprovalForm({
         productCode
     );
 
+    // Fetch product fee config for accurate deduction computation.
+    const { data: loanProduct } = useLoanProduct(productCode);
+    const productFees: ProductFeeConfig | undefined = loanProduct
+        ? {
+              applicationChargeRate: loanProduct.applicationChargeRate,
+              notarialFee: loanProduct.notarialFee,
+              insuranceFee: loanProduct.insuranceFee,
+              chargeAdvanceInterest: loanProduct.chargeAdvanceInterest,
+              advanceInterestRate: loanProduct.advanceInterestRate,
+          }
+        : undefined;
+
     const productDisplay = resolveLoanProductDisplayName(
         parameters.product,
         loanClass?.catLoanClass
@@ -197,16 +211,17 @@ function SingleLoanApprovalForm({
     const buyOuts = loan.buyOuts ?? [];
     const incomingLoans = loan.incomingLoans ?? [];
 
-    // Single source of truth for the printed numbers (6% deduction plug,
-    // frozen-first term/rate, PMT, capacity/MLA) — shared with
-    // approval-form-document.tsx so preview and document cannot diverge.
+    // Single source of truth for the printed numbers (product-specific
+    // deduction rates, frozen-first term/rate, PMT, capacity/MLA) —
+    // shared with approval-form-document.tsx so preview and document
+    // cannot diverge.
     const c = computeLoanMetrics({ ...loan, parameters }, {
         outstandingLoans,
         ebiReloans,
         buyOuts,
         incomingLoans,
         client,
-    });
+    }, productFees);
     const approvalTermDays = c.approvalTermDays;
     const annualRatePercent = c.annualRatePercent;
     const monthlyAmortization = c.amortization;
