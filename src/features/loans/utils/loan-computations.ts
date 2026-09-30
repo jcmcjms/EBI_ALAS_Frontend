@@ -191,7 +191,11 @@ export function computeMonthlyAmortization(
     if (termMonths <= 0) return 0;
     if (annualRatePercent === 0) return round2(principal / termMonths);
 
-    const r = annualRatePercent / 100 / 12;
+    // Excel parity: ROUND(rate/12, 6) — prevents floating-point drift
+    // from accumulating across the term's exponentiation. Without this,
+    // the unrounded repeating decimal produces a slightly different PMT
+    // than the legacy LAM template.
+    const r = Math.round((annualRatePercent / 100 / 12) * 1_000_000) / 1_000_000;
     const n = termMonths;
     const pmt = (principal * r) / (1 - Math.pow(1 + r, -n));
 
@@ -396,6 +400,13 @@ export interface LoanMetricsSnapshot {
     incomingLoans: readonly IncomingRowCarrier[];
     /** Optional override — defaults to 6% when not supplied. */
     applicationChargeRate?: number;
+    /** Optional product fee overrides from the LoanProduct table. */
+    productFees?: {
+        docStamp: number;
+        notarialFee: number;
+        insurance: number;
+        advanceInterest: number;
+    };
 }
 
 /**
@@ -403,10 +414,14 @@ export interface LoanMetricsSnapshot {
  * the scalar inputs the engine expects. The defaults match the legacy
  * Excel's blank-cell behaviour (zero), so a partially-filled form
  * computes the same as the AO leaving a cell empty.
+ *
+ * When `productFees` is provided (from the LoanProduct table), the
+ * snapshot uses product-specific fee values instead of hardcoded zeros.
  */
 export function buildLoanMetricsSnapshot(
     form: FormCarrier,
     applicationChargeRate = 0.06,
+    productFees?: LoanMetricsSnapshot["productFees"],
 ): {
     loan: LoanComputationInputs;
     income: DisposableIncomeInputs;
@@ -444,13 +459,10 @@ export function buildLoanMetricsSnapshot(
             annualRatePercent,
             termDays,
             applicationChargeRate,
-            // TODO(team): Wire loan product fees from useLoanProduct() into
-            // this snapshot. The TanStack Query hooks already exist — the
-            // caller (approval-form-preview) just needs to pass the product.
-            docStamp: 0,
-            notarialFee: 0,
-            insurance: 0,
-            advanceInterest: 0,
+            docStamp: productFees?.docStamp ?? 0,
+            notarialFee: productFees?.notarialFee ?? 0,
+            insurance: productFees?.insurance ?? 0,
+            advanceInterest: productFees?.advanceInterest ?? 0,
             outstandingBalance,
             buyOutBalance,
         },

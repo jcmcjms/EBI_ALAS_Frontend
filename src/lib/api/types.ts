@@ -879,6 +879,23 @@ export interface LoanProductResponse {
     /** Advance-interest annual rate as a decimal fraction (0.12 = 12% p.a.). */
     advanceInterestRate: number;
     /**
+     * Application charge rate as a decimal fraction of proposed amount.
+     * 0.06 = 6% (A16 default), 0.065 = 6.5% (C23), 0.075 = 7.5% (C35).
+     */
+    applicationChargeRate: number;
+    /**
+     * Amortization computation mode:
+     *   "DIM" = Diminishing balance (standard annuity formula)
+     *   "MIC" = Minimum Installment Check (max of DIM and tiered minimum)
+     */
+    amortizationMode: string;
+    /**
+     * Whether this product charges advance interest at disbursement.
+     * True for add-on/MIC products (e.g. C35 @ 18%), false for standard
+     * diminishing-balance products (e.g. A16 @ 7%).
+     */
+    chargeAdvanceInterest: boolean;
+    /**
      * Mirrored from webloan. Read-only on the admin surface.
      * True when webloan has a non-null `expiration` on the source row.
      */

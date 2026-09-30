@@ -54,9 +54,31 @@ export const GRACE_TOLERANCE_DAYS = 120;
  * Deductions is fixed at 6% of the proposed amount. Application Charge
  * is the plug after Doc. Stamp (webloan c_doc_stamp) and the Notarial
  * Fee (₱500) so the column foots to exactly 6.00%.
+ *
+ * These are fallback defaults for when product data is not available.
+ * The actual rates come from the LoanProduct table and are passed via
+ * the `ProductFeeConfig` parameter to `computeLoanMetrics`.
  */
 export const LEGACY_TOTAL_DEDUCTION_RATE = 0.06;
 export const LEGACY_NOTARIAL_FEE = 500;
+
+/**
+ * Product-specific fee configuration from the LoanProduct table.
+ * When provided to `computeLoanMetrics`, overrides the legacy hardcoded
+ * defaults so the approval form matches the product's actual policy.
+ */
+export interface ProductFeeConfig {
+    /** Application charge rate as decimal (e.g. 0.065 for 6.5%). */
+    applicationChargeRate: number;
+    /** Flat notarial fee in PHP. */
+    notarialFee: number;
+    /** Flat insurance/MRI fee in PHP. */
+    insuranceFee: number;
+    /** Whether this product charges advance interest at disbursement. */
+    chargeAdvanceInterest: boolean;
+    /** Advance-interest annual rate as decimal (e.g. 0.18 for 18% p.a.). */
+    advanceInterestRate: number;
+}
 
 // ── Approval-form boundary normalization ─────────────────────────────
 // These functions are the single source of truth for how raw webloan
@@ -140,6 +162,11 @@ export function buildProductLine(
  * Backend is the source of truth — these numbers are UI-only.
  * Compliance / accounting must always re-derive the figures from the
  * canonical ledger entries, never from these snapshots.
+ *
+ * @param productFees Optional product-specific fee config from the
+ *   LoanProduct table. When provided, overrides the legacy hardcoded
+ *   6% / ₱500 defaults so the approval form matches the product's
+ *   actual policy (e.g. C23 @ 6.5%, C35 @ 7.5%).
  */
 export function computeLoanMetrics(
     primaryLoan: SelectedLoan,
@@ -149,7 +176,8 @@ export function computeLoanMetrics(
         buyOuts: SelectedLoan["buyOuts"];
         incomingLoans: SelectedLoan["incomingLoans"];
         client: LoanApplicationFormData["client"];
-    }
+    },
+    productFees?: ProductFeeConfig,
 ) {
     const { outstandingLoans, ebiReloans, buyOuts, incomingLoans, client } = obligations;
     const params = primaryLoan.parameters;
@@ -158,6 +186,7 @@ export function computeLoanMetrics(
     const totalPrincipal = outstandingLoans.reduce((s, l) => s + (l.principalBalance || 0), 0);
     const ebiDeductions = ebiReloans.reduce((s, r) => s + (r.existingDeduction || 0), 0);
     const ebiOb = ebiReloans.reduce((s, r) => s + (r.outstandingBalance || 0), 0);
+    const buyOutDeductions = buyOuts.reduce((s, b) => s + (b.amortization || 0), 0);
     const buyOutBalance = buyOuts.reduce((s, b) => s + (b.outstandingBalance || 0), 0);
     const incomingTotal = incomingLoans.reduce((s, i) => s + (i.deductions || 0), 0);
 
@@ -172,11 +201,29 @@ export function computeLoanMetrics(
         ?? toAnnualRatePercent(params.interestRate);
 
     const principal = params.proposedAmount || 0;
+
+    // Fee computation — use product-specific rates when available,
+    // fall back to legacy hardcoded defaults for backward compatibility.
+    //
+    // `applicationChargeRate` from the LoanProduct table is the TOTAL
+    // deduction rate (e.g. 6% for A16, 6.5% for C23, 7.5% for C35).
+    // Application charge is the residual plug — matching the backend's
+    // FixedTotalRate mode and the Excel template formula:
+    //   Application Charge = (principal × rate) - docStamp - notarial - insurance
+    const totalDeductionRate = productFees?.applicationChargeRate ?? LEGACY_TOTAL_DEDUCTION_RATE;
+    const notarialFee = productFees?.notarialFee ?? LEGACY_NOTARIAL_FEE;
+    const insurance = productFees?.insuranceFee ?? 0;
+
     // Doc. Stamp is the frozen webloan c_doc_stamp — never regenerate at 0.75%.
     const docStamp = primaryLoan.cDocStamp ?? 0;
-    const notarialFee = LEGACY_NOTARIAL_FEE;
-    const deductionsSubtotal = principal * LEGACY_TOTAL_DEDUCTION_RATE;
-    const applicationCharge = deductionsSubtotal - docStamp - notarialFee;
+
+    // Advance interest: only charged when the product flag is set.
+    const advanceInterest = productFees?.chargeAdvanceInterest
+        ? principal * (productFees.advanceInterestRate || 0) * (approvalTermDays / 360)
+        : 0;
+
+    const deductionsSubtotal = principal * totalDeductionRate;
+    const applicationCharge = Math.max(0, deductionsSubtotal - docStamp - notarialFee - insurance - advanceInterest);
     const deductionPct = principal > 0 ? (deductionsSubtotal / principal) * 100 : 0;
 
     const grossProceeds = principal - deductionsSubtotal;
@@ -187,15 +234,15 @@ export function computeLoanMetrics(
     const amortization = computeMonthlyAmortization(principal, annualRatePercent, approvalTermDays);
 
     const nthp = client.netTakeHomePay || 0;
-    const netPayAfterDeduction = nthp - amortization + ebiDeductions;
+    const netPayAfterDeduction = nthp - amortization + ebiDeductions + buyOutDeductions;
     const totalMonthlyIncome = netPayAfterDeduction;
 
     // Capacity-to-pay block, mirroring the legacy template:
-    //   Total Disposable   = NTHP + reloan deductions released
+    //   Total Disposable   = NTHP + reloan deductions released + buy-out deductions released
     //   Less: Minimum NTHP = policy floor the borrower retains (₱5,000)
     //   Total Deductions   = that floor + incoming/undeducted deductions
     //   Total Disposable   = net capacity feeding the MLA PV
-    const totalDisposableGross = nthp + ebiDeductions;
+    const totalDisposableGross = nthp + ebiDeductions + buyOutDeductions;
     const minimumNthp = DEFAULT_MINIMUM_NTHP;
     const totalDeductionsFinal = minimumNthp + incomingTotal;
     const totalDisposableNet = totalDisposableGross - totalDeductionsFinal;
@@ -217,6 +264,8 @@ export function computeLoanMetrics(
         applicationCharge,
         docStamp,
         notarialFee,
+        insurance,
+        advanceInterest,
         deductionsSubtotal,
         deductionPct,
         grossProceeds,
@@ -227,6 +276,7 @@ export function computeLoanMetrics(
         totalPrincipal,
         ebiDeductions,
         ebiOb,
+        buyOutDeductions,
         buyOutBalance,
         incomingTotal,
         nthp,
