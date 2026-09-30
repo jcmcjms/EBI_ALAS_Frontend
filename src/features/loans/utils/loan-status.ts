@@ -36,83 +36,80 @@ export interface LoanStatusMeta {
     hint: string;
 }
 
+/** Standardized 4-color palette: blue=in-progress, green=completed, red=negative, grey=draft. */
+const C = {
+    blue:   "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400",
+    green:  "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400",
+    red:    "border-red-300 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400",
+    grey:   "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-400",
+} as const;
+
 export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
     Draft: {
         label: "Draft",
         defaultSlaHours: null,
         hint: "Encoded, not yet submitted",
-        className:
-            "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-400",
+        className: C.grey,
     },
     ForRecommendation: {
         label: "For Recommendation",
         defaultSlaHours: 4,
         hint: "With the Branch Head (Recommender)",
-        className:
-            "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400",
+        className: C.blue,
     },
     ForChecking: {
         label: "For Checking",
         defaultSlaHours: 8,
         hint: "With the Credit Checker (Evaluator)",
-        className:
-            "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400",
+        className: C.blue,
     },
     ForApproval: {
         label: "For Approval",
         defaultSlaHours: 8,
         hint: "With the Area Head (Approver)",
-        className:
-            "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400",
+        className: C.blue,
     },
     ForRevision: {
         label: "For Revision",
         defaultSlaHours: 24,
         hint: "Returned to the Encoder for fixes",
-        className:
-            "border-orange-300 bg-orange-50 text-orange-800 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-400",
+        className: C.blue,
     },
     Approved: {
         label: "Approved",
         defaultSlaHours: null,
         hint: "Approved — awaiting disbursement setup",
-        className:
-            "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400",
+        className: C.green,
     },
     ForDisbursement: {
         label: "For Disbursement",
         defaultSlaHours: 24,
         hint: "Release of proceeds in progress",
-        className:
-            "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-400",
+        className: C.blue,
     },
     Disbursed: {
         label: "Disbursed",
         defaultSlaHours: null,
         hint: "Proceeds released",
-        className:
-            "border-teal-300 bg-teal-100 text-teal-800 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-400",
+        className: C.green,
     },
     OnGoing: {
         label: "On Going",
         defaultSlaHours: null,
         hint: "Active receiving loan",
-        className:
-            "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-400",
+        className: C.green,
     },
     Rejected: {
         label: "Rejected",
         defaultSlaHours: null,
         hint: "Declined — terminal",
-        className:
-            "border-red-300 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400",
+        className: C.red,
     },
     Cancelled: {
         label: "Cancelled",
         defaultSlaHours: null,
         hint: "Client withdrew — terminal",
-        className:
-            "border-slate-400 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-400 line-through",
+        className: C.grey + " line-through",
     },
 };
 

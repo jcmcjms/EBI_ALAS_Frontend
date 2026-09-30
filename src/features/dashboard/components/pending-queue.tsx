@@ -8,23 +8,23 @@ import { cn } from "@/src/shared/lib/utils";
 import { initialsOf } from "@/src/shared/lib/name-utils";
 import type { PendingQueueItem, LoanStatus } from "../types";
 import type { LoanStatus as LoanStatusKey } from "@/src/features/loans/utils/loan-status";
-import { assessAging, AGING_BADGE_CLASS } from "@/src/features/loans/utils/loan-aging";
+import { assessAging } from "@/src/features/loans/utils/loan-aging";
 import { useSlaPolicy } from "@/src/features/loans/api/loan-review";
 import { useAuthStore } from "@/src/store/authStore";
 
 const statusStyles: Record<LoanStatus, string> = {
-    "On Going": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-    "For Recommendation": "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
-    "For Checking": "bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400",
-    "For Approval": "bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
+    "On Going": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
+    "For Recommendation": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+    "For Checking": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+    "For Approval": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
     "Approved": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
     "Rejected": "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
-    "Cancelled": "bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400",
+    "Cancelled": "bg-slate-500/10 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400",
     "Expired": "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
-    "For Revision": "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
-    "For Disbursement": "bg-teal-500/10 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400",
+    "For Revision": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+    "For Disbursement": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
     "Disbursed": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
-    "For Incomplete Documents": "bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400",
+    "For Incomplete Documents": "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
 };
 
 export function waitingMinutes(date: string): number {
@@ -117,23 +117,11 @@ export const PendingQueue = memo(function PendingQueue({ data }: PendingQueuePro
                                         </p>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <span className="text-sm font-medium tabular-nums">{formatWaiting(mins)}</span>
-                                        {assessment.tier === "warning" && (
-                                            <Badge
-                                                variant="outline"
-                                                className={cn("ml-2 text-[10px] h-4 px-1.5", AGING_BADGE_CLASS.warning)}
-                                            >
-                                                Watch
-                                            </Badge>
-                                        )}
-                                        {assessment.tier === "breach" && (
-                                            <Badge
-                                                variant="outline"
-                                                className={cn("ml-2 text-[10px] h-4 px-1.5", AGING_BADGE_CLASS.breach)}
-                                            >
-                                                Aging
-                                            </Badge>
-                                        )}
+                                        <span className={cn(
+                                            "text-sm font-medium tabular-nums",
+                                            assessment.tier === "warning" && "text-amber-600 dark:text-amber-400",
+                                            assessment.tier === "breach" && "text-red-600 dark:text-red-400",
+                                        )}>{formatWaiting(mins)}</span>
                                     </div>
                                 </li>
                             );
