@@ -518,6 +518,32 @@ export async function getQueueDefault(): Promise<LoanStatus[]> {
     return unwrapApiData(res.data).filter((s): s is LoanStatus => s in LOAN_STATUS_META);
 }
 
+// ── Disbursement Status Sync ────────────────────────────────────────────────
+
+export interface SyncDisbursementResult {
+    loanId: number;
+    lamId: string;
+    loanNo: string;
+    previousStatus?: string;
+    currentStatus: string;
+    synced: boolean;
+    reason: string;
+}
+
+/** Syncs ALAS loan status with webloan disbursement state (approved/released). */
+export async function syncDisbursementStatus(
+    loanNo: string,
+): Promise<SyncDisbursementResult> {
+    const res = await apiClient.post<ApiResponse<SyncDisbursementResult>>(
+        `/api/loans/sync-disbursement-status`,
+        null,
+        { params: { loanNo } },
+    );
+    if (!res.data.success)
+        throw new Error(res.data.message || "Failed to sync disbursement status");
+    return res.data.data!;
+}
+
 // ─── Hooks ──────────────────────────────────────────────────────────────────
 
 export function useSlaPolicy() {
