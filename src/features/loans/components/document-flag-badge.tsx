@@ -39,13 +39,15 @@ export function DocumentFlagBadge({ flag, compact }: DocumentFlagBadgeProps) {
             <Popover>
                 <PopoverTrigger
                     render={
-                        <Badge
-                            variant="outline"
-                            className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 cursor-pointer"
-                        >
-                            <FileDashed size={12} weight="bold" />
-                            {flag.missingCount > 0 ? flag.missingCount : <Hourglass size={12} weight="bold" />}
-                        </Badge>
+                        <button type="button" className="inline-flex">
+                            <Badge
+                                variant="outline"
+                                className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 cursor-pointer"
+                            >
+                                <FileDashed size={12} weight="bold" />
+                                {flag.missingCount > 0 ? flag.missingCount : <Hourglass size={12} weight="bold" />}
+                            </Badge>
+                        </button>
                     }
                 />
                 <PopoverContent align="start" className="w-80 space-y-2 p-3 text-xs">
@@ -70,13 +72,15 @@ export function DocumentFlagBadge({ flag, compact }: DocumentFlagBadgeProps) {
         <Popover>
             <PopoverTrigger
                 render={
-                    <Badge
-                        variant="outline"
-                        className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 cursor-pointer"
-                    >
-                        <FileDashed size={14} weight="bold" />
-                        {flag.missingCount > 0 ? `${flag.missingCount} doc(s) flagged` : "flagged — verifying"}
-                    </Badge>
+                    <button type="button" className="inline-flex">
+                        <Badge
+                            variant="outline"
+                            className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 cursor-pointer"
+                        >
+                            <FileDashed size={14} weight="bold" />
+                            {flag.missingCount > 0 ? `${flag.missingCount} doc(s) flagged` : "flagged — verifying"}
+                        </Badge>
+                    </button>
                 }
             />
             <PopoverContent align="start" className="w-80 space-y-2 p-3 text-xs">
