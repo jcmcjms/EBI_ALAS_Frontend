@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@/src/components/ui/card'
 import { Spinner } from '@/src/components/ui/spinner'
+import { EmptyState, ErrorState } from '@/src/components/ui/empty-state'
 import {
   Table,
   TableBody,
@@ -49,7 +50,7 @@ export function ProductsTable() {
   const canViewProducts = hasPermission(PERMISSIONS.loanProductView)
 
   const [showRetired, setShowRetired] = useState(false)
-  const { data, isLoading, isError, error, isFetching } = useLoanProducts()
+  const { data, isLoading, isError, error, isFetching, refetch } = useLoanProducts()
   const products = useMemo(
     () =>
       showRetired ? (data ?? []) : (data ?? []).filter((p) => !p.isRetired),
@@ -214,21 +215,21 @@ export function ProductsTable() {
                   <TableRow>
                     <TableCell
                       colSpan={columns.length}
-                      className="h-24 text-center text-muted-foreground"
+                      className="py-12 text-center"
                     >
-                      <div className="inline-flex items-center gap-2">
-                        <Spinner className="size-3" />
-                        Loading loan products…
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Spinner className="size-4" />
+                        <span>Loading loan products…</span>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : isError ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-red-600"
-                    >
-                      Failed to load products: {getErrorMessage(error)}
+                    <TableCell colSpan={columns.length} className="p-0">
+                      <ErrorState
+                        message={getErrorMessage(error)}
+                        onRetry={() => refetch()}
+                      />
                     </TableCell>
                   </TableRow>
                 ) : pagedRows.length ? (
@@ -255,15 +256,29 @@ export function ProductsTable() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      {globalFilter
-                        ? 'No products match your search.'
-                        : showRetired
-                          ? 'No loan products have been synced yet. Run a sync to pull them from webloan.'
-                          : 'No active loan products. Enable "Include retired" to see the full catalog, or run a sync.'}
+                    <TableCell colSpan={columns.length} className="p-0">
+                      <EmptyState
+                        icon={Database}
+                        title="No loan products found"
+                        hint={
+                          globalFilter
+                            ? 'No products match your search query. Try searching with a different term.'
+                            : showRetired
+                              ? 'No loan products have been synced yet. Run a sync to pull catalog records from webloan.'
+                              : 'No active loan products. Enable "Include retired" to view inactive products, or run a manual sync.'
+                        }
+                        action={
+                          globalFilter ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setGlobalFilter('')}
+                            >
+                              Clear search
+                            </Button>
+                          ) : undefined
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 )}

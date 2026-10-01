@@ -33,6 +33,9 @@ import { TemporaryPasswordDialog } from './components/temporary-password-dialog'
 import { ImportUsersSheet } from './components/import-users-sheet'
 import { useUserActions } from './hooks/use-user-actions'
 import { toastSuccess, toastError } from '@/src/components/ui/toast'
+import { Spinner } from '@/src/components/ui/spinner'
+import { EmptyState, ErrorState } from '@/src/components/ui/empty-state'
+import { Users } from '@phosphor-icons/react'
 
 function useDebouncedValue<T>(value: T, delayMs = 300): T {
   const [debounced, setDebounced] = useState(value)
@@ -189,18 +192,21 @@ export function UsersDataTable() {
                   <TableRow>
                     <TableCell
                       colSpan={columns.length}
-                      className="h-24 text-center text-muted-foreground"
+                      className="py-12 text-center"
                     >
-                      Loading users...
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Spinner className="size-4" />
+                        <span>Loading user accounts…</span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : usersQuery.isError ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-red-600"
-                    >
-                      Failed to load users: {getErrorMessage(usersQuery.error)}
+                    <TableCell colSpan={columns.length} className="p-0">
+                      <ErrorState
+                        message={getErrorMessage(usersQuery.error)}
+                        onRetry={() => usersQuery.refetch()}
+                      />
                     </TableCell>
                   </TableRow>
                 ) : table.getRowModel().rows?.length ? (
@@ -218,11 +224,39 @@ export function UsersDataTable() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      No users found.
+                    <TableCell colSpan={columns.length} className="p-0">
+                      <EmptyState
+                        icon={Users}
+                        title="No users found"
+                        hint={
+                          search.trim() || roleFilter !== 'all' || branchFilter !== 'all'
+                            ? 'No user accounts match your search or filter criteria. Try adjusting or clearing your filters.'
+                            : 'There are currently no registered users in this directory.'
+                        }
+                        action={
+                          search.trim() || roleFilter !== 'all' || branchFilter !== 'all' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSearchInput('')
+                                setRoleFilter('all')
+                                setBranchFilter('all')
+                              }}
+                            >
+                              Clear filters
+                            </Button>
+                          ) : canCreateUsers ? (
+                            <Button
+                              size="sm"
+                              onClick={() => setIsCreateDrawerOpen(true)}
+                              className="gap-2"
+                            >
+                              Create User
+                            </Button>
+                          ) : undefined
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 )}
