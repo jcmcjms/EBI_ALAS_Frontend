@@ -141,7 +141,7 @@ apiClient.interceptors.response.use(
       }
 
       if (url === '/api/auth/refresh') {
-        toastError('Session security token expired — please log in again.')
+        toastError('Your session has expired. Please log in again.')
         return Promise.reject(error)
       }
 
@@ -161,14 +161,14 @@ apiClient.interceptors.response.use(
                 'Backend must include the claim in issued access JWTs.',
             )
           }
-          toastError('Session security token expired — please log in again.')
+          toastError('Your session has expired. Please log in again.')
           return Promise.reject(error)
         }
         headers[CSRF_HEADER] = newXsrf
         originalRequest._csrfRetry = true
         return apiClient(originalRequest)
       } catch {
-        toastError('Session security token expired — please log in again.')
+        toastError('Your session has expired. Please log in again.')
         return Promise.reject(error)
       }
     }
@@ -203,18 +203,18 @@ apiClient.interceptors.response.use(
 
 function getStatusFallbackMessage(status: number): string {
   if (status === 400)
-    return 'The request was invalid. Please check your input and try again.'
+    return 'The request was invalid. Please review your input and try again.'
   if (status === 401)
-    return 'Authentication failed. Please check your credentials and try again.'
+    return 'Your session may have expired. Please log in again.'
   if (status === 403)
-    return "You don't have permission to access this. Please contact your administrator if you need access."
-  if (status === 404) return 'The requested resource was not found.'
+    return 'You do not have permission to perform this action. Contact your administrator if access is needed.'
+  if (status === 404) return 'The requested record or resource could not be found.'
   if (status === 409)
-    return 'The operation conflicts with the current state. Please refresh and try again.'
+    return 'This record was modified by another user. Please refresh and try again.'
   if (status === 429)
-    return 'Too many attempts. Please wait a moment and try again.'
-  if (status >= 500) return 'Server error. Please try again later.'
-  return 'An unexpected error occurred. Please try again.'
+    return 'Too many requests in a short period. Please wait a moment and try again.'
+  if (status >= 500) return 'The server encountered an error processing your request. Please try again later.'
+  return 'An unexpected error occurred while communicating with the system. Please try again.'
 }
 
 export function getErrorMessage(error: unknown): string {
@@ -226,8 +226,8 @@ export function getErrorMessage(error: unknown): string {
       if (status === 502)
         return 'Server is temporarily unavailable. Please try again later.'
       if (status === 503)
-        return 'Service is currently unavailable. Please try again later.'
-      if (status === 504) return 'Server timed out. Please try again later.'
+        return 'Service is currently under maintenance. Please try again later.'
+      if (status === 504) return 'Server connection timed out. Please try again.'
 
       if (
         typeof data === 'string' &&
@@ -250,7 +250,7 @@ export function getErrorMessage(error: unknown): string {
     }
 
     if (error.request) {
-      return 'Network error. Please check your connection and try again.'
+      return 'Network communication error. Please verify your connection.'
     }
   }
 
@@ -261,5 +261,5 @@ export function getErrorMessage(error: unknown): string {
     return error
   }
 
-  return 'An unexpected error occurred. Please try again.'
+  return 'An unexpected error occurred while processing your request. Please try again.'
 }
