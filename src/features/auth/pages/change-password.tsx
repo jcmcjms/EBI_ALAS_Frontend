@@ -190,7 +190,7 @@ export default function ChangePassword() {
                 <p className="text-sm text-muted-foreground">
                   {mustChange
                     ? 'Your temporary password must be changed before you can access ALAS.'
-                    : 'To secure your account, please choose a strong new password.'}
+                    : 'Choose a new password for your account.'}
                 </p>
               </div>
 
@@ -404,8 +404,7 @@ export default function ChangePassword() {
       </main>
 
       <footer className="p-6 text-center text-xs text-muted-foreground">
-        Passwords are verified against bank policy and every session is signed
-        out after a change.
+        You'll be signed out of all devices after changing your password.
       </footer>
     </div>
   )

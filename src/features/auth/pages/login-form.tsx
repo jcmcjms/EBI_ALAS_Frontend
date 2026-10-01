@@ -45,7 +45,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
           toastSuccess('Login successful')
           navigate('/dashboard', { replace: true })
         } else {
-          toastError('Failed to process login token')
+          toastError('Something went wrong. Please try again.')
         }
       } else {
         toastError(apiResponse.message || 'Login failed')
@@ -65,7 +65,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Login to your account</h1>
           <p className="text-sm text-balance text-muted-foreground">
-            Enter your credentials below.
+            Enter your username and password to sign in.
           </p>
         </div>
 
