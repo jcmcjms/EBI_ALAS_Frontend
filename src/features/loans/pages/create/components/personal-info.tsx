@@ -31,15 +31,11 @@ export function PersonalInfoSection() {
     } = useFormContext<LoanApplicationFormData>();
     const clientErrors = errors.client;
 
-    // Controlled from form state so CIS-sourced / draft-restored suffixes
-    // display correctly and programmatic clears (Change client) reach the trigger.
+    
+    
     const suffix = useWatch({ control, name: "client.suffix" });
 
-    /**
-     * Returns common props for the manual-entry inputs (School / Referrer):
-     *  - aria-invalid when validation has failed
-     *  - destructive border + focus ring to match the inline error message
-     */
+    
     const getErrorProps = (fieldName: "school" | "referrer") => {
         const error = clientErrors?.[fieldName];
         return {
@@ -59,9 +55,9 @@ export function PersonalInfoSection() {
             icon={<LockSimple size={20} weight="bold" className="text-primary" />}
         >
             <div className="space-y-6">
-                {/* -- System Verified Section --------------------------- */}
+                {}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    {/* Row 1 � Names */}
+                    {}
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">First Name</Label>
                         <Input
@@ -87,13 +83,13 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 2 � Suffix, Birthdate, Employee ID */}
+                    {}
                     <div className="space-y-1.5">
                         <Label htmlFor="client-suffix" className="text-xs text-muted-foreground">
                             Suffix
                         </Label>
                         <Select
-                            // Base UI contract: null = no selection; "" is a real item value here.
+                            
                             value={suffix || null}
                             onValueChange={(value) =>
                                 setValue("client.suffix", value ?? "", {
@@ -106,9 +102,7 @@ export function PersonalInfoSection() {
                                 <SelectValue placeholder="Select suffix" />
                             </SelectTrigger>
                             <SelectContent>
-                                {/* Explicit empty option � the accessible undo path. Base UI
-                                    Select has no built-in clear; without this, an accidental
-                                    selection is only reversible by reloading the page. */}
+                                {}
                                 <SelectItem value="">None</SelectItem>
                                 <SelectSeparator />
                                 <SelectItem value="Jr.">Jr.</SelectItem>
@@ -137,7 +131,7 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 3 � Address (full width) */}
+                    {}
                     <div className="space-y-1.5 md:col-span-3">
                         <Label className="text-xs text-muted-foreground">Address</Label>
                         <Input
@@ -147,7 +141,7 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 4 � Agency Type, Position */}
+                    {}
                     <div className="space-y-1.5 md:col-span-2">
                         <Label className="text-xs text-muted-foreground">Agency Type</Label>
                         <Input
@@ -165,7 +159,7 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 5 � MIS Agency, Length of Service, NTHP */}
+                    {}
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">MIS Agency</Label>
                         <Input
@@ -193,7 +187,7 @@ export function PersonalInfoSection() {
                         />
                     </div>
 
-                    {/* Row 6 � Region, Division Code, Station Code */}
+                    {}
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">Region</Label>
                         <Input
@@ -220,7 +214,7 @@ export function PersonalInfoSection() {
                     </div>
                 </div>
 
-                {/* -- Divider & Manual Entry Section -------------------- */}
+                {}
                 <div className="border-t pt-6">
                     <div className="mb-4 flex items-center gap-2">
                         <Buildings size={20} weight="bold" className="text-primary" />
@@ -234,7 +228,7 @@ export function PersonalInfoSection() {
                     </p>
 
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* School/Agency Field */}
+                        {}
                         <div className="space-y-1.5">
                             <Label
                                 htmlFor="client.school"
@@ -263,7 +257,7 @@ export function PersonalInfoSection() {
                             )}
                         </div>
 
-                        {/* Referrer Field */}
+                        {}
                         <div className="space-y-1.5">
                             <Label
                                 htmlFor="client.referrer"

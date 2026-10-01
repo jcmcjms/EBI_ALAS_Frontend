@@ -17,7 +17,7 @@ export interface HistoryEntryMeta {
     tone: HistoryTone;
 }
 
-/** Workflow transitions phrased the way officers say them out loud. */
+
 const STATUS_PAIR_TITLES: Record<
     string,
     { title: string; tone: HistoryTone }
@@ -52,7 +52,7 @@ const STATUS_PAIR_TITLES: Record<
         title: "Resubmitted for recommendation",
         tone: "info",
     },
-    // Skip-path pairs: when recommender step is bypassed (flag off).
+    
     "Draft>ForChecking": {
         title: "Submitted for evaluation",
         tone: "info",
@@ -147,7 +147,7 @@ export function describeHistoryEntry(entry: LoanHistoryEntry): HistoryEntryMeta 
                 tone: "success",
             };
         default:
-            // Future verbs degrade gracefully instead of showing camelCase.
+            
             return {
                 title: humanize(entry.action),
                 category: "workflow",
@@ -161,7 +161,7 @@ export function humanize(verb: string): string {
     return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/** Marker chip colors — same palette family as the status/aging badges. */
+
 export const TONE_MARKER_CLASS: Record<HistoryTone, string> = {
     neutral:
         "border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-500/40 dark:bg-slate-500/10 dark:text-slate-400",

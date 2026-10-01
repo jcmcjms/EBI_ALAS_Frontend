@@ -42,7 +42,7 @@ export function ReviewDeskPage() {
     const slaPolicy = useSlaPolicy();
     const currentUserId = useAuthStore((s) => (s.user?.userId ? Number(s.user.userId) : undefined));
 
-    // Resume: a lease survived a refresh / crash — pick up where we left off.
+    
     useEffect(() => {
         if (desk?.currentClaim) {
             navigate(`/loans/approval/${desk.currentClaim.loanId}`, { replace: true });
@@ -60,9 +60,9 @@ export function ReviewDeskPage() {
         !claim.isPending &&
         (!head?.ownerUserId || head.ownerUserId === currentUserId);
 
-    // Enter = serve next (the shortcut advertised on the button). Skipped
-    // when focus is on an interactive element so a focused button's own
-    // Enter activation can't double-fire a claim.
+    
+    
+    
     useEffect(() => {
         function onKeyDown(event: KeyboardEvent) {
             if (event.key !== "Enter" || event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
@@ -143,7 +143,7 @@ export function ReviewDeskPage() {
                     />
                 ) : (
                     <div className="container mx-auto w-full max-w-5xl flex-1 space-y-5 px-6 py-6">
-                        {/* Toolbar: live count + refresh */}
+                        {}
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="space-y-0.5" aria-live="polite">
                                 <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight tabular-nums">
@@ -162,7 +162,7 @@ export function ReviewDeskPage() {
                             </Button>
                         </div>
 
-                        {/* KPI strip */}
+                        {}
                         {stats && (
                             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 <StatCard icon={<Queue size={16} weight="bold" />} label="In queue" value={String(stats.fileCount)} />
@@ -183,7 +183,7 @@ export function ReviewDeskPage() {
                             </div>
                         )}
 
-                        {/* Next up — rich head card */}
+                        {}
                         {head && (
                             <NextUpCard
                                 item={head}
@@ -196,7 +196,7 @@ export function ReviewDeskPage() {
                             />
                         )}
 
-                        {/* Pending queue — the backlog behind the head */}
+                        {}
                         <Card className="shadow-none">
                             <CardHeader className="flex-row items-center justify-between space-y-0 py-4">
                                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -233,7 +233,7 @@ export function ReviewDeskPage() {
     return <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40">{body}</div>;
 }
 
-/* ── Next-up hero card ─────────────────────────────────────────────────── */
+
 interface NextUpCardProps {
     item: QueuedLoanDto;
     canServe: boolean;
@@ -332,7 +332,7 @@ function NextUpCard({ item, canServe, claiming, onServe, currentUserId, slaPolic
     );
 }
 
-/* ── Pending queue row (memoized) ── */
+
 interface DeskQueueRowProps {
     item: QueuedLoanDto;
     slaPolicy: Record<string, number> | null;
@@ -381,7 +381,7 @@ const DeskQueueRow = memo(function DeskQueueRow({ item, slaPolicy, now }: DeskQu
     );
 });
 
-/* ── Shared atoms ── */
+
 function StatusBadge({ status }: { status: string }) {
     const meta = LOAN_STATUS_META[status as LoanStatus];
     if (!meta) return <Badge variant="outline">{status}</Badge>;
@@ -459,7 +459,7 @@ function Fact({ label, value, title, strong, tone = "default" }: FactProps) {
     );
 }
 
-/* ── Centered state panel (empty / error / no-access) ── */
+
 interface DeskMessageProps {
     icon: ReactNode;
     title: string;
@@ -494,7 +494,7 @@ function DeskMessage({ icon, title, description, tone = "muted", meta, action }:
     );
 }
 
-/* ── Loading: skeleton mirrors the populated layout (no layout jump) ── */
+
 function DeskSkeleton() {
     return (
         <div className="container mx-auto w-full max-w-5xl space-y-5 px-6 py-6" aria-busy="true" aria-label="Loading desk queue">

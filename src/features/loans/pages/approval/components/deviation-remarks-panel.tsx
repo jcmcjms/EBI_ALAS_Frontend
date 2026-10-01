@@ -198,7 +198,7 @@ function DeviationThread({
                 </Badge>
             </header>
 
-            {/* Thread root: the encoder's submission-time justification (immutable). */}
+            {}
             <div className="rounded-md border border-slate-300 bg-slate-50 p-3">
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-semibold">Encoder</span>
@@ -229,7 +229,7 @@ function DeviationThread({
                                 variant="ghost"
                                 className="h-6 gap-1 px-2 text-[11px]"
                                 onClick={() => {
-                                    /* parentId is managed by ThreadComposer */
+                                    
                                 }}
                             >
                                 <ArrowBendUpLeft size={11} /> Reply

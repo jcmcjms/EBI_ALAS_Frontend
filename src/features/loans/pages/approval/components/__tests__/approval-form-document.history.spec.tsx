@@ -92,9 +92,9 @@ describe("ApprovalFormDocument — application history (page 3)", () => {
         expect(
             screen.getByText("Docs complete, recommend for evaluation."),
         ).toBeInTheDocument();
-        // Status transition printed as "from → to"
+        
         expect(screen.getByText(/ForRecommendation → ForChecking/)).toBeInTheDocument();
-        // Null fromStatus renders as an em-dash placeholder, not empty
+        
         expect(screen.getByText(/— → Draft/)).toBeInTheDocument();
     });
 
@@ -121,7 +121,7 @@ describe("ApprovalFormDocument — application history (page 3)", () => {
         ];
 
         render(<ApprovalFormDocument data={stubForm} actions={actions} />);
-        // Two distinct day-group header rows expected
+        
         const dayHeaders = screen.getAllByText(/September 2[78], 2026/);
         expect(dayHeaders.length).toBe(2);
     });

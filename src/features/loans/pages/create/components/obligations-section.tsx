@@ -9,21 +9,21 @@ import { getSection } from "@/src/features/loans/constants/sections";
 
 export function ObligationsSection() {
     const { control } = useFormContext();
-    // Consume the SINGLE shared `useLoanTransfers` instance via context.
-    // Calling `useLoanTransfers()` directly here would mount a second
-    // `useFieldArray("outstandingLoans")` instance whose `fields`
-    // snapshot never sees mutations made by the EBI section's instance,
-    // re-introducing the "transfer toast fires but target stays empty"
-    // bug. See loan-transfers-provider.tsx for the full contract.
+    
+    
+    
+    
+    
+    
     const { outstanding, handleTransfer } = useLoanTransfersContext();
     const outstandingFields = outstanding.fields;
 
-    // Re-render when the underlying outstanding-loans form state changes
-    // (the AO types into a row, the active-loans-table hydrates from
-    // /outstanding-loans, etc.). We don't actually *read* this value
-    // here — iteration is driven by `outstandingFields` below — but
-    // subscribing to it ensures the component re-renders whenever any
-    // field in this section mutates.
+    
+    
+    
+    
+    
+    
     const watchedLoans = (useWatch({ control, name: "outstandingLoans" }) as Array<{
         pn?: string;
         principalBalance?: number;
@@ -34,26 +34,26 @@ export function ObligationsSection() {
         status?: string;
     }>) || [];
 
-    // ── Iterate `useFieldArray.fields` (not `useWatch`) ─────────────────
-    // Iterating over `arrays.outstanding.fields` is the only reliable
-    // way to get a stable RHF-generated `id` per row. The previous
-    // version mapped over `useWatch`'s data array and then *guessed*
-    // the id by indexing `fields[i]` — that index frequently desyncs
-    // from the data index (e.g. when `setValue("outstandingLoans", [...])`
-    // replaces the whole array in `active-loans-table.tsx`, which
-    // bypasses `useFieldArray`'s mutation API). The desync surfaced as
-    // "Could not transfer loan — source row not found." when the user
-    // tried to move a row from Outstanding to EBI. Iterating the
-    // `fields` snapshot directly removes the guess entirely: every
-    // `field.id` here is the *same* id `useFieldArray`'s `remove` will
-    // accept on the matching `findIndex` inside `useLoanTransfers`.
-    //
-    // `watchedLoans` (from `useWatch`) is kept as the source of truth
-    // for the row *data* the cells display — `getValues` returns a
-    // snapshot from render time, while `useWatch` re-renders the
-    // component on every mutation. `i` from `outstandingFields.map` is
-    // also the correct index into `watchedLoans`, since both arrays
-    // describe the same RHF store.
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     const totalOutstanding = watchedLoans.reduce(
         (sum, loan) => sum + (loan?.outstandingBalance || 0),
         0,
@@ -95,10 +95,10 @@ export function ObligationsSection() {
                 <TableBody>
                     {outstandingFields.length > 0 ? (
                         outstandingFields.map((field, i) => {
-                            // `i` here is the index into `useFieldArray`'s
-                            // `fields` snapshot, which matches `watchedLoans`'s
-                            // index for the same row (both reflect the same
-                            // RHF store on every render).
+                            
+                            
+                            
+                            
                             const loan = watchedLoans[i];
                             return (
                                 <TableRow
@@ -136,9 +136,9 @@ export function ObligationsSection() {
                                         <TransferActionMenu
                                             currentSection="outstanding"
                                             onTransfer={(target) =>
-                                                // Pass the row index — `handleTransfer`
-                                                // now uses index-based lookup (controlled
-                                                // rows make index-keyed splice safe).
+                                                
+                                                
+                                                
                                                 handleTransfer("outstanding", i, target as "outstanding" | "ebi")
                                             }
                                         />

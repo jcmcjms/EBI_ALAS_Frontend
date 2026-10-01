@@ -30,7 +30,7 @@ import { useAuthStore } from "@/src/store/authStore";
 import { useSignatureChain, withDraftEncoder, type SignatureSlotDto } from "@/src/features/loans/api/signatures";
 import { useLoanProduct } from "@/src/features/admin/loan-products/hooks/use-loan-products";
 
-/* ── formatting helpers (match the template: plain comma numbers) ── */
+
 
 function num(value?: number | null): string {
     if (typeof value !== "number" || Number.isNaN(value)) return "-";
@@ -67,7 +67,7 @@ const B = "border border-black";
 const DOUBLE_UNDERLINE: React.CSSProperties = { borderBottom: "3px double #000" };
 const TOP_LINE: React.CSSProperties = { borderTop: "1px solid #000" };
 
-/* ── small presentational atoms ── */
+
 
 interface TableCellProps {
     children: React.ReactNode;
@@ -105,7 +105,7 @@ function AmtRow({ label, value, blue, bold, underline, topLine, labelBold }: {
     );
 }
 
-/* ── Signature block atom (same as approval-form-document.tsx) ── */
+
 
 function SignatureBlock({ slot }: { slot: SignatureSlotDto }) {
     const name = slot.signedByName?.trim();
@@ -128,33 +128,16 @@ function SignatureBlock({ slot }: { slot: SignatureSlotDto }) {
     );
 }
 
-/* ── Single Loan Approval Form ─────────────────────────────────────
- *
- * Renders the approval form for a single loan. This is extracted into
- * a separate component so it can be mapped over the loans array with
- * proper print page breaks between each form.
- *
- * Audit-trail contract: the preview — create-page screen, its browser
- * print pack, and the html2canvas PDF — NEVER renders the Application
- * History / audit-trail sheet. That sheet is a print-only artifact of
- * the approval document (approval-form-document.tsx, page 3), sourced
- * from the frozen LoanDetailResponse.actions of the system of record.
- * Drafts have no server actions yet, and post-submission prints must
- * come from the approval page. Do not mirror page 3 into this file.
- */
+
 interface SingleLoanApprovalFormProps {
     loan: SelectedLoan;
     client: ClientFormData;
     branchType: LoanApplicationFormData["branchType"];
     form: LoanApplicationFormData;
     index: number;
-    /**
-     * Server-minted LAM ID for each loan (keyed by PN). Pre-submit this is
-     * `undefined` and the sheet shows "Auto-generated on submit"; post-
-     * submit each sheet prints its own LAM ID.
-     */
+    
     lamIdByLoanNo?: Record<string, string>;
-    /** Server-resolved signature chain (page 2). Omitted → section hidden. */
+    
     signatureSlots?: SignatureSlotDto[];
 }
 
@@ -167,9 +150,9 @@ function SingleLoanApprovalForm({
     lamIdByLoanNo,
     signatureSlots,
 }: SingleLoanApprovalFormProps) {
-    // Defensive fallback: if parameters is missing from the form state
-    // (e.g. during a useWatch snapshot race), use safe defaults to avoid
-    // crashing the entire approval form preview.
+    
+    
+    
     const parameters = loan.parameters ?? {
         product: "",
         purpose: "",
@@ -180,9 +163,9 @@ function SingleLoanApprovalForm({
         insurance: 0,
     } as LoanParameters;
 
-    // ── Loan product display name ─────────────────────────────────
+    
     const productCode = parseProductCode(parameters.product);
-    // Each loan carries its own branchCode (extracted from accountId at toggle time)
+    
     const preLoanBranchCode = loan.branchCode?.trim() || form?.preLoan?.bch?.trim() || "";
     const { data: loanClass } = useCatLoanClass(
         preLoanBranchCode,
@@ -190,7 +173,7 @@ function SingleLoanApprovalForm({
         productCode
     );
 
-    // Fetch product fee config for accurate deduction computation.
+    
     const { data: loanProduct } = useLoanProduct(productCode);
     const productFees: ProductFeeConfig | undefined = loanProduct
         ? {
@@ -212,10 +195,10 @@ function SingleLoanApprovalForm({
     const buyOuts = loan.buyOuts ?? [];
     const incomingLoans = loan.incomingLoans ?? [];
 
-    // Single source of truth for the printed numbers (product-specific
-    // deduction rates, frozen-first term/rate, PMT, capacity/MLA) —
-    // shared with approval-form-document.tsx so preview and document
-    // cannot diverge.
+    
+    
+    
+    
     const c = computeLoanMetrics({ ...loan, parameters }, {
         outstandingLoans,
         ebiReloans,
@@ -248,8 +231,8 @@ function SingleLoanApprovalForm({
     const totalDisposableNet = c.totalDisposableNet;
     const maximumLoanableAmount = c.maximumLoanableAmount;
 
-    // Printed obligation rows: blank wizard placeholders are dropped so an
-    // empty matrix collapses instead of printing the legacy fixed dash rows.
+    
+    
     const reloanRows = printableObligationRows(ebiReloans, isBlankReloan);
     const buyOutRows = printableObligationRows(buyOuts, isBlankBuyOut);
     const incomingRows = printableObligationRows(incomingLoans, isBlankIncomingLoan);
@@ -270,12 +253,12 @@ function SingleLoanApprovalForm({
         <div
             className={cn(
                 "p-5",
-                // Print optimization: each loan form starts on a new page
+                
                 index > 0 && "break-before-page print:break-before-page"
             )}
         >
             <ApprovalFormSheet>
-                {/* Header with loan number badge */}
+                {}
                 {index > 0 && (
                     <div className="mb-2 text-center text-xs font-bold text-muted-foreground">
                         — Loan {index + 1} of {form.loans.length} —
@@ -285,7 +268,7 @@ function SingleLoanApprovalForm({
                 <h1 className="mb-2 text-sm font-bold underline">LOAN APPROVAL FORM</h1>
 
                 <div className="border-2 border-b-0 border-black print:border-b-2">
-                    {/* ══ CLIENT INFORMATION ══ */}
+                    {}
                     <table className="w-full border-collapse">
                         <tbody>
                             <tr>
@@ -323,7 +306,7 @@ function SingleLoanApprovalForm({
                             <tr>
                                 <L>Region Code :</L>
                                 <V blue>{dash(client.region)}</V>
-                                {/* PN displays the specific loan number for this form */}
+                                {}
                                 <V blue colSpan={2} rowSpan={3} className="align-bottom">
                                     PN: {loan.loanNo}
                                 </V>
@@ -358,11 +341,11 @@ function SingleLoanApprovalForm({
                         </tbody>
                     </table>
 
-                    {/* ══ LOAN COMPUTATIONS ══ */}
+                    {}
                     <div className={cn(B, "text-center font-bold")}>LOAN COMPUTATIONS</div>
 
                     <div className={BAND_MAIN}>
-                        {/* ── LEFT column ── */}
+                        {}
                         <div className={cn(B, "border-r-0 p-2")}>
                             <AmtRow label={<span className="font-bold">Maximum Loanable Amount **</span>} value={num(maximumLoanableAmount)} blue underline />
                             <AmtRow label={<span className="font-bold">Proposed Loan for Approval</span>} value={<span className="font-bold">{num(parameters.proposedAmount)}</span>} blue />
@@ -398,7 +381,7 @@ function SingleLoanApprovalForm({
                             </div>
                         </div>
 
-                        {/* ── RIGHT column ── */}
+                        {}
                         <div className={cn(B, "p-2")}>
                             <div className="font-bold underline">Outstanding Loans (do not include accounts for payoff):</div>
                             <table className="w-full border-collapse">
@@ -452,7 +435,7 @@ function SingleLoanApprovalForm({
                                 </span>
                             </div>
 
-                            {/* Net Pay box */}
+                            {}
                             <div className="mt-3 border border-black">
                                 <div className="border-b border-black px-1.5 py-0.5 font-bold italic underline">
                                     Net Pay After Deduction Plus Other Sources of Income
@@ -467,7 +450,7 @@ function SingleLoanApprovalForm({
                         </div>
                     </div>
 
-                    {/* ── EBI / Buy-Out / Incoming ───────────────────── */}
+                    {}
                     <div className={cn(B, "border-t-0 p-2 break-inside-avoid")}>
                         <table className="w-full table-fixed border-collapse">
                             <colgroup>
@@ -588,7 +571,6 @@ function SingleLoanApprovalForm({
 
                     </div>
 
-                {/* ══ PAGE 2 — certifications & signatures ══ */}
                 <section className="break-before-page">
                     <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
                         <span className="text-sm font-bold underline">
@@ -632,7 +614,6 @@ function SingleLoanApprovalForm({
                             </div>
                         </div>
 
-                        {/* ── Signature blocks, encoder → approver ── */}
                         {signatureSlots && signatureSlots.length > 0 && (
                             <div className="border-t-2 border-black p-3 break-inside-avoid">
                                 <div className="grid grid-cols-2 gap-x-8 gap-y-6">
@@ -649,32 +630,17 @@ function SingleLoanApprovalForm({
     );
 }
 
-/* ── Legacy template layout constants ─────────────────────────────── */
-
-/* Fixed row counts of the legacy Excel grid were removed when the
- * reloan / buy-out / incoming matrices moved to dynamic rows derived
- * from the form data — re-add them here only when the printed form
- * re-introduces a fixed-row layout. */
-
-/* Column bands of the legacy sheet: computations and the reloan band
- * split 58/42; the deviations band splits 62/38. */
 const BAND_MAIN = "grid grid-cols-[58%_42%]";
-
-/* ── main component ── */
 
 export const ApprovalFormPreview = forwardRef<
     HTMLDivElement,
     {
         onGeneratePdf?: () => void;
-        /** Server-minted LAM ID keyed by PN; `undefined` pre-submit. */
         lamIdByLoanNo?: Record<string, string>;
     }
 >(({ onGeneratePdf, lamIdByLoanNo }, ref) => {
         const { control } = useFormContext<LoanApplicationFormData>();
 
-        // useWatch subscribes to live form values — no desync risk from
-        // a second useFieldArray snapshot. Each loan form reads via
-        // useLoanComputations(parameters) for per-loan computation.
         const watchedLoans = useWatch({ control, name: "loans" }) ?? [];
         const watchedForm = useWatch({ control }) as LoanApplicationFormData;
 
@@ -683,7 +649,6 @@ export const ApprovalFormPreview = forwardRef<
 
         const section = getSection("approval-form");
 
-        // Signature chain — draft preview patches the encoder's name from the JWT session.
         const { data: chain } = useSignatureChain();
         const user = useAuthStore((s) => s.user);
         const signatureSlots = useMemo(
@@ -692,12 +657,12 @@ export const ApprovalFormPreview = forwardRef<
         );
 
         const [activeLoanNo, setActiveLoanNo] = useState("");
-        const [captureAll, setCaptureAll] = useState(false); // PDF capture needs every sheet visible
+        const [captureAll, setCaptureAll] = useState(false); 
 
-        // Deselect-safe: derived during render. If the user's selection is
-        // still in the list, keep it; otherwise fall back to the first loan
-        // (or "" when the list is empty). Avoids cascading renders from a
-        // setState-in-effect.
+        
+        
+        
+        
         const effectiveActiveLoanNo = useMemo(
             () =>
                 activeLoanNo && watchedLoans.some((l) => l?.loanNo === activeLoanNo)
@@ -712,7 +677,7 @@ export const ApprovalFormPreview = forwardRef<
         );
 
         const handleGeneratePdf = async () => {
-            // html2canvas skips display:none — reveal every sheet for the capture pass.
+            
             setCaptureAll(true);
             await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
             try { await onGeneratePdf?.(); } finally { setCaptureAll(false); }
@@ -739,25 +704,24 @@ export const ApprovalFormPreview = forwardRef<
                 }
                 contentClassName="p-0"
             >
-                {/* Captured area — replicates the LOAN APPROVAL FORM template 1:1.
-                    Fixed 800px sheet + Arial to mirror the Excel print geometry. */}
+                {}
                 <div
                     ref={ref}
                     id="approval-form-preview"
                     data-print-root
                     className="bg-white text-black print:bg-white"
                 >
-                    {/* Empty state */}
+                    {}
                     {watchedLoans.length === 0 && (
                         <div className="p-8 text-center text-muted-foreground">
                             Select loan numbers in Step 1.3 to generate approval forms.
                         </div>
                     )}
 
-                    {/* Master-detail: Toolbar + single active form on screen, all forms on print */}
+                    {}
                     {watchedLoans.length > 0 && (
                         <>
-                            {/* Muted band ends exactly at the seam; active tab merges into the sheet */}
+                            {}
                             <div className="bg-muted/30 px-3 pt-2">
                                 <FormTabStrip
                                     idPrefix="approval"
@@ -792,11 +756,10 @@ export const ApprovalFormPreview = forwardRef<
                                 />
                             </div>
 
-                            {/* Sheets: screen shows the active one; print emits the whole package,
-                                one form per physical page (the bank's assembly requirement). */}
+                            {}
                             <div className="bg-white text-black">
                                 {watchedLoans.map((loan, index) => {
-                                    // Guard: skip loans with missing loanNo to avoid key warnings
+                                    
                                     if (!loan.loanNo) return null;
                                     return (
                                     <div

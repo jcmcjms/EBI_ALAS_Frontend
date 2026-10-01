@@ -46,7 +46,7 @@ describe("summarizeDeskQueue", () => {
     it("aggregates depth, longest wait, SLA breaches and exposure", () => {
         const stats = summarizeDeskQueue(
             [
-                queued({ enqueuedAt: new Date(NOW - 9 * 3_600_000).toISOString() }), // > 8h ForChecking SLA
+                queued({ enqueuedAt: new Date(NOW - 9 * 3_600_000).toISOString() }), 
                 queued({ loanId: 2, position: 2, isHead: false, proposedAmount: 386_000 }),
             ],
             NOW,

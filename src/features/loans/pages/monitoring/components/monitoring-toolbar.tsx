@@ -24,7 +24,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
     const role = useAuthStore((s) => s.user?.role);
     const [localSearch, setLocalSearch] = useState(filters.search);
 
-    // Debounce search input
+    
     useEffect(() => {
         const timer = setTimeout(() => {
             onFiltersChange({ ...filters, search: localSearch });
@@ -36,7 +36,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
 
     return (
         <div className="flex flex-wrap items-center gap-3 gap-y-2 px-4 py-3 border-b bg-muted/20">
-            {/* Search */}
+            {}
             <div className="relative flex-1 max-w-sm">
                 <MagnifyingGlass size={16} className="absolute left-3 top-2.5 text-muted-foreground" weight="bold" />
                 <Input
@@ -47,7 +47,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                 />
             </div>
 
-            {/* Date Range Picker */}
+            {}
             <Popover>
                 <PopoverTrigger className="inline-flex items-center gap-2 h-9 w-[240px] justify-start text-left font-normal bg-background border border-input rounded-md px-3 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer">
                     <CalendarBlank size={16} className="text-muted-foreground" weight="bold" />
@@ -74,9 +74,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                 </PopoverContent>
             </Popover>
 
-            {/* Status Filter — multi-select: role queues can span several stages,
-                and dashboard deep-links arrive comma-joined. A single-value Select
-                silently dropped everything after the first status. */}
+            {}
             <Popover>
                 <PopoverTrigger className="inline-flex h-9 min-w-[180px] cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-accent hover:text-accent-foreground">
                     <span className="flex items-center gap-2 truncate">
@@ -147,7 +145,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                 </PopoverContent>
             </Popover>
 
-            {/* "My queue" affordance — visible, removable default filter */}
+            {}
             {roleQueue.length > 0 && (
                 isRoleQueue ? (
                     <Badge variant="secondary" className="h-9 gap-1.5 px-3 text-xs font-normal">
@@ -175,7 +173,7 @@ export function MonitoringToolbar({ filters, onFiltersChange, roleQueue }: Toolb
                 )
             )}
 
-            {/* "My turn" toggle — shows only the file currently owned by the user */}
+            {}
             {filters.myTurn ? (
                 <Badge variant="secondary" className="h-9 gap-1.5 px-3 text-xs font-normal">
                     <UserCircle size={12} weight="bold" />

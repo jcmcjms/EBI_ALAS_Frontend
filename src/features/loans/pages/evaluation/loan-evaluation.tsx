@@ -68,7 +68,7 @@ import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 
 type EvaluationAction = "recommended" | "notRecommended" | "pushback";
 
-/** Statuses past which evaluation is closed — the page becomes read-only. */
+
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing"];
 
 export function LoanEvaluationPage() {
@@ -101,7 +101,7 @@ export function LoanEvaluationPage() {
         enabled: Number.isFinite(id) && id > 0,
     });
 
-    // Signature chain — resolved from LoanActions audit trail.
+    
     const { data: signatureSlots } = useLoanSignatureChain(id);
 
     const detail = loan.data;
@@ -152,7 +152,7 @@ export function LoanEvaluationPage() {
                                 {details.map((d, i) => <li key={i}>{d}</li>)}
                             </ul>
                         </div>,
-                        // Longer than the default so multi-error lists can be read.
+                        
                         { timeout: 10_000 },
                     );
                 } else {
@@ -210,7 +210,7 @@ export function LoanEvaluationPage() {
         if (action === "pushback") {
             updateStatus.mutate({ status: "ForRevision", comments: trimmed });
         } else {
-            // Both recommended and notRecommended go to ForApproval with verdict
+            
             const finalComments =
                 action === "notRecommended"
                     ? trimmed
@@ -219,7 +219,7 @@ export function LoanEvaluationPage() {
         }
     };
 
-    // ── Empty / error states ─────────────────────────────────────────
+    
     if (!Number.isFinite(id) || id <= 0) {
         return (
             <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
@@ -266,7 +266,7 @@ export function LoanEvaluationPage() {
         );
     }
 
-    // Only Evaluators may act, and only while the application is still in ForChecking.
+    
     const isEvaluator = user?.role === "Evaluator";
     const isForChecking = detail.status === "ForChecking";
     const showEvaluatorActions = isEvaluator && isForChecking && !frozen;
@@ -283,7 +283,7 @@ export function LoanEvaluationPage() {
 
     return (
         <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40">
-            {/* ── Sticky header ──────────────────────────────────────────── */}
+            {}
             <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
                 <div className="container mx-auto flex h-16 flex-wrap items-center justify-between gap-3 px-6">
                     <div className="flex flex-wrap items-center gap-3">
@@ -350,7 +350,7 @@ export function LoanEvaluationPage() {
                     )}
                 </div>
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
-                    {/* ── Document: fixed 800px sheet inside a zoomable viewport ── */}
+                    {}
                     <div className="space-y-4">
                         <Card className="overflow-hidden">
                             <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 p-4">
@@ -413,7 +413,7 @@ export function LoanEvaluationPage() {
                         </Card>
                     </div>
 
-                    {/* ── Right rail: evaluation actions + audit trail ── */}
+                    {}
                     <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit lg:self-start">
                         <Card>
                             <CardHeader className="border-b pb-4">
@@ -431,7 +431,7 @@ export function LoanEvaluationPage() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6 pt-4">
-                                {/* ── Audit Trail ── */}
+                                {}
                                 <div className="space-y-3">
                                     <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                         <Clock size={12} /> History
@@ -495,7 +495,7 @@ export function LoanEvaluationPage() {
 
                                 <div className="h-px bg-border" />
 
-                                {/* ── Comments ── */}
+                                {}
                                 <div className="space-y-2">
                                     <Label
                                         htmlFor="eval-comments"
@@ -537,7 +537,7 @@ export function LoanEvaluationPage() {
                                     </div>
                                 </div>
 
-                                {/* ── Action buttons ── */}
+                                {}
                                 <div className="space-y-2">
                                     {frozen && (
                                         <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
@@ -549,7 +549,7 @@ export function LoanEvaluationPage() {
 
                                     {showEvaluatorActions ? (
                                         <>
-                                            {/* ── Evaluator actions ── */}
+                                            {}
                                             <Button
                                                 className="w-full gap-2"
                                                 size="lg"
@@ -684,7 +684,7 @@ export function LoanEvaluationPage() {
                 </div>
             </div>
 
-            {/* ── Flag Incomplete Documents dialog ─────────────────────────── */}
+            {}
             <FlagIncompleteDocumentsDialog
                 open={flagOpen}
                 onOpenChange={setFlagOpen}

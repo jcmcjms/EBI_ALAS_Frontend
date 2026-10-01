@@ -2,7 +2,7 @@ import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { Button } from "@/src/components/ui/button";
 import { FormTabStrip } from "@/src/components/ui/form-tab-strip";
 
-/** Structural mirror of the group endpoint's member rows (loan-groups.ts). */
+
 export interface GroupLoanSummary {
     id: number;
     lamId: string;
@@ -18,13 +18,7 @@ interface ApprovalGroupTabsProps {
     statusOf: (status: string) => string;
 }
 
-/**
- * Sticky per-loan tab strip for multi-loan application groups.
- * Selection is navigation: the parent routes to /loans/approval/{id}, so
- * every id-keyed query on the page (sheet, audit trail, deviations, files,
- * checklist) follows automatically — one source of truth, zero desync.
- * Hidden for single-loan groups and in print.
- */
+
 export function ApprovalGroupTabs({
     loans,
     currentLoanId,

@@ -59,7 +59,7 @@ export function RoutingChip({ loanId }: RoutingChipProps) {
     );
 }
 
-/** Extract "Area Head" from "Area Head (Tier 2, ≤ 600,000, None)" */
+
 function extractAuthorityTitle(matchedRule: string): string {
     const paren = matchedRule.indexOf(" (");
     return paren > 0 ? matchedRule.slice(0, paren) : matchedRule;

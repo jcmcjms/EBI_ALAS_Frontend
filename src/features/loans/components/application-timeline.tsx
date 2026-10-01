@@ -29,7 +29,7 @@ const TYPE_ICON: Record<TimelineEvent["type"], { icon: typeof ArrowRight; ring: 
     remark:          { icon: NotePencil,     ring: "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-400" },
 };
 
-/** Fallback for events with an unrecognized or missing `type`. */
+
 const DEFAULT_TYPE_ICON = { icon: NotePencil, ring: "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-400" };
 
 const matchesFilter = (e: TimelineEvent, f: Filter) =>
@@ -37,10 +37,7 @@ const matchesFilter = (e: TimelineEvent, f: Filter) =>
 
 interface ApplicationTimelineProps {
     loanId: number;
-    /**
-     * "panel"  — bounded scroll with sticky controls (review page)
-     * "inline" — flows inside parent scroll (monitoring drawer)
-     */
+    
     variant?: "panel" | "inline";
 }
 
@@ -67,7 +64,7 @@ export function ApplicationTimeline({ loanId, variant = "panel" }: ApplicationTi
 
     const events = useMemo(() => {
         const filtered = loaded.filter((e) => matchesFilter(e, filter));
-        // Server pages arrive newest-first; the toggle re-orders the loaded window.
+        
         return newestFirst ? filtered : [...filtered].reverse();
     }, [loaded, filter, newestFirst]);
 
@@ -185,7 +182,7 @@ export function ApplicationTimeline({ loanId, variant = "panel" }: ApplicationTi
                 </ol>
             )}
 
-            {/* Progressive disclosure: explicit, count-aware, never auto-fires. */}
+            {}
             {query.hasNextPage && (
                 <div className="flex justify-center p-3">
                     <Button

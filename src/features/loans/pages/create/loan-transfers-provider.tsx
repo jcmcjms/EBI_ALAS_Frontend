@@ -1,17 +1,4 @@
-/**
- * LoanTransfersProvider
- * ---------------------
- * Single-instance mount point for `useLoanTransfers`, scoped to the
- * active loan via `useActiveLoan`.
- *
- * MUST NOT be keyed by the active loan: keying remounts the provider's
- * children — the entire form subtree — which destroys local component
- * state (the CIS island's fetched pending-loan list, selected LAI, etc.)
- * on every loan selection / tab switch. The hook below mounts exactly
- * one useFieldArray (static name) and touches per-loan arrays only
- * through setValue, so nothing here needs to remount when the active
- * loan changes.
- */
+
 import { createContext, useContext, type ReactNode } from "react";
 
 import { useActiveLoan } from "./active-loan-context";
@@ -31,7 +18,7 @@ export function LoanTransfersProvider({ children }: { children: ReactNode }) {
     );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
+
 export function useLoanTransfersContext(): LoanTransfersContextValue {
     const ctx = useContext(LoanTransfersContext);
     if (!ctx) {

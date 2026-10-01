@@ -5,29 +5,15 @@ import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 
 interface LoanParametersFieldsProps {
-    /**
-     * Field prefix for the parameters within a selected loan.
-     * Example: "loans.0.parameters" for the first loan in the array.
-     * This allows the component to be reused for each loan in the
-     * multi-loan application workflow.
-     */
+    
     fieldPrefix: string;
 }
 
-/**
- * Reusable panel content for Loan Parameters.
- * Extracted from LoanParametersSection so it can be composed inside
- * LoanParametersTabsSection which owns the multi-loan selector.
- * This component has NO SectionCard wrapper — it renders only the
- * field grid (read-only parameters hydrated from the pending-loan
- * feed). The smart-default fee section was removed: the creation
- * form does not fetch the product catalog (403 for Encoders);
- * fee data lives on the review sheet from `LoanResponse` fields.
- */
+
 export function LoanParametersFields({ fieldPrefix }: LoanParametersFieldsProps) {
     const { register } = useFormContext();
 
-    // Build prefixed field names
+    
     const productPath = `${fieldPrefix}.product` as const;
     const proposedAmountPath = `${fieldPrefix}.proposedAmount` as const;
     const purposePath = `${fieldPrefix}.purpose` as const;
@@ -38,15 +24,9 @@ export function LoanParametersFields({ fieldPrefix }: LoanParametersFieldsProps)
 
     return (
         <div className="space-y-5">
-            {/* Outer grid uses 4 columns on md+ so row 2 can carry the
-                new "Policy Term (months)" field alongside the existing
-                Term (days). Loan Product + Purpose of Loan span the
-                full first row (1 + 3 cols); NTHP Date sits alone in
-                row 3 with the remaining columns empty — same rhythm as
-                before, just one extra column available for the loan
-                terms row. */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                {/* Row 1 — Product & Purpose */}
+                {}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Loan Product</Label>
                     <Input
@@ -67,7 +47,7 @@ export function LoanParametersFields({ fieldPrefix }: LoanParametersFieldsProps)
                     />
                 </div>
 
-                {/* Row 2 — Amount, Term (days), Policy Term (months), Rate */}
+                {}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Proposed Amount (₱)</Label>
                     <Input
@@ -95,15 +75,7 @@ export function LoanParametersFields({ fieldPrefix }: LoanParametersFieldsProps)
                     />
                 </div>
 
-                {/* Policy term in months — sourced from
-                    `loan_data.total_amortization` via the consolidated
-                    pending-loan SQL. Distinct from Term (days) above:
-                    this is the authoritative input to amortization
-                    calculations and stays stable across calendar-
-                    boundary edge cases. Optional on the schema; this
-                    field renders blank when the form was hydrated from
-                    a flow that didn't surface a pending loan (e.g. the
-                    approval-page mapper). */}
+                {}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground flex items-center gap-1">
                         <CalendarBlank size={12} weight="bold" /> Policy Term (months)
@@ -132,7 +104,7 @@ export function LoanParametersFields({ fieldPrefix }: LoanParametersFieldsProps)
                     />
                 </div>
 
-                {/* Row 3 — NTHP date */}
+                {}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">NTHP Date</Label>
                     <Input

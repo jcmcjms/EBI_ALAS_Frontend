@@ -16,29 +16,15 @@ interface SectionCardProps {
   title: string;
   description?: string;
   icon?: ReactNode;
-  /**
-   * Section is populated from an upstream system (CIS / preloan /
-   * approval-document generator) and needs no Account-Officer action.
-   * Surfaces a "System sourced" badge next to the title so the user
-   * sees at a glance that nothing here is editable.
-   */
+  
   systemSourced?: boolean;
-  /** Right-aligned element in the title row (custom badges, totals…). */
+  
   badge?: ReactNode;
   contentClassName?: string;
   children: ReactNode;
 }
 
-/**
- * Shared shell for every wizard section.
- *
- * - Heading is focusable (`tabIndex=-1`, `[data-section-heading]`) so
- *   the stepper can move screen-reader focus when navigating.
- * - `scroll-mt-24` reserves room for the sticky page header when the
- *   page-level `scrollToSection` scrolls into view.
- * - Section number and label come from `sections.ts` so the stepper
- *   list, the mobile nav, and the on-page heading can never drift.
- */
+
 export function SectionCard({
   step,
   title,
@@ -83,17 +69,7 @@ export function SectionCard({
   );
 }
 
-/**
- * Decimal sub-heading (1.1, 1.2 …) for nested blocks inside a section.
- * Keeps nesting visually obvious without competing with the section's
- * own step number.
- *
- * `icon` renders inline next to the title — matching the top-level
- * `SectionCard`'s convention so an isolated sub-heading (no button to
- * push against) doesn't end up with its icon stranded on the far
- * right by `justify-between`. Use `actions` instead when the right-
- * side needs a button or badge.
- */
+
 export function SubSectionHeading({
   step,
   title,
@@ -117,13 +93,7 @@ export function SubSectionHeading({
   );
 }
 
-/**
- * Read-only key/value pair.
- *
- * System-verified data renders as text, not as a disabled input — a
- * grey box reads as "field you forgot to fill in" and forces the AO to
- * verify whether the value is editable.
- */
+
 export function ReadOnlyField({
   label,
   value,

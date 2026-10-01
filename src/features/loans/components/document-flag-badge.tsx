@@ -15,22 +15,11 @@ interface DocumentFlagDto {
 
 interface DocumentFlagBadgeProps {
     flag: DocumentFlagDto | null;
-    /** Compact mode: icon-only with tooltip (for table rows). */
+    
     compact?: boolean;
 }
 
-/**
- * Amber chip + popover showing: flagged by, when, reason, missing count.
- *
- * Mount in:
- *   - Monitoring drawer header (next to status badge)
- *   - Monitoring table rows (compact mode)
- *   - Review page header
- *   - Dashboard widget rows
- *
- * The status badge always tells the routing truth (ForChecking, ForApproval…).
- * This chip tells the document truth — two facts, two signals, never conflated.
- */
+
 export function DocumentFlagBadge({ flag, compact }: DocumentFlagBadgeProps) {
     if (!flag) return null;
 

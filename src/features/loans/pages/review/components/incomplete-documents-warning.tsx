@@ -17,11 +17,7 @@ interface Props {
     documentFlag?: DocumentFlag | null;
 }
 
-/**
- * Application-level completeness: ANY pending requirement ⇒ incomplete file.
- * Shown when a reviewer has flagged the file with missing documents.
- * The flag is a data fact, not a routing status — the file stays at its desk.
- */
+
 export function IncompleteDocumentsWarning({ checklist, documentFlag }: Props) {
     const pending = (checklist ?? []).filter((i) => i.uploadStatus !== "Uploaded");
     const hasFlag = documentFlag != null;

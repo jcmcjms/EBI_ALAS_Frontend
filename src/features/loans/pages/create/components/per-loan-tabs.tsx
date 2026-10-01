@@ -6,16 +6,11 @@ import { useActiveLoan } from "../active-loan-context";
 import type { SelectedLoan } from "@/src/features/loans/schemas/schema";
 
 interface PerLoanTabsProps {
-    /** DOM-id namespace. Required: several strips coexist on one page. */
+    
     idPrefix: string;
     ariaLabel: string;
     activeSurface?: "sheet" | "card";
-    /**
-     * "hidden" keeps every panel mounted (safe for plain `register` fields with
-     * per-panel prefixes — §3). "active-only" unmounts inactive panels — required
-     * when the panel consumes loan-scoped `useFieldArray` instances from
-     * LoanTransfersContext, which only ever point at the ACTIVE loan (§5).
-     */
+    
     mountStrategy?: "hidden" | "active-only";
     hasError?: (index: number) => boolean;
     metric?: (loan: SelectedLoan) => string | undefined;

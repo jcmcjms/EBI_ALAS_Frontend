@@ -9,8 +9,8 @@ export function ApplicationDetailsSection() {
     const { register } = useFormContext();
     const user = useAuthStore((state) => state.user);
 
-    // Auto-populate officer and branch on mount
-    // In a real app, use useEffect to set these values if they are empty
+    
+    
     const officerName = user ? `${user.firstName} ${user.middleName ? user.middleName + " " : ""}${user.lastName}` : "Maria Santos";
     const branchName = user?.branchId || "Makati Main";
 

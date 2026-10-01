@@ -1,36 +1,31 @@
-/**
- * Loan computation utilities (PMT, minimum amortization, net proceeds).
- *
- * Note: These are UI projections only. Backend uses decimal precision
- * and is the source of truth for ledger entries.
- */
 
-// Types defined locally to avoid circular import with schema.ts
-// (schema → computations → schema cycle breaks under verbatimModuleSyntax).
 
-/** Minimal structural view of `client.netTakeHomePay`. */
+
+
+
+
 export type NthpCarrier = { netTakeHomePay?: number };
 
-/** Minimal structural view of `loan.{proposedAmount, interestRate, term}`. */
+
 export type LoanParamsCarrier = {
     proposedAmount?: number;
     interestRate?: number;
     term?: number;
 };
 
-/** Minimal structural view of an `outstandingLoans[i]` row. */
+
 export type OutstandingLoanCarrier = { outstandingBalance?: number; principalBalance?: number };
 
-/** Minimal structural view of an `ebiReloans[i]` row. */
+
 export type EbiRowCarrier = { outstandingBalance?: number; existingDeduction?: number };
 
-/** Minimal structural view of a `buyOuts[i]` row. */
+
 export type BuyOutRowCarrier = { outstandingBalance?: number };
 
-/** Minimal structural view of an `incomingLoans[i]` row. */
+
 export type IncomingRowCarrier = { deductions?: number };
 
-/** Minimal structural view of the form slices the snapshot reads. */
+
 export type FormCarrier = {
     loan?: LoanParamsCarrier;
     client?: NthpCarrier;
@@ -40,68 +35,53 @@ export type FormCarrier = {
     incomingLoans?: readonly IncomingRowCarrier[];
 };
 
-// ── Input contracts ────────────────────────────────────────────────────
-//
-// Two flavours are exported so callers can compose them in the way
-// that fits their shape:
-//
-//   1. `LoanComputationInputs` — flat, scalar, ready to test. Use this
-//      when calling from a Zod `superRefine` or a Vitest suite where
-//      there is no RHF context.
-//   2. `LoanMetricsSnapshot` — derives inputs from the actual form
-//      shape (`LoanApplicationFormData`) so the hook can be a thin
-//      pass-through and the math stays pure.
 
-// Flat inputs (call directly from tests / schemas).
+
+
+
+
+
+
+
+
+
+
+
+
 export interface LoanComputationInputs {
-    /** Principal / proposed loan amount in PHP. */
+    
     principal: number;
-    /** Nominal annual interest rate, in percent (e.g. 7.0 for 7%). */
+    
     annualRatePercent: number;
-    /** Term in days. */
+    
     termDays: number;
-    /**
-     * Upfront application charge as a fraction of `principal`
-     * (e.g. 0.06 for 6%). In production this should be sourced from
-     * the selected Loan Product DTO — see the warning in the
-     * architecture note about the A16 product defaulting to 6%.
-     */
+    
     applicationChargeRate: number;
-    /** Documentary stamp tax in PHP (e.g. `principal * 0.0075`). */
+    
     docStamp: number;
-    /** Notarial fee in PHP (flat). */
+    
     notarialFee: number;
-    /** Insurance / MRI in PHP. */
+    
     insurance: number;
-    /** Advance interest in PHP. */
+    
     advanceInterest: number;
-    /**
-     * Outstanding balance of EBI accounts to be settled by this loan
-     * (the "Total Accounts Balance" line on the approval form).
-     */
+    
     outstandingBalance: number;
-    /**
-     * Outstanding balance of buy-out accounts from other FIs
-     * (the "Total Buy-Out Balance" line on the approval form).
-     */
+    
     buyOutBalance: number;
 }
 
-/**
- * Per-cycle obligations declared by the AO on the form.
- * `otherMonthlyObligations` is the hand-keyed catch-all for recurring
- * monthly obligations not captured by EBI reloan, buy-out, or incoming rows.
- */
+
 export interface DisposableIncomeInputs {
-    /** Net Take-Home Pay in PHP. */
+    
     nthp: number;
-    /** Other recurring monthly income the AO is willing to count. */
+    
     otherIncome: number;
-    /** Other monthly obligations (rent, household, etc.). */
+    
     otherMonthlyObligations: number;
 }
 
-// ── Output contract ────────────────────────────────────────────────────
+
 
 export interface LoanComputationResults {
     monthlyAmortization: number;
@@ -109,32 +89,19 @@ export interface LoanComputationResults {
     totalUpfrontDeductions: number;
     grossProceeds: number;
     netProceeds: number;
-    /** Monthly amortization + `otherMonthlyObligations`. */
+    
     totalMonthlyObligations: number;
-    /** `(nthp + otherIncome) - totalMonthlyObligations`. */
+    
     totalDisposable: number;
-    /** True when `totalDisposable < 0`. Drives the Zod gate. */
+    
     isAmortizationExceedingDisposable: boolean;
-    /** Looked up from the tiered table; `0` for amounts below the floor. */
+    
     minimumRequiredAmortization: number;
 }
 
-// ── Math ───────────────────────────────────────────────────────────────
 
-/**
- * Standard PMT (amortizing payment) for a fixed-rate, fully-amortizing
- * loan.
- *
- * @param principal loan principal in PHP.
- * @param annualRatePercent nominal APR in percent (e.g. 7.5 for 7.5%).
- * @param termDays term in days (the loan term throughout the system is
- *                 days; the engine internally converts to monthly
- *                 periods because the PMT formula is parameterized in
- *                 months — converting at the boundary keeps the API
- *                 shape uniform).
- * @returns monthly payment, rounded to 2 decimal places. Returns 0
- *          for non-positive principal or term.
- */
+
+
 export function computeMonthlyAmortization(
     principal: number,
     annualRatePercent: number,
@@ -144,18 +111,18 @@ export function computeMonthlyAmortization(
         return 0;
     }
     if (principal <= 0 || termDays <= 0) return 0;
-    // Convert days → months. Using 30 days per month keeps the legacy
-    // "1 month = 30 days" convention the rest of the system (preloan
-    // totalTermDays, approval-form preview, etc.) already uses, so the
-    // engine output matches what the printed form shows.
+    
+    
+    
+    
     const termMonths = Math.floor(termDays / 30);
     if (termMonths <= 0) return 0;
     if (annualRatePercent === 0) return round2(principal / termMonths);
 
-    // Excel parity: ROUND(rate/12, 6) — prevents floating-point drift
-    // from accumulating across the term's exponentiation. Without this,
-    // the unrounded repeating decimal produces a slightly different PMT
-    // than the legacy LAM template.
+    
+    
+    
+    
     const r = Math.round((annualRatePercent / 100 / 12) * 1_000_000) / 1_000_000;
     const n = termMonths;
     const pmt = (principal * r) / (1 - Math.pow(1 + r, -n));
@@ -163,23 +130,10 @@ export function computeMonthlyAmortization(
     return round2(pmt);
 }
 
-/**
- * Denomination the legacy LAM template quotes the Maximum Loanable
- * Amount in. The Excel FLOORs the PV to the nearest 100.
- */
+
 export const LOAN_AMOUNT_DENOMINATION = 100;
 
-/**
- * Hard-coded MLA caps for specific ATM products, mirroring the nested
- * IF chain in the legacy LAM template:
- *   C34 → 200,000
- *   C21 → 135,000
- *   C27 → 120,000
- *   C29 → 100,000
- *   C25 → 200,000
- * These bypass the PV(capacity) calculation entirely, even if the
- * borrower's capacity is negative.
- */
+
 const ATM_HARD_CAPS: Readonly<Record<string, number>> = {
     C34: 200_000,
     C21: 135_000,
@@ -188,76 +142,44 @@ const ATM_HARD_CAPS: Readonly<Record<string, number>> = {
     C25: 200_000,
 };
 
-/**
- * Computes the Maximum Loanable Amount (MLA) exactly as the legacy LAM
- * Excel template does.
- *
- * 1. If the product code is one of the hard-capped ATM products (C34,
- *    C21, C27, C29, C25), the MLA is that fixed cap.
- * 2. Otherwise, the MLA is the present value of the net disposable
- *    capacity (NTHP + EBI reloan deductions - minimum NTHP - incoming
- *    deductions) treated as the monthly amortization, at the loan's
- *    own rate and term.
- * 3. The result is FLOORed to the nearest 100.
- *
- * Sign handling: if the capacity is negative (borrower cannot afford
- * the minimum NTHP), the PV is mathematically negative. We preserve
- * the sign so the UI can render it in parentheses (e.g. "(PhP187,900.00)"),
- * matching the legacy template's negative MLA display.
- */
+
 export function computeMaximumLoanableAmount(
     monthlyCapacity: number,
     annualRatePercent: number,
     termDays: number,
     productCode?: string | null
 ): number {
-    // 1. Hard caps for specific ATM products
+    
     const code = (productCode ?? "").trim().toUpperCase();
     if (code in ATM_HARD_CAPS) {
         return ATM_HARD_CAPS[code];
     }
 
-    // 2. PV calculation for all other products (APDS, BONUS, AUX, etc.)
+    
     if (!Number.isFinite(monthlyCapacity) || monthlyCapacity === 0) return 0;
     if (!Number.isFinite(annualRatePercent) || !Number.isFinite(termDays)) return 0;
 
     const termMonths = Math.floor(termDays / 30);
     if (termMonths <= 0) return 0;
 
-    // Mirror the legacy Excel ROUND(N9/12, 6) to prevent floating-point
-    // drift from accumulating across the term's exponentiation.
+    
+    
     const r = Math.round((annualRatePercent / 100 / 12) * 1_000_000) / 1_000_000;
 
-    // Use Math.abs for the PV magnitude, then re-apply the capacity sign
+    
     const absCapacity = Math.abs(monthlyCapacity);
     const pvMagnitude = r === 0
         ? absCapacity * termMonths
         : (absCapacity * (1 - Math.pow(1 + r, -termMonths))) / r;
 
-    // 3. FLOOR to nearest 100 (towards zero for negative numbers to match
-    // the legacy template's absolute-value formatting)
+    
+    
     const flooredMagnitude = Math.floor(pvMagnitude / LOAN_AMOUNT_DENOMINATION) * LOAN_AMOUNT_DENOMINATION;
 
     return Math.sign(monthlyCapacity) * flooredMagnitude;
 }
 
-/**
- * Tiered minimum-payment table (mirrors the Excel's "Min Amort" lookup
- * column). Loan amounts below 100k have no minimum.
- *
- * Tier table (PHP):
- *   < 100,000           → no minimum
- *   100,000 – 110,000   → 3,000
- *   110,001 – 130,000   → 3,500
- *   130,001 – 145,000   → 4,000
- *   145,001 – 165,000   → 4,500
- *   165,001 – 200,000   → 5,000
- *   > 200,000           → 5,000 + 500 per additional ₱20,000 (rounded up)
- *
- * @param loanAmount Proposed loan amount in PHP.
- * @returns Minimum monthly amortization in PHP, or 0 for amounts below
- *          the floor.
- */
+
 export function getMinimumRequiredAmortization(loanAmount: number): number {
     if (!Number.isFinite(loanAmount) || loanAmount < 100_000) return 0;
     if (loanAmount <= 110_000) return 3_000;
@@ -266,19 +188,13 @@ export function getMinimumRequiredAmortization(loanAmount: number): number {
     if (loanAmount <= 165_000) return 4_500;
     if (loanAmount <= 200_000) return 5_000;
 
-    // >200k: 5k base + 500 per ₱20k of overage (Excel uses CEILING on
-    // the overage / 20k step).
+    
+    
     const overage = loanAmount - 200_000;
     return 5_000 + Math.ceil(overage / 20_000) * 500;
 }
 
-/**
- * Orchestrates the full set of derived metrics from the loan terms
- * and the borrower's disposable income.
- *
- * Pure: every input is passed as an argument; the function reads no
- * module state, no globals, and no React context.
- */
+
 export function computeLoanMetrics(
     loanInputs: LoanComputationInputs,
     incomeInputs: DisposableIncomeInputs,
@@ -308,9 +224,9 @@ export function computeLoanMetrics(
     );
 
     const grossProceeds = round2(principal - totalUpfrontDeductions);
-    // The Excel's "Net Proceeds to Client" subtracts the EBI OB first,
-    // then the buy-out balance. Keep that two-step order so the printed
-    // form matches the legacy template line-for-line.
+    
+    
+    
     const netProceeds = round2(grossProceeds - outstandingBalance - buyOutBalance);
 
     const totalMonthlyObligations = round2(
@@ -328,30 +244,23 @@ export function computeLoanMetrics(
         netProceeds,
         totalMonthlyObligations,
         totalDisposable,
-        // The Excel prints the difference (income - obligations); a
-        // negative total means the AO has overrun the borrower's
-        // capacity to pay.
+        
+        
+        
         isAmortizationExceedingDisposable: totalDisposable < 0,
         minimumRequiredAmortization: getMinimumRequiredAmortization(principal),
     };
 }
 
-// ── RHF bridge ─────────────────────────────────────────────────────────
-//
-// `LoanMetricsSnapshot` adapts the actual `LoanApplicationFormData`
-// shape to the flat inputs the engine expects. The hook in
-// `src/hooks/use-loan-computations.ts` is a thin wrapper over
-// `useMemo(snapshot)` + `computeLoanMetrics` — keeping the snapshot
-// builder pure means the engine stays testable without RHF.
 
-/**
- * A minimal read-only view of the loan form's relevant slices.
- * Mirrors the slices the hook actually subscribes to via `useWatch`.
- *
- * The shape is intentionally narrow: only the fields the engine reads.
- * Callers (the hook, the schema's `superRefine`) are expected to
- * supply a structurally-compatible subset of `LoanApplicationFormData`.
- */
+
+
+
+
+
+
+
+
 export interface LoanMetricsSnapshot {
     loan: LoanParamsCarrier;
     client: NthpCarrier;
@@ -359,9 +268,9 @@ export interface LoanMetricsSnapshot {
     ebiReloans: readonly EbiRowCarrier[];
     buyOuts: readonly BuyOutRowCarrier[];
     incomingLoans: readonly IncomingRowCarrier[];
-    /** Optional override — defaults to 6% when not supplied. */
+    
     applicationChargeRate?: number;
-    /** Optional product fee overrides from the LoanProduct table. */
+    
     productFees?: {
         docStamp: number;
         notarialFee: number;
@@ -370,15 +279,7 @@ export interface LoanMetricsSnapshot {
     };
 }
 
-/**
- * Snapshot builder: collapses the form's array-shaped obligations into
- * the scalar inputs the engine expects. The defaults match the legacy
- * Excel's blank-cell behaviour (zero), so a partially-filled form
- * computes the same as the AO leaving a cell empty.
- *
- * When `productFees` is provided (from the LoanProduct table), the
- * snapshot uses product-specific fee values instead of hardcoded zeros.
- */
+
 export function buildLoanMetricsSnapshot(
     form: FormCarrier,
     applicationChargeRate = 0.06,
@@ -391,9 +292,9 @@ export function buildLoanMetricsSnapshot(
     const annualRatePercent = form.loan?.interestRate || 0;
     const termDays = form.loan?.term || 0;
 
-    // The Excel's "Total Accounts Balance" line is the EBI reloan OB
-    // (not the raw WebLoan outstanding feed — those are listed under
-    // "Outstanding Loans" and are not subtracted from gross proceeds).
+    
+    
+    
     const outstandingBalance = (form.ebiReloans ?? []).reduce(
         (sum: number, row) => sum + (row?.outstandingBalance || 0),
         0,
@@ -404,11 +305,11 @@ export function buildLoanMetricsSnapshot(
         0,
     );
 
-    // The "other monthly obligations" aggregate isn't currently
-    // surfaced as a single form input — it lives implicitly across the
-    // incoming/undeducted loans and the AO's manual notes. We sum the
-    // incoming-loan deductions as a conservative proxy so the
-    // capacity-to-pay check matches what the printed page hints at.
+    
+    
+    
+    
+    
     const otherMonthlyObligations = (form.incomingLoans ?? []).reduce(
         (sum: number, row) => sum + (row?.deductions || 0),
         0,
@@ -435,41 +336,12 @@ export function buildLoanMetricsSnapshot(
     };
 }
 
-// ── Term resolution ────────────────────────────────────────────────────
 
-/**
- * Maximum grace period (in days) the core system may add between the
- * amortization schedule and calendar maturity. A16 ships 2,587 calendar
- * days against an 84-month (2,520d) schedule — a 67-day gap. Anything
- * larger means `policyTermMonths` does NOT describe the term (e.g.
- * single-payment Lumpsum products ship total_amortization = 1) and the
- * feed's term days must be quoted verbatim.
- */
+
+
 export const MAX_GRACE_DAYS = 90;
 
-/**
- * Resolves the correct term in days for the approval form, handling
- * both monthly-amortizing products and single-payment products.
- *
- * For monthly-amortizing products (e.g. A16: 84 installments),
- * `policyTermMonths × 30` equals the term in months, so
- * `84 × 30 = 2,520` is correct. The feed's `term` (2,587) includes
- * a grace period of 67 days.
- *
- * For single-payment products (e.g. C02 – CL Lumpsum AdvInt), the
- * amortization count is 1, so `1 × 30 = 30` — which is NOT the term
- * at all; the real term is the feed's 720 days.
- *
- * Guard: use the policy term only when it actually describes the term
- * (i.e. the feed's day-count differs from it by at most a grace
- * period), otherwise quote the feed's term days verbatim.
- *
- * @param termDays The calendar day-count to maturity from the feed
- *                 (e.g. 2,587 for A16, 720 for C02).
- * @param policyTermMonths The amortization period count from the feed
- *                         (e.g. 84 for A16, 1 for C02).
- * @returns The resolved term in days for the approval form.
- */
+
 export function resolveApprovalTermDays(
     termDays: number,
     policyTermMonths?: number | null,
@@ -483,12 +355,12 @@ export function resolveApprovalTermDays(
         : rawTermDays;
 }
 
-/** Days per month in the legacy "1 month = 30 days" convention. */
+
 export const DAYS_PER_MONTH = 30;
 
-// ── helpers ────────────────────────────────────────────────────────────
 
-/** Round to 2 decimal places using banker-neutral half-away-from-zero. */
+
+
 function round2(value: number): number {
     if (!Number.isFinite(value)) return 0;
     return Math.round(value * 100) / 100;

@@ -21,10 +21,10 @@ import type { GroupLoanResult, GroupStatusResponse } from "@/src/features/loans/
 interface Props {
     groupNo: string;
     currentLoanId: number;
-    /** Target statuses the acting role may move the CURRENT loan to. */
+    
     allowedTargets: string[];
     statusOf: (status: string) => string;
-    /** Row click → open that loan's review (parent navigates). */
+    
     onSelectLoan?: (loanId: number) => void;
 }
 
@@ -44,8 +44,8 @@ export function GroupReviewSection({
     const [results, setResults] = useState<GroupStatusResponse | null>(null);
 
     const loans = group.data?.loans ?? [];
-    // Loans in the group other than the one currently open — the section is hidden
-    // when the group has only one loan.
+    
+    
     const siblings = useMemo(
         () => loans.filter((l) => l.id !== currentLoanId),
         [loans, currentLoanId]
@@ -56,7 +56,7 @@ export function GroupReviewSection({
         [loans, currentLoanId]
     );
 
-    // UX-only pre-filter: server re-validates every loan independently.
+    
     const eligibility = useMemo(
         () =>
             loans.map((l) => {
@@ -78,8 +78,8 @@ export function GroupReviewSection({
         setTarget(t);
         setResults(null);
         setComments("");
-        // Pre-select only loans currently in the same status as the open one —
-        // the server rejects cross-status bundle moves.
+        
+        
         setPicked(
             Object.fromEntries(
                 loans

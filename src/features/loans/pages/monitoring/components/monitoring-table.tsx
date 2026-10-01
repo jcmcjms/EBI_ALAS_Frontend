@@ -26,39 +26,24 @@ import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 import { CANCELLABLE_STATUSES } from "@/src/features/loans/api/loan-review";
 import { EmptyState } from "@/src/components/ui/empty-state";
 
-/** Per-column Tailwind classes surfaced through `meta.className`. */
+
 type MonitoringColumnMeta = {
     className?: string;
 };
 
-/** Skeleton rows to show while the first page loads — enough to fill a 1080p viewport. */
+
 const SKELETON_ROW_COUNT = 8;
 
-/**
- * Resolve a branch code (e.g. "011") to its human-readable name
- * (e.g. "Head Office Branch") using the static `BRANCHES` directory.
- *
- * The monitoring record carries `branchCode` as the canonical wire value —
- * the table sends it back to `GET /api/loans?branchCode=…` for filtering
- * and the server sorts on it. We only swap in the name for the rendered
- * cell; the underlying field stays the code so filter / sort / API
- * contracts remain untouched.
- *
- * Falls back to the raw code when:
- *   - the value is the sentinel `"—"` (no branch on the loan),
- *   - the code is not present in the static directory (e.g. a new branch
- *     added server-side that hasn't been mirrored yet — same fallback
- *     behaviour as `dashboard.tsx` and `cis-lookup.tsx`).
- */
+
 function resolveBranchName(code: string): string {
     if (!code || code === "—") return code || "—";
     return BRANCHES.find((b) => b.code === code)?.name ?? code;
 }
 
-// Declare features for this table (v9 API).
-// `columnMeta: metaHelper<MonitoringColumnMeta>()` registers the
-// `meta.className` field so per-column Tailwind utilities can be
-// applied at render time from the column definition.
+
+
+
+
 const features = tableFeatures({
     ...coreFeatures,
     rowSortingFeature,
@@ -72,24 +57,21 @@ const columnHelper = createColumnHelper<typeof features, LoanMonitoringRecord>()
 interface MonitoringTableProps {
     filters: MonitoringFilters;
     onRowClick: (record: LoanMonitoringRecord) => void;
-    /** Server-fetched SLA policy (hours per stage). Null when the
-     *  /sla-policy endpoint is unreachable — the indicator falls back
-     *  to built-in defaults from LOAN_STATUS_META. */
+    
     slaPolicy?: Record<string, number> | null;
-    /** Current authenticated user — used to gate the cancel action
-     *  and highlight "Your turn" on the assigned-to column. */
+    
     currentUser?: { id: number; role: string; name?: string } | null;
-    /** Called when the user clicks the cancel button on a row. */
+    
     onCancel?: (record: LoanMonitoringRecord) => void;
 }
 
-// ─── Shared Timer Context ───────────────────────────────────────────────────
-//
-// Instead of each `TimeLapsedIndicator` row creating its own `setInterval`
-// (15 timers × 1s each = 15 state updates/second), a single provider at
-// the table level ticks once per second and publishes `Date.now()` via
-// context. All rows read the same timestamp — one timer, one re-render
-// cycle, identical visual output.
+
+
+
+
+
+
+
 
 const SharedTimerContext = createContext<number>(Date.now());
 
@@ -106,23 +88,23 @@ function SharedTimerProvider({ children }: { children: ReactNode }) {
     );
 }
 
-// ─── Time Lapsed indicator (SLA-driven urgency) ─────────────────────────────
-//
-// Computes elapsed time LIVE from `lastActionDate` (instead of reading the
-// server-rounded `timeLapsedHours` snapshot) and re-renders every second
-// so the indicator visibly ticks and shows minutes + seconds alongside
-// hours. Server `timeLapsedHours` is still on the record for consumers
-// that need a stable snapshot (sorting, exports) — this indicator just
-// bypasses it for display accuracy.
-//
-// Urgency = elapsed-since-last-action vs the stage's handling SLA:
-//   ok      < 60% of SLA consumed   → green
-//   warning 60–99%                  → amber (act soon)
-//   breach  ≥ 100%                  → red   (SLA missed)
-//   none    terminal / no-SLA stage → neutral
-//
-// 60% gives the handler a visible heads-up before the breach, not after.
-// A red "23h" on an Approved loan was noise — now it's slate.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function formatElapsed(ms: number): string {
     const total = Math.max(0, Math.floor(ms / 1000));
@@ -146,8 +128,8 @@ interface TimeLapsedIndicatorProps {
 function TimeLapsedIndicator({ lastActionDate, status, slaPolicy }: TimeLapsedIndicatorProps) {
     const now = useContext(SharedTimerContext);
 
-    // Freeze the timer for terminal statuses — the clock stops at the
-    // moment of the last action so the displayed elapsed time never grows.
+    
+    
     const TERMINAL_STATUSES = new Set(["Cancelled", "Disbursed", "OnGoing"]);
     const effectiveNow = TERMINAL_STATUSES.has(status) ? new Date(lastActionDate).getTime() : now;
 
@@ -171,11 +153,7 @@ function TimeLapsedIndicator({ lastActionDate, status, slaPolicy }: TimeLapsedIn
     );
 }
 
-/**
- * Skeleton row used while the first page is loading (no `keepPreviousData`
- * cache yet). Matches the column count so the layout doesn't jump when
- * the real rows arrive.
- */
+
 function SkeletonRow({ colSpan }: { colSpan: number }) {
     return (
         <TableRow className="border-b">
@@ -190,9 +168,9 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState<SortingState>([{ id: "applicationDate", desc: true }]);
 
-    // `keepPreviousData` (set inside the hook) keeps the previous page
-    // visible during a refetch so pagination/sort doesn't flash an empty
-    // state — first load still shows the skeleton below.
+    
+    
+    
     const {
         data: pageData = [],
         rowCount = 0,
@@ -211,11 +189,11 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
         }),
         columnHelper.accessor("branchCode", {
             header: "Branch",
-            // Display the resolved branch name (e.g. "Head Office Branch")
-            // rather than the raw code (e.g. "011"). The accessor value is
-            // still the code, so default sort still orders by code — swap
-            // to `sortingFn` keyed on the name if alphabetical-by-name
-            // sorting is needed later.
+            
+            
+            
+            
+            
             cell: (info) => <span className="text-xs">{resolveBranchName(info.getValue())}</span>,
         }),
         columnHelper.accessor("customerName", { header: "Customer Name", cell: (info) => <span className="font-medium text-sm">{info.getValue()}</span> }),
@@ -298,7 +276,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                 const row = info.row.original;
                 const mine = row.isQueueHead && row.queueOwnerName === currentUser?.name;
 
-                // ForApproval: show the actual approver or no-authority state
+                
                 if (row.status === "ForApproval") {
                     if (row.assignedApproverName) {
                         return (
@@ -327,7 +305,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                     }
                 }
 
-                // Queue head (non-ForApproval stages)
+                
                 if (row.isQueueHead) {
                     return (
                         <div className="flex items-center gap-1.5">
@@ -384,9 +362,9 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
         }),
     ]);
 
-    // Server-driven pagination: react-table just renders pageCount and
-    // triggers `setPagination` on prev/next clicks — the actual page
-    // fetch happens inside the hook when `pagination` changes.
+    
+    
+    
     const pageCount = Math.max(1, Math.ceil(rowCount / pagination.pageSize));
 
     const table = useTable({
@@ -401,19 +379,19 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
         pageCount,
     });
 
-    // ── Render states ────────────────────────────────────────────────────
-    //
-    // Three distinct empty-body cases:
-    //
-    //   (a) `isLoading && !data` — first page ever, no keepPreviousData
-    //       cache yet → show skeleton rows so the layout doesn't jump.
-    //
-    //   (b) `isError` — the GET /api/loans call failed. Surface a
-    //       retryable error banner instead of an empty table.
-    //
-    //   (c) `pageData.length === 0` — server returned zero rows for
-    //       the current filter. Show a contextual empty state with a
-    //       hint to clear filters.
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     const showSkeleton = isLoading && pageData.length === 0;
     const showError = isError;
     const showEmpty = !showSkeleton && !showError && pageData.length === 0;
@@ -421,8 +399,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
     return (
         <SharedTimerProvider>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {/* Refetch banner — subtle indicator that a background refresh
-                is in flight (e.g. after returning from another page). */}
+            {}
             {isFetching && !isLoading && (
                 <div className="px-4 py-1 text-[11px] text-muted-foreground bg-muted/40 border-b">
                     Refreshing…
@@ -505,9 +482,7 @@ export function MonitoringTable({ filters, onRowClick, slaPolicy, currentUser, o
                 </Table>
             </div>
 
-            {/* Pagination Footer — driven entirely by server rowCount, so
-                the "X to Y of N" labels reflect the backend's filtered
-                total, not the page slice. */}
+            {}
             <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/10 text-xs text-muted-foreground">
                 <div>
                     {rowCount === 0 ? (

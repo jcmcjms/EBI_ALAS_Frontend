@@ -81,9 +81,9 @@ import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 import { mapLoanDetailToFormData } from "@/src/features/loans/utils/map-detail-to-form";
 
-// End-state statuses — the page freezes (`frozen`) and all workflow actions disappear.
+
 const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing", "Cancelled"];
-const MIN_REMARKS = 10; // mirrors UpdateLoanStatusValidator
+const MIN_REMARKS = 10; 
 
 const WORKFLOW_ACTION_MAP: Record<string, WorkflowAction> = {
     "ForChecking": "Recommend",
@@ -111,11 +111,11 @@ type WorkflowButtonDef = {
 const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     { role: "Recommender", from: "ForRecommendation", to: "ForChecking", label: "Recommend for Checking", kind: "advance", remarksRequired: false },
     { role: "Recommender", from: "ForRecommendation", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
-    // ── Evaluator ────────────────────────────────────────────────────
+    
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Recommended", kind: "advance", verdict: "Recommended", remarksRequired: false },
     { role: "Evaluator", from: "ForChecking", to: "ForApproval", label: "Not Recommended", kind: "advance", verdict: "NotRecommended", remarksRequired: true, confirm: true },
     { role: "Evaluator", from: "ForChecking", to: "ForRevision", label: "Push Back to Encoder", kind: "return", remarksRequired: true, confirm: true },
-    // ── Approver ─────────────────────────────────────────────────────
+    
     { role: "Approver", from: "ForApproval", to: "Approved", label: "Approve Loan", kind: "advance", remarksRequired: false },
     { role: "Approver", from: "ForApproval", to: "ForRevision", label: "Return to Encoder", kind: "return", remarksRequired: true, confirm: true },
     { role: "Approver", from: "ForApproval", to: "Rejected", label: "Reject", kind: "reject", remarksRequired: true, confirm: true },
@@ -131,12 +131,12 @@ export function LoanApprovalPage() {
     const [zoom, setZoom] = useState(1);
     const [tab, setTab] = useState("workflow");
 
-    // ── Cancel dialog state ────────────────────────────────────────────────
+    
     const [cancelOpen, setCancelOpen] = useState(false);
     const [cancelReason, setCancelReason] = useState("");
     const [cancelPending, setCancelPending] = useState(false);
 
-    // ── Flag dialog state ──────────────────────────────────────────────────
+    
     const [flagOpen, setFlagOpen] = useState(false);
 
     const user = useAuthStore((s) => s.user);
@@ -145,9 +145,9 @@ export function LoanApprovalPage() {
         queryKey: queryKeys.loans.review.detail(id),
         queryFn: () => getLoanDetail(id),
         enabled: Number.isFinite(id) && id > 0,
-        staleTime: 30_000,        // back-nav / tab-return / mutation refetch: instant
+        staleTime: 30_000,        
         gcTime: 5 * 60_000,
-        placeholderData: keepPreviousData,  // same-id refetches keep the sheet painted
+        placeholderData: keepPreviousData,  
     });
 
     const checklist = useQuery({
@@ -157,12 +157,12 @@ export function LoanApprovalPage() {
         staleTime: 30_000,
     });
 
-    // Signature chain — resolved from LoanActions audit trail.
+    
     const { data: signatureSlots } = useLoanSignatureChain(id);
 
-    // ── Remarks for print audit trail ─────────────────────────────────────
-    // Fetched in parallel with the detail query; staleTime matches the detail
-    // cache so the print pack stays in sync. `enabled` gates on a valid id.
+    
+    
+    
     const { data: deviationsData } = useQuery({
         queryKey: queryKeys.loans.review.deviations(id),
         queryFn: () => getLoanDeviations(id),
@@ -177,13 +177,13 @@ export function LoanApprovalPage() {
         staleTime: 30_000,
     });
 
-    // Group membership drives the sticky tab strip. Same query key as
-    // GroupReviewSection's internal useLoanGroup — React Query dedupes,
-    // so this costs zero extra requests.
+    
+    
+    
     const group = useLoanGroup(loan.data?.applicationGroupNo ?? "");
     const groupLoans = group.data?.loans ?? [];
 
-    // ── Selection is navigation: reset per-loan ephemeral state ──────
+    
     useEffect(() => {
         setRemarks("");
         setZoom(1);
@@ -193,9 +193,9 @@ export function LoanApprovalPage() {
         window.scrollTo({ top: 0 });
     }, [id]);
 
-    // ── Prefetch siblings so tab switches paint instantly ────────────
-    // detail has staleTime 30s + keepPreviousData, so a prefetched
-    // sibling renders its sheet synchronously on switch.
+    
+    
+    
     useEffect(() => {
         for (const sibling of groupLoans) {
             if (sibling.id === id) continue;
@@ -206,9 +206,9 @@ export function LoanApprovalPage() {
         }
     }, [groupLoans, id, qc]);
 
-    // Scope ALL browser printing (Print button and Ctrl+P alike) to the
-    // approval sheet while this page is mounted — see the print-scope
-    // block in index.css. Removed on unmount so other pages print normally.
+    
+    
+    
     useEffect(() => {
         document.body.classList.add("print-form-only");
         return () => document.body.classList.remove("print-form-only");
@@ -244,8 +244,8 @@ export function LoanApprovalPage() {
 
     const actions = WORKFLOW_ACTIONS.filter((a) => a.role === user?.role && a.from === detail?.status);
 
-    // Exactly the roles the transition map allows to flag at each desk —
-    // the UI never offers a button that would 409.
+    
+    
     const canFlagAtDesk = detail ? (
         (detail.status === "ForRecommendation" && user?.role === "Recommender") ||
         (detail.status === "ForChecking" && user?.role === "Evaluator") ||
@@ -293,8 +293,8 @@ export function LoanApprovalPage() {
         onError: (e: unknown) => toastError(getErrorMessage(e)),
     });
 
-    // More than a dry check — when everything is present the hold is released
-    // and the application re-enters the review queue.
+    
+    
     const recheck = useMutation({
         mutationFn: async () => {
             const res = await apiClient.post<ApiResponse<{ complete: boolean; missing: string[] }>>(
@@ -312,7 +312,7 @@ export function LoanApprovalPage() {
         onError: (e: unknown) => toastError(getErrorMessage(e)),
     });
 
-    // ── Empty / error states ─────────────────────────────────────────
+    
     if (!Number.isFinite(id) || id <= 0) {
         return (
             <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
@@ -376,7 +376,7 @@ export function LoanApprovalPage() {
 
     return (
         <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40">
-            {/* ── Sticky header ──────────────────────────────────────────── */}
+            {}
             <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
                 <div className="container mx-auto flex h-16 flex-wrap items-center justify-between gap-3 px-6">
                     <div className="flex flex-wrap items-center gap-3">
@@ -418,8 +418,7 @@ export function LoanApprovalPage() {
                                 <WarningCircle size={12} weight="fill" /> Escalated
                             </Badge>
                         )}
-                        {/* NOTE: `evaluationVerdict` stores the action verb ("EvaluatedRecommended"),
-                            not the request verdict ("Recommended") sent by updateLoanStatus. */}
+                        {}
                         {detail.evaluationVerdict === "EvaluatedNotRecommended" && (
                             <Badge variant="secondary" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800">
                                 <ThumbsDown size={12} weight="fill" /> Evaluator: Not Recommended
@@ -457,7 +456,7 @@ export function LoanApprovalPage() {
                     </div>
                 </div>
 
-                {/* ── Group navigation (multi-loan applications only) ── */}
+                {}
                 <ApprovalGroupTabs
                     loans={groupLoans}
                     currentLoanId={id}
@@ -475,7 +474,7 @@ export function LoanApprovalPage() {
                     />
                 </div>
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
-                    {/* ── Document: fixed 800px sheet inside a zoomable viewport ── */}
+                    {}
                     <div className="space-y-4">
                         <Card className="overflow-hidden">
                             <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 p-4">
@@ -487,7 +486,7 @@ export function LoanApprovalPage() {
                                     />
                                     Approval Form Document
                                 </CardTitle>
-                                {/* Zoom clamped to 60–150%; toFixed(2) absorbs float drift from ±0.1 steps. */}
+                                {}
                                 <div className="flex items-center gap-1.5">
                                     <Button
                                         size="icon"
@@ -542,7 +541,7 @@ export function LoanApprovalPage() {
                         </Card>
                     </div>
 
-                    {/* ── Right rail: workflow + deviations + files ── */}
+                    {}
                     <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit lg:self-start">
                         <Tabs value={tab} onValueChange={setTab}>
                             <TabsList className="w-full">
@@ -566,7 +565,7 @@ export function LoanApprovalPage() {
                                 </TabsTrigger>
                             </TabsList>
 
-                            {/* ── Workflow Tab ── */}
+                            {}
                             <TabsContent value="workflow" className="pt-4">
                                 <Card>
                                     <CardHeader className="border-b pb-4">
@@ -584,7 +583,7 @@ export function LoanApprovalPage() {
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-6 pt-4">
-                                        {/* ── Audit Trail ── */}
+                                        {}
                                         <div className="space-y-3">
                                             <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                                 <Clock size={12} /> Remarks
@@ -594,7 +593,7 @@ export function LoanApprovalPage() {
 
                                         <div className="h-px bg-border" />
 
-                                        {/* ── Remarks ── */}
+                                        {}
                                         <div className="space-y-2">
                                             <Label
                                                 htmlFor="remarks"
@@ -621,7 +620,7 @@ export function LoanApprovalPage() {
                                             )}
                                         </div>
 
-                                        {/* ── Action buttons ── */}
+                                        {}
                                         <div className="space-y-2">
                                             {needsDeskGate && !canAct && (
                                                 queueState?.isHead && !queueState.ownerName ? (
@@ -730,7 +729,7 @@ export function LoanApprovalPage() {
                                 </Card>
                             </TabsContent>
 
-                            {/* ── Deviations Tab ── */}
+                            {}
                             <TabsContent value="deviations" className="pt-4">
                                 <Card>
                                     <CardHeader className="border-b pb-4">
@@ -760,7 +759,7 @@ export function LoanApprovalPage() {
                                 </Card>
                             </TabsContent>
 
-                            {/* ── Files Tab ── */}
+                            {}
                             <TabsContent value="files" className="pt-4">
                                 <Card>
                                     <CardHeader className="flex-row items-center justify-between border-b pb-4">
@@ -810,7 +809,7 @@ export function LoanApprovalPage() {
                             </TabsContent>
                         </Tabs>
 
-                        {/* ── Group Review Section ── */}
+                        {}
                         {detail.applicationGroupNo && (
                             <GroupReviewSection
                                 groupNo={detail.applicationGroupNo}
@@ -824,7 +823,7 @@ export function LoanApprovalPage() {
                 </div>
             </div>
 
-            {/* ── Cancel confirmation dialog ──────────────────────────────── */}
+            {}
             <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -883,7 +882,7 @@ export function LoanApprovalPage() {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* ── Flag Incomplete Documents dialog ─────────────────────────── */}
+            {}
             <FlagIncompleteDocumentsDialog
                 open={flagOpen}
                 onOpenChange={setFlagOpen}

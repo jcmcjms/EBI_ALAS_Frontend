@@ -5,7 +5,7 @@ import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 import { LOAN_STATUS_META } from "@/src/features/loans/utils/loan-status";
 
-// ── Envelope types mirroring the backend ────────────────────────────────
+
 
 export type EvaluationVerdict = "Recommended" | "NotRecommended";
 
@@ -43,13 +43,13 @@ export interface LoanDetailResponse {
     proposedAmount: number;
     termDays: number;
     interestRate: number;
-    /** Amortization period count frozen at submission (60 for monthly products). */
+    
     policyTermMonths: number | null;
-    /** Frozen TERM (Days) quoted by the approval form — prefer over re-derivation. */
+    
     approvalTermDays: number | null;
-    /** Frozen annual rate percent — prefer over re-derivation. */
+    
     annualRatePercent: number | null;
-    /** Frozen webloan c_doc_stamp used as approval-form Doc. Stamp. */
+    
     cDocStamp: number | null;
     nthpDate: string | null;
     notarialFee: number;
@@ -209,7 +209,7 @@ export interface SlaPolicy {
     ForApproval: number;
 }
 
-// ── Loan Routing ──────────────────────────────────────────────────────
+
 
 export interface RoutingEvaluatedInputs {
     cycle: string;
@@ -240,7 +240,7 @@ export async function getLoanRouting(id: number): Promise<LoanRoutingResponse> {
     return unwrapApiData(res.data);
 }
 
-// ── Unified Loan Timeline ────────────────────────────────────────────────
+
 
 export interface TimelineEvent {
     id: string;
@@ -256,7 +256,7 @@ export interface TimelineEvent {
     subjectCode: string | null;
 }
 
-// ─── Query keys ─────────────────────────────────────────────────────────────
+
 
 export const loanReviewKeys = {
     detail: (id: number) => ["loans", "review", id, "detail"] as const,
@@ -270,7 +270,7 @@ export const loanReviewKeys = {
     slaPolicy: ["loans", "sla-policy"] as const,
 };
 
-// ─── API Functions ──────────────────────────────────────────────────────────
+
 
 export async function getLoanDetail(id: number): Promise<LoanDetailResponse> {
     const res = await apiClient.get<ApiResponse<LoanDetailResponse>>(
@@ -390,7 +390,7 @@ export type WorkflowAction =
     | "Recommend" | "NotRecommend" | "PushBack"
     | "Approve" | "Reject" | "ReturnForRevision";
 
-/** Desk intents carry an action; only ops/admin paths carry a raw status. */
+
 export type UpdateStatusPayload =
     | { action: WorkflowAction; comments: string }
     | { status: LoanStatus; comments: string };
@@ -424,9 +424,9 @@ export const CANCELLABLE_STATUSES: LoanStatus[] = [
     "ForRevision",
 ];
 
-// ── Document Flag ───────────────────────────────────────────────────────
 
-/** Flag documents as missing (POST /api/loans/{id}/document-flag). */
+
+
 export async function flagDocuments(
     loanId: number,
     payload: { missingRequirementCodes: string[]; reason: string },
@@ -439,7 +439,7 @@ export async function flagDocuments(
         throw new Error(res.data.message || "Failed to flag documents");
 }
 
-/** Clear the document flag (DELETE /api/loans/{id}/document-flag). */
+
 export async function clearDocumentFlag(loanId: number): Promise<void> {
     const res = await apiClient.delete<ApiResponse<null>>(
         `/api/loans/${loanId}/document-flag`,
@@ -448,7 +448,7 @@ export async function clearDocumentFlag(loanId: number): Promise<void> {
         throw new Error(res.data.message || "Failed to clear document flag");
 }
 
-/** SLA policy — fetched once per session. */
+
 export async function getSlaPolicy(): Promise<Record<string, number>> {
     const res = await apiClient.get<ApiResponse<Record<string, number>>>(
         "/api/loans/sla-policy",
@@ -456,7 +456,7 @@ export async function getSlaPolicy(): Promise<Record<string, number>> {
     return unwrapApiData(res.data);
 }
 
-// ── Document Remarks ────────────────────────────────────────────────────────
+
 
 export async function getDocumentRemarks(loanId: number): Promise<DocumentRemarkDto[]> {
     const res = await apiClient.get<ApiResponse<DocumentRemarkDto[]>>(
@@ -481,7 +481,7 @@ export async function postDocumentRemark(
     return unwrapApiData(res.data);
 }
 
-// ── Document Checklist ──────────────────────────────────────────────────────
+
 
 export async function getDocumentChecklist(loanId: number): Promise<DocumentChecklistItem[]> {
     const res = await apiClient.get<ApiResponse<DocumentChecklistItem[]>>(
@@ -490,7 +490,7 @@ export async function getDocumentChecklist(loanId: number): Promise<DocumentChec
     return unwrapApiData(res.data);
 }
 
-// ── Preview Helpers ─────────────────────────────────────────────────────────
+
 
 export function canPreviewInline(contentType: string | null): boolean {
     if (!contentType) return false;
@@ -511,14 +511,14 @@ export async function fetchChecklistDocument(docId: number): Promise<{ url: stri
     };
 }
 
-// ── Queue Default (role-based) ───────────────────────────────────────────────
+
 
 export async function getQueueDefault(): Promise<LoanStatus[]> {
     const res = await apiClient.get<ApiResponse<string[]>>("/api/loans/queue-default");
     return unwrapApiData(res.data).filter((s): s is LoanStatus => s in LOAN_STATUS_META);
 }
 
-// ── Disbursement Status Sync ────────────────────────────────────────────────
+
 
 export interface SyncDisbursementResult {
     loanId: number;
@@ -530,7 +530,7 @@ export interface SyncDisbursementResult {
     reason: string;
 }
 
-/** Syncs ALAS loan status with webloan disbursement state (approved/released). */
+
 export async function syncDisbursementStatus(
     loanNo: string,
 ): Promise<SyncDisbursementResult> {
@@ -544,7 +544,7 @@ export async function syncDisbursementStatus(
     return res.data.data!;
 }
 
-// ─── Hooks ──────────────────────────────────────────────────────────────────
+
 
 export function useSlaPolicy() {
     return useQuery({

@@ -12,11 +12,7 @@ interface VerifyDocumentsResult {
     documentsCompleteAt: string | null;
 }
 
-/**
- * On-demand document completeness recheck. Calls the cache-bypassing
- * POST /api/loans/{id}/documents/verify endpoint and invalidates
- * all related queries so the monitoring badge + routing panel refresh.
- */
+
 export function useVerifyDocuments(loanId: number | null) {
     const qc = useQueryClient();
     return useMutation({
@@ -27,9 +23,9 @@ export function useVerifyDocuments(loanId: number | null) {
             return unwrapApiData(res.data);
         },
         onSuccess: (r) => {
-            // Monitoring table badge
+            
             qc.invalidateQueries({ queryKey: queryKeys.loans.all });
-            // Routing panel (approval page)
+            
             if (loanId !== null) {
                 qc.invalidateQueries({ queryKey: approvalMatrixKeys.routing(loanId) });
                 qc.invalidateQueries({ queryKey: loanReviewKeys.checklistDocuments(loanId) });

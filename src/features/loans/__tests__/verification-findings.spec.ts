@@ -39,7 +39,7 @@ describe("verification findings validation", () => {
     });
 
     it("enforces character cap on text content (not markup)", () => {
-        // 2001 characters of text content inside a paragraph should fail
+        
         const result = verificationSchema.safeParse({
             findings: `<p>${"a".repeat(2001)}</p>`,
         });

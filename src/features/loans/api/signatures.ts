@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 
-/** One signature line on page 2 of the Loan Approval Form. */
+
+
 export interface SignatureSlotDto {
     order: number;
     action: string;
@@ -23,14 +23,14 @@ export interface SignatureSlot {
     signatureUrl: string | null;
 }
 
-// ─── Query keys ──────────────────────────────────────────────────────────────
+
 
 export const signatureKeys = {
     chain: ["workflow", "signature-chain"] as const,
     loan: (loanId: number) => ["loans", loanId, "signature-chain"] as const,
 };
 
-// ─── API functions ───────────────────────────────────────────────────────────
+
 
 export async function getSignatureChain(): Promise<SignatureSlotDto[]> {
     const res = await apiClient.get<ApiResponse<SignatureSlotDto[]>>(
@@ -48,7 +48,7 @@ export async function getLoanSignatureChain(
     return unwrapApiData(res.data);
 }
 
-// ─── Hooks ───────────────────────────────────────────────────────────────────
+
 
 export function useSignatureChain() {
     return useQuery({
@@ -67,7 +67,7 @@ export function useLoanSignatureChain(loanId?: number) {
     });
 }
 
-// ─── Draft helpers ───────────────────────────────────────────────────────────
+
 
 interface DraftUser {
     firstName: string;

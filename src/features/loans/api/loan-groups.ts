@@ -1,7 +1,7 @@
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 export interface GroupLoanSummary {
     id: number;
@@ -41,7 +41,7 @@ export interface GroupStatusResponse {
     results: GroupLoanResult[];
 }
 
-// ─── API Functions ──────────────────────────────────────────────────────────
+
 
 export async function getLoanGroup(groupNo: string): Promise<LoanGroupResponse> {
     const res = await apiClient.get<ApiResponse<LoanGroupResponse>>(

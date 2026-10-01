@@ -8,7 +8,7 @@ import {
     type DocumentChecklistItem,
 } from "@/src/features/loans/api/loan-review";
 
-/** Threaded remarks per checklist code; FE groups by checklistIdCode. */
+
 export function useDocumentRemarks(loanId: number) {
     const qc = useQueryClient();
     const query = useQuery<DocumentRemarkDto[]>({
@@ -28,7 +28,7 @@ export function useDocumentRemarks(loanId: number) {
     return { ...query, postRemark: mutate };
 }
 
-/** Document checklist with per-item status tracking. */
+
 export function useDocumentChecklist(loanId: number) {
     return useQuery<DocumentChecklistItem[]>({
         queryKey: queryKeys.loans.documentChecklist(loanId),

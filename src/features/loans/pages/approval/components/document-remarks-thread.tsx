@@ -78,7 +78,7 @@ interface DocumentRemarksThreadProps {
     loanId: number;
     checklistIdCode: string;
     docId: number | null;
-    /** Remarks for THIS document only (panel slices the single query). */
+    
     remarks: DocumentRemarkDto[];
     canWrite: boolean;
     frozen: boolean;
@@ -154,7 +154,7 @@ export function DocumentRemarksThread({
                 </div>
             ))}
 
-            {/* Orphaned deeper replies (parent collapsed) still render flat. */}
+            {}
             {remarks
                 .filter(
                     (r) =>

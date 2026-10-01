@@ -20,17 +20,13 @@ import type { LoanChecklistDocumentDto } from "@/src/features/loans/api/loan-rev
 interface FlagIncompleteDocumentsDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    /** Checklist rows from useDocumentChecklist(loanId). */
+    
     items: LoanChecklistDocumentDto[];
     isSubmitting: boolean;
     onSubmit: (payload: { missingRequirementCodes: string[]; comments: string }) => void;
 }
 
-/**
- * Reviewer-initiated flag for missing documents.
- * Pre-selects items the document server already knows are missing —
- * the reviewer confirms/adjusts instead of retyping.
- */
+
 export function FlagIncompleteDocumentsDialog({
     open,
     onOpenChange,
@@ -42,7 +38,7 @@ export function FlagIncompleteDocumentsDialog({
     const [comments, setComments] = useState("");
     const [attempted, setAttempted] = useState(false);
 
-    // Pre-select whatever the document server already knows is missing.
+    
     useEffect(() => {
         if (open) {
             setSelected(items.filter((i) => i.uploadStatus !== "Uploaded").map((i) => i.idCode));

@@ -20,7 +20,7 @@ export function describeEvent(e: TimelineEvent): TimelineSentence {
     if (e.type === "remark")
         return { headline: e.subject ?? "Added remarks" };
 
-    // workflow
+    
     const { action, fromStatus, toStatus } = e;
     if (action === "Created")
         return { headline: "Created the loan application" };
@@ -59,15 +59,9 @@ export function describeEvent(e: TimelineEvent): TimelineSentence {
 export const relativeTime = (iso: string) =>
     formatDistanceToNowStrict(new Date(iso), { addSuffix: true });
 
-// ── Desk vocabulary ──────────────────────────────────────────────────────
 
-/**
- * Human names for WorkflowQueueService stages.
- *
- * Raw enum values like "DocumentCompletion" or "documentcompletion desk"
- * are meaningless to branch staff. These sentences describe what the file
- * is actually waiting for, in the language a branch manager uses.
- */
+
+
 const QUEUE_DESK_SENTENCE: Record<string, (owner: string | null) => string> = {
     Recommendation: (o) =>
         `Waiting at the Recommendation desk${o ? ` — next up: ${o}` : ""}.`,
@@ -79,13 +73,7 @@ const QUEUE_DESK_SENTENCE: Record<string, (owner: string | null) => string> = {
         `On hold for missing documents${o ? ` — ${o} is uploading the requirements` : ""}.`,
 };
 
-/**
- * Translate a raw queue stage + optional owner into a sentence a branch
- * manager reads once and understands.
- *
- * Returns `null` when the stage is empty or unrecognized — the caller
- * should skip the desk-status banner in that case.
- */
+
 export function queueDeskSentence(
     stage: string | null | undefined,
     owner: string | null | undefined,

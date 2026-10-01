@@ -42,20 +42,15 @@ const MIN_REMARKS = 10;
 interface AttachmentsPanelProps {
     loanId: number;
     frozen: boolean;
-    /** Reviewers + submitting encoder may write remarks (backend enforces). */
+    
     canRemark: boolean;
-    /** Evaluator (or Admin) while the file sits in ForChecking. Server re-checks turn ownership. */
+    
     canPushBack: boolean;
     pushBackPending: boolean;
     onPushBack: (pendingCodes: string[], remarks: string) => void;
 }
 
-/**
- * Document requirements for the loan, synced from the document server
- * (WebLoan / BPB_BINARY_SERVER). Completeness is binary at application level:
- * ANY pending requirement means the file is incomplete. Documents are
- * uploaded/updated in WebLoan only — this panel is read + remarks + push-back.
- */
+
 export function AttachmentsPanel({
     loanId,
     frozen,
@@ -74,7 +69,7 @@ export function AttachmentsPanel({
         queryKey: loanReviewKeys.checklistDocuments(loanId),
         queryFn: () => getChecklistDocuments(loanId),
     });
-    // One remarks query for the whole file; sliced per requirement below.
+    
     const remarksQuery = useQuery({
         queryKey: loanReviewKeys.documentRemarks(loanId),
         queryFn: () => getDocumentRemarks(loanId),

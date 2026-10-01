@@ -23,7 +23,7 @@ export interface DeskQueueStats {
     totalExposure: number;
 }
 
-/** KPI strip inputs: depth, worst aging, SLA breaches, pipeline value. */
+
 export function summarizeDeskQueue(
     items: readonly QueuedLoanDto[],
     now: number = Date.now(),

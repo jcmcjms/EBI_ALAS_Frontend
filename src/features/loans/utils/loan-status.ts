@@ -1,18 +1,6 @@
-/**
- * Single source of truth for loan workflow statuses.
- *
- * Wire statuses emitted by LoanWorkflowService — rendered verbatim, never
- * collapsed into generic buckets. The old `UI_STATUS_BY_BACKEND_STATUS` map
- * (in `use-loan-monitoring.ts`) collapsed ForRecommendation, ForChecking,
- * ForApproval, and ForRevision into "Pending" / "Under Review", hiding
- * operationally critical distinctions (a returned file looked like progress).
- *
- * Every consumer — monitoring table, dashboard pending queue, filter toolbar,
- * detail drawer — imports from here so badge semantics, labels, and SLA
- * defaults stay in lock-step.
- */
 
-/** Wire statuses emitted by LoanWorkflowService. */
+
+
 export type LoanStatus =
     | "Draft"
     | "ForRecommendation"
@@ -28,15 +16,15 @@ export type LoanStatus =
 
 export interface LoanStatusMeta {
     label: string;
-    /** Badge classes (light + dark), consistent with existing badge palette. */
+    
     className: string;
-    /** Fallback handling SLA in hours when the /sla-policy endpoint is unreachable. */
+    
     defaultSlaHours: number | null;
-    /** Tooltip: who currently owns the file. */
+    
     hint: string;
 }
 
-/** Standardized 4-color palette: blue=in-progress, green=completed, red=negative, grey=draft. */
+
 const C = {
     blue:   "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400",
     green:  "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400",
@@ -113,7 +101,7 @@ export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
     },
 };
 
-/** Filter dropdown order: active stages first, then terminal. */
+
 export const STATUS_FILTER_ORDER: LoanStatus[] = [
     "ForRecommendation",
     "ForChecking",

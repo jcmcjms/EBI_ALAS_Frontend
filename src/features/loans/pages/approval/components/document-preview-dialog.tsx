@@ -20,13 +20,7 @@ interface DocumentPreviewDialogProps {
     doc: { docId: number; fileName: string; contentType: string } | null;
 }
 
-/**
- * Inline preview for checklist documents. Bytes arrive through the
- * authenticated API client (Bearer token can't ride on an iframe/img tag),
- * so we render a same-origin blob URL: PDFs get the browser's native viewer
- * (with working in-iframe print), images render directly, Office formats get
- * an honest "download to open" fallback.
- */
+
 export function DocumentPreviewDialog({ open, onClose, doc }: DocumentPreviewDialogProps) {
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
     const [objectUrl, setObjectUrl] = useState<string | null>(null);
@@ -34,7 +28,7 @@ export function DocumentPreviewDialog({ open, onClose, doc }: DocumentPreviewDia
     const [error, setError] = useState(false);
     const [fullscreen, setFullscreen] = useState(false);
 
-    // Fetch (or hit the blob cache) whenever the previewed doc changes.
+    
     const load = useCallback(async () => {
         if (!open || !doc) return;
         setLoading(true);
@@ -62,7 +56,7 @@ export function DocumentPreviewDialog({ open, onClose, doc }: DocumentPreviewDia
             });
     }, [load]);
 
-    // Escape closes; body scroll locks while modal.
+    
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -96,17 +90,17 @@ export function DocumentPreviewDialog({ open, onClose, doc }: DocumentPreviewDia
     const handlePrint = () => {
         if (!objectUrl) return;
         if (isPdf && iframeRef.current?.contentWindow) {
-            // Same-origin blob URL → the embedded PDF viewer is scriptable.
+            
             try {
                 iframeRef.current.contentWindow.focus();
                 iframeRef.current.contentWindow.print();
                 return;
             } catch {
-                /* fall through */
+                
             }
         }
-        // Images / fallback: print the document in a clean window so the
-        // browser handles scaling + pagination.
+        
+        
         const w = window.open(objectUrl, "_blank", "noopener");
         w?.addEventListener("load", () => setTimeout(() => w.print(), 250));
     };

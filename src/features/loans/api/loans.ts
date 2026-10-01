@@ -11,7 +11,7 @@ import type { LoanDetailResponse } from "./loan-review";
 
 export type { LoanSubmissionPayload, CreatedLoanSummary, LoanSubmissionResponse };
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 export interface MonitoringFilters {
     search?: string;
@@ -26,9 +26,7 @@ export interface MonitoringSort {
     direction: "asc" | "desc";
 }
 
-/**
- * One entry on a loan's vertical audit timeline.
- */
+
 export interface LoanHistoryEntry {
     id: number;
     actionBy: string;
@@ -40,7 +38,7 @@ export interface LoanHistoryEntry {
     actionByRole: string;
 }
 
-// ─── API Functions ──────────────────────────────────────────────────────────
+
 
 export async function submitLoanApplication(
     payload: LoanSubmissionPayload,

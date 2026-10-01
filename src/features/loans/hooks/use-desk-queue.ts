@@ -4,7 +4,7 @@ import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 import { toastError, toastSuccess, toastInfo } from "@/src/components/ui/toast";
 
-// ─── Types (mirror IWorkflowQueueService DTOs) ───────────────────────────────
+
 
 export interface QueuedLoanDto {
     loanId: number;
@@ -42,12 +42,9 @@ export interface ClaimResponse {
     leasedAt: string;
 }
 
-// ─── Hooks ───────────────────────────────────────────────────────────────────
 
-/**
- * Desk queue view: positions, head flag, owners, and the reviewer's
- * current claim (if any — survives refresh via lease).
- */
+
+
 export function useDeskQueue() {
     return useQuery({
         queryKey: queryKeys.loans.desk,
@@ -57,18 +54,15 @@ export function useDeskQueue() {
             );
             return unwrapApiData(envelope);
         },
-        staleTime: 30_000, // 30s — desk state changes infrequently
-        // Polling fallback alongside the SignalR invalidation in
-        // useApprovalRealtime: if the socket drops, the desk still
-        // converges within 30s (paused while the tab is hidden).
+        staleTime: 30_000, 
+        
+        
+        
         refetchInterval: 30_000,
     });
 }
 
-/**
- * Atomic head-lease: claims the next file from the reviewer's desk.
- * On success → toast + invalidate desk. On empty → "Queue is clear".
- */
+
 export function useClaimNext() {
     const qc = useQueryClient();
 
@@ -93,10 +87,7 @@ export function useClaimNext() {
     });
 }
 
-/**
- * Release the reviewer's current claim — clears the lease, returns
- * the item to the pool.
- */
+
 export function useReleaseClaim() {
     const qc = useQueryClient();
 

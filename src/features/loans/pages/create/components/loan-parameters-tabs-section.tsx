@@ -7,12 +7,7 @@ import { SectionCard } from "./section-card";
 import { PerLoanTabs } from "./per-loan-tabs";
 import { LoanParametersFields } from "./loan-parameters-fields";
 
-/**
- * Step 3 shell. Owns the multi-loan selector so the chips and the panel
- * they control render inside ONE card (visible control→content relation).
- * Selection state is local + derived from `loans`; the field array itself
- * stays owned solely by active-loans-table (single-writer rule).
- */
+
 export function LoanParametersTabsSection() {
     const { control, formState } = useFormContext<LoanApplicationFormData>();
     const loans = useWatch({ control, name: "loans" }) ?? [];

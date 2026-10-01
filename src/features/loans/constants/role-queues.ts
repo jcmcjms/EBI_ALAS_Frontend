@@ -1,10 +1,6 @@
 import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 
-/**
- * Mirror of backend Common/Constants/RoleQueues.cs (same pattern as
- * PERMISSIONS ↔ Permissions.cs). Used for the synchronous first paint;
- * the server policy reconciles it once /queue-default resolves.
- */
+
 export const ROLE_QUEUE_DEFAULTS: Record<string, LoanStatus[]> = {
     Recommender: ["ForRecommendation"],
     Evaluator: ["ForChecking"],

@@ -1,11 +1,7 @@
 import type { LoanSubmissionPayload } from "@/src/lib/api/types";
 import type { LoanApplicationFormData } from "../schemas/schema";
 
-/**
- * Pure form→wire mapper. Strips RHF-internal fields (`loans[].id`) and keeps
- * the payload shape identical to LoanSubmissionDtos.cs so the backend
- * validator is the single enforcement point.
- */
+
 export function mapFormToSubmissionPayload(
     form: LoanApplicationFormData
 ): LoanSubmissionPayload {

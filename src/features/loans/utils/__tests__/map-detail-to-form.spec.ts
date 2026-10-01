@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { LoanDetailResponse } from "../../api/loan-review";
 import { mapLoanDetailToFormData } from "../map-detail-to-form";
 
-/**
- * Realistic LoanDetailResponse covering every collection the mapper
- * must place under `loans[0]` (wizard shape) rather than the root.
- */
+
 function baseDetail(): LoanDetailResponse {
     return {
         id: 42,

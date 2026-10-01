@@ -1,11 +1,4 @@
-/**
- * Single source of truth for wizard section identity.
- *
- * The stepper, the mobile nav, the progress counter and every section
- * header derive their numbering and titles from here so they can never
- * drift again. If a label, description, or step number changes, it
- * changes in exactly one place.
- */
+
 export type SectionId =
   | "cis-lookup"
   | "personal-info"
@@ -18,21 +11,15 @@ export type SectionId =
 
 export interface SectionDef {
   id: SectionId;
-  /** 1-based step number shown in the sidebar and the section header. */
+  
   step: number;
-  /** Short title shown in the stepper list and the section header. */
+  
   label: string;
-  /** One-sentence summary shown under the section header. */
+  
   description: string;
-  /**
-   * True when the section is sourced from an upstream system (CIS, the
-   * preloan/pending-loan endpoint, the approval-document generator) and
-   * needs no Account-Officer action. System-sourced sections use a
-   * distinct "auto" status in the stepper so the green checkmark
-   * doesn't conflate "data on file" with "user completed this".
-   */
+  
   systemSourced?: boolean;
-  /** Section is not required for submission. Defaults to required. */
+  
   optional?: boolean;
 }
 

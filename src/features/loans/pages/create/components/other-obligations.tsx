@@ -1,32 +1,4 @@
-/**
- * OtherObligationsSection
- * -----------------------
- * Section 5 of the loan creation wizard. Renders three tables per loan:
- *
- *   1. EBI Accounts for Reloans  — read-only rows populated via
- *      transfers from Outstanding Loans. Each row exposes a transfer
- *      menu so it can be moved back to Outstanding.
- *
- *   2. Buy-Out Accounts (Other FIs) — manually managed by the AO. The
- *      user adds rows via "Add Account", edits the inputs directly,
- *      and deletes rows via the trash icon.
- *
- *   3. Incoming / Undeducted Loans — same manual add / edit / delete
- *      pattern as Buy-Outs, triggered by "Add Loan".
- *
- * Visual contract:
- *   • `bg-muted/50` + `readOnly` on the EBI rows signals to the user
- *     that those rows are populated via transfers (not direct entry),
- *     and contrasts visually with the standard inputs in the manual
- *     grids below.
- *   • Phosphor icons are used throughout for consistency with the
- *     rest of the wizard.
- *
- * Controlled-row contract:
- *   All inputs render from `useWatch` values (form state) and mutate
- *   via `setValue`. This makes index-keyed rows safe under splice and
- *   removes the `useFieldArray` "one instance per name" constraint.
- */
+
 
 import { useFormContext, useWatch, type FieldPath } from "react-hook-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
@@ -78,7 +50,7 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
 
     const P = `loans.${loanIndex}`;
 
-    // Controlled rows: subscribe to form state so inputs re-render on mutation.
+    
     const ebi = (useWatch({ control, name: `${P}.ebiReloans` as FieldPath<LoanApplicationFormData> }) as EbiReloan[] | undefined) ?? [];
     const buyOuts = (useWatch({ control, name: `${P}.buyOuts` as FieldPath<LoanApplicationFormData> }) as BuyOut[] | undefined) ?? [];
     const incoming = (useWatch({ control, name: `${P}.incomingLoans` as FieldPath<LoanApplicationFormData> }) as IncomingLoan[] | undefined) ?? [];
@@ -91,7 +63,7 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
 
     return (
         <>
-            {/* ── EBI Reloans ─────────────────────────────────────── */}
+            {}
             <div className="p-4">
                 <SubSectionHeading
                     step="5.1"
@@ -176,7 +148,7 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
                 </Table>
             </div>
 
-            {/* ── Buy-Outs from Other FIs ─────────────────────────── */}
+            {}
             <div className="p-4">
                 <SubSectionHeading
                     step="5.2"
@@ -274,7 +246,7 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
                 </Table>
             </div>
 
-            {/* ── Incoming / Undeducted ───────────────────────────── */}
+            {}
             <div className="p-4">
                 <SubSectionHeading
                     step="5.3"

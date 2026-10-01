@@ -21,22 +21,11 @@ import type { LoanMonitoringRecord } from "@/src/features/loans/types/monitoring
 interface LoanDetailsDrawerProps {
     applicationId: number | null;
     onClose: () => void;
-    /** Monitoring record from the parent table — carries queue fields
-     *  that the detail endpoint may not yet return. */
+    
     record?: LoanMonitoringRecord | null;
 }
 
-/**
- * Loan Details drawer for the monitoring page.
- *
- * Enriched header: shows LAM ID, borrower name, and live status badge
- * so the drawer identifies the file the way the bank does.
- *
- * TASK 11 ADDITION — "Review & Process Application" button:
- * The drawer is the entry point into the approval workflow. We push the
- * user to `/loans/approval/<numericId>` and let that page do the real
- * fetch + render.
- */
+
 export function LoanDetailsDrawer({
     applicationId,
     onClose,
@@ -89,10 +78,7 @@ export function LoanDetailsDrawer({
                         ) : (
                             "Select an application to view its details."
                         )}
-                        {/* Document flag badge — shows next to status badge.
-                         * The `?? record` fallback covers query-latency only;
-                         * once the detail query resolves, its count is the
-                         * source of truth (SQL COUNT, not in-memory nav). */}
+                        {}
                         {(detail.data?.documentFlag ?? record?.documentFlag) && (
                             <DocumentFlagBadge
                                 flag={detail.data?.documentFlag ?? record?.documentFlag ?? null}
@@ -101,7 +87,7 @@ export function LoanDetailsDrawer({
                     </SheetDescription>
                 </SheetHeader>
 
-                {/* Queue position banner — human-readable desk sentence */}
+                {}
                 {deskSentence && (
                     <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground mx-6 mt-3">
                         <p className="flex items-center gap-2">

@@ -14,8 +14,8 @@ import { getSection } from "@/src/features/loans/constants/sections";
 import { useActiveLoan } from "../active-loan-context";
 import { useDeviationCatalog, type DeviationCatalogItemDto } from "@/src/features/admin/users/hooks/use-deviation-catalog";
 
-// Typed view of the deviations error subtree returned by RHF's
-// errors object.
+
+
 type DeviationsErrors = {
     otherRemarks?: { message?: string };
     deviationDetails?: { message?: string };
@@ -23,13 +23,7 @@ type DeviationsErrors = {
     deviationJustifications?: Record<string, { message?: string }>;
 };
 
-/**
- * Tolerance (in ₱) for "is this fee *really* overridden?" — matches the
- * `FEES_TOLERANCE` used by `loanApplicationSchema`'s root superRefine and
- * `CurrencyInput`'s `VALUE_TOLERANCE`. Keeping all three in lockstep
- * prevents the schema's "required" gate from disagreeing with the UI's
- * "show the field" gate.
- */
+
 const FEE_OVERRIDE_TOLERANCE = 0.01;
 
 export function DeviationsSection() {
@@ -76,10 +70,10 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
     const hasDeviations = useWatch({ control, name: `${path}.hasDeviations` }) ?? false;
     const selected = (useWatch({ control, name: `${path}.deviationDetails` }) as DeviationReason[] | undefined) ?? [];
 
-    // ── Fetch deviation catalog from API ───────────────────────────────
+    
     const { data: catalog, isLoading: catalogLoading } = useDeviationCatalog(hasDeviations);
 
-    // Group catalog items by severity
+    
     const { majorItems, minorItems } = useMemo(() => {
         if (!catalog) return { majorItems: [], minorItems: [] };
         return {
@@ -88,10 +82,10 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
         };
     }, [catalog]);
 
-    // Fallback: use hardcoded list if API fails
+    
     const fallbackReasons = DEVIATION_REASONS;
 
-    // ── Detect fee overrides for the conditional justification field ───
+    
     const notarialFee =
         (useWatch({ control, name: `${paramsPath}.notarialFee` }) as number | undefined) ?? 0;
     const docStamps =
@@ -132,7 +126,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
         }
     };
 
-    // Count selected deviations by severity
+    
     const selectedMajorCount = selected.filter((r) =>
         majorItems.some((item) => item.description === r)
     ).length;
@@ -140,7 +134,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
         minorItems.some((item) => item.description === r)
     ).length;
 
-    // Render a single deviation checkbox item
+    
     const renderDeviationItem = (reason: string) => {
         const id = `deviation-${loanNo}-${reason}`;
         const checked = selected.includes(reason as DeviationReason);
@@ -207,7 +201,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
         );
     };
 
-    // Render a severity group section
+    
     const renderSeverityGroup = (
         title: string,
         severity: "major" | "minor",
@@ -246,7 +240,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
 
     return (
         <div className="space-y-5">
-            {/* Deviation toggle */}
+            {}
             <div className="flex items-center space-x-3">
                 <Checkbox
                     id={`hasDeviations-${loanNo}`}
@@ -292,7 +286,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
                             </div>
                         ) : catalog && catalog.length > 0 ? (
                             <div className="space-y-4">
-                                {/* Major Deviations */}
+                                {}
                                 {majorItems.length > 0 &&
                                     renderSeverityGroup(
                                         "Major Deviations",
@@ -301,7 +295,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
                                         "Requires COO or higher approval"
                                     )}
 
-                                {/* Minor Deviations */}
+                                {}
                                 {minorItems.length > 0 &&
                                     renderSeverityGroup(
                                         "Minor Deviations",
@@ -311,7 +305,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
                                     )}
                             </div>
                         ) : (
-                            /* Fallback: flat list if API returns empty */
+                            
                             <div
                                 role="group"
                                 aria-label="Deviation reasons"
@@ -345,7 +339,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
                 </div>
             )}
 
-            {/* ── Fee Deviation Justification ───────────────────────────────── */}
+            {}
             {hasFeeOverride && (
                 <div className="rounded-md border border-red-500/30 bg-red-500/5 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm text-red-700">
@@ -383,7 +377,7 @@ function DeviationsFields({ loanIndex, loanNo }: { loanIndex: number; loanNo: st
                 </div>
             )}
 
-            {/* Other Remarks */}
+            {}
             <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                     <Label className="text-xs text-muted-foreground">Other Remarks</Label>

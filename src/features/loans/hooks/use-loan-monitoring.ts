@@ -13,16 +13,9 @@ import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
 interface PaginationState { pageIndex: number; pageSize: number; }
 interface SortingState { id: string; desc: boolean; }
 
-// ─── Sort column mapping ─────────────────────────────────────────────────────
 
-/**
- * FE column id → backend whitelisted sort param.
- *
- * The backend lowercases the incoming `sortBy` internally, so the casing
- * here is cosmetic — we keep it lowercase to match the backend's own
- * docs. Any column not listed here has no server-side sort; omitting
- * `sortBy` lets the backend fall back to ApplicationDate DESC.
- */
+
+
 const SORT_COLUMN_MAP: Record<string, string> = {
     applicationDate: "applicationdate",
     loanAmount: "proposedamount",
@@ -30,28 +23,16 @@ const SORT_COLUMN_MAP: Record<string, string> = {
     customerName: "customername",
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/**
- * Safe date parse. The previous mapper called `new Date(undefined)`
- * which threw RangeError inside queryFn and killed the entire query.
- */
+
+
 function parseDate(value?: string | null): Date | null {
     if (!value) return null;
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-/**
- * One `CreatedLoanSummary` (one row inside an ApplicationGroupNo group) →
- * one monitoring table record. Defensive against the POST-shaped
- * response where list-view enrichment fields are null.
- *
- * Status is passed through verbatim from the backend — never collapsed
- * into generic buckets. The old `UI_STATUS_BY_BACKEND_STATUS` map hid
- * operationally critical distinctions (e.g. ForRevision vs ForChecking
- * both read "Under Review", so a returned file looked like progress).
- */
+
 function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
     const nameParts = [loan.firstName, loan.middleName, loan.lastName, loan.suffix]
         .filter((part): part is string => Boolean(part));
@@ -71,17 +52,17 @@ function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
         status: (loan.status as LoanStatus) ?? "Draft",
         lastActionDate: lastActionAt.toISOString(),
         timeLapsedHours: Math.max(0, Math.round((Date.now() - lastActionAt.getTime()) / 3_600_000)),
-        // Prefer the server-resolved last handler; fall back to the creator for
-        // POST-shaped responses / legacy rows with no audit actions yet.
+        
+        
         lastActionBy: loan.lastActionByName ?? loan.createdByName ?? "—",
         lastActionVerb: loan.lastAction ?? null,
         createdById: loan.createdById ?? null,
-        // ── Delegation-of-authority routing fields ──────────────────
+        
         documentsComplete: loan.documentsComplete ?? null,
         documentsCompleteAt: loan.documentsCompleteAt ?? null,
         assignedApproverName: loan.assignedApproverName ?? null,
         requiredApprovalTier: loan.requiredApprovalTier ?? null,
-        // ── Workflow queue fields ──────────────────────────────────────
+        
         queueStage: (loan.queueStage as QueueStage) ?? null,
         queuePosition: loan.queuePosition ?? null,
         queueLength: loan.queueLength ?? null,
@@ -92,25 +73,9 @@ function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
     };
 }
 
-// ─── Hook ────────────────────────────────────────────────────────────────────
 
-/**
- * Server-backed loan monitoring hook. Drives `GET /api/loans` with the
- * table's filter / pagination / sorting state and returns the
- * page-shaped data react-table consumes.
- *
- * Server does ALL of:
- *   - Filtering (search, status multi-select, branch, application-date range)
- *   - Sorting (whitelisted columns only)
- *   - Counting (totalCount → rowCount)
- *   - Pagination (page index + size)
- *
- * Wire shape:
- *   The backend returns `ApiResponse<PagedResult<LoanSubmissionResponse>>`
- * where each `LoanSubmissionResponse` groups its loans by
- * `ApplicationGroupNo`. The monitoring table wants a flat array, so
- * we flatten via `flatMap(group => group.loans.map(toMonitoringRecord))`.
- */
+
+
 export function useLoanMonitoring(
     filters: MonitoringFilters,
     pagination: PaginationState,
@@ -126,8 +91,8 @@ export function useLoanMonitoring(
 
             if (filters.search) params.search = filters.search;
 
-            // Raw statuses go straight through — no collapsing into generic buckets.
-            // The backend's ?status= filter already accepts comma-separated raw statuses.
+            
+            
             if (filters.status.length > 0) {
                 params.status = filters.status.join(",");
             }
@@ -154,17 +119,17 @@ export function useLoanMonitoring(
                 { params },
             );
 
-            // Surface soft failures (HTTP 200 + success:false) as query
-            // errors so the table's retry banner handles them like any
-            // other failure.
+            
+            
+            
             if (!envelope.success || !envelope.data) {
                 throw new Error(envelope.message || "Loan monitoring request failed");
             }
 
             const page = envelope.data;
 
-            // GET /api/loans groups rows by ApplicationGroupNo (one item
-            // per submission). The table renders one row per LOAN, so flatten.
+            
+            
             const records = page.items.flatMap((group) =>
                 (group.loans ?? []).map(toMonitoringRecord),
             );
@@ -175,11 +140,11 @@ export function useLoanMonitoring(
         staleTime: 1000 * 60 * 2,
     });
 
-    // ── View-model contract for MonitoringTable ─────────────────────────
-    // The table destructures `data` as the row ARRAY and `rowCount` as a
-    // top-level number. Returning the queryFn payload nested (as earlier
-    // iterations did) made rowCount fall back to 0 ("0 entries") and handed
-    // react-table a non-array, which silently rendered zero rows.
+    
+    
+    
+    
+    
     return {
         ...query,
         data: query.data?.records ?? [],

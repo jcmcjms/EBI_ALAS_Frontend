@@ -44,33 +44,20 @@ import { WorkflowOverview } from "@/src/features/loans/components/workflow-overv
 import { useCreateLoan } from "@/src/features/loans/hooks/use-create-loan";
 import { mapFormToSubmissionPayload } from "@/src/features/loans/utils/map-form-to-request";
 
-// ── Section definitions ─────────────────────────────────────────
-// Sourced from ./sections so the stepper, mobile nav and every
-// section header derive their numbering from one place. Adding or
-// re-ordering sections is a single-file change.
+
+
+
+
 import { SECTIONS, type SectionId, type SectionDef } from "@/src/features/loans/constants/sections";
 
 const SCROLL_OFFSET_PX = 96;
 
-// ── Error counting utilities ────────────────────────────────────
 
-/**
- * Per-section completion state for the stepper.
- *
- *  - `auto`     — data sourced from an upstream system (CIS, preloan,
- *                 approval generator). Shown with a distinct glyph so
- *                 the user doesn't conflate "data on file" with a
- *                 user-earned "complete" check.
- *  - `complete` — Account-Officer-entered data passes the presence
- *                 checks.
- *  - `error`    — there is a validation error after a submit attempt.
- *  - `active`   — currently in view (IntersectionObserver / scroll target).
- *  - `locked`   — section can't be reached yet (no client loaded).
- *  - `upcoming` — not yet started.
- */
+
+
 type SectionStatus = "active" | "complete" | "auto" | "error" | "locked" | "upcoming";
 
-/** Counts leaf validation messages in an RHF error subtree (objects or arrays). */
+
 function countFieldErrors(node: unknown): number {
   if (!node || typeof node !== "object") return 0;
   const record = node as Record<string, unknown>;
@@ -81,7 +68,7 @@ function countFieldErrors(node: unknown): number {
   );
 }
 
-/** Keys on each loan error node that belong to a given section. */
+
 const LOAN_SCOPED_KEYS: Partial<Record<SectionId, string[]>> = {
   "loan-params": ["parameters"],
   "other-obligations": ["ebiReloans", "buyOuts", "incomingLoans"],
@@ -103,23 +90,19 @@ function sectionErrorCount(errors: FieldErrors<LoanApplicationFormData>, id: Sec
     case "cis-lookup":
       return countFieldErrors(errors.branchType) + countFieldErrors(errors.client);
     case "personal-info":
-      return 0; // read-only, CIS-sourced
+      return 0; 
     case "obligations":
       return countFieldErrors(errors.outstandingLoans);
     case "approval-form":
-      return 0; // preview only, no validation
+      return 0; 
     default:
       return 0;
   }
 }
 
-// ── Section progress hook (useWatch-scoped, avoids root re-render) ──
 
-/**
- * Section completion + status, scoped via useWatch so the page root doesn't
- * re-render on every keystroke. Deliberately lightweight presence checks;
- * the Zod schema remains the source of truth on submit.
- */
+
+
 function useSectionProgress(
   isClientLoaded: boolean,
   preLoanSelected: boolean,
@@ -133,10 +116,10 @@ function useSectionProgress(
   const isComplete = (id: SectionId): boolean => {
     switch (id) {
       case "cis-lookup":
-        // The lookup is "complete" when a client is loaded, an account
-        // has been picked (handled by the parent lifting `isClientLoaded`
-        // to mean "profile sourced"), AND at least one loan has been
-        // selected. For multi-loan, we check if any loan has parameters.
+        
+        
+        
+        
         return (
           isClientLoaded &&
           !!branchType.requestingOfficer &&
@@ -145,18 +128,18 @@ function useSectionProgress(
       case "personal-info":
       case "obligations":
       case "other-obligations":
-        return isClientLoaded; // read-only, complete once sourced from CIS
+        return isClientLoaded; 
       case "loan-params":
-        // All selected loans must have valid parameters
+        
         if (!Array.isArray(loans) || loans.length === 0) return false;
         return true;
       case "verification":
-        // Per-loan: all loans must have non-empty findings
+        
         if (!Array.isArray(loans) || loans.length === 0) return false;
         return loans.every((l) => !!l?.verification?.findings?.trim());
       case "deviations":
-        // Per-loan: all loans must have non-empty otherRemarks, and if
-        // hasDeviations is true, at least one reason with justification
+        
+        
         if (!Array.isArray(loans) || loans.length === 0) return false;
         return loans.every((l) => {
           const d = l?.deviations;
@@ -172,7 +155,7 @@ function useSectionProgress(
           return true;
         });
       case "approval-form":
-        return isClientLoaded; // preview available once client is loaded
+        return isClientLoaded; 
     }
   };
 
@@ -180,8 +163,8 @@ function useSectionProgress(
     if (submitAttempted && sectionErrorCount(formState.errors, section.id) > 0)
       return "error";
     if (activeSection === section.id) return "active";
-    // System-sourced sections become "auto" (data on file) the moment
-    // a client is loaded — never a user-earned "complete" check.
+    
+    
     if (section.systemSourced)
       return isClientLoaded ? "auto" : "upcoming";
     if (isComplete(section.id)) return "complete";
@@ -195,7 +178,7 @@ function useSectionProgress(
   return { getStatus, errorCount, isComplete };
 }
 
-// ── Status icon ─────────────────────────────────────────────────
+
 
 function StatusIcon({ status }: { status: SectionStatus }) {
   if (status === "complete")
@@ -204,8 +187,8 @@ function StatusIcon({ status }: { status: SectionStatus }) {
     return (
       <WarningCircle size={20} weight="fill" className="text-destructive" />
     );
-  // `auto` = data sourced from an upstream system. Distinct glyph so
-  // it doesn't read as a user-earned "complete" check.
+  
+  
   if (status === "auto")
     return (
       <div className="flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
@@ -234,7 +217,7 @@ function StatusIcon({ status }: { status: SectionStatus }) {
   );
 }
 
-// ── Desktop sidebar stepper ─────────────────────────────────────
+
 
 interface StepperProps {
   activeSection: SectionId;
@@ -242,13 +225,7 @@ interface StepperProps {
   preLoanSelected: boolean;
   submitAttempted: boolean;
   onNavigate: (id: SectionId) => void;
-  /**
-   * Sections to render in the stepper list. The full `SECTIONS`
-   * registry from `./sections` is the source of truth; `loan-creation`
-   * filters out sections that should not appear (e.g. Section 4 —
-   * "Outstanding Loans" — when the picked preloan is a New Loan or
-   * Additional Loan, where there is no portfolio to enumerate).
-   */
+  
   visibleSections: readonly SectionDef[];
 }
 
@@ -266,9 +243,9 @@ function DesktopStepper({
     submitAttempted,
     activeSection
   );
-  // Ready count is scoped to the visible sections so a Section 4
-  // that's been hidden for a New Loan / Additional Loan preloan
-  // doesn't drag the progress bar down.
+  
+  
+  
   const readyCount = visibleSections.filter(
     (s) => isComplete(s.id) || (s.systemSourced && isClientLoaded)
   ).length;
@@ -276,7 +253,7 @@ function DesktopStepper({
   return (
     <aside className="hidden w-64 shrink-0 lg:block">
       <div className="sticky top-[calc(var(--header-height)+1rem)] space-y-6">
-        {/* Progress summary */}
+        {}
         <div className="space-y-2 px-2">
           <div className="flex items-baseline justify-between">
             <h2 className="text-xs font-semibold text-muted-foreground">
@@ -301,7 +278,7 @@ function DesktopStepper({
           </div>
         </div>
 
-        {/* Section nav */}
+        {}
         <nav aria-label="Application sections" className="space-y-1">
           {visibleSections.map((section, index) => {
             const status = getStatus(section, index);
@@ -349,7 +326,7 @@ function DesktopStepper({
   );
 }
 
-// ── Mobile horizontal section nav ───────────────────────────────
+
 
 function MobileSectionNav({
   activeSection,
@@ -405,45 +382,45 @@ function MobileSectionNav({
   );
 }
 
-// ── Main page component ─────────────────────────────────────────
+
 
 export function LoanCreationPage() {
-  // Acting officer's branchId is the **server-side** filter for the preloan
-  // list (bch = JWT-user.branchId). The frontend never sends it — we just
-  // read it from the auth store to render the scope chip and to label the
-  // user's branch in the page header.
+  
+  
+  
+  
   const userBranchId = useAuthStore((s) => s.user?.branchId ?? "");
   const userBranchName =
     WEBLOAN_BRANCHES.find((b) => b.code === userBranchId)?.name ??
     userBranchId;
 
-  // The selected preloan id is mirrored into form state (loanApplicationSchema.preLoan)
-  // AND kept as a local payload so the rest of the form (loan params, etc.)
-  // can be hydrated from it without re-fetching. Reset together with the rest
-  // of the form on "Change client" / "Change account".
+  
+  
+  
+  
   const [selectedPreLoan, setSelectedPreLoan] = useState<{
     id: string;
     payload: PreLoanItem | null;
   }>({ id: "", payload: null });
 
   const methods = useForm<LoanApplicationFormData>({
-    // Cast: Zod's `.default()` makes the schema's *input* type diverge from
-    // its *output* type (e.g. `notarialFee: number | undefined` on input,
-    // `number` on output). RHF's resolver generics expect them to align, so
-    // we pin both sides to the *output* shape — the form is fed pre-coerced
-    // defaults from `defaultValues`, so undefined never actually arrives.
+    
+    
+    
+    
+    
     resolver: zodResolver(
       loanApplicationSchema
     ) as Resolver<LoanApplicationFormData>,
     mode: "onBlur",
     defaultValues: {
       branchType: {
-        // Typed creation-type code (0/1/2/6) + matching label. Both
-        // reset together on account / preloan change — see
-        // `active-loans-table.tsx` and `cis-lookup.tsx` for the
-        // clear paths. `null` here means "no preloan picked yet",
-        // which the schema accepts; the wizard refuses to mark Step
-        // 3 (cis-lookup) complete without a known code.
+        
+        
+        
+        
+        
+        
         creationTypeCode: null,
         creationTypeLabel: "",
         branch: "",
@@ -473,7 +450,7 @@ export function LoanCreationPage() {
       loans: [],
       outstandingLoans: [],
       preLoan: undefined,
-      // ── Delegation-of-authority routing ──────────────────────────
+      
       loanType: "New",
     },
   });
@@ -482,10 +459,10 @@ export function LoanCreationPage() {
   const { isDirty, errors } = formState;
   const { control } = methods;
 
-  // Narrow subscription via useWatch: avoids re-rendering this entire page
-  // on every keystroke. RHF's `watch()` cannot be memoized by React Compiler,
-  // which is exactly what the new lint rule `react-hooks/incompatible-library`
-  // exists to flag.
+  
+  
+  
+  
   const cisId = useWatch({ control, name: "client.cisId" }) ?? "";
   const isClientLoaded = cisId.length > 0;
 
@@ -495,18 +472,18 @@ export function LoanCreationPage() {
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const approvalFormRef = useRef<HTMLDivElement | null>(null);
 
-  // ── Submission ────────────────────────────────────────────────────
-  // The mutation owns its own concerns (idempotency key, cache
-  // invalidation, redirect, toast). The form just calls `createLoan(...)`
-  // and lets React Query manage loading/error states.
-  //
-  // Flow on success (inside useCreateLoan):
-  //   1. invalidate queryKeys.loans.all  → monitoring table refetches
-  //   2. toast "Application ... submitted"
-  //   3. navigate('/loans/monitoring')   → user lands on the new row
+  
+  
+  
+  
+  
+  
+  
+  
+  
   const { mutate: createLoan, isPending: isSubmitting } = useCreateLoan();
 
-  // Intersection Observer tracks the active section while scrolling.
+  
   useEffect(() => {
     if (!isClientLoaded) return;
 
@@ -527,16 +504,16 @@ export function LoanCreationPage() {
     return () => observer.disconnect();
   }, [isClientLoaded]);
 
-  // Track scroll position for "Scroll to Top" button.
+  
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Scope ALL browser printing (Print button and Ctrl+P alike) to the
-  // approval form preview while this page is mounted — see the print-scope
-  // block in index.css. Removed on unmount so other pages print normally.
+  
+  
+  
   useEffect(() => {
     document.body.classList.add("print-form-only");
     return () => document.body.classList.remove("print-form-only");
@@ -551,9 +528,9 @@ export function LoanCreationPage() {
       element.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET_PX
     );
     window.scrollTo({ top, behavior: "smooth" });
-    // Move screen-reader focus to the section heading so the user lands
-    // on the destination, not at the bottom of the previous section.
-    // Visual scroll stays smooth/unchanged (`preventScroll: true`).
+    
+    
+    
     element
       .querySelector<HTMLElement>("[data-section-heading]")
       ?.focus({ preventScroll: true });
@@ -565,12 +542,12 @@ export function LoanCreationPage() {
   );
 
   const onSubmit = useCallback((data: LoanApplicationFormData) => {
-    if (isSubmitting) return; // re-entry guard for the duration of the in-flight POST
+    if (isSubmitting) return; 
     setSubmitAttempted(true);
 
-    // The mutation owns: idempotency-key mint + rotation, cache
-    // invalidation, success/error toasts, and the post-submit redirect
-    // to /loans/monitoring. Nothing for the page to do beyond dispatch.
+    
+    
+    
     createLoan(mapFormToSubmissionPayload(data));
   }, [createLoan, isSubmitting]);
 
@@ -592,11 +569,11 @@ export function LoanCreationPage() {
     [scrollToSection]
   );
 
-  // Wrap the form's onSubmit in `useCallback` so the prop passed to
-  // <form> stays stable across renders. Calling `handleSubmit(...)`
-  // during render would invoke the ref accessor for the underlying
-  // form (`react-hooks/refs` lint), and a stable callback also means
-  // the <form>'s effect / HMR machinery doesn't churn on every render.
+  
+  
+  
+  
+  
   const handleFormSubmit = useCallback(
     (e?: React.BaseSyntheticEvent) => handleSubmit(onSubmit, onInvalid)(e),
     [handleSubmit, onSubmit, onInvalid]
@@ -606,32 +583,32 @@ export function LoanCreationPage() {
     ? SECTIONS.reduce((n, s) => n + sectionErrorCount(errors, s.id), 0)
     : 0;
 
-  // Section 4 ("Outstanding Loans") is hidden when the picked preloan
-  // is a New Loan (code 0) or an Additional Loan (code 6) — there is
-  // no prior portfolio to enumerate in either case, and the WebLoan
-  // /outstanding-loans endpoint deliberately returns nothing for
-  // these. The hide-state is derived from the *code* (typed), not
-  // the human label, so a localized label or a future backend label
-  // change can't desync the visibility check. `null`/unknown
-  // defaults to "show" (conservative — matches the prior behavior).
+  
+  
+  
+  
+  
+  
+  
+  
   const branchTypeCode = useWatch({ control, name: "branchType.creationTypeCode" });
 
-  // The loans array is managed by useFieldArray in active-loans-table.
-  // The stepper gate and submit gate both read its length to determine
-  // whether a pre-loan has been selected.
+  
+  
+  
   const loans = useWatch({ control, name: "loans" }) ?? [];
   const preLoanSelected = loans.length > 0;
 
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode);
 
-  // Filter the section registry down to what should actually render.
-  // The full `SECTIONS` array stays the single source of truth — we
-  // never mutate it — but the stepper list, the progress counter, and
-  // the form layout all consume this filtered view so an "Outstanding
-  // Loans" section that has no obligations to show never appears in
-  // the navigation or the on-page flow. Computed BEFORE `stepperProps`
-  // because the stepper takes `visibleSections` as a prop (TDZ-free
-  // top-down ordering).
+  
+  
+  
+  
+  
+  
+  
+  
   const visibleSections = hideOutstandingSection
     ? SECTIONS.filter((s) => s.id !== "obligations")
     : SECTIONS;
@@ -639,13 +616,13 @@ export function LoanCreationPage() {
   const stepperProps: StepperProps = {
     activeSection,
     isClientLoaded,
-    preLoanSelected,               // was: !!selectedPreLoan.id
+    preLoanSelected,               
     submitAttempted,
     onNavigate: scrollToSection,
     visibleSections,
   };
 
-  const canSubmit = isClientLoaded && preLoanSelected;   // was: !!selectedPreLoan.id
+  const canSubmit = isClientLoaded && preLoanSelected;   
   const firstErrorSection = submitAttempted
     ? SECTIONS.find((s) => sectionErrorCount(errors, s.id) > 0)
     : undefined;
@@ -653,19 +630,13 @@ export function LoanCreationPage() {
   return (
     <FormProvider {...methods}>
       <ActiveLoanProvider loans={loans}>
-      {/* ── LoanTransfersProvider ─────────────────────────────────────
-       * Must sit inside FormProvider because `useLoanTransfers` reads the
-       * form via `useFormContext`. It mounts exactly one `useFieldArray`
-       * per array name; Section 4 (Outstanding Loans) and Section 5
-       * (EBI, Buy-Outs & Incoming) consume the shared instance via
-       * `useLoanTransfersContext()` so a transfer in one section is
-       * reflected in the other on the same render. */}
+      {}
       <LoanTransfersProvider>
         <form
           onSubmit={handleFormSubmit}
           className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40"
         >
-        {/* ── Top header ──────────────────────────────── */}
+        {}
         <header className="border-b bg-background">
           <div className="container mx-auto flex h-16 items-center justify-between px-6">
             <div className="flex flex-wrap items-center gap-4">
@@ -718,15 +689,14 @@ export function LoanCreationPage() {
           </div>
         </header>
 
-        {/* ── Mobile section nav ─────────────────────────────── */}
+        {}
         <MobileSectionNav {...stepperProps} />
 
         <div className="container mx-auto flex flex-1 gap-8 px-6 py-8">
-          {/* ── Desktop sidebar stepper (sticky wrapper lives inside
-                DesktopStepper itself — single sticky container). */}
+          {}
           <DesktopStepper {...stepperProps} />
 
-          {/* ── Main form content ─────────────────────────────── */}
+          {}
           <main className="mx-auto w-full max-w-4xl flex-1 space-y-8">
             <section
               id="cis-lookup"
@@ -767,7 +737,7 @@ export function LoanCreationPage() {
                   <PersonalInfoSection />
                 </section>
 
-                {/* 2. Loan Parameters - Segmented selector inside SectionCard */}
+                {}
                 <section
                   id="loan-params"
                   ref={(el) => {
@@ -812,7 +782,7 @@ export function LoanCreationPage() {
                   <DeviationsSection />
                 </section>
 
-                {/* 8. Approval Form */}
+                {}
                 <section
                   id="approval-form"
                   ref={(el) => {
@@ -828,12 +798,12 @@ export function LoanCreationPage() {
               <WorkflowOverview />
             )}
 
-            {/* Spacer for sticky footer */}
+            {}
             <div className="h-24" />
           </main>
         </div>
 
-        {/* ── Sticky bottom action bar ───────────────────────── */}
+        {}
         <footer className="sticky bottom-0 z-20 border-t bg-background/95 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container mx-auto flex h-16 items-center justify-between px-6">
             {totalErrors > 0 ? (
@@ -880,7 +850,7 @@ export function LoanCreationPage() {
           </div>
         </footer>
 
-        {/* ── Scroll to top button ───────────────────────────── */}
+        {}
         {showScrollTop && (
           <Button
             type="button"

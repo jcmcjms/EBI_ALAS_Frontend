@@ -113,7 +113,7 @@ describe("buildPrintableDeviationEntries", () => {
     });
 
     it("prints the fee-override deviation even when the deviations flag is off", () => {
-        // Mirrors the backend: rows derive from declared data, not the flag.
+        
         const entries = buildPrintableDeviationEntries({
             hasDeviations: false,
             deviationDetails: [],

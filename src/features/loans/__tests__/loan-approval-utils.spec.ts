@@ -12,19 +12,14 @@ import {
 } from "@/src/features/loans/utils/loan-approval-utils";
 import { computeMonthlyAmortization } from "@/src/features/loans/utils/loan-computations";
 
-/**
- * Shared case table for approval-form convention rules. These tests are
- * the Vitest mirror of the xUnit cases in ApprovalFormConventionsTests.cs.
- * Do not "fix" one side without the other — the two implementations must
- * produce identical results for every row in this table.
- */
+
 
 describe("resolveApprovalTermDays", () => {
     it.each([
-        [2572, 84, 2520],  // Bug case: grace 52d ≤ 120 → policy wins
-        [720, 1, 720],     // C02 single-payment: 30d vs 720d → feed verbatim
-        [2520, 84, 2520],  // Idempotent
-        [900, null, 900],  // No policy → feed
+        [2572, 84, 2520],  
+        [720, 1, 720],     
+        [2520, 84, 2520],  
+        [900, null, 900],  
     ])(
         "feedTermDays=%d, policyTermMonths=%s → %d",
         (feedTermDays, policyTermMonths, expected) => {
@@ -41,31 +36,31 @@ describe("resolveApprovalTermDays", () => {
     });
 
     it("returns policy when grace is exactly at boundary (120)", () => {
-        // 84 * 30 = 2520, feed = 2640, grace = 120 (exactly at boundary)
+        
         expect(resolveApprovalTermDays(2640, 84)).toBe(2520);
     });
 
     it("returns feed when grace is just over boundary (121)", () => {
-        // 84 * 30 = 2520, feed = 2641, grace = 121 (just over boundary)
+        
         expect(resolveApprovalTermDays(2641, 84)).toBe(2641);
     });
 
     it("returns policy when feed < policy but within grace tolerance", () => {
-        // 84 * 30 = 2520, feed = 2400, |grace| = 120 (within tolerance)
+        
         expect(resolveApprovalTermDays(2400, 84)).toBe(2520);
     });
 
     it("returns feed when feed < policy and outside grace tolerance", () => {
-        // 84 * 30 = 2520, feed = 2399, |grace| = 121 (outside tolerance)
+        
         expect(resolveApprovalTermDays(2399, 84)).toBe(2399);
     });
 });
 
 describe("toAnnualRatePercent", () => {
     it.each([
-        [0.2157, 21.57],   // Fraction → percent
-        [21.57, 21.57],    // Already in percent (idempotent)
-        [0, 0],            // Zero
+        [0.2157, 21.57],   
+        [21.57, 21.57],    
+        [0, 0],            
     ])("rate=%d → %d", (rate, expected) => {
         expect(toAnnualRatePercent(rate)).toBe(expected);
     });
@@ -152,9 +147,9 @@ describe("computeLoanMetrics deduction convention", () => {
         creationTypeCode: 0,
         creationTypeLabel: "New Loan",
         branchCode: "B1",
-        // Frozen values DIVERGE from the re-derived ones
-        // (resolveApprovalTermDays(1856, 60) === 1800; toAnnualRatePercent(7.5) === 7.5)
-        // so an always-re-derive implementation cannot pass the preference test.
+        
+        
+        
         approvalTermDays: 2160,
         annualRatePercent: 9.66,
         parameters: {
@@ -234,11 +229,11 @@ describe("computeLoanMetrics deduction convention", () => {
 
     it("prefers frozen approvalTermDays and annualRatePercent", () => {
         const c = computeLoanMetrics(loan, obligations);
-        // Frozen values (2160 / 9.66) diverge from the re-derived ones
-        // (1800 / 7.5) — this test fails if frozen fields are ignored.
+        
+        
         expect(c.approvalTermDays).toBe(2160);
         expect(c.annualRatePercent).toBe(9.66);
-        // PMT is locked to the frozen/resolved term and rate.
+        
         expect(c.amortization).toBeCloseTo(
             computeMonthlyAmortization(322000, 9.66, 2160),
             2,

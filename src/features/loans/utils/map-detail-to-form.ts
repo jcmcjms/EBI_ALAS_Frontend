@@ -8,21 +8,11 @@ import {
 
 const DEVIATION_REASON_SET: ReadonlySet<string> = new Set(DEVIATION_REASONS);
 
-/**
- * Maps backend LoanDetailResponse to the wizard-shaped
- * LoanApplicationFormData consumed by ApprovalFormDocument and
- * computeLoanMetrics (both read obligations / verification /
- * deviations from `loans[loanIndex]`).
- *
- * `outstandingLoans` stays at the application root. Frozen
- * `approvalTermDays` / `annualRatePercent` land on `loans[i]`;
- * `policyTermMonths` lands on `loans[i].parameters.policyTermMonths`.
- * Backend nulls map to `undefined`.
- */
+
 export function mapLoanDetailToFormData(
     l: LoanDetailResponse
 ): LoanApplicationFormData {
-    // Codes outside the 0/1/2/6 enum silently collapse to NEW_LOAN.
+    
     const creationTypeCode: 0 | 1 | 2 | 6 =
         l.creationTypeCode === CREATION_TYPE.RELOAN
             ? CREATION_TYPE.RELOAN
@@ -32,8 +22,8 @@ export function mapLoanDetailToFormData(
                 ? CREATION_TYPE.ADDITIONAL_LOAN
                 : CREATION_TYPE.NEW_LOAN;
 
-    // Backend sends free-text deviation reasons; anything outside the
-    // schema enum is dropped so the DeviationReason type holds.
+    
+    
     const deviationDetails = (l.deviationDetails ?? []).filter(
         (reason): reason is DeviationReason => DEVIATION_REASON_SET.has(reason)
     );
@@ -66,11 +56,11 @@ export function mapLoanDetailToFormData(
             school: l.school ?? undefined,
             referrer: l.referrer ?? undefined,
         },
-        // Multi-loan migration: the legacy single `loan` field was removed
-        // from the schema in favour of `loans[]`. The approval page
-        // renders ONE approval form per loan in this array (see
-        // `loanIndex` prop on ApprovalFormDocument). Obligations,
-        // verification, and deviations belong to this loan only.
+        
+        
+        
+        
+        
         loans: [
             {
                 loanNo: l.loanNo ?? "",

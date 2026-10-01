@@ -16,9 +16,7 @@ interface WorkflowStep {
     icon: ReactNode;
 }
 
-/** Mirrors the live workflow: CIS → LAI → loan-number selection (multi-loan,
- *  max 1 per product) → per-loan encoding tabs → review & submit with the
- *  automatic document-completeness gate. */
+
 const STEPS: WorkflowStep[] = [
     {
         title: "Look up the client",
@@ -47,11 +45,7 @@ const STEPS: WorkflowStep[] = [
     },
 ];
 
-/**
- * Pristine-state orientation: a connected numbered stepper (sequence is the
- * message), a CTA on the only actionable step, and one expectation-setting
- * note about the automatic document hold so a held file never looks "lost".
- */
+
 export function WorkflowOverview() {
     const startLookup = () => {
         const section = document.getElementById("cis-lookup");
@@ -77,10 +71,7 @@ export function WorkflowOverview() {
             <ol className="grid gap-6 p-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
                 {STEPS.map((step, i) => (
                     <li key={step.title} className="relative">
-                        {/* ── Number rail: circle + connector on their own row so
-                             the line can never cross the step title (the old
-                             absolute line sat at the circle's center, which is
-                             mid-title once labels wrap). ── */}
+                        {}
                         <div className="flex items-center">
                             <span className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-card text-[11px] font-bold tabular-nums text-primary">
                                 {i + 1}
@@ -93,7 +84,7 @@ export function WorkflowOverview() {
                             )}
                         </div>
 
-                        {/* ── Label block gets the full column width → far less wrapping ── */}
+                        {}
                         <div className="mt-3 flex items-center gap-2">
                             <span className="text-primary" aria-hidden>
                                 {step.icon}

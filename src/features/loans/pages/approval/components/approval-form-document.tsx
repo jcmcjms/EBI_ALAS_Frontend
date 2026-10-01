@@ -27,7 +27,7 @@ import type {
     DocumentRemarkDto,
 } from "@/src/features/loans/api/loan-review";
 
-/* ── formatting helpers (match the template: plain comma numbers) ── */
+
 
 function num(value?: number | null): string {
     if (typeof value !== "number" || Number.isNaN(value)) return "-";
@@ -59,11 +59,7 @@ function ageFrom(isoDateStr?: string): string {
     return String(age);
 }
 
-/**
- * Canonical audit-trail action as returned by `LoanDetailResponse.actions`.
- * Kept inline rather than imported from `loan-review` to avoid pulling the
- * full review API surface into a pure presentational component.
- */
+
 export interface ApprovalFormActionEntry {
     id: number;
     action: string;
@@ -86,12 +82,7 @@ function formatActionTime(iso: string): string {
     });
 }
 
-/**
- * Render the status transition string for an audit entry.
- *   "ForRecommendation → ForChecking"
- *   "ForApproval → Approved"
- * `null` on either side renders as "—" so the column never collapses.
- */
+
 function formatTransition(
     from: string | null,
     to: string | null,
@@ -101,33 +92,23 @@ function formatTransition(
     return `${f} → ${t}`;
 }
 
-/**
- * Unified audit-trail entry for the printed pack. Merges workflow actions,
- * deviation remark threads, and document remark threads into a single
- * chronological stream. `type` distinguishes the source so the printed
- * sheet shows what kind of event each row represents.
- */
+
 interface UnifiedAuditEntry {
     id: string;
     type: "action" | "deviation-remark" | "document-remark";
-    /** Workflow action verb or "Deviation Remark" / "Document Remark". */
+    
     label: string;
-    /** Status transition (actions only) or deviation/document context. */
+    
     context: string | null;
-    /** Actor name (actions) or author name (remarks). */
+    
     actor: string;
-    /** ISO timestamp (actionDate for actions, createdAt for remarks). */
+    
     timestamp: string;
-    /** The content: action comments, or remark body. */
+    
     content: string;
 }
 
-/**
- * Merges workflow actions, deviation remarks, and document remarks into a
- * single chronological stream for the printed audit trail. Each entry carries
- * a type discriminator so the sheet can render different visual cues for
- * workflow events vs. conversation threads.
- */
+
 function buildUnifiedAuditTrail(
     actions: ApprovalFormActionEntry[] | undefined,
     deviations: LoanDeviationDto[] | undefined,
@@ -135,7 +116,7 @@ function buildUnifiedAuditTrail(
 ): UnifiedAuditEntry[] {
     const entries: UnifiedAuditEntry[] = [];
 
-    // Workflow actions
+    
     if (actions) {
         for (const a of actions) {
             entries.push({
@@ -150,7 +131,7 @@ function buildUnifiedAuditTrail(
         }
     }
 
-    // Deviation remarks (flatten the threads)
+    
     if (deviations) {
         for (const dev of deviations) {
             for (const remark of dev.remarks) {
@@ -167,7 +148,7 @@ function buildUnifiedAuditTrail(
         }
     }
 
-    // Document remarks
+    
     if (documentRemarks) {
         for (const remark of documentRemarks) {
             entries.push({
@@ -182,8 +163,8 @@ function buildUnifiedAuditTrail(
         }
     }
 
-    // Sort chronologically (oldest first, newest last) so the printed trail
-    // reads top-down as a timeline.
+    
+    
     return entries.sort((a, b) => {
         const ta = new Date(a.timestamp).getTime();
         const tb = new Date(b.timestamp).getTime();
@@ -199,11 +180,9 @@ const B = "border border-black";
 const DOUBLE_UNDERLINE: React.CSSProperties = { borderBottom: "3px double #000" };
 const TOP_DOUBLE: React.CSSProperties = { borderTop: "1px solid #000", borderBottom: "3px double #000" };
 
-/* ── pure computations live in `@/src/lib/loan-approval-utils` ──
- * Kept out of this file so the component-only-export / HMR contract
- * (`react-refresh/only-export-components`) stays satisfied. */
 
-/* ── small presentational atoms ── */
+
+
 
 interface TableCellProps {
     children: React.ReactNode;
@@ -224,11 +203,7 @@ function V({ children, blue, className, colSpan, rowSpan }: TableCellProps) {
     );
 }
 
-/**
- * Right rail (col 5) of the obligations matrix. The legacy layout drew it
- * as a single rowSpan=21 cell; per-row cells keep the vertical rule intact
- * while the conditional reloan/buy-out/incoming blocks above come and go.
- */
+
 function RailCell({ children }: { children?: React.ReactNode }) {
     return (
         <td className="border-l border-black px-1.5 py-0.5 text-center tabular-nums">
@@ -254,7 +229,7 @@ function AmtRow({ label, value, blue, bold, underline, topLine, labelBold }: {
     );
 }
 
-/* ── Signature block atom ── */
+
 
 function SignatureBlock({ slot }: { slot: SignatureSlotDto }) {
     const name = slot.signedByName?.trim();
@@ -262,7 +237,7 @@ function SignatureBlock({ slot }: { slot: SignatureSlotDto }) {
     return (
         <div>
             <div className="font-bold">{slot.action}:</div>
-            {/* wet-ink line */}
+            {}
             <div className="mt-8 border-b border-black" />
             <div className="mt-0.5 font-bold">{name ?? "\u00A0"}</div>
             <div>
@@ -278,48 +253,29 @@ function SignatureBlock({ slot }: { slot: SignatureSlotDto }) {
     );
 }
 
-/* ── main component (pure, prop-driven) ── */
+
 
 interface ApprovalFormDocumentProps {
     data: LoanApplicationFormData;
-    /**
-     * Optional: which loan to render. Defaults to the first loan in
-     * `data.loans`. Pass an explicit index when the parent is iterating
-     * one approval form per selected loan.
-     */
+    
     loanIndex?: number;
-    /**
-     * `loan_data.cat_loan_class` of the selected preloan, resolved by the
-     * page via GET /api/webloans/loan-class. Only class-scoped products
-     * (C23/C35 → BONUS / YEB vs BONUS / MYB) consume it; null/undefined
-     * falls back to the backend description (see loan-product-display.ts).
-     */
+    
     catLoanClass?: string | null;
-    /** Server-resolved signature chain (page 2). Omitted → section hidden. */
+    
     signatureSlots?: SignatureSlotDto[];
-    /**
-     * Canonical audit-trail actions for this loan application. Rendered on
-     * page 3 of the printed form. `undefined` or empty → section hidden.
-     * Sourced from `LoanDetailResponse.actions` by the parent page.
-     */
+    
     actions?: ApprovalFormActionEntry[];
-    /**
-     * Deviation remark threads (per-deviation conversation). Merged into the
-     * page 3 audit trail. `undefined` or empty → no deviation remarks printed.
-     */
+    
     deviations?: LoanDeviationDto[];
-    /**
-     * Document remark threads (per-document conversation). Merged into the
-     * page 3 audit trail. `undefined` or empty → no document remarks printed.
-     */
+    
     documentRemarks?: DocumentRemarkDto[];
 }
 
 const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocumentProps>(({ data, loanIndex = 0, catLoanClass, signatureSlots, actions, deviations: deviationThreads, documentRemarks }, ref) => {
     const client = data?.client ?? ({} as LoanApplicationFormData["client"]);
     const branchType = data?.branchType ?? ({} as LoanApplicationFormData["branchType"]);
-    // Multi-loan: the printed approval form is scoped to one loan. The
-    // parent can pass `loanIndex` to render each selected loan's form.
+    
+    
     const primaryLoan = data?.loans?.[loanIndex];
     const params = primaryLoan?.parameters;
     const verification = primaryLoan?.verification;
@@ -330,13 +286,13 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
     const buyOuts = primaryLoan?.buyOuts ?? [];
     const incomingLoans = primaryLoan?.incomingLoans ?? [];
 
-    // Printed obligation rows: blank wizard placeholders are dropped so an
-    // empty matrix collapses instead of printing the legacy fixed dash rows.
+    
+    
     const reloanRows = printableObligationRows(ebiReloans, isBlankReloan);
     const buyOutRows = printableObligationRows(buyOuts, isBlankBuyOut);
     const incomingRows = printableObligationRows(incomingLoans, isBlankIncomingLoan);
 
-    // Fetch product fee config for accurate deduction computation.
+    
     const productCodeForLookup = params?.product ? parseProductCode(params.product) : null;
     const { data: loanProduct } = useLoanProduct(productCodeForLookup);
     const productFees: ProductFeeConfig | undefined = loanProduct
@@ -349,8 +305,8 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
           }
         : undefined;
 
-    // Bail out cleanly when no loan is selected so the parent renders an
-    // empty state instead of an explosion of `undefined.X` reads.
+    
+    
     if (!primaryLoan || !params) {
         return (
             <div
@@ -378,8 +334,8 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
     const productCode = parseProductCode(params.product);
     const productDisplay = resolveLoanProductDisplayName(params.product, catLoanClass);
 
-    // Frozen-first term/rate from shared metrics — keeps the printed
-    // form aligned with the preview (see computeLoanMetrics).
+    
+    
     const approvalTermDays = c.approvalTermDays;
     const annualRatePercent = c.annualRatePercent;
 
@@ -403,7 +359,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                 <h1 className="mb-2 text-sm font-bold underline">LOAN APPROVAL FORM</h1>
 
                 <div className="border-2 border-b-0 border-black print:border-b-2">
-                {/* ══ CLIENT INFORMATION ══ */}
+                {}
                 <table className="w-full border-collapse">
                     <tbody>
                         <tr>
@@ -473,11 +429,11 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                     </tbody>
                 </table>
 
-                {/* ══ LOAN COMPUTATIONS ══ */}
+                {}
                 <div className={cn(B, "text-center font-bold")}>LOAN COMPUTATIONS</div>
 
                 <div className="grid grid-cols-2">
-                    {/* ── LEFT column ── */}
+                    {}
                     <div className={cn(B, "border-r-0 p-2")}>
                         <AmtRow label={<span className="font-bold">Maximum Loanable Amount **</span>} value={num(c.maximumLoanableAmount)} blue underline />
                         <AmtRow label={<span className="font-bold">Proposed Loan for Approval</span>} value={<span className="font-bold">{num(params.proposedAmount)}</span>} blue />
@@ -513,7 +469,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                         </div>
                     </div>
 
-                    {/* ── RIGHT column ── */}
+                    {}
                     <div className={cn(B, "p-2")}>
                         <div className="font-bold underline">Outstanding Loans (do not include accounts for payoff):</div>
                         <table className="w-full border-collapse">
@@ -567,7 +523,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                             </span>
                         </div>
 
-                        {/* Net Pay box */}
+                        {}
                         <div className="mt-3 border border-black">
                             <div className="border-b border-black px-1.5 py-0.5 font-bold italic underline">
                                 Net Pay After Deduction Plus Other Sources of Income
@@ -582,14 +538,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                     </div>
                 </div>
 
-                {/* ── EBI / Buy-Out / Incoming ──
-                    Mirrors loan_approval_template.pdf: one fixed grid whose
-                    matrix columns end at ~71%; the right rail holds the
-                    incoming-loan column and the summary stack reuses the
-                    matrix columns. Each obligation block renders only when
-                    it carries values — the legacy fixed blank rows wasted
-                    half a sheet and cut the page. `break-inside-avoid`
-                    keeps the compact grid whole near page boundaries. */}
+                {}
                 <table className={cn(B, "w-full table-fixed border-collapse border-t-0 break-inside-avoid")}>
                     <colgroup>
                         <col className="w-[22%]" />
@@ -656,7 +605,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                             </>
                         )}
 
-                        {/* ── summary stack: reuses the matrix columns ── */}
+                        {}
                         <tr>
                             <td className="px-1.5 py-0.5 font-bold">Total Reloan&Buy-out Accounts</td>
                             <td className="px-1.5 py-0.5 text-right font-bold tabular-nums" style={TOP_DOUBLE}>{num(c.ebiDeductions)}</td>
@@ -727,10 +676,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                 </table>
                 </div>
 
-                {/* ══ PAGE 2 — certifications & signatures ══
-                    break-before-page gives a real printed page; the dashed
-                    rule is the on-screen page gap only. Continuation header
-                    keeps the page attributable when sheets get separated. */}
+                {}
                 <section className="break-before-page">
                     <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
                         <span className="text-sm font-bold underline">
@@ -774,7 +720,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                             </div>
                         </div>
 
-                        {/* ── Signature blocks, encoder → approver ── */}
+                        {}
                         {signatureSlots && signatureSlots.length > 0 && (
                             <div className="border-t-2 border-black p-3 break-inside-avoid">
                                 <div className="grid grid-cols-2 gap-x-8 gap-y-6">
@@ -787,7 +733,7 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
                     </div>
                 </section>
 
-                {/* ══ PAGE 3 — Unified audit trail (actions + remarks) ══ */}
+                {}
                 {(() => {
                     const unifiedTrail = buildUnifiedAuditTrail(actions, deviationThreads, documentRemarks);
                     if (unifiedTrail.length === 0) return null;
@@ -896,10 +842,5 @@ const ApprovalFormDocumentBase = forwardRef<HTMLDivElement, ApprovalFormDocument
 });
 ApprovalFormDocumentBase.displayName = "ApprovalFormDocument";
 
-/**
- * Memoized on purpose: the sheet is ~600 DOM nodes and recomputes loan
- * metrics per render. The page hands it referentially stable props
- * (`formData` via useMemo, `catLoanClass` a primitive), so sidebar query
- * resolutions (history / remarks / files) no longer re-render the document.
- */
+
 export const ApprovalFormDocument = memo(ApprovalFormDocumentBase);
