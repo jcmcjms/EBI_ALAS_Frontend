@@ -14,11 +14,7 @@ interface Props {
     data: IncompleteDocsQueueItem[];
 }
 
-/**
- * "Flagged Documents" — files flagged by reviewers while requirements are
- * completed. The flag is a data fact, not a routing status. Flagged files
- * stay at their real desk; this widget surfaces them for encoder attention.
- */
+
 export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({ data }: Props) {
     const navigate = useNavigate();
     const display = useMemo(() => data.slice(0, 5), [data]);

@@ -1,6 +1,4 @@
-/**
- * Account feature constants and tab definitions.
- */
+
 
 export const ACCOUNT_TABS = [
     "overview",
@@ -11,15 +9,12 @@ export const ACCOUNT_TABS = [
 
 export type AccountTab = (typeof ACCOUNT_TABS)[number];
 
-/** Unknown / missing `?tab=` values fall back to Overview rather than erroring. */
+
 export function parseAccountTab(raw: string | null): AccountTab {
     return ACCOUNT_TABS.find((tab) => tab === raw) ?? "overview";
 }
 
-/**
- * Activity kind classification for the timeline.
- * Backend returns free-form Action strings; we bucket them into UI kinds.
- */
+
 export type ActivityKind =
     | "application"
     | "approval"
@@ -38,7 +33,7 @@ export const ACTIVITY_META: Record<
     login: { icon: "SignIn", label: "Sign-in" },
 };
 
-/** Password rotation policy constants. */
+
 export const PASSWORD_POLICY = [
     "Rotate every 90 days",
     "Minimum 8 characters",

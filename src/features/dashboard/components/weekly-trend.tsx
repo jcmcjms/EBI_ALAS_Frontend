@@ -5,9 +5,9 @@ import type { WeeklyTrendPoint } from "../types";
 
 interface WeeklyTrendProps { data: WeeklyTrendPoint[]; }
 
-// Recharts' tooltip payload is a heterogeneous array of `{ name, value,
-// dataKey, payload, ... }` objects keyed off the data series. We type
-// the props structurally so the tooltip can stay `any`-free.
+
+
+
 interface CustomTooltipProps {
     active?: boolean;
     payload?: Array<{ name?: string; value?: number | string; dataKey?: string }>;
@@ -63,13 +63,7 @@ export function WeeklyTrend({ data }: WeeklyTrendProps) {
                         <p className="text-sm text-muted-foreground">No trend data available.</p>
                     </div>
                 ) : (
-                    /*
-                     * ResponsiveContainer requires a parent with a *defined* height.
-                     * The chart lives inside a flex column on the dashboard grid, so
-                     * we give it a fixed h-[200px] instead of flex-1 — that avoids
-                     * the "width(-1) and height(-1)" warning when the flex parent
-                     * has no intrinsic height yet.
-                     */
+                    
                     <div className="h-[200px] w-full">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>

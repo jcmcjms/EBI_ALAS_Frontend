@@ -1,6 +1,4 @@
-/**
- * Dashboard page — thin shell that composes the dashboard widgets.
- */
+
 
 import { useAuthStore } from "@/src/store/authStore";
 import { useNavigate } from "react-router-dom";

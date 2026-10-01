@@ -1,10 +1,8 @@
-/**
- * Notification types and domain helpers.
- */
+
 
 import type { NotificationResponse } from "./api/notifications";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 export type NotificationType = "application" | "action" | "message" | "system";
 
@@ -19,7 +17,7 @@ export interface AppNotification {
     link?: string;
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+
 
 export function formatRelativeTime(iso: string): string {
     const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);

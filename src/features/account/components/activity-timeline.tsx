@@ -1,9 +1,4 @@
-/**
- * Activity timeline — renders a list of timeline items with icons and timestamps.
- *
- * Pure presentation component. Data transformation (`toTimelineItems`) is
- * exported separately so callers can transform before rendering.
- */
+
 
 import {
     CheckCircle,
@@ -17,7 +12,7 @@ import type { Activity } from "../api/account";
 import { formatRelativeTime } from "@/src/features/notifications/types";
 import type { ActivityKind } from "../types";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 export interface TimelineItem {
     id: string;
@@ -27,7 +22,7 @@ export interface TimelineItem {
     createdAt: string;
 }
 
-// ─── Icon map ───────────────────────────────────────────────────────────────
+
 
 const ICON_MAP: Record<ActivityKind, typeof Clock> = {
     application: ClipboardText,
@@ -37,13 +32,9 @@ const ICON_MAP: Record<ActivityKind, typeof Clock> = {
     login: SignIn,
 };
 
-// ─── Transformation ─────────────────────────────────────────────────────────
 
-/**
- * Bucket the backend's free-form `Action` strings into the five UI kinds.
- * Exported so both OverviewTab (preview) and ActivityTab (full list) share
- * the same mapping logic.
- */
+
+
 export function toTimelineItems(records: Activity[]): TimelineItem[] {
     return records.map((a) => {
         const action = (a.action ?? "").toLowerCase();
@@ -85,7 +76,7 @@ export function toTimelineItems(records: Activity[]): TimelineItem[] {
     });
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
+
 
 export function ActivityTimeline({ items }: { items: TimelineItem[] }) {
     return (

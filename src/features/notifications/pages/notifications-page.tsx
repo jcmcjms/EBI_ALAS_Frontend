@@ -80,7 +80,7 @@ function FilterMenu<T extends string>({ label, value, options, onChange }: Filte
 export function NotificationsPage() {
     const navigate = useNavigate();
 
-    // Server-driven inbox state
+    
     const [search, setSearch] = useState("");
     const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
     const [status, setStatus] = useState<StatusFilter>("all");
@@ -89,7 +89,7 @@ export function NotificationsPage() {
     const [page, setPage] = useState(1);
     const [autoRead, setAutoRead] = useState(false);
 
-    // Server-driven inbox query
+    
     const { data, isLoading } = useNotificationInbox({
         page,
         pageSize: PAGE_SIZE,
@@ -116,7 +116,7 @@ export function NotificationsPage() {
     const unreadCount = data?.unreadCount ?? 0;
     const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-    // Mutations
+    
     const markReadMutation = useMarkNotificationRead();
     const markAllMutation = useMarkAllNotificationsRead();
 
@@ -127,7 +127,7 @@ export function NotificationsPage() {
         if (link) navigate(link);
     };
 
-    // Filter setters reset pagination inline
+    
     const setQueryAndReset = (next: string) => {
         setSearch(next);
         setPage(1);
@@ -154,7 +154,7 @@ export function NotificationsPage() {
     return (
         <div className="flex flex-1 flex-col bg-muted/40">
             <div className="container mx-auto w-full max-w-5xl flex-1 px-6 py-8">
-                {/* Page header */}
+                {}
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3">
@@ -198,7 +198,7 @@ export function NotificationsPage() {
                     </div>
                 </div>
 
-                {/* Toolbar */}
+                {}
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                     <div className="relative min-w-0 flex-1 basis-64">
                         <MagnifyingGlass
@@ -248,7 +248,7 @@ export function NotificationsPage() {
                     </Button>
                 </div>
 
-                {/* List */}
+                {}
                 <Card className="mt-6 overflow-hidden">
                     {isLoading ? (
                         <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
@@ -353,7 +353,7 @@ export function NotificationsPage() {
                     )}
                 </Card>
 
-                {/* Pagination */}
+                {}
                 <div className="mt-4 flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
                         Showing {from} to {to} of {totalCount} notification{totalCount === 1 ? "" : "s"}

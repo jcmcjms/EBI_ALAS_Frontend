@@ -1,9 +1,4 @@
-/**
- * Audit Logs API — types and fetchers co-located.
- *
- * Mirrors Features/AuditLogs/AuditLogEndpoints.cs.
- * Requires `auditLogs.view` permission (granted to Admin role).
- */
+
 
 import { apiClient } from "@/src/lib/apiClient";
 import {
@@ -16,9 +11,9 @@ import {
 
 export type { AuditLogQueryParams, AuditLogRecord } from "@/src/lib/api/types";
 
-// ─── API Functions ──────────────────────────────────────────────────────────
 
-/** GET /api/audit-logs — paged, filterable audit log list. */
+
+
 export async function listAuditLogs(
     params: AuditLogQueryParams,
 ): Promise<PagedResult<AuditLogRecord>> {
@@ -39,7 +34,7 @@ export async function listAuditLogs(
     return unwrapApiData(res.data);
 }
 
-/** GET /api/audit-logs/{id} — single audit log record. */
+
 export async function getAuditLog(id: number): Promise<AuditLogRecord> {
     const res = await apiClient.get<ApiResponse<AuditLogRecord>>(
         `/api/audit-logs/${id}`,

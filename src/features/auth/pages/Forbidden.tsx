@@ -2,13 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/src/components/ui/button";
 import { ShieldSlash } from "@phosphor-icons/react";
 
-/**
- * Dedicated 403 Forbidden page.
- *
- * Shown when a logged-in user attempts to access a resource they lack
- * permission for. In a banking environment this is also the right place
- * to log the unauthorized access attempt to your SIEM system.
- */
+
 export default function Forbidden() {
   const navigate = useNavigate();
 

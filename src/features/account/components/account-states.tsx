@@ -1,7 +1,4 @@
-/**
- * Re-exports from shared UI — kept as a thin barrel so existing
- * `import { … } from "./account-states"` paths don't break.
- */
+
 
 export { EmptyState, ErrorState } from "@/src/components/ui/empty-state";
 

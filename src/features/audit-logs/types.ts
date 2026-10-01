@@ -1,6 +1,4 @@
-/**
- * Audit log constants — action config, formatting helpers.
- */
+
 
 import type { ComponentType } from "react";
 import {
@@ -48,5 +46,5 @@ export function formatAuditDate(iso: string): string {
     });
 }
 
-/** Delay before the search input triggers an API call. */
+
 export const SEARCH_DEBOUNCE_MS = 300;

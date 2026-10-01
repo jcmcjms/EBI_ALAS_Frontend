@@ -1,6 +1,4 @@
-/**
- * Activity tab — full activity history with "Show more" pagination.
- */
+
 
 import { useState } from "react";
 import { Button } from "@/src/components/ui/button";
@@ -35,8 +33,7 @@ export function ActivityTab() {
                 ) : (
                     <>
                         <ActivityTimeline items={items} />
-                        {/* Backend returns at most `limit` rows with no total —
-                            a short page means we've reached the end. */}
+                        {}
                         {items.length >= limit && (
                             <div className="mt-6 text-center">
                                 <Button

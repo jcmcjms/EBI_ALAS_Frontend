@@ -1,6 +1,4 @@
-/**
- * Audit Logs page — thin composition of filters, table, and details sheet.
- */
+
 
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/src/components/ui/card";
@@ -47,7 +45,7 @@ export function AuditLogsPage() {
     const [page, setPage] = useState(1);
     const [selectedLog, setSelectedLog] = useState<AuditLogRecord | null>(null);
 
-    // Debounce search input.
+    
     const [debouncedSearch, setDebouncedSearch] = useState("");
     useEffect(() => {
         const t = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
@@ -66,7 +64,7 @@ export function AuditLogsPage() {
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-6">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
@@ -84,7 +82,7 @@ export function AuditLogsPage() {
                 </Badge>
             </div>
 
-            {/* Filters */}
+            {}
             <Card>
                 <CardContent className="p-4 flex flex-col sm:flex-row gap-4">
                     <div className="relative flex-1">
@@ -123,7 +121,7 @@ export function AuditLogsPage() {
                 </CardContent>
             </Card>
 
-            {/* Table */}
+            {}
             <Card>
                 <Table>
                     <TableHeader>
@@ -211,7 +209,7 @@ export function AuditLogsPage() {
                 </Table>
             </Card>
 
-            {/* Pagination */}
+            {}
             {data && totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2">
                     <Button
@@ -236,7 +234,7 @@ export function AuditLogsPage() {
                 </div>
             )}
 
-            {/* Details Sheet */}
+            {}
             <AuditLogDetailsSheet
                 log={selectedLog}
                 onClose={() => setSelectedLog(null)}

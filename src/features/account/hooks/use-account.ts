@@ -1,9 +1,4 @@
-/**
- * Account feature hooks — TanStack Query wrappers.
- *
- * Each hook owns one query/mutation. Toast notifications live here so
- * components stay presentation-only.
- */
+
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toastError, toastSuccess } from "@/src/components/ui/toast";
@@ -21,13 +16,13 @@ import {
     type PagedSessionsResponse,
 } from "../api/account";
 
-// ─── Queries ────────────────────────────────────────────────────────────────
+
 
 export function useAccountProfile() {
     return useQuery({
         queryKey: queryKeys.account.profile,
         queryFn: getAccountProfile,
-        staleTime: 5 * 60_000, // own profile rarely changes
+        staleTime: 5 * 60_000, 
     });
 }
 
@@ -63,7 +58,7 @@ export function useAccountClients(limit = 5) {
     });
 }
 
-// ─── Mutations ──────────────────────────────────────────────────────────────
+
 
 export function useUpdateProfile() {
     const queryClient = useQueryClient();

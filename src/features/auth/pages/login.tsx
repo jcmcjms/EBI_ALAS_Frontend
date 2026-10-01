@@ -1,6 +1,4 @@
-/**
- * Login page — split-screen layout with branding and form.
- */
+
 
 import { LoginForm } from "./login-form";
 

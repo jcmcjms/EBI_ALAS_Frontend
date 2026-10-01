@@ -1,13 +1,11 @@
-/**
- * Audit Logs feature hooks — TanStack Query wrappers.
- */
+
 
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import type { AuditLogQueryParams } from "@/src/lib/api/types";
 import { getAuditLog, listAuditLogs } from "../api/audit-logs";
 
-/** Paged + filtered audit log directory (server-side search/pagination). */
+
 export function useAuditLogs(params: AuditLogQueryParams) {
     return useQuery({
         queryKey: queryKeys.auditLogs.list(params),
@@ -16,7 +14,7 @@ export function useAuditLogs(params: AuditLogQueryParams) {
     });
 }
 
-/** Single audit log record by ID. */
+
 export function useAuditLog(id: number | null) {
     return useQuery({
         queryKey:

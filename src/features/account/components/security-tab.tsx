@@ -1,6 +1,4 @@
-/**
- * Security tab — password policy, active sessions, and session revocation.
- */
+
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,14 +27,14 @@ import type { Session } from "../api/account";
 import { PASSWORD_POLICY, ROTATION_DAYS } from "../types";
 import { EmptyState, ErrorState, LoadingState } from "./account-states";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 type RevokeConfirm =
     | { kind: "single"; session: Session }
     | { kind: "others"; count: number }
     | null;
 
-// ─── Component ──────────────────────────────────────────────────────────────
+
 
 export function SecurityTab() {
     const navigate = useNavigate();
@@ -50,7 +48,7 @@ export function SecurityTab() {
     const sessions = sessionsQuery.data?.items ?? [];
     const otherCount = sessions.filter((s) => !s.isCurrent).length;
 
-    // Current session first, then most recent.
+    
     const orderedSessions = useMemo(
         () => [...sessions].sort((a, b) => Number(b.isCurrent) - Number(a.isCurrent)),
         [sessions],
@@ -76,7 +74,7 @@ export function SecurityTab() {
 
     return (
         <div className="space-y-6">
-            {/* Password card */}
+            {}
             <Card>
                 <CardHeader className="border-b bg-muted/30 py-3">
                     <CardTitle className="flex items-center gap-2 text-sm">
@@ -111,7 +109,7 @@ export function SecurityTab() {
                 </CardContent>
             </Card>
 
-            {/* Sessions card */}
+            {}
             <Card>
                 <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
                     <CardTitle className="text-sm">Active Sessions</CardTitle>
@@ -212,7 +210,7 @@ export function SecurityTab() {
                 </CardContent>
             </Card>
 
-            {/* Revoke confirmation dialog */}
+            {}
             <AlertDialog
                 open={confirm !== null}
                 onOpenChange={(open) => !open && setConfirm(null)}

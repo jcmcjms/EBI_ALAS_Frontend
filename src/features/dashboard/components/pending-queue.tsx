@@ -38,29 +38,22 @@ export function formatWaiting(mins: number): string {
 
 interface PendingQueueProps { data: PendingQueueItem[]; }
 
-/**
- * Pending queue card showing the top 5 pending loan applications.
- *
- * Memoized to prevent re-renders when parent updates but data hasn't changed.
- * The queue data changes infrequently (only on new submissions or status changes),
- * so memoization significantly reduces unnecessary re-renders during real-time
- * dashboard updates.
- */
+
 export const PendingQueue = memo(function PendingQueue({ data }: PendingQueueProps) {
     const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
     const displayData = useMemo(() => data.slice(0, 5), [data]);
 
-    // Collect the unique raw status keys across all pending items so the
-    // "View all" deep-link can jump straight into a filtered monitoring view.
+    
+    
     const pendingStatuses = useMemo(
         () => [...new Set(data.map((d) => d.statusKey))].join(","),
         [data],
     );
 
-    // SLA policy — fetched once per session (staleTime: Infinity).
-    // Falls back to built-in defaults from LOAN_STATUS_META when the
-    // endpoint is unreachable.
+    
+    
+    
     const slaPolicy = useSlaPolicy();
 
     return (
@@ -83,9 +76,9 @@ export const PendingQueue = memo(function PendingQueue({ data }: PendingQueuePro
                     <ul className="divide-y">
                         {displayData.map((item) => {
                             const mins = waitingMinutes(item.date);
-                            // SLA-driven urgency: green → amber → red as the
-                            // elapsed time consumes the stage's handling SLA.
-                            // Terminal stages get a neutral pill.
+                            
+                            
+                            
                             const assessment = assessAging(
                                 item.statusKey as LoanStatusKey,
                                 item.date,

@@ -1,6 +1,4 @@
-/**
- * Dashboard types — view-models consumed by the dashboard widgets.
- */
+
 
 export type LoanStatus =
     | "On Going"
@@ -21,7 +19,7 @@ export interface PendingQueueItem {
     lamId: string;
     branch: string;
     status: LoanStatus;
-    /** Raw backend workflow status (e.g. "ForRecommendation") for SLA lookup. */
+    
     statusKey: string;
     date: string;
     clientName: string;

@@ -1,11 +1,9 @@
-/**
- * Notifications API — types and fetchers co-located.
- */
+
 
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 export interface NotificationResponse {
     id: number;
@@ -32,7 +30,7 @@ export interface InboxPage {
     unreadCount: number;
 }
 
-// ─── API Functions ──────────────────────────────────────────────────────────
+
 
 export async function getNotificationInbox(
     params: InboxQuery = {},

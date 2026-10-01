@@ -17,14 +17,7 @@ function scrollTo(id: string) {
     }
 }
 
-/**
- * Dashboard summary cards showing key metrics.
- *
- * Memoized to prevent re-renders when parent updates but data hasn't changed.
- * This is important because the dashboard refreshes frequently via real-time
- * updates, but the summary cards only need to re-render when the summary data
- * actually changes.
- */
+
 export const DashboardSummary = memo(function DashboardSummary({ data }: DashboardSummaryProps) {
     const stats = [
         {

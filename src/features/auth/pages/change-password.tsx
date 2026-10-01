@@ -1,9 +1,4 @@
-/**
- * Change-password gate — serves both the forced flow (mustChangePassword)
- * and voluntary changes.  Chromeless by design: no AppShell, no navigation,
- * mirrors the login page's visual language so the gate reads as part of
- * the authentication surface, not the app.
- */
+
 
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -30,7 +25,7 @@ import {
     type ChangePasswordFormData,
 } from "../schemas";
 
-/** Mirrors the server policy (BankingSecurityValidator) so feedback is instant. */
+
 const RULES = [
     {
         id: "len",
@@ -149,7 +144,7 @@ export default function ChangePassword() {
                 currentPassword: data.currentPassword,
                 newPassword: data.newPassword,
             });
-            // Backend revokes every session on success — re-login is mandatory.
+            
             toastSuccess(
                 "Password changed. Sign in with your new password.",
             );
@@ -169,7 +164,7 @@ export default function ChangePassword() {
                 message &&
                 /current password/i.test(message)
             ) {
-                // Wrong-current-password belongs ON the field, not in a toast.
+                
                 setError("currentPassword", {
                     type: "server",
                     message,
@@ -307,7 +302,7 @@ export default function ChangePassword() {
                                     />
                                 </div>
 
-                                {/* Live policy checklist + strength — feedback while typing, not after submit */}
+                                {}
                                 <div
                                     id="newPassword-rules"
                                     className="mt-2 space-y-2"

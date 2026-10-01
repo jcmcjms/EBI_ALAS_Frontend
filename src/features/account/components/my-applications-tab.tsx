@@ -1,6 +1,4 @@
-/**
- * My Applications tab — full table of the officer's processed loan applications.
- */
+
 
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -52,8 +50,8 @@ export function MyApplicationsTab() {
             </TableHeader>
             <TableBody>
                 {data.map((app) => {
-                    // Backend returns `LamId` but FE type declares `formNumber`.
-                    // Render whatever string is present, falling back to lamId.
+                    
+                    
                     const rawApp = app as unknown as {
                         id: number;
                         formNumber?: string;

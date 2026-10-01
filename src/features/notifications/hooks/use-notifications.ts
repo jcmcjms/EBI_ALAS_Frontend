@@ -1,6 +1,4 @@
-/**
- * Notification feature hooks — TanStack Query wrappers.
- */
+
 
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,12 +15,9 @@ import {
 import { useNotificationStore } from "../store/notification-store";
 import { mapApiNotifications } from "../types";
 
-// ─── Queries ────────────────────────────────────────────────────────────────
 
-/**
- * Header-bell query. When SignalR is connected, polling is disabled.
- * Falls back to 30s polling when disconnected.
- */
+
+
 export function useNotifications(
     enabled = true,
     isSignalRConnected = false,
@@ -48,9 +43,7 @@ export function useNotifications(
     return query;
 }
 
-/**
- * Server-driven inbox query for the notifications page.
- */
+
 export function useNotificationInbox(params: InboxQuery, enabled = true) {
     return useQuery({
         queryKey: [...queryKeys.notifications, "inbox", params],
@@ -60,7 +53,7 @@ export function useNotificationInbox(params: InboxQuery, enabled = true) {
     });
 }
 
-// ─── Mutations ──────────────────────────────────────────────────────────────
+
 
 export function useMarkNotificationRead() {
     const queryClient = useQueryClient();

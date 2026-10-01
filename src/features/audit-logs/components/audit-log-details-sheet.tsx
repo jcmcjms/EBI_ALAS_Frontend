@@ -55,7 +55,7 @@ export function AuditLogDetailsSheet({ log, onClose }: Props) {
 
                 <ScrollArea className="h-[calc(100vh-200px)] px-6 pb-6">
                     <div className="space-y-6">
-                        {/* Metadata Grid */}
+                        {}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -102,7 +102,7 @@ export function AuditLogDetailsSheet({ log, onClose }: Props) {
 
                         <Separator />
 
-                        {/* Entity Info */}
+                        {}
                         <div className="space-y-1">
                             <p className="text-xs text-muted-foreground">
                                 Entity
@@ -114,7 +114,7 @@ export function AuditLogDetailsSheet({ log, onClose }: Props) {
 
                         <Separator />
 
-                        {/* Technical Diff */}
+                        {}
                         <div className="space-y-3">
                             <h3 className="text-sm font-semibold flex items-center gap-2">
                                 <Code

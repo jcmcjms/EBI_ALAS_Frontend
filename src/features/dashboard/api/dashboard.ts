@@ -1,11 +1,9 @@
-/**
- * Dashboard API — types and fetchers co-located.
- */
+
 
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 export interface DashboardOverviewDto {
     kpis: {
@@ -60,7 +58,7 @@ export interface DashboardOverviewDto {
     generatedAtUtc: string;
 }
 
-// ─── API Functions ──────────────────────────────────────────────────────────
+
 
 export async function getDashboardOverview(): Promise<DashboardOverviewDto> {
     const res = await apiClient.get<ApiResponse<DashboardOverviewDto>>(

@@ -1,13 +1,4 @@
-/**
- * Account page — thin shell that composes the tab components.
- *
- * This file owns:
- * - Tab state
- * - Profile edit sheet open/close state
- * - Layout (header + tabs)
- *
- * All data fetching and business logic lives in the tab components and hooks.
- */
+
 
 import { useState } from "react";
 import { GearSix } from "@phosphor-icons/react";
@@ -27,7 +18,7 @@ export function AccountPage() {
     return (
         <div className="flex flex-1 flex-col bg-muted/40">
             <div className="container mx-auto w-full max-w-7xl flex-1 px-6 py-8">
-                {/* Header */}
+                {}
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold tracking-tight">
                         My Account
@@ -38,7 +29,7 @@ export function AccountPage() {
                     </Button>
                 </div>
 
-                {/* Tabs */}
+                {}
                 <Tabs
                     value={tab}
                     onValueChange={(v) => v && setTab(v as AccountTab)}
@@ -74,7 +65,7 @@ export function AccountPage() {
                 </Tabs>
             </div>
 
-            {/* Profile edit sheet — mounted once, toggled by open prop */}
+            {}
             <ProfileEditSheet open={editOpen} onOpenChange={setEditOpen} />
         </div>
     );

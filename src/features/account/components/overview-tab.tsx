@@ -1,7 +1,4 @@
-/**
- * Overview tab — profile card, completeness banner, recent activity,
- * recent applications, and recent clients.
- */
+
 
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -34,7 +31,7 @@ import type { AccountTab } from "../types";
 import { ActivityTimeline, toTimelineItems } from "./activity-timeline";
 import { EmptyState, ErrorState, LoadingState } from "./account-states";
 
-// ─── Component ──────────────────────────────────────────────────────────────
+
 
 interface OverviewTabProps {
     onEditProfile: () => void;
@@ -51,7 +48,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
 
     const profile = profileQuery.data;
 
-    // ── Derived data ────────────────────────────────────────────────────────
+    
 
     const fullName = useMemo(() => {
         if (profile) {
@@ -67,8 +64,8 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
         return BRANCHES.find((b) => b.code === code)?.name ?? `Branch ${code}`;
     }, [profile, user]);
 
-    // Photo intentionally excluded: there is no upload endpoint or UI yet,
-    // so counting it made 100% unreachable. Re-add when upload ships.
+    
+    
     const missingFields = useMemo(() => {
         if (!profile) return [];
         return [
@@ -129,7 +126,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
         return rows;
     }, [profile, user, branchLabel]);
 
-    // ── Error state ─────────────────────────────────────────────────────────
+    
 
     if (profileQuery.isError) {
         return (
@@ -144,11 +141,11 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
         );
     }
 
-    // ── Render ──────────────────────────────────────────────────────────────
+    
 
     return (
         <div className="space-y-6">
-            {/* Completeness banner */}
+            {}
             {missingFields.length > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -173,7 +170,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
             )}
 
             <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-                {/* ── Profile card ── */}
+                {}
                 <Card>
                     <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
                         <CardTitle className="text-sm">Profile</CardTitle>
@@ -268,9 +265,9 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
                     </CardContent>
                 </Card>
 
-                {/* ── Right column ── */}
+                {}
                 <div className="space-y-6">
-                    {/* Latest activity */}
+                    {}
                     <Card>
                         <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
                             <CardTitle className="text-sm">Latest Activity</CardTitle>
@@ -304,7 +301,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
                     </Card>
 
                     <div className="grid gap-6 xl:grid-cols-2">
-                        {/* Recent applications */}
+                        {}
                         <Card>
                             <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
                                 <CardTitle className="text-sm">Recent Applications</CardTitle>
@@ -376,7 +373,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
                             </CardContent>
                         </Card>
 
-                        {/* Recent clients */}
+                        {}
                         <Card>
                             <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
                                 <CardTitle className="text-sm">Recent Clients</CardTitle>

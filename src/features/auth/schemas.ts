@@ -1,6 +1,4 @@
-/**
- * Auth schemas — Zod validation for login and password forms.
- */
+
 
 import { z } from "zod";
 

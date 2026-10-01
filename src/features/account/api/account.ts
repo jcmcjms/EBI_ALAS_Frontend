@@ -1,15 +1,9 @@
-/**
- * Account API layer — types and fetchers co-located.
- *
- * Types mirror EBI.ALAS.Api/Features/Account/AccountDtos.cs.
- * Every function returns unwrapped data (the `ApiResponse<T>.data` layer
- * is stripped here so hooks receive clean domain objects).
- */
+
 
 import { apiClient } from "@/src/lib/apiClient";
 import type { PagedResult } from "@/src/lib/api/types";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 export interface AccountProfile {
     id: number;
@@ -36,11 +30,7 @@ export interface AccountStats {
 
 export interface Session {
     id: number;
-    /**
-     * User-Agent string captured at login/refresh. May be `null` for refresh
-     * tokens issued before device capture was wired in — callers should
-     * render an "Unknown Device" fallback rather than assume a string.
-     */
+    
     deviceInfo: string | null;
     createdAt: string;
     expiresAt: string;
@@ -51,7 +41,7 @@ export type PagedSessionsResponse = PagedResult<Session>;
 
 export interface Activity {
     id: number;
-    /** Loan Application Management number (e.g. "LA-2026-08-9942"). */
+    
     lamId: string;
     action: string;
     fromStatus?: string;
@@ -83,7 +73,7 @@ export interface RecentClient {
     lastInteraction: string;
 }
 
-// ─── API Functions ──────────────────────────────────────────────────────────
+
 
 export async function getAccountProfile(): Promise<AccountProfile> {
     const response = await apiClient.get("/api/account/me");

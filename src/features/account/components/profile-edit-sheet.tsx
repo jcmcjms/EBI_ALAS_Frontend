@@ -1,9 +1,4 @@
-/**
- * Profile edit sheet — slide-over form for updating email, phone, and
- * emergency contact.
- *
- * Validation mirrors EBI.ALAS.Api/Features/Account/AccountValidators.cs.
- */
+
 
 import { useEffect, useState, type FormEvent } from "react";
 import { z } from "zod";
@@ -20,7 +15,7 @@ import {
 } from "@/src/components/ui/sheet";
 import { useAccountProfile, useUpdateProfile } from "../hooks/use-account";
 
-// ─── Validation ─────────────────────────────────────────────────────────────
+
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^\+?[0-9\s\-()]{7,20}$/;
@@ -48,7 +43,7 @@ const profileSchema = z.object({
         .max(200, "Emergency contact must not exceed 200 characters."),
 });
 
-// ─── Component ──────────────────────────────────────────────────────────────
+
 
 interface ProfileEditSheetProps {
     open: boolean;
@@ -64,7 +59,7 @@ export function ProfileEditSheet({ open, onOpenChange }: ProfileEditSheetProps) 
     const [emergencyContact, setEmergencyContact] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Re-seed on every open so discarded edits never resurface.
+    
     useEffect(() => {
         if (!open || !profile) return;
         setEmail(profile.email ?? "");
@@ -87,7 +82,7 @@ export function ProfileEditSheet({ open, onOpenChange }: ProfileEditSheetProps) 
             );
             return;
         }
-        // Empty string → null so cleared fields actually clear server-side.
+        
         updateProfile.mutate(
             {
                 email: parsed.data.email || null,

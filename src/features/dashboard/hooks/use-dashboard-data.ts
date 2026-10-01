@@ -1,6 +1,4 @@
-/**
- * Dashboard feature hooks — TanStack Query wrappers.
- */
+
 
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/src/shared/lib/query/queryKeys";
@@ -11,9 +9,9 @@ import type {
     LoanStatus,
 } from "../types";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
 
-/** Backend status keys → the display union the widgets' badge styles key off. */
+
+
 const STATUS_LABELS: Record<string, LoanStatus> = {
     ForRecommendation: "For Recommendation",
     ForChecking: "For Checking",
@@ -29,7 +27,7 @@ const STATUS_LABELS: Record<string, LoanStatus> = {
 const branchNameOf = (code: string) =>
     BRANCHES.find((b) => b.code === code)?.name ?? `Branch ${code}`;
 
-/** DTO → existing view-models so the five widgets stay untouched. */
+
 function mapOverview(o: DashboardOverviewDto): DashboardData {
     return {
         summary: {
@@ -90,7 +88,7 @@ function mapOverview(o: DashboardOverviewDto): DashboardData {
     };
 }
 
-// ─── Hooks ──────────────────────────────────────────────────────────────────
+
 
 export function useDashboardData() {
     return useQuery({

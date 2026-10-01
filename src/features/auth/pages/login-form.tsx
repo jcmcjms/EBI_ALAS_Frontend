@@ -1,6 +1,4 @@
-/**
- * Login form — username/password with Zod validation.
- */
+
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";

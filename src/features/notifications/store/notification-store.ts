@@ -1,6 +1,4 @@
-/**
- * Notification Zustand store — in-memory bell state.
- */
+
 
 import { create } from "zustand/react";
 import type { AppNotification } from "../types";
