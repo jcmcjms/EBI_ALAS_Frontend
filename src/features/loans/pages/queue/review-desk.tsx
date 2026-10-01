@@ -292,13 +292,13 @@ export function ReviewDeskPage() {
                   </Badge>
                 </CardTitle>
                 <span className="text-xs text-muted-foreground">
-                  Positions match Loan Monitoring ranks
+                  Queue order matches Loan Monitoring
                 </span>
               </CardHeader>
               <CardContent className="p-0">
                 {queueBehind.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    No files waiting behind the head — new submissions appear
+                    No other files in queue — new submissions will appear
                     here automatically.
                   </p>
                 ) : (
@@ -317,8 +317,8 @@ export function ReviewDeskPage() {
             </Card>
 
             <p className="text-xs text-muted-foreground">
-              Files are locked to one reviewer at a time — the holder's name
-              stays on the file until the lock expires.
+              Only one reviewer can work on a file at a time. The assigned
+              name stays until the review period ends.
             </p>
           </div>
         )}

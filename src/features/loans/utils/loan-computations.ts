@@ -97,17 +97,18 @@ export function computeMonthlyAmortization(
   const n = termMonths
   const pmt = (principal * r) / (1 - Math.pow(1 + r, -n))
 
-  return round2(pmt)
+  return Math.ceil(pmt)
 }
 
 export const LOAN_AMOUNT_DENOMINATION = 100
 
 const ATM_HARD_CAPS: Readonly<Record<string, number>> = {
   C34: 200_000,
-  C21: 135_000,
+  C21: 215_000,
   C27: 120_000,
   C29: 100_000,
   C25: 200_000,
+  C02: 100_000,
 }
 
 export function computeMaximumLoanableAmount(

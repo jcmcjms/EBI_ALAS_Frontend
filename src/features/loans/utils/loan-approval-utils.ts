@@ -11,6 +11,12 @@ import type {
   SelectedLoan,
 } from '../schemas/schema'
 
+const APDS_PRODUCT_CODES: ReadonlySet<string> = new Set(['A03', 'A13', 'A16', 'A17'])
+
+function isApdsProduct(productCode: string): boolean {
+  return APDS_PRODUCT_CODES.has(productCode.trim().toUpperCase())
+}
+
 export const DAYS_PER_MONTH = 30
 
 export const DEFAULT_MINIMUM_NTHP = 5_000
@@ -121,19 +127,24 @@ export function computeLoanMetrics(
     primaryLoan.annualRatePercent ?? toAnnualRatePercent(params.interestRate)
 
   const principal = params.proposedAmount || 0
+  const productCode = parseProductCode(params.product)
+  const isC02 = productCode === 'C02'
 
   const totalDeductionRate =
     productFees?.applicationChargeRate ?? LEGACY_TOTAL_DEDUCTION_RATE
   const notarialFee = productFees?.notarialFee ?? LEGACY_NOTARIAL_FEE
-  const insurance = productFees?.insuranceFee ?? 0
+  const insurance = isC02
+    ? (principal / 1000) * 3 * (approvalTermDays / 360)
+    : productFees?.insuranceFee ?? 0
 
   const docStamp = primaryLoan.cDocStamp ?? 0
 
-  const advanceInterest = productFees?.chargeAdvanceInterest
-    ? principal *
-      (productFees.advanceInterestRate || 0) *
-      (approvalTermDays / 360)
-    : 0
+  const advanceInterest =
+    productFees?.chargeAdvanceInterest || isC02
+      ? principal *
+        (productFees?.advanceInterestRate || annualRatePercent / 100) *
+        (approvalTermDays / 360)
+      : 0
 
   const deductionsSubtotal = principal * totalDeductionRate
   const applicationCharge = Math.max(
@@ -155,8 +166,9 @@ export function computeLoanMetrics(
   )
 
   const nthp = client.netTakeHomePay || 0
-  const netPayAfterDeduction =
-    nthp - amortization + ebiDeductions + buyOutDeductions
+  const netPayAfterDeduction = isApdsProduct(productCode)
+    ? nthp - amortization + ebiDeductions + buyOutDeductions
+    : nthp - amortization
   const totalMonthlyIncome = netPayAfterDeduction
 
   const totalDisposableGross = nthp + ebiDeductions + buyOutDeductions
@@ -164,7 +176,6 @@ export function computeLoanMetrics(
   const totalDeductionsFinal = minimumNthp + incomingTotal
   const totalDisposableNet = totalDisposableGross - totalDeductionsFinal
 
-  const productCode = parseProductCode(params.product)
   const maximumLoanableAmount = computeMaximumLoanableAmount(
     totalDisposableNet,
     annualRatePercent,

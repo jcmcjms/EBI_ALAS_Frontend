@@ -626,7 +626,7 @@ export function LoanEvaluationPage() {
                         onClick={() => setFlagOpen(true)}
                       >
                         <WarningCircle size={16} />
-                        Flag as lacking documents
+                        Flag Incomplete Documents
                       </Button>
                     </>
                   ) : (

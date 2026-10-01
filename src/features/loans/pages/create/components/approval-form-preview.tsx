@@ -362,7 +362,7 @@ function SingleLoanApprovalForm({
                 </V>
                 <L>LAM ID:</L>
                 <V blue colSpan={3}>
-                  {lamIdByLoanNo?.[loan.loanNo] ?? 'Auto-generated on submit'}
+                  {lamIdByLoanNo?.[loan.loanNo] ?? 'Generated upon submission'}
                 </V>
               </tr>
               <tr>

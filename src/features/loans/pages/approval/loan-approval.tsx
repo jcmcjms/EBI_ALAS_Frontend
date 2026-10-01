@@ -338,7 +338,7 @@ export function LoanApprovalPage() {
           ? 'Evaluation recorded as Not Recommended — forwarded to Approver.'
           : payload.kind === 'return'
             ? 'Application pushed back to the encoder.'
-            : 'Application moved.',
+            : 'Application forwarded successfully.',
       )
       setRemarks('')
       qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
@@ -540,8 +540,7 @@ export function LoanApprovalPage() {
                 onClick={() => setFlagOpen(true)}
                 className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
               >
-                <WarningCircle size={16} weight="bold" /> Flag as lacking
-                documents
+                <WarningCircle size={16} weight="bold" /> Flag Incomplete Documents
               </Button>
             )}
             <Badge variant="outline" className="gap-1.5 font-normal">
@@ -657,8 +656,8 @@ export function LoanApprovalPage() {
                       Workflow Actions
                     </CardTitle>
                     <CardDescription className="pt-1 text-xs">
-                      Review the sheet, then route the application. Remarks are
-                      mandatory.
+                      Review the approval form, then take action. Add your
+                      remarks below.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6 pt-4">
@@ -688,7 +687,7 @@ export function LoanApprovalPage() {
                         onChange={setRemarks}
                         disabled={frozen || act.isPending}
                         ariaLabel="Workflow remarks"
-                        placeholder="Comments, conditions, or reasons — stored with the workflow action…"
+                        placeholder="Add your comments, conditions, or reasons…"
                       />
                       {remarks.trim().length < MIN_REMARKS && !frozen && (
                         <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -717,7 +716,7 @@ export function LoanApprovalPage() {
                         ) : queueState?.ownerName ? (
                           <div className="rounded-md border bg-muted/30 p-3 text-sm">
                             Currently with {queueState.ownerName}. You have
-                            view-only access until the lease is released.
+                            view-only access until the current review is finished.
                           </div>
                         ) : (
                           <div className="rounded-md border bg-muted/30 p-3 text-sm">
@@ -811,7 +810,7 @@ export function LoanApprovalPage() {
                                     ? 'The application returns to the ENCODER (not the recommender) for revision. They will be notified with your remarks.'
                                     : a.verdict === 'NotRecommended'
                                       ? 'The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached.'
-                                      : 'This terminates the loan process and notifies the encoder.'}
+                                      : 'This will reject the loan and close the application. The encoder will be notified.'}
                                   {remarks.trim() && (
                                     <span className="mt-2 block border-l-2 border-border pl-2 italic">
                                       <RichText
@@ -864,7 +863,7 @@ export function LoanApprovalPage() {
                     <CardDescription className="pt-1 text-xs">
                       Each deviation carries the encoder&apos;s justification;
                       the recommender and evaluator reply per deviation, and the
-                      encoder can answer back.
+                      the encoder can reply to each remark.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-4">

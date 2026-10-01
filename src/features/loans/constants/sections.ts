@@ -34,7 +34,7 @@ export const SECTIONS: SectionDef[] = [
     step: 2,
     label: 'Personal & Agency',
     description:
-      'Core borrower details sourced from the legacy CIS database. Fields other than Suffix are read-only.',
+      'Core borrower details retrieved from the CIS record.',
     systemSourced: true,
   },
   {
