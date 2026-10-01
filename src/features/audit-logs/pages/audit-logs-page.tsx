@@ -26,6 +26,7 @@ import {
   UserCircle,
   WarningCircle,
 } from '@phosphor-icons/react'
+import { EmptyState } from '@/src/components/ui/empty-state'
 import { cn } from '@/src/shared/lib/utils'
 import type { AuditLogRecord } from '@/src/lib/api/types'
 import { useAuditLogs } from '../hooks/use-audit-logs'
@@ -69,8 +70,7 @@ export function AuditLogsPage() {
             System Audit Log
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Immutable record of all user actions, system events, and data
-            modifications.
+            A complete history of all changes and actions in the system.
           </p>
         </div>
         <Badge variant="outline" className="gap-1.5 font-normal">
@@ -140,11 +140,31 @@ export function AuditLogsPage() {
               </TableRow>
             ) : logs.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center py-8 text-muted-foreground"
-                >
-                  No audit log entries found.
+                <TableCell colSpan={6} className="p-0">
+                  <EmptyState
+                    icon={ShieldCheck}
+                    title="No audit log entries found"
+                    hint={
+                      debouncedSearch.trim() || actionFilter !== 'all'
+                        ? 'No records match your search or filter criteria. Try resetting your search or filter.'
+                        : 'System actions, user authentication, and loan status changes are automatically recorded here.'
+                    }
+                    action={
+                      debouncedSearch.trim() || actionFilter !== 'all' ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSearch('')
+                            setActionFilter('all')
+                            setPage(1)
+                          }}
+                        >
+                          Clear filters
+                        </Button>
+                      ) : undefined
+                    }
+                  />
                 </TableCell>
               </TableRow>
             ) : (
