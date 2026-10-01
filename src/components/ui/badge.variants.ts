@@ -1,10 +1,4 @@
-/**
- * Badge variants — extracted from `badge.tsx` so the component file
- * can export only the `Badge` component (required by
- * `react-refresh/only-export-components`). Consumers should still
- * import `badgeVariants` from `badge.tsx` — this module is the
- * implementation detail behind the re-export.
- */
+
 import { cva } from "class-variance-authority";
 
 export const badgeVariants = cva(

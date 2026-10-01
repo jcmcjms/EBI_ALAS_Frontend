@@ -1,10 +1,4 @@
-/**
- * Button variants — extracted from `button.tsx` so the component file
- * can export only the `Button` component (required by
- * `react-refresh/only-export-components`). Consumers should still
- * import `buttonVariants` from `button.tsx` — this module is the
- * implementation detail behind the re-export.
- */
+
 import { cva } from "class-variance-authority";
 
 export const buttonVariants = cva(

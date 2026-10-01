@@ -1,10 +1,4 @@
-/**
- * Tabs list variants — extracted from `tabs.tsx` so the component file
- * can export only the `Tabs*` components (required by
- * `react-refresh/only-export-components`). Consumers should still
- * import `tabsListVariants` from `tabs.tsx` — this module is the
- * implementation detail behind the re-export.
- */
+
 import { cva } from "class-variance-authority";
 
 export const tabsListVariants = cva(

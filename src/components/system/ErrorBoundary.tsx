@@ -11,19 +11,7 @@ interface State {
   error: Error | null;
 }
 
-/**
- * React class-component error boundary. Catches unhandled rendering
- * errors anywhere in the subtree and shows a safe fallback instead of
- * a white-screen crash.
- *
- * Usage:
- *   <ErrorBoundary>
- *     <App />
- *   </ErrorBoundary>
- *
- * In a banking context this is mandatory — users must never see a blank
- * page after an unexpected JS error.
- */
+
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null };
 
@@ -32,9 +20,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // ── Telemetry hook ────────────────────────────────────────────────
-    // Wire this to your observability platform (Sentry, Datadog, etc.)
-    // Example: Sentry.captureException(error, { extra: { errorInfo } });
+    
+    
+    
     if (import.meta.env.DEV) {
       console.error("[ErrorBoundary] Unhandled rendering error:", error, errorInfo);
     }

@@ -108,12 +108,7 @@ function AlertDialogDescription({
     );
 }
 
-/**
- * Visual + a11y wrapper for the destructive confirm button.
- * Renders an unstyled <button> styled with our Button variants so it
- * inherits theme + disabled handling. base-ui `Dialog.Close` semantics
- * still apply because the parent primitive closes on outside/escape.
- */
+
 const AlertDialogAction = React.forwardRef<
     HTMLButtonElement,
     React.ComponentProps<"button">
@@ -127,9 +122,7 @@ const AlertDialogAction = React.forwardRef<
 ));
 AlertDialogAction.displayName = "AlertDialogAction";
 
-/**
- * Cancel button — closes the dialog without performing the action.
- */
+
 function AlertDialogClose({ ...props }: AlertDialogPrimitive.Close.Props) {
     return <AlertDialogPrimitive.Close data-slot="alert-dialog-close" {...props} />;
 }

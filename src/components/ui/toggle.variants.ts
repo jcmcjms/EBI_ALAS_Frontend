@@ -1,10 +1,4 @@
-/**
- * Toggle variants — extracted from `toggle.tsx` so the component file
- * can export only the `Toggle` component (required by
- * `react-refresh/only-export-components`). Consumers should still
- * import `toggleVariants` from `toggle.tsx` — this module is the
- * implementation detail behind the re-export.
- */
+
 import { cva } from "class-variance-authority";
 
 export const toggleVariants = cva(

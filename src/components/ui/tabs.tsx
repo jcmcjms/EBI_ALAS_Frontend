@@ -4,10 +4,10 @@ import type { VariantProps } from "class-variance-authority"
 import { cn } from "@/src/shared/lib/utils"
 import { tabsListVariants } from "./tabs.variants"
 
-// Re-export so existing imports (`import { tabsListVariants } from "./tabs"`) keep working.
-// The variant declaration lives in `tabs.variants.ts` so this file
-// exports only the `Tabs*` components, satisfying
-// `react-refresh/only-export-components`.
+
+
+
+
 export { tabsListVariants }
 
 function Tabs({

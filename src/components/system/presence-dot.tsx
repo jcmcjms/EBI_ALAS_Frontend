@@ -6,19 +6,7 @@ import {
     TooltipTrigger,
 } from "@/src/components/ui/tooltip";
 
-/**
- * Green/grey presence indicator dot.
- *
- * Reads from the presence store (zero network requests) and shows:
- * - Pulsing green dot when online.
- * - Grey dot when offline.
- * - Tooltip with session count when online.
- *
- * Usage:
- * - Users admin table: `<PresenceDot userId={row.id} />`
- * - Monitoring "Assigned To": `<PresenceDot userId={row.assignedApproverId} />`
- * - Any user reference in the UI.
- */
+
 export function PresenceDot({
     userId,
     className,

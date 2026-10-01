@@ -3,16 +3,16 @@ import { cn } from "@/src/shared/lib/utils";
 
 export interface FormTabItem {
   value: string;
-  /** Primary token — product code. */
+  
   label: string;
-  /** Secondary — PN tail, mono. */
+  
   hint?: string;
-  /** Tertiary — amount/metric, tabular. */
+  
   metric?: string;
   title?: string;
-  /** Destructive indicator dot (row has validation errors). */
+  
   hasError?: boolean;
-  /** Amber indicator dot — review attention (e.g. unresolved documents). */
+  
   hasWarning?: boolean;
 }
 
@@ -21,23 +21,15 @@ interface FormTabStripProps {
   value: string;
   onValueChange: (value: string) => void;
   ariaLabel: string;
-  /** DOM-id namespace. Defaults to "form". Multiple strips on one page need unique prefixes. */
+  
   idPrefix?: string;
-  /** Surface the active tab merges into: white print sheet vs card body. */
+  
   activeSurface?: "sheet" | "card";
-  /** Right slot on the seam (counter, prev/next). */
+  
   trailing?: React.ReactNode;
 }
 
-/**
- * Lyra-conformant selector strip: square corners, 1px hairlines, flat
- * surfaces, 2px primary accent on the active tab (same accent language
- * as the sidebar stepper's left bar). The active tab's bottom border
- * takes the panel surface color and overlaps the track hairline via
- * -mb-px, so tab + panel read as ONE connected object — not floating
- * pills. WAI-ARIA tabs pattern: roving tabindex, arrow/Home/End keys,
- * automatic activation (panels are local form state, cheap to swap).
- */
+
 export function FormTabStrip({
   items, value, onValueChange, ariaLabel,
   idPrefix = "form", activeSurface = "card", trailing,
@@ -59,8 +51,7 @@ export function FormTabStrip({
 
   return (
     <div className="flex items-end gap-2 print:hidden">
-      {/* Hairline lives on this wrapper (NOT the scroll container, or the
-          -mb-px overlap would be clipped by overflow-x-auto). */}
+      {}
       <div className="min-w-0 flex-1 border-b border-border">
         <div
           role="tablist"
@@ -86,8 +77,8 @@ export function FormTabStrip({
                 className={cn(
                   "flex shrink-0 items-center gap-2 rounded-none border px-3 py-2 text-xs font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                  // border-t-2 on BOTH states keeps tab heights identical;
-                  // inactive just makes the accent transparent.
+                  
+                  
                   active
                     ? cn(
                         "border-border border-t-2 border-t-primary text-foreground shadow-none",

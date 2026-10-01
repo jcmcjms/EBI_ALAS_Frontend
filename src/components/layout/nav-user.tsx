@@ -47,14 +47,14 @@ export function NavUser({
 
     const handleLogout = async () => {
         try {
-            // Notify backend so it can blacklist the token
+            
             if (accessToken) {
                 await apiClient.post("/api/auth/logout").catch(() => {
-                    // If backend call fails, still log out locally
+                    
                 });
             }
         } finally {
-            // Always clear local session regardless of backend response
+            
             clearSession()
             navigate("/login", { replace: true })
         }

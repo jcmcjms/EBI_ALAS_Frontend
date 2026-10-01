@@ -4,9 +4,9 @@ import type { VariantProps } from "class-variance-authority"
 import { cn } from "@/src/shared/lib/utils"
 import { toggleVariants } from "./toggle.variants"
 
-// Re-export so existing imports keep working. The variant declaration
-// lives in `toggle.variants.ts` so this file exports only the `Toggle`
-// component, satisfying `react-refresh/only-export-components`.
+
+
+
 export { toggleVariants }
 
 function Toggle({

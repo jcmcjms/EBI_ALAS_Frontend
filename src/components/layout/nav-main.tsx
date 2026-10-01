@@ -24,7 +24,7 @@ export function NavMain({
     const hasPermission = useAuthStore((state) => state.hasPermission)
     const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission)
 
-    // Filter nav items based on user permissions
+    
     const filteredItems = items.filter((item) => {
         if (item.requiredPermissions?.length) {
             return hasAnyPermission(item.requiredPermissions)
@@ -35,10 +35,10 @@ export function NavMain({
         }
         return true
     }).map((item) => {
-        // If item has sub-items, filter those too
+        
         if (item.items && item.items.length > 0) {
             const filteredSubItems = item.items.filter((subItem) => {
-                // If sub-item has a required permission, check it
+                
                 if (subItem.requiredPermission && !hasPermission(subItem.requiredPermission)) {
                     return false
                 }

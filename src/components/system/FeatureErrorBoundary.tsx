@@ -4,9 +4,9 @@ import { WarningCircle, ArrowClockwise } from "@phosphor-icons/react";
 
 interface Props {
   children: ReactNode;
-  /** Feature name for error context (e.g., "Loan Monitoring", "Dashboard") */
+  
   featureName: string;
-  /** Optional custom fallback UI */
+  
   fallback?: ReactNode;
 }
 
@@ -15,18 +15,7 @@ interface State {
   error: Error | null;
 }
 
-/**
- * Feature-level error boundary for isolating component crashes.
- *
- * Unlike the root ErrorBoundary which catches everything, this one
- * wraps a specific feature section so a crash in one area doesn't
- * kill the entire app.
- *
- * Usage:
- *   <FeatureErrorBoundary featureName="Loan Monitoring">
- *     <LoanMonitoring />
- *   </FeatureErrorBoundary>
- */
+
 export class FeatureErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null };
 
@@ -35,7 +24,7 @@ export class FeatureErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // In production, send to monitoring service with feature context
+    
     if (import.meta.env.DEV) {
       console.error(
         `[${this.props.featureName}] Feature error:`,

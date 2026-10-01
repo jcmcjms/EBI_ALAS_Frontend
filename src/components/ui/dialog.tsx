@@ -41,8 +41,8 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
-  // Radix-style props that don't exist in Base UI — destructure to
-  // prevent them leaking to the DOM element as unknown attributes.
+  
+  
   onInteractOutside: _onInteractOutside,
   onEscapeKeyDown: _onEscapeKeyDown,
   ...props

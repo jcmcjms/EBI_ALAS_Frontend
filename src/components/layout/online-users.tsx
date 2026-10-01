@@ -12,9 +12,7 @@ import {
 } from "@/src/components/ui/popover";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 
-/**
- * Returns up to 2 initials from a full name.
- */
+
 function initialsOf(name: string): string {
     return name
         .split(/\s+/)
@@ -25,14 +23,7 @@ function initialsOf(name: string): string {
         .toUpperCase();
 }
 
-/**
- * Header avatar stack + popover directory of online users.
- *
- * Shows up to 4 avatars in a stack, a "+N" overflow count, and a
- * Users icon. Clicking opens a popover with the full online directory.
- *
- * Reads from the presence store — zero network requests.
- */
+
 export function OnlineUsers() {
     const online = useOnlineUsers();
     const me = useAuthStore((s) => Number(s.user?.userId));

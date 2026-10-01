@@ -4,7 +4,7 @@ import type { TooltipValueType } from "recharts"
 
 import { cn } from "@/src/shared/lib/utils"
 
-// Format: { THEME_NAME: CSS_SELECTOR }
+
 const THEMES = { light: "", dark: ".dark" } as const
 
 const INITIAL_DIMENSION = { width: 320, height: 200 } as const
@@ -88,8 +88,8 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
-  // Injects CSS custom properties from the ChartConfig. The `dangerouslySetInnerHTML`
-  // is safe here: values come from developer-authored config, never user input.
+  
+  
   return (
     <style
       dangerouslySetInnerHTML={{

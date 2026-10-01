@@ -18,7 +18,7 @@ import { cn } from "@/src/shared/lib/utils";
 import { isRichTextEmpty, sanitizeRichText, toRichText } from "@/src/shared/lib/rich-text";
 
 interface RichTextEditorProps {
-    /** Sanitized HTML (or legacy plain text) from the form store. */
+    
     value: string;
     onChange: (html: string) => void;
     onBlur?: () => void;
@@ -94,8 +94,8 @@ export function RichTextEditor({
         },
     });
 
-    // External writes (form reset, server-loaded draft, tab remount) replace
-    // the document. Skipped while focused so typing never clobbers itself.
+    
+    
     useEffect(() => {
         if (!editor || editor.view.hasFocus()) return;
         const next = toRichText(value);

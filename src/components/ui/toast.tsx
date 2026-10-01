@@ -215,19 +215,19 @@ function Toaster({
 const createToastManager = ToastPrimitive.createToastManager
 const useToastManager = ToastPrimitive.useToastManager
 
-// ── Programmatic toast helpers ───────────────────────────────────────────────
-// Convenience wrappers around `toast.add()` for imperative usage outside of
-// React components (e.g. Axios interceptors, service workers, etc.).
-// The `type` field drives the icon rendered by <ToastIcon>.
-//
-// Base UI default timeout is 5000ms.  We override per type:
-//   success / info  → 2 s   (quick confirmations, no deep reading needed)
-//   warning         → 4 s   (user may need to read)
-//   error           → 5 s   (needs attention)
-//   loading         → 0     (manual dismiss — spinner stays until closed)
-//
-// Callers can pass `{ timeout }` to override the default per-call, e.g.
-//   toastError(<DetailedJSX />, { timeout: 10_000 })
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 interface ToastOptions {
   timeout?: number
@@ -250,7 +250,7 @@ function toastInfo(title: React.ReactNode, options?: ToastOptions) {
   toast.add({ type: "info", title, timeout: 2000, ...options })
 }
 
-/** Loading spinner — stays visible until manually dismissed via `toast.close(id)`. */
+
 function toastLoading(title: React.ReactNode, options?: ToastOptions) {
   return toast.add({ type: "loading", title, timeout: 0, ...options })
 }
