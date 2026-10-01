@@ -4,9 +4,7 @@ import { WarningCircle, ArrowClockwise } from '@phosphor-icons/react'
 
 interface Props {
   children: ReactNode
-
   featureName: string
-
   fallback?: ReactNode
 }
 
@@ -44,24 +42,23 @@ export class FeatureErrorBoundary extends Component<Props, State> {
 
       return (
         <div
-          className="flex flex-col items-center justify-center gap-4 p-8 text-center"
+          className="flex flex-col items-center justify-center gap-3 rounded-lg border bg-card p-6 text-center shadow-xs"
           role="alert"
           aria-live="polite"
         >
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+          <div className="flex size-11 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
             <WarningCircle
-              size={24}
+              size={22}
               weight="duotone"
-              className="text-muted-foreground"
               aria-hidden="true"
             />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-sm font-semibold text-foreground">
               Unable to load {this.props.featureName}
             </p>
-            <p className="text-xs text-muted-foreground">
-              An unexpected error occurred. Please try again.
+            <p className="max-w-xs text-xs text-muted-foreground">
+              A temporary issue prevented this section from rendering properly.
             </p>
           </div>
           <Button
@@ -72,7 +69,7 @@ export class FeatureErrorBoundary extends Component<Props, State> {
             aria-label={`Retry loading ${this.props.featureName}`}
           >
             <ArrowClockwise size={14} weight="bold" aria-hidden="true" />
-            Try again
+            Reload section
           </Button>
         </div>
       )
@@ -81,3 +78,4 @@ export class FeatureErrorBoundary extends Component<Props, State> {
     return this.props.children
   }
 }
+

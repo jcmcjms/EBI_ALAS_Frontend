@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Button } from '@/src/components/ui/button'
+import { WarningOctagon, ArrowClockwise, House } from '@phosphor-icons/react'
 
 interface Props {
   children: ReactNode
@@ -40,42 +41,59 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback ?? (
-          <div className="flex h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-            <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
-              <svg
-                className="size-8 text-destructive"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-                />
-              </svg>
+          <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 p-6 text-center">
+            <div className="w-full max-w-md space-y-6 rounded-xl border bg-card p-8 shadow-sm">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                <WarningOctagon size={32} weight="duotone" />
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                  Application Encountered an Error
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  An unexpected problem occurred while rendering this section.
+                  You can try refreshing the view or returning to the dashboard.
+                </p>
+              </div>
+
+              {import.meta.env.DEV && this.state.error && (
+                <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-left">
+                  <p className="font-mono text-xs font-semibold text-destructive">
+                    {this.state.error.name}: {this.state.error.message}
+                  </p>
+                  {this.state.error.stack && (
+                    <pre className="mt-2 max-h-40 overflow-auto text-[11px] text-destructive/80 font-mono">
+                      {this.state.error.stack}
+                    </pre>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={this.handleReset}
+                  className="gap-2"
+                >
+                  <ArrowClockwise size={16} weight="bold" />
+                  Try Again
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={this.handleReload}
+                  className="gap-2"
+                >
+                  <House size={16} weight="bold" />
+                  Reload Page
+                </Button>
+              </div>
             </div>
-            <h2 className="text-2xl font-semibold text-foreground">
-              Application Error
-            </h2>
-            <p className="max-w-md text-sm text-muted-foreground">
-              An unexpected error occurred. The development team has been
-              notified. Please try reloading the application.
+
+            <p className="mt-6 text-xs text-muted-foreground">
+              ALAS &bull; Enterprise Bank Inc. Loan Application System
             </p>
-            {import.meta.env.DEV && this.state.error && (
-              <pre className="max-w-lg overflow-auto rounded-md border border-destructive/20 bg-destructive/5 p-4 text-left text-xs text-destructive">
-                {this.state.error.message}
-                {'\n'}
-                {this.state.error.stack}
-              </pre>
-            )}
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={this.handleReset}>
-                Try Again
-              </Button>
-              <Button onClick={this.handleReload}>Reload Dashboard</Button>
-            </div>
           </div>
         )
       )
@@ -84,3 +102,4 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children
   }
 }
+
