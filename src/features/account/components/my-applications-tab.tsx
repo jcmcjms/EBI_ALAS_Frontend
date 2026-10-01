@@ -1,8 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
+import { ClipboardText, ArrowRight } from '@phosphor-icons/react'
 import { Badge } from '@/src/components/ui/badge'
 import { Button } from '@/src/components/ui/button'
-import { Spinner } from '@/src/components/ui/spinner'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/src/components/ui/card'
 import {
   Table,
   TableBody,
@@ -12,79 +18,138 @@ import {
   TableRow,
 } from '@/src/components/ui/table'
 import { useAccountLoans } from '../hooks/use-account'
+import { EmptyState, ErrorState, LoadingState } from './account-states'
+import { useAuthStore } from '@/src/store/authStore'
+import { LOAN_STATUS_META, type LoanStatus } from '@/src/features/loans/utils/loan-status'
+import { cn } from '@/src/shared/lib/utils'
 
 export function MyApplicationsTab() {
   const navigate = useNavigate()
-  const { data, isLoading } = useAccountLoans(200)
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-        <Spinner className="h-4 w-4" />
-        Loading…
-      </div>
-    )
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <div className="py-12 text-center text-sm text-muted-foreground">
-        You haven&apos;t submitted any loan applications yet.
-      </div>
-    )
-  }
+  const { data, isLoading, isError, refetch } = useAccountLoans(200)
+  const user = useAuthStore((s) => s.user)
+  const canCreate = user?.role === 'Encoder' || user?.role === 'Admin'
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Form Number</TableHead>
-          <TableHead>Borrower</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Applied On</TableHead>
-          <TableHead>Last Updated</TableHead>
-          <TableHead className="text-right">Action</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.map((app) => {
-          const rawApp = app as unknown as {
-            id: number
-            formNumber?: string
-            lamId?: string
-            clientName: string
-            status: string
-            applicationDate: string
-          }
-          const formNumber =
-            rawApp.formNumber ?? rawApp.lamId ?? `#${rawApp.id}`
-
-          return (
-            <TableRow key={app.id}>
-              <TableCell className="font-medium">{formNumber}</TableCell>
-              <TableCell>{app.clientName}</TableCell>
-              <TableCell>
-                <Badge variant="outline">{app.status}</Badge>
-              </TableCell>
-              <TableCell>
-                {format(new Date(app.applicationDate), 'MMM d, yyyy')}
-              </TableCell>
-              <TableCell className="text-xs text-muted-foreground">
-                {format(new Date(app.applicationDate), 'MMM d, yyyy')}
-              </TableCell>
-              <TableCell className="text-right">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30 py-3">
+        <CardTitle className="text-sm">My Loan Applications</CardTitle>
+        {canCreate && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => navigate('/loans/create')}
+          >
+            New Application
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="p-0">
+        {isLoading ? (
+          <LoadingState label="Loading applications…" />
+        ) : isError ? (
+          <ErrorState
+            message="Failed to load your loan applications."
+            onRetry={() => refetch()}
+          />
+        ) : !data || data.length === 0 ? (
+          <EmptyState
+            icon={ClipboardText}
+            title="No loan applications found"
+            hint="Applications you create will appear here along with their latest approval status."
+            action={
+              canCreate ? (
+                <Button
+                  size="sm"
+                  onClick={() => navigate('/loans/create')}
+                  className="gap-2"
+                >
+                  Create Application
+                </Button>
+              ) : (
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => navigate(`/loans/monitoring?id=${app.id}`)}
+                  onClick={() => navigate('/loans/monitoring')}
                 >
-                  View Details
+                  View Loan Monitoring
                 </Button>
-              </TableCell>
-            </TableRow>
-          )
-        })}
-      </TableBody>
-    </Table>
+              )
+            }
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead>LAM ID</TableHead>
+                <TableHead>Borrower</TableHead>
+                <TableHead>Proposed Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Applied Date</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((app) => {
+                const meta = LOAN_STATUS_META[app.status as LoanStatus]
+                const amountFormatted =
+                  typeof app.proposedAmount === 'number'
+                    ? new Intl.NumberFormat('en-PH', {
+                        style: 'currency',
+                        currency: 'PHP',
+                        maximumFractionDigits: 0,
+                      }).format(app.proposedAmount)
+                    : '—'
+
+                return (
+                  <TableRow
+                    key={app.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    <TableCell className="font-mono text-xs font-semibold">
+                      {app.lamId || `#${app.id}`}
+                    </TableCell>
+                    <TableCell className="font-medium text-foreground">
+                      {app.clientName}
+                    </TableCell>
+                    <TableCell className="tabular-nums font-medium">
+                      {amountFormatted}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          'text-xs font-normal',
+                          meta?.className ?? 'bg-muted text-muted-foreground',
+                        )}
+                      >
+                        {app.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground tabular-nums">
+                      {app.applicationDate
+                        ? format(new Date(app.applicationDate), 'MMM d, yyyy')
+                        : '—'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 gap-1 text-xs hover:text-primary"
+                        onClick={() => navigate(`/loans/monitoring?id=${app.id}`)}
+                      >
+                        Details
+                        <ArrowRight size={13} weight="bold" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   )
 }
+

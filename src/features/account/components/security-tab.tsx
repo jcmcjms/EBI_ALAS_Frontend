@@ -91,7 +91,7 @@ export function SecurityTab() {
                   variant="outline"
                   className="border-amber-300 bg-amber-50 font-normal text-amber-700"
                 >
-                  Rotation due
+                  Update recommended
                 </Badge>
               )}
             </div>
@@ -183,7 +183,7 @@ export function SecurityTab() {
                             })
                           }
                         >
-                          Revoke
+                          Sign out
                         </Button>
                       )}
                     </div>
@@ -221,7 +221,7 @@ export function SecurityTab() {
             <AlertDialogDescription>
               {confirm?.kind === 'others'
                 ? `This signs out ${confirm.count} other device${confirm.count === 1 ? '' : 's'}. Your current session stays active.`
-                : `The device "${confirm?.kind === 'single' ? (confirm.session.deviceInfo ?? 'Unknown Device') : ''}" will be signed out immediately and its refresh token invalidated.`}
+                : `The device "${confirm?.kind === 'single' ? (confirm.session.deviceInfo ?? 'Unknown Device') : ''}" will be signed out immediately.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
