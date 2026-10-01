@@ -490,6 +490,17 @@ export function LoanCreationPage() {
       if (isSubmitting) return
       setSubmitAttempted(true)
 
+      const userBranchId = useAuthStore.getState().user?.branchId ?? ''
+      const mismatched = data.loans.filter(
+        (l) => l.branchCode && l.branchCode !== userBranchId,
+      )
+      if (mismatched.length > 0) {
+        toastError(
+          `Loan branch (${mismatched[0].branchCode}) does not match your assigned branch (${userBranchId}). Only loans from your branch can be submitted.`,
+        )
+        return
+      }
+
       createLoan(mapFormToSubmissionPayload(data))
     },
     [createLoan, isSubmitting],
