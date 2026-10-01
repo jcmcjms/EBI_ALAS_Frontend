@@ -13,20 +13,13 @@ import { stripRoleDisplayName } from "@/src/features/admin/users/components/role
 import { useRoles } from "../hooks/use-roles";
 import { useApprovalAuthorities } from "../hooks/use-approval-authorities";
 
-/**
- * Value→label lookup for the branch <Select> trigger. Base UI's
- * <Select.Value> renders the raw value (the branch code) unless the
- * Root receives an `items` map — without it the closed trigger shows
- * the code instead of the branch name.
- */
+
 const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
     value: branch.code,
     label: branch.name,
 }));
 
-/**
- * Formats a number as Philippine Peso currency string.
- */
+
 function formatPhp(amount: number): string {
     return new Intl.NumberFormat("en-PH", {
         style: "currency",
@@ -36,16 +29,7 @@ function formatPhp(amount: number): string {
     }).format(amount);
 }
 
-/**
- * Editable fields — mirrors PUT /api/users/{id} (UpdateUserRequest).
- *
- * `eSignature` is intentionally OPTIONAL on the wire. The parent only
- * sets it when the user actually edited or cleared the signature —
- * a minor profile edit (e.g. correcting a typo in the last name)
- * never round-trips the ~100KB PNG through the API. The backend's
- * "no-change" logic (`request.ESignature is not null`) treats the
- * omitted key the same as `undefined` and preserves the existing value.
- */
+
 export interface UserProfileChanges {
     firstName: string;
     middleName: string;
@@ -59,26 +43,19 @@ export interface UserProfileChanges {
 
 interface UserEditDrawerProps {
     user: UserResponse | null;
-    /** Whether the current session holds `user.edit` — gates the Save button. */
+    
     canEdit: boolean;
     onClose: () => void;
-    /** Persists changes via the API. Resolves true when saved successfully. */
+    
     onSave: (userId: number, changes: UserProfileChanges) => Promise<boolean>;
-    /** Routed to the parent's confirmation flow for sensitive actions. */
+    
     onToggleStatus: (user: UserResponse) => void;
     onResetPassword: (user: UserResponse) => void;
     onForcePasswordReset: (user: UserResponse) => void;
     onRevokeSessions: (user: UserResponse) => void;
 }
 
-/** Text inputs in the drawer. The signature lives in its own state slot
- *  because it never round-trips through `<input>` events.
- *
- *  The fields are typed as plain `string` (not `string | null`) because
- *  `<input value=...>` requires a string — we hydrate `null`/`undefined`
- *  from the API into `""` in `profileFrom` and convert back to `null`
- *  in `handleSave`. The `UserProfileChanges` shape keeps the nullable
- *  wire form because the save payload is what travels to the server. */
+
 type EditableProfile = {
     firstName: string;
     middleName: string;
@@ -89,11 +66,7 @@ type EditableProfile = {
     coveredBranches: string[];
 };
 
-/**
- * Builds the editable profile from a UserResponse. For Approvers,
- * jobTitle is seeded with the authority key (not the display name)
- * so the dropdown can match the selected value.
- */
+
 function profileFrom(user: UserResponse): EditableProfile {
     return {
         firstName: user.firstName,
@@ -101,8 +74,8 @@ function profileFrom(user: UserResponse): EditableProfile {
         lastName: user.lastName,
         branchId: user.branchId,
         role: user.role,
-        // For Approvers: use the authority key so the <Select> matches.
-        // For others: use the free-text jobTitle.
+        
+        
         jobTitle: user.approvalAuthority?.key ?? user.jobTitle ?? "",
         coveredBranches: user.coveredBranches ?? [],
     };
@@ -129,27 +102,24 @@ export function UserEditDrawer({
     onRevokeSessions,
 }: UserEditDrawerProps) {
     const { data: roles } = useRoles();
-    // Same lookup semantics as BRANCH_SELECT_ITEMS; roles arrive async,
-    // so memoize on the fetched list.
+    
+    
     const roleSelectItems = useMemo(
         () => roles.map((role) => ({ value: role.name, label: stripRoleDisplayName(role.displayName) })),
         [roles],
     );
     const [profile, setProfile] = useState<EditableProfile>(emptyProfile);
-    /** Mirrors the latest base64 PNG drawn on the canvas. `null` means
-     *  the user has cleared the pad. */
+    
     const [eSignature, setESignature] = useState<string | null>(null);
-    /** Distinguishes "user touched the signature" from "the initial value
-     *  we hydrated from the server". Without this, every minor profile
-     *  edit would push the existing ~100KB PNG back to the server. */
+    
     const [isSignatureDirty, setIsSignatureDirty] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSyncedUser, setLastSyncedUser] = useState<UserResponse | null>(null);
 
-    // Re-seed local form state whenever a different user is opened (or an
-    // update produces a new user object), using the guarded
-    // adjust-state-during-render pattern instead of an effect.
+    
+    
+    
     if (user !== lastSyncedUser) {
         setLastSyncedUser(user);
         setProfile(user ? profileFrom(user) : emptyProfile);
@@ -158,31 +128,31 @@ export function UserEditDrawer({
         setIsDirty(false);
     }
 
-    // Fetch approval authorities only when current role is Approver.
+    
     const isApprover = profile.role === "Approver";
     const { data: authorities, isLoading: authoritiesLoading } = useApprovalAuthorities(isApprover);
 
-    // Determine if the selected authority is Branch-scope (scopeType === 0).
+    
     const selectedAuthority = isApprover ? (authorities ?? []).find(a => a.key === profile.jobTitle) : null;
     const isBranchScope = isApprover && selectedAuthority?.scopeType === 0;
 
     const handleFieldChange = <K extends keyof EditableProfile>(field: K, value: EditableProfile[K]) => {
         setProfile(prev => {
             const next = { ...prev, [field]: value };
-            // When switching away from Approver, clear the authority selection
-            // and covered branches.
+            
+            
             if (field === "role" && value !== "Approver") {
                 next.jobTitle = "";
                 next.coveredBranches = [];
             }
-            // When switching to Approver, clear jobTitle so the user picks
-            // from the authority dropdown (not stale free text).
+            
+            
             if (field === "role" && value === "Approver") {
                 next.jobTitle = "";
                 next.coveredBranches = [];
             }
-            // When the authority changes, clear covered branches if the new
-            // authority is not Branch-scope (scopeType !== 0).
+            
+            
             if (field === "jobTitle" && prev.role === "Approver") {
                 const selectedAuth = (authorities ?? []).find(a => a.key === value);
                 if (selectedAuth && selectedAuth.scopeType !== 0) {
@@ -215,7 +185,7 @@ export function UserEditDrawer({
             toastError("Please select an approval authority for this Approver.");
             return;
         }
-        // Branch-scope approvers must select at least one covered branch.
+        
         if (profile.role === "Approver" && isBranchScope && profile.coveredBranches.length === 0) {
             toastError("Please select at least one covered branch for this Branch-scope approver.");
             return;
@@ -227,9 +197,9 @@ export function UserEditDrawer({
 
         setIsSaving(true);
         try {
-            // Always send jobTitle (even when empty → null) so a clearing
-            // action persists. Only forward the signature when the user
-            // actually touched it — see isSignatureDirty above.
+            
+            
+            
             const changes: UserProfileChanges = {
                 firstName: profile.firstName.trim(),
                 middleName: profile.middleName.trim(),
@@ -237,8 +207,8 @@ export function UserEditDrawer({
                 branchId: profile.branchId,
                 role: profile.role,
                 jobTitle: profile.jobTitle.trim() || null,
-                // Omit the key entirely when not applicable so the backend's
-                // null = "keep existing" semantics work correctly on update.
+                
+                
                 ...(isBranchScope && profile.coveredBranches.length > 0
                     ? { coveredBranches: profile.coveredBranches }
                     : {}),
@@ -309,7 +279,7 @@ export function UserEditDrawer({
                             />
                         </div>
 
-                        {/* ── Job Title / Approval Authority ── */}
+                        {}
                         <div className="space-y-2">
                             <Label htmlFor="edit-jobTitle">
                                 {isApprover ? "Approval Authority" : "Job Title"}
@@ -347,7 +317,7 @@ export function UserEditDrawer({
                             </p>
                         </div>
 
-                        {/* ── Covered Branches (Branch-scope Approvers only) ── */}
+                        {}
                         {isBranchScope && (
                             <div className="space-y-2">
                                 <Label>Covered Branches *</Label>
@@ -444,7 +414,7 @@ export function UserEditDrawer({
                             </p>
                         </div>
 
-                        {/* ── Approval Authority (in Roles tab for Approvers) ── */}
+                        {}
                         {isApprover && (
                             <div className="space-y-2">
                                 <Label htmlFor="edit-authority">Approval Authority</Label>
@@ -469,7 +439,7 @@ export function UserEditDrawer({
                             </div>
                         )}
 
-                        {/* ── Covered Branches (in Roles tab for Branch-scope Approvers) ── */}
+                        {}
                         {isBranchScope && (
                             <div className="space-y-2">
                                 <Label>Covered Branches *</Label>

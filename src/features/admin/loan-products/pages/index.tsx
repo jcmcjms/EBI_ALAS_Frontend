@@ -1,6 +1,4 @@
-/**
- * Loan Products admin page — thin shell.
- */
+
 
 import { Database } from "@phosphor-icons/react";
 import { ProductsTable } from "../components/products-table";

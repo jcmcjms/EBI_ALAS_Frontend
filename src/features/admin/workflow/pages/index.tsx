@@ -1,6 +1,4 @@
-/**
- * Workflow settings page — thin shell.
- */
+
 
 import { WorkflowSettingsContent } from "./workflow-settings-content";
 

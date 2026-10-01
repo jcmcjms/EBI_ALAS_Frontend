@@ -1,6 +1,4 @@
-/**
- * Products table toolbar — search, retired toggle, and action buttons.
- */
+
 
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
 import {
@@ -41,7 +39,7 @@ export function ProductsToolbar({
 }: ProductsToolbarProps) {
     return (
         <div className="flex items-center gap-2">
-            {/* Include retired toggle */}
+            {}
             <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5">
                 <Checkbox
                     id="show-retired"
@@ -57,7 +55,7 @@ export function ProductsToolbar({
                 </Label>
             </div>
 
-            {/* Search */}
+            {}
             <div className="relative">
                 <MagnifyingGlass
                     size={16}
@@ -72,7 +70,7 @@ export function ProductsToolbar({
                 />
             </div>
 
-            {/* Action buttons */}
+            {}
             {canManageProducts && (
                 <>
                     <Button

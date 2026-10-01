@@ -1,11 +1,9 @@
-/**
- * Approval Matrix API — authority matrix, deviation catalog, routing.
- */
+
 
 import { apiClient } from "@/src/lib/apiClient";
 import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 export interface ApprovalAuthorityDto {
     key: string;
@@ -47,7 +45,7 @@ export interface LoanRoutingDto {
     assignedApproverName: string | null;
 }
 
-// ─── Query Keys ─────────────────────────────────────────────────────────────
+
 
 export const approvalMatrixKeys = {
     authorities: () => ["approval-matrix", "authorities"] as const,
@@ -56,7 +54,7 @@ export const approvalMatrixKeys = {
     routing: (id: number) => ["loans", id, "routing"] as const,
 };
 
-// ─── API Functions ──────────────────────────────────────────────────────────
+
 
 export async function getApprovalAuthorities(): Promise<ApprovalAuthorityDto[]> {
     const res = await apiClient.get<ApiResponse<ApprovalAuthorityDto[]>>(
@@ -92,7 +90,7 @@ export async function releaseAssignment(id: number): Promise<void> {
     );
 }
 
-// ─── Severity Helpers ───────────────────────────────────────────────────────
+
 
 export const SEVERITY_LABELS: Record<number, string> = {
     0: "None",

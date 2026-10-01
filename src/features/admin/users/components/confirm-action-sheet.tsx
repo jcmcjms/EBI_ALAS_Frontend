@@ -8,9 +8,9 @@ interface ConfirmActionSheetProps {
     title: string;
     description: string;
     actionLabel: string;
-    /** Renders destructive styling and a warning icon. */
+    
     destructive?: boolean;
-    /** Shows a spinner on the confirm button and disables it. */
+    
     isPending?: boolean;
     onConfirm: () => void;
 }

@@ -1,6 +1,4 @@
-/**
- * Users admin page — thin shell that composes the data table.
- */
+
 
 import { UsersDataTable } from "../users-data-table";
 

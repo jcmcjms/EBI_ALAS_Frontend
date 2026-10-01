@@ -12,14 +12,7 @@ export interface TemporaryCredential {
     temporaryPassword: string;
 }
 
-/**
- * One-time credential handoff (GitHub/AWS pattern).
- *  - Masked by default — shared branch terminals defeat cleartext toasts.
- *  - Copy-to-clipboard + reveal toggle; the dialog is the ONLY place the
- *    secret renders, and only until dismissed.
- *  - Acknowledgment gates "Done" so the secret can't vanish uncopied.
- *  - Escape/overlay close blocked until acked or explicitly discarded.
- */
+
 export function TemporaryPasswordDialog({
     credential,
     onDismiss,
@@ -49,9 +42,9 @@ export function TemporaryPasswordDialog({
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
-            // navigator.clipboard can fail when the dialog steals focus or
-            // the page isn't in a secure context. Fall back to a temporary
-            // textarea + execCommand which works regardless of focus state.
+            
+            
+            
             try {
                 const textarea = document.createElement("textarea");
                 textarea.value = credential.temporaryPassword;

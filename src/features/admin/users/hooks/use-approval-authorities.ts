@@ -1,6 +1,4 @@
-/**
- * Approval authorities hook — reference data for approver dropdowns.
- */
+
 
 import { useQuery } from "@tanstack/react-query";
 import {

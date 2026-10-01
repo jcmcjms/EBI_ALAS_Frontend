@@ -1,12 +1,10 @@
-/**
- * Roles hook — reference data for role dropdowns/filters.
- */
+
 
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/src/shared/lib/query/queryKeys";
 import { listRoles, type RoleInfo } from "../api/roles";
 
-const REFERENCE_STALE_TIME = 60 * 60_000; // 1 hour
+const REFERENCE_STALE_TIME = 60 * 60_000; 
 
 export function useRoles(): {
     data: RoleInfo[];

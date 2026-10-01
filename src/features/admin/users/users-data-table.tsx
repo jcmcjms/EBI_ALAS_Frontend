@@ -1,17 +1,4 @@
-/**
- * Users data table — thin composition of columns, toolbar, stats, and table UI.
- *
- * This file owns:
- * - Permission gating
- * - Data fetching (useUsers, useUserStats)
- * - Local UI state (filters, pagination, selected user)
- * - Composition of sub-components
- *
- * Column definitions live in `components/user-columns.tsx`.
- * Toolbar lives in `components/users-toolbar.tsx`.
- * Stats cards live in `components/user-stats-cards.tsx`.
- * Action handlers live in `hooks/use-user-actions.ts`.
- */
+
 
 import { useEffect, useState } from "react";
 import { FlexRender, useTable } from "@tanstack/react-table";
@@ -44,7 +31,7 @@ import { ImportUsersSheet } from "./components/import-users-sheet";
 import { useUserActions } from "./hooks/use-user-actions";
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
 
-// ─── Hook ───────────────────────────────────────────────────────────────────
+
 
 function useDebouncedValue<T>(value: T, delayMs = 300): T {
     const [debounced, setDebounced] = useState(value);
@@ -55,17 +42,17 @@ function useDebouncedValue<T>(value: T, delayMs = 300): T {
     return debounced;
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
+
 
 export function UsersDataTable() {
-    // ── Permissions ───────────────────────────────────────────────
+    
     const hasPermission = useAuthStore((s) => s.hasPermission);
     const canCreateUsers = hasPermission(PERMISSIONS.userCreate);
 
-    // ── Reference data ────────────────────────────────────────────
+    
     const { data: roles } = useRoles();
 
-    // ── Server-driven list state ──────────────────────────────────
+    
     const [searchInput, setSearchInput] = useState("");
     const search = useDebouncedValue(searchInput, 300);
     const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -89,16 +76,16 @@ export function UsersDataTable() {
     const shiftPage = (delta: number) =>
         setPagination((prev) => ({ ...prev, pageIndex: Math.max(0, prev.pageIndex + delta) }));
 
-    // ── Action handlers ───────────────────────────────────────────
+    
     const actions = useUserActions();
 
-    // ── Drawers / dialogs ─────────────────────────────────────────
+    
     const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
     const [selectedUserForAuditLog, setSelectedUserForAuditLog] = useState<UserResponse | null>(null);
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
 
-    // ── Table instance ────────────────────────────────────────────
+    
     const table = useTable({
         features,
         data: paged?.items ?? [],
@@ -115,7 +102,7 @@ export function UsersDataTable() {
         },
     });
 
-    // ── Derived values ────────────────────────────────────────────
+    
     const totalRows = paged?.totalCount ?? 0;
     const itemCount = paged?.items.length ?? 0;
     const firstRowIndex = itemCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
@@ -140,7 +127,7 @@ export function UsersDataTable() {
             .catch((error) => toastError(getErrorMessage(error)));
     };
 
-    // ── Render ────────────────────────────────────────────────────
+    
     return (
         <>
             <div className="space-y-4">
@@ -231,7 +218,7 @@ export function UsersDataTable() {
                         </Table>
                     </CardContent>
 
-                    {/* Pagination */}
+                    {}
                     <div className="flex items-center justify-between border-t bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
                         <div>
                             Showing {firstRowIndex} to {lastRowIndex} of {totalRows} entries
@@ -262,7 +249,7 @@ export function UsersDataTable() {
                 </Card>
             </div>
 
-            {/* Drawers / dialogs */}
+            {}
             <UserEditDrawer
                 user={selectedUser}
                 canEdit={hasPermission(PERMISSIONS.userEdit)}

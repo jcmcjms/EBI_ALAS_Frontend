@@ -1,15 +1,4 @@
-/**
- * Loan Products table — thin composition of columns, toolbar, and table UI.
- *
- * This file owns:
- * - Permission gating
- * - Data fetching (useLoanProducts)
- * - Local UI state (filter, pagination, editing, confirm)
- * - Composition of sub-components
- *
- * Column definitions live in `product-columns.tsx`.
- * Toolbar lives in `products-toolbar.tsx`.
- */
+
 
 import { useMemo, useState } from "react";
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
@@ -60,12 +49,12 @@ interface ConfirmActionState {
 }
 
 export function ProductsTable() {
-    // ── Permissions ───────────────────────────────────────────────
+    
     const hasPermission = useAuthStore((s) => s.hasPermission);
     const canManageProducts = hasPermission(PERMISSIONS.loanProductManage);
     const canViewProducts = hasPermission(PERMISSIONS.loanProductView);
 
-    // ── Data ─────────────────────────────────────────────────────
+    
     const [showRetired, setShowRetired] = useState(false);
     const { data, isLoading, isError, error, isFetching } = useLoanProducts();
     const products = useMemo(
@@ -74,11 +63,11 @@ export function ProductsTable() {
         [data, showRetired],
     );
 
-    // ── Mutations ────────────────────────────────────────────────
+    
     const updateMutation = useUpdateLoanProduct();
     const syncMutation = useSyncLoanProducts();
 
-    // ── Local UI state ───────────────────────────────────────────
+    
     const [globalFilter, setGlobalFilter] = useState("");
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
     const [editingCode, setEditingCode] = useState<string | null>(null);
@@ -93,7 +82,7 @@ export function ProductsTable() {
         [editingCode, products],
     );
 
-    // ── Table instance ───────────────────────────────────────────
+    
     const table = useTable({
         features,
         data: products,
@@ -129,7 +118,7 @@ export function ProductsTable() {
         },
     });
 
-    // ── Handlers ─────────────────────────────────────────────────
+    
     const handleSave = async (
         productCode: string,
         values: UpdateLoanProductPayload,
@@ -154,7 +143,7 @@ export function ProductsTable() {
         setPagination((p) => ({ ...p, pageIndex: 0 }));
     };
 
-    // ── Permission gate ──────────────────────────────────────────
+    
     if (!canViewProducts) {
         return (
             <Card className="border shadow-sm">
@@ -165,14 +154,14 @@ export function ProductsTable() {
         );
     }
 
-    // ── Derived values ───────────────────────────────────────────
+    
     const pagedRows = table.getRowModel().rows;
     const totalRows = products.length;
     const firstRow = totalRows === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
     const lastRow = Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalRows);
     const totalPages = table.getPageCount() || 1;
 
-    // ── Render ───────────────────────────────────────────────────
+    
     return (
         <>
             <div className="space-y-4">
@@ -269,7 +258,7 @@ export function ProductsTable() {
                         </Table>
                     </CardContent>
 
-                    {/* Pagination */}
+                    {}
                     <div className="flex items-center justify-between border-t bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
                         <div>
                             Showing {firstRow}–{lastRow} of {totalRows}{" "}

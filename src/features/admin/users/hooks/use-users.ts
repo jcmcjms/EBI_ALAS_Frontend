@@ -1,6 +1,4 @@
-/**
- * Users feature hooks — TanStack Query wrappers.
- */
+
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/src/shared/lib/query/queryKeys";
@@ -24,9 +22,9 @@ import {
     updateUserStatus,
 } from "../api/users";
 
-// ─── Queries ────────────────────────────────────────────────────────────────
 
-/** Paged + filtered user directory (server-side search/role/status/pagination). */
+
+
 export function useUsers(params: UserQueryParams) {
     return useQuery({
         queryKey: queryKeys.users.list(params),
@@ -46,10 +44,7 @@ export function useUser(id: number | null) {
     });
 }
 
-/**
- * Directory stat cards. Backend exposes no aggregate endpoint, so we read
- * `totalCount` from two 1-row pages: all users vs active users only.
- */
+
 export function useUserStats() {
     const total = useQuery({
         queryKey: [...queryKeys.users.stats(), "total"],
@@ -71,7 +66,7 @@ export function useUserStats() {
     };
 }
 
-/** GET /api/users/{id}/audit-log — requires `user.view`. */
+
 export function useUserAuditLog(id: number | null) {
     return useQuery({
         queryKey:
@@ -83,7 +78,7 @@ export function useUserAuditLog(id: number | null) {
     });
 }
 
-// ─── Mutations ──────────────────────────────────────────────────────────────
+
 
 function useInvalidateUsers() {
     const queryClient = useQueryClient();
@@ -91,7 +86,7 @@ function useInvalidateUsers() {
         queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
 }
 
-/** POST /api/users — requires `user.create`. */
+
 export function useCreateUser(options?: {
     onSuccess?: (user: UserResponse) => void;
 }) {
@@ -105,7 +100,7 @@ export function useCreateUser(options?: {
     });
 }
 
-/** PUT /api/users/{id} — requires `user.edit`. */
+
 export function useUpdateUser() {
     const invalidate = useInvalidateUsers();
     return useMutation({
@@ -120,7 +115,7 @@ export function useUpdateUser() {
     });
 }
 
-/** PATCH /api/users/{id}/status — requires `user.suspend`. */
+
 export function useUpdateUserStatus() {
     const invalidate = useInvalidateUsers();
     return useMutation({
@@ -130,7 +125,7 @@ export function useUpdateUserStatus() {
     });
 }
 
-/** POST /api/users/{id}/reset-password — requires `user.edit`. */
+
 export function useResetUserPassword() {
     const invalidate = useInvalidateUsers();
     return useMutation({
@@ -139,7 +134,7 @@ export function useResetUserPassword() {
     });
 }
 
-/** POST /api/users/{id}/force-password-reset — requires `user.edit`. */
+
 export function useForcePasswordReset() {
     const invalidate = useInvalidateUsers();
     return useMutation({
@@ -148,7 +143,7 @@ export function useForcePasswordReset() {
     });
 }
 
-/** POST /api/users/{id}/revoke-sessions — requires `user.suspend`. */
+
 export function useRevokeUserSessions() {
     const invalidate = useInvalidateUsers();
     return useMutation({
@@ -157,7 +152,7 @@ export function useRevokeUserSessions() {
     });
 }
 
-/** POST /api/users/import — requires `user.create`. */
+
 export function useImportUsers() {
     const queryClient = useQueryClient();
     return useMutation<UserImportResult, Error, File>({

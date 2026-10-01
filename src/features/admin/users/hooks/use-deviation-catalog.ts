@@ -1,6 +1,4 @@
-/**
- * Deviation catalog hook — fetches deviation reasons with severity from API.
- */
+
 
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -14,7 +12,7 @@ export function useDeviationCatalog(enabled = true) {
         queryKey: approvalMatrixKeys.deviationCatalog(),
         queryFn: getDeviationCatalog,
         enabled,
-        staleTime: 5 * 60 * 1000, // 5 minutes — matches backend cache
+        staleTime: 5 * 60 * 1000, 
     });
 }
 

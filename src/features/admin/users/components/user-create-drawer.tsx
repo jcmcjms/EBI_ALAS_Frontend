@@ -12,11 +12,7 @@ import { stripRoleDisplayName } from "@/src/features/admin/users/components/role
 import { useRoles } from "../hooks/use-roles";
 import { useApprovalAuthorities } from "../hooks/use-approval-authorities";
 
-/**
- * Payload contract for POST /api/users (CreateUserRequest).
- * The temporary password is generated here and sent to the backend;
- * it is revealed to the admin only after the account is created.
- */
+
 export interface UserCreatePayload {
     username: string;
     password: string;
@@ -33,7 +29,7 @@ export interface UserCreatePayload {
 interface UserCreateDrawerProps {
     open: boolean;
     onClose: () => void;
-    /** Creates the user via the API. Resolves true when created (drawer then shows confirmation). */
+    
     onCreate: (payload: UserCreatePayload) => Promise<boolean>;
 }
 
@@ -49,24 +45,16 @@ const emptyForm = {
     coveredBranches: [] as string[],
 };
 
-// Mirrors backend CreateUserValidator: ^[a-zA-Z0-9_]+$, max 50 chars.
+
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 
-/**
- * Value→label lookup for the branch <Select> trigger. Base UI's
- * <Select.Value> renders the raw value (the branch code, e.g. "000")
- * unless the Root receives an `items` map — without it the closed
- * trigger shows the code instead of "Lianga Branch". Module-level so
- * the array identity is stable across renders.
- */
+
 const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
     value: branch.code,
     label: branch.name,
 }));
 
-/**
- * Formats a number as Philippine Peso currency string.
- */
+
 function formatPhp(amount: number): string {
     return new Intl.NumberFormat("en-PH", {
         style: "currency",
@@ -76,13 +64,7 @@ function formatPhp(amount: number): string {
     }).format(amount);
 }
 
-/**
- * Generates a readable temporary password using cryptographically secure
- * randomness that satisfies the backend policy: at least one uppercase, one
- * lowercase, one digit, and one special character (!?*.). Ambiguous
- * characters (O/0, I/l/1) are excluded so the password survives being read
- * aloud or transcribed by hand.
- */
+
 function generateTempPassword(length = 12): string {
     const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
     const lower = "abcdefghijkmnopqrstuvwxyz";
@@ -96,11 +78,11 @@ function generateTempPassword(length = 12): string {
         return set[buf[0] % set.length];
     };
 
-    // Guarantee at least one character from each required class.
+    
     const chars = [pick(upper), pick(lower), pick(digits), pick(specials)];
     while (chars.length < length) chars.push(pick(all));
 
-    // Fisher–Yates shuffle so the guaranteed characters aren't front-loaded.
+    
     for (let i = chars.length - 1; i > 0; i--) {
         const buf = new Uint32Array(1);
         crypto.getRandomValues(buf);
@@ -112,8 +94,8 @@ function generateTempPassword(length = 12): string {
 
 export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerProps) {
     const { data: roles } = useRoles();
-    // Same lookup semantics as BRANCH_SELECT_ITEMS; roles arrive async,
-    // so memoize on the fetched list.
+    
+    
     const roleSelectItems = useMemo(
         () => roles.map((role) => ({ value: role.name, label: stripRoleDisplayName(role.displayName) })),
         [roles],
@@ -121,31 +103,31 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
     const [form, setForm] = useState(emptyForm);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Fetch approval authorities only when role is Approver (for the dropdown).
+    
     const isApprover = form.role === "Approver";
     const { data: authorities, isLoading: authoritiesLoading } = useApprovalAuthorities(isApprover);
 
-    // Determine if the selected authority is Branch-scope (scopeType === 0).
+    
     const selectedAuthority = isApprover ? (authorities ?? []).find(a => a.key === form.jobTitle) : null;
     const isBranchScope = isApprover && selectedAuthority?.scopeType === 0;
 
     const handleFieldChange = <K extends keyof typeof emptyForm>(field: K, value: typeof emptyForm[K]) => {
         setForm(prev => {
             const next = { ...prev, [field]: value };
-            // When switching away from Approver, clear the authority selection
-            // and covered branches so stale data doesn't leak.
+            
+            
             if (field === "role" && value !== "Approver") {
                 next.jobTitle = "";
                 next.coveredBranches = [];
             }
-            // When switching to Approver, also clear jobTitle since the user
-            // needs to pick from the authority dropdown (not type free text).
+            
+            
             if (field === "role" && value === "Approver") {
                 next.jobTitle = "";
                 next.coveredBranches = [];
             }
-            // When the authority changes, clear covered branches if the new
-            // authority is not Branch-scope (scopeType !== 0).
+            
+            
             if (field === "jobTitle" && prev.role === "Approver") {
                 const selectedAuth = (authorities ?? []).find(a => a.key === value);
                 if (selectedAuth && selectedAuth.scopeType !== 0) {
@@ -189,12 +171,12 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
             toastError("Role is required");
             return;
         }
-        // Approvers must select an authority from the matrix.
+        
         if (form.role === "Approver" && !form.jobTitle) {
             toastError("Please select an approval authority for this Approver.");
             return;
         }
-        // Branch-scope approvers must select at least one covered branch.
+        
         if (form.role === "Approver" && isBranchScope && form.coveredBranches.length === 0) {
             toastError("Please select at least one covered branch for this Branch-scope approver.");
             return;
@@ -206,8 +188,8 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
 
         setIsSubmitting(true);
         try {
-            // The generated password travels with the payload; the backend
-            // hashes it (BCrypt) before storage — it is never stored in clear.
+            
+            
             const tempPassword = generateTempPassword();
             const success = await onCreate({
                 username: form.username.trim(),
@@ -219,15 +201,15 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                 branchId: form.branchId,
                 role: form.role,
                 eSignature: form.eSignature,
-                // Set to null when not applicable so the backend's
-                // null = "keep existing" semantics work correctly on update.
+                
+                
                 coveredBranches: isBranchScope && form.coveredBranches.length > 0
                     ? form.coveredBranches
                     : null,
             });
             if (!success) return;
 
-            // Parent handles the secure handoff dialog — just close and reset.
+            
             setForm(emptyForm);
             onClose();
         } finally {
@@ -317,7 +299,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                         <p className="text-xs text-muted-foreground">A temporary password will be generated for this account.</p>
                     </div>
 
-                    {/* ── Job Title / Approval Authority ── */}
+                    {}
                     <div className="space-y-2">
                         <Label htmlFor="create-jobTitle">
                             {isApprover ? "Approval Authority *" : "Job Title"}
@@ -355,7 +337,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                         </p>
                     </div>
 
-                    {/* ── Covered Branches (Branch-scope Approvers only) ── */}
+                    {}
                     {isBranchScope && (
                         <div className="space-y-2">
                             <Label>Covered Branches *</Label>
@@ -371,7 +353,7 @@ export function UserCreateDrawer({ open, onClose, onCreate }: UserCreateDrawerPr
                         </div>
                     )}
 
-                    {/* ── Signature Pad ── */}
+                    {}
                     <div className="space-y-2">
                         <Label htmlFor="create-signature">E-Signature *</Label>
                         <SignaturePad

@@ -1,6 +1,4 @@
-/**
- * Users table column definitions.
- */
+
 
 import { format } from "date-fns";
 import {
@@ -35,7 +33,7 @@ import {
 import { BRANCHES, type UserResponse } from "@/src/lib/api/types";
 import { cn } from "@/src/shared/lib/utils";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+
 
 export function formatFullName(
     user: Pick<UserResponse, "firstName" | "middleName" | "lastName">,
@@ -49,7 +47,7 @@ function getBranchName(code: string): string {
     return BRANCHES.find((b) => b.code === code)?.name ?? code;
 }
 
-// ─── Table meta type ────────────────────────────────────────────────────────
+
 
 export type UsersTableMeta = {
     onEditUser?: (user: UserResponse) => void;
@@ -60,7 +58,7 @@ export type UsersTableMeta = {
     onToggleStatus?: (user: UserResponse) => void;
 };
 
-// ─── Table features config ──────────────────────────────────────────────────
+
 
 export const features = tableFeatures({
     columnFilteringFeature,
@@ -71,7 +69,7 @@ export const features = tableFeatures({
     tableMeta: {} as UsersTableMeta,
 });
 
-// ─── Column definitions ─────────────────────────────────────────────────────
+
 
 const columnHelper = createColumnHelper<typeof features, UserResponse>();
 

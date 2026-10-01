@@ -1,6 +1,4 @@
-/**
- * User stats cards — total, active, suspended counts.
- */
+
 
 import { Card } from "@/src/components/ui/card";
 

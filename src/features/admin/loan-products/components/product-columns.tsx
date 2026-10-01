@@ -1,9 +1,4 @@
-/**
- * Loan Products table column definitions.
- *
- * Extracted from ProductsTable for single-responsibility:
- * this file owns "what columns exist and how they render".
- */
+
 
 import { format } from "date-fns";
 import {
@@ -35,14 +30,14 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/src/components/ui/tooltip";
 import type { LoanProductResponse } from "@/src/lib/api/types";
 
-// ─── Table meta type ────────────────────────────────────────────────────────
+
 
 export type ProductsTableMeta = {
     onEditProduct?: (product: LoanProductResponse) => void;
     onSyncNow?: () => void;
 };
 
-// ─── Table features config ──────────────────────────────────────────────────
+
 
 export const features = tableFeatures({
     columnFilteringFeature,
@@ -55,7 +50,7 @@ export const features = tableFeatures({
     tableMeta: {} as ProductsTableMeta,
 });
 
-// ─── Column definitions ─────────────────────────────────────────────────────
+
 
 const columnHelper = createColumnHelper<typeof features, LoanProductResponse>();
 
@@ -203,7 +198,7 @@ export const columns = columnHelper.columns([
     }),
 ]);
 
-// ─── Cell helpers ───────────────────────────────────────────────────────────
+
 
 function FeeRow({ label, value }: { label: string; value: number }) {
     return (

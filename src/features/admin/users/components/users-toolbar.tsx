@@ -1,6 +1,4 @@
-/**
- * Users table toolbar — search, branch/role filters, and action buttons.
- */
+
 
 import { MagnifyingGlass, Plus, Export, FileArrowUp, Funnel } from "@phosphor-icons/react";
 import { Button } from "@/src/components/ui/button";
@@ -45,7 +43,7 @@ export function UsersToolbar({
 }: UsersToolbarProps) {
     return (
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-            {/* Search */}
+            {}
             <div className="relative">
                 <MagnifyingGlass
                     size={16}
@@ -60,7 +58,7 @@ export function UsersToolbar({
                 />
             </div>
 
-            {/* Filters */}
+            {}
             <div className="flex gap-2">
                 <Select value={branchFilter} onValueChange={onBranchFilterChange}>
                     <SelectTrigger className="h-9 w-[150px] bg-background">
@@ -93,7 +91,7 @@ export function UsersToolbar({
                 </Select>
             </div>
 
-            {/* Action buttons */}
+            {}
             <div className="flex gap-2 sm:ml-auto">
                 {canCreateUsers && (
                     <Button

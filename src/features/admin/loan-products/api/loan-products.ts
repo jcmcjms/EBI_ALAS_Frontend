@@ -1,8 +1,4 @@
-/**
- * Loan Products API — types and fetchers co-located.
- *
- * Mirrors Features/Loans/LoanProductEndpoints.cs.
- */
+
 
 import { apiClient } from "@/src/lib/apiClient";
 import {
@@ -16,9 +12,9 @@ import {
 
 export type { LoanProductImportResult } from "@/src/lib/api/types";
 
-// ─── API Functions ──────────────────────────────────────────────────────────
 
-/** GET /api/loan-products — every row, active + retired. */
+
+
 export async function getLoanProducts(): Promise<LoanProductResponse[]> {
     const res = await apiClient.get<ApiResponse<LoanProductResponse[]>>(
         "/api/loan-products",
@@ -26,7 +22,7 @@ export async function getLoanProducts(): Promise<LoanProductResponse[]> {
     return unwrapApiData(res.data);
 }
 
-/** GET /api/loan-products/{code} — 404 when the code is not in the mirror. */
+
 export async function getLoanProductByCode(
     code: string,
 ): Promise<LoanProductResponse | null> {
@@ -36,10 +32,7 @@ export async function getLoanProductByCode(
     return unwrapApiData(res.data);
 }
 
-/**
- * PUT /api/loan-products/{code} — admin write of policy fields.
- * Code, Description, IsRetired, and LastSyncedAt are preserved.
- */
+
 export async function updateLoanProduct(
     code: string,
     payload: UpdateLoanProductPayload,
@@ -51,7 +44,7 @@ export async function updateLoanProduct(
     return unwrapApiData(res.data);
 }
 
-/** POST /api/loan-products/sync — manual sync trigger. Admin-only. */
+
 export async function syncLoanProducts(): Promise<LoanProductSyncResult> {
     const res = await apiClient.post<ApiResponse<LoanProductSyncResult>>(
         "/api/loan-products/sync",
@@ -59,7 +52,7 @@ export async function syncLoanProducts(): Promise<LoanProductSyncResult> {
     return unwrapApiData(res.data);
 }
 
-/** GET /api/loan-products/export — download the full product catalog as .xlsx. */
+
 export async function exportLoanProducts(
     includeRetired = true,
 ): Promise<void> {
@@ -81,7 +74,7 @@ export async function exportLoanProducts(
     URL.revokeObjectURL(url);
 }
 
-/** GET /api/loan-products/import/template — download a blank .xlsx template. */
+
 export async function downloadLoanProductTemplate(): Promise<void> {
     const res = await apiClient.get("/api/loan-products/import/template", {
         responseType: "blob",
@@ -100,7 +93,7 @@ export async function downloadLoanProductTemplate(): Promise<void> {
     URL.revokeObjectURL(url);
 }
 
-/** POST /api/loan-products/import — upsert loan products from an .xlsx file. */
+
 export async function importLoanProducts(
     file: File,
 ): Promise<LoanProductImportResult> {
@@ -116,13 +109,9 @@ export async function importLoanProducts(
     return unwrapApiData(res.data);
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
 
-/**
- * Convenience: find a product by its bare code (e.g. "PL", "C35").
- * Pure function so callers can run it against the cached `useLoanProducts`
- * data without an extra round-trip.
- */
+
+
 export function findProductByCode(
     products: LoanProductResponse[] | undefined,
     code: string,

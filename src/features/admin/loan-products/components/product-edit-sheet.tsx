@@ -32,44 +32,17 @@ import {
 import { Spinner } from "@/src/components/ui/spinner";
 import type { LoanProductResponse } from "@/src/lib/api/types";
 
-/**
- * Edit sheet for a single loan product.
- *
- * Mirrors `PUT /api/loan-products/{code}` (and `UpdateLoanProductRequest`).
- * The sheet is intentionally narrow: it can only change the **8 policy
- * fields**. Code, Description, IsRetired, and LastSyncedAt are
- * sync-owned and are surfaced as read-only context so the operator
- * understands why those fields are not editable here.
- *
- * The current `LoanProductService.UpdateAsync` on the backend explicitly
- * preserves the sync-owned columns on this path, so even if a future
- * caller tried to PUT them, the change would be silently dropped.
- * Removing them from the form makes that contract visible.
- *
- * ## Validation
- *
- * Mirrors `UpdateLoanProductValidator` (FluentValidation) on the
- * backend so the form catches obvious mistakes client-side and the
- * backend stays the security boundary:
- *   - all amount fields >= 0
- *   - maxAmount >= minAmount
- *   - minTermDays, maxTermDays >= 0
- *   - maxTermDays >= minTermDays
- *   - maxTermDays <= 2617 (the absolute 7-year + 2-month grace-period
- *     bank ceiling, mirrored from `LoanProductService.AbsoluteMaxTermDays`)
- *   - advanceInterestRate between 0 and 1 (decimal fraction;
- *     0.12 = 12% p.a.)
- */
+
 const productFormSchema = z
     .object({
-        // Eligibility bounds ─────────────────────────────────────────
+        
         minAmount: z.coerce
             .number({ message: "Min amount is required." })
             .min(0, "Min amount cannot be negative."),
         maxAmount: z.coerce
             .number({ message: "Max amount is required." })
             .min(0, "Max amount cannot be negative."),
-        // Term bounds (days) ───────────────────────────────────────
+        
         minTermDays: z.coerce
             .number({ message: "Min term is required." })
             .int("Min term must be a whole number of days.")
@@ -79,7 +52,7 @@ const productFormSchema = z
             .int("Max term must be a whole number of days.")
             .min(0, "Max term cannot be negative.")
             .max(2617, "Max term cannot exceed 2617 days (7 years + 2 months grace period)."),
-        // Bank fees (flat PHP) ──────────────────────────────────────
+        
         notarialFee: z.coerce
             .number({ message: "Notarial fee is required." })
             .min(0, "Notarial fee cannot be negative."),
@@ -89,7 +62,7 @@ const productFormSchema = z
         insuranceFee: z.coerce
             .number({ message: "Insurance fee is required." })
             .min(0, "Insurance fee cannot be negative."),
-        // Advance-interest rate (decimal fraction, 0-1) ─────────────
+        
         advanceInterestRate: z.coerce
             .number({ message: "Advance interest rate is required." })
             .min(0, "Advance interest rate cannot be negative.")
@@ -107,27 +80,18 @@ const productFormSchema = z
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
 interface ProductEditSheetProps {
-    /**
-     * The product being edited. `null` = sheet closed. The sheet is
-     * driven by this prop (not local state) so the parent table is the
-     * single source of truth for "which product is open".
-     */
+    
     product: LoanProductResponse | null;
-    /** Permission gate — Admin only. UI mirrors `loan_product.manage`. */
+    
     canEdit: boolean;
-    /** Called when the user dismisses the sheet (Cancel, X, Esc, backdrop). */
+    
     onClose: () => void;
-    /**
-     * Persist the form. Returns `true` on success so the parent can
-     * keep the sheet open on failure (validation errors are surfaced
-     * inline; the user needs to see what they typed). Returns
-     * `false` so the parent can close on success.
-     */
+    
     onSave: (
         productCode: string,
         values: ProductFormValues
     ) => Promise<boolean>;
-    /** True while the underlying mutation is in flight. */
+    
     isSaving?: boolean;
 }
 
@@ -146,26 +110,26 @@ export function ProductEditSheet({
         formState: { errors, isDirty, isSubmitting },
     } = useForm<ProductFormValues>({
         resolver: zodResolver(productFormSchema),
-        // Mode "onBlur" matches the rest of the app: errors surface
-        // when the user leaves the field, not on every keystroke.
+        
+        
         mode: "onBlur",
         defaultValues: emptyValues(),
     });
 
-    // Seed the form from the product row whenever a new product is
-    // opened. `reset` re-runs the resolver and clears the dirty state
-    // so the Save button starts disabled.
+    
+    
+    
     useEffect(() => {
         if (product) {
             reset(valuesFromProduct(product), { keepDirty: false });
         }
     }, [product, reset]);
 
-    // Live mirror of the rate so we can show the percentage hint
-    // (e.g. "0.1200 = 12% p.a.") next to the field. Picked from
-    // the form (not `product`) so the user sees the *pending* value.
-    // `useWatch` is the Compiler-friendly alternative to `watch()` —
-    // the latter can't be memoized safely.
+    
+    
+    
+    
+    
     const watchedRate = useWatch({ control, name: "advanceInterestRate" });
 
     const submit = handleSubmit(async (values) => {
@@ -230,7 +194,7 @@ export function ProductEditSheet({
                     className="flex flex-1 flex-col overflow-hidden"
                 >
                     <div className="flex-1 space-y-6 overflow-y-auto p-6">
-                        {/* ── Sync-owned context (read-only) ─────────── */}
+                        {}
                         <Card className="border bg-muted/10">
                             <CardHeader className="pb-3">
                                 <CardTitle className="flex items-center gap-2 text-sm">
@@ -274,7 +238,7 @@ export function ProductEditSheet({
                             </CardContent>
                         </Card>
 
-                        {/* ── Eligibility bounds ──────────────────────── */}
+                        {}
                         <section className="space-y-4">
                             <SectionHeading
                                 title="Eligibility Bounds"
@@ -319,7 +283,7 @@ export function ProductEditSheet({
 
                         <Separator />
 
-                        {/* ── Bank fees ───────────────────────────────── */}
+                        {}
                         <section className="space-y-4">
                             <SectionHeading
                                 title="Bank Fees (Flat, PHP)"
@@ -355,7 +319,7 @@ export function ProductEditSheet({
 
                         <Separator />
 
-                        {/* ── Interest ────────────────────────────────── */}
+                        {}
                         <section className="space-y-4">
                             <SectionHeading
                                 title="Advance Interest Rate"
@@ -378,7 +342,7 @@ export function ProductEditSheet({
                             </div>
                         </section>
 
-                        {/* ── Permission / dirty-state notice ─────────── */}
+                        {}
                         {!canEdit && (
                             <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
                                 <WarningCircle
@@ -438,7 +402,7 @@ export function ProductEditSheet({
     );
 }
 
-// ── Small local helpers (kept in-file; not exported) ─────────────────────
+
 
 function emptyValues(): ProductFormValues {
     return {
@@ -504,9 +468,9 @@ function ReadOnlyField({
     );
 }
 
-// `NumberField` keeps the `register()` spread last so its own `error`
-// / `hint` / `disabled` props take precedence over the underlying
-// <input> defaults from the register call.
+
+
+
 function NumberField({
     id,
     label,

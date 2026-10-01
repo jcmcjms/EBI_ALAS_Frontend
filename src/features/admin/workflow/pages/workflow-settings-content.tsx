@@ -1,8 +1,4 @@
-/**
- * Workflow settings content — the actual page body.
- *
- * Controls the recommendation step in the loan pipeline.
- */
+
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,7 +34,7 @@ import {
 import { useWorkflowConfiguration } from "../hooks/use-workflow";
 import { LOAN_STATUS_META, type LoanStatus } from "@/src/features/loans/utils/loan-status";
 
-// ─── Pipeline preview ────────────────────────────────────────────────────────
+
 
 function PipelinePreview({
     requireRecommendation,
@@ -73,7 +69,7 @@ function PipelinePreview({
     );
 }
 
-// ─── Content ────────────────────────────────────────────────────────────────
+
 
 export function WorkflowSettingsContent() {
     const qc = useQueryClient();
@@ -81,7 +77,7 @@ export function WorkflowSettingsContent() {
     const [pending, setPending] = useState<boolean | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
 
-    // Only fetched when the admin is actually confirming a disable.
+    
     const backlog = useQuery({
         queryKey: ["loans", "count", "ForRecommendation"],
         queryFn: () => getLoanCountByStatus("ForRecommendation"),

@@ -17,7 +17,7 @@ import { getErrorMessage } from "@/src/lib/apiClient";
 import { cn } from "@/src/shared/lib/utils";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
-/** Error list cap — the full set is always available via the CSV report. */
+
 const VISIBLE_ERRORS = 50;
 
 interface ImportUsersSheetProps {
@@ -107,8 +107,7 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                     </SheetDescription>
                 </SheetHeader>
 
-                {/* px-4 aligns with SheetHeader/SheetFooter (p-4); gap-6 is the
-                    section rhythm; min-w-0 children prevent edge bleed. */}
+                {}
                 <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 pt-2 pb-4">
                     {result ? (
                         <div role="status" className="flex flex-col gap-6">
@@ -126,8 +125,7 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                                             {result.createdUsernames.length}
                                         </Badge>
                                     </div>
-                                    {/* Scrollable cloud: 80+ badges must not push
-                                        the error list below the fold. */}
+                                    {}
                                     <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto rounded-md border bg-muted/30 p-2">
                                         {result.createdUsernames.map((username) => (
                                             <Badge key={username} variant="secondary" className="text-xs font-normal">
@@ -154,8 +152,7 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                                             <Download size={12} weight="bold" /> Error report
                                         </Button>
                                     </div>
-                                    {/* Stacked wrapping rows — a 3-column table can
-                                        never fit long messages in a 448px sheet. */}
+                                    {}
                                     <ul className="divide-y rounded-md border">
                                         {result.errors.slice(0, VISIBLE_ERRORS).map((error) => (
                                             <li key={`${error.rowNumber}-${error.field}`} className="space-y-0.5 px-3 py-2">
@@ -219,8 +216,7 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                     )}
                 </div>
 
-                {/* Pinned full-width action bar; -mx-4 cancels the content px-4 so
-                    the border/bg span the sheet while buttons stay aligned. */}
+                {}
                 <SheetFooter className="-mx-4 mt-auto gap-2 border-t bg-muted/30">
                     {result ? (
                         <>

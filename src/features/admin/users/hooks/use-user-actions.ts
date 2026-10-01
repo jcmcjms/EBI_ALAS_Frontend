@@ -1,9 +1,4 @@
-/**
- * User action handlers — extracted from UsersDataTable.
- *
- * Owns the confirm-action flow for destructive/sensitive operations
- * (toggle status, reset password, force reset, revoke sessions).
- */
+
 
 import { useState } from "react";
 import { toastSuccess, toastError } from "@/src/components/ui/toast";
@@ -35,7 +30,7 @@ export function useUserActions() {
     const hasPermission = useAuthStore((s) => s.hasPermission);
     const canSuspendUsers = hasPermission(PERMISSIONS.userSuspend);
 
-    // ── Mutations ─────────────────────────────────────────────────
+    
     const createUserMutation = useCreateUser();
     const updateUserMutation = useUpdateUser();
     const updateUserStatusMutation = useUpdateUserStatus();
@@ -43,11 +38,11 @@ export function useUserActions() {
     const forcePasswordResetMutation = useForcePasswordReset();
     const revokeSessionsMutation = useRevokeUserSessions();
 
-    // ── Dialog state ──────────────────────────────────────────────
+    
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(null);
     const [tempCred, setTempCred] = useState<TemporaryCredential | null>(null);
 
-    // ── Handlers ──────────────────────────────────────────────────
+    
 
     function closeConfirm() {
         setConfirmAction(null);

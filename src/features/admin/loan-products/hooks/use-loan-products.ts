@@ -1,6 +1,4 @@
-/**
- * Loan Products feature hooks — TanStack Query wrappers.
- */
+
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/src/shared/lib/query/queryKeys";
@@ -17,14 +15,11 @@ import {
     updateLoanProduct,
 } from "../api/loan-products";
 
-// ─── Queries ────────────────────────────────────────────────────────────────
 
-const LOAN_PRODUCTS_STALE_TIME = 5 * 60_000; // 5 minutes
 
-/**
- * Fetch the loan-product catalog (admin view — active + retired).
- * Single endpoint: `GET /api/loan-products`.
- */
+const LOAN_PRODUCTS_STALE_TIME = 5 * 60_000; 
+
+
 export function useLoanProducts() {
     return useQuery({
         queryKey: queryKeys.loanProducts.list(),
@@ -33,9 +28,7 @@ export function useLoanProducts() {
     });
 }
 
-/**
- * Single-product query (`GET /api/loan-products/{code}`).
- */
+
 export function useLoanProduct(code: string | null) {
     return useQuery({
         queryKey:
@@ -48,7 +41,7 @@ export function useLoanProduct(code: string | null) {
     });
 }
 
-// ─── Mutations ──────────────────────────────────────────────────────────────
+
 
 function useInvalidateLoanProducts() {
     const queryClient = useQueryClient();
@@ -58,10 +51,7 @@ function useInvalidateLoanProducts() {
         });
 }
 
-/**
- * `PUT /api/loan-products/{code}` — admin write of policy fields.
- * Pessimistic: cache invalidated only after backend confirms success.
- */
+
 export function useUpdateLoanProduct() {
     const queryClient = useQueryClient();
     const invalidate = useInvalidateLoanProducts();
@@ -83,7 +73,7 @@ export function useUpdateLoanProduct() {
     });
 }
 
-/** `POST /api/loan-products/sync` — manual sync trigger. */
+
 export function useSyncLoanProducts() {
     const invalidate = useInvalidateLoanProducts();
     return useMutation({
@@ -92,7 +82,7 @@ export function useSyncLoanProducts() {
     });
 }
 
-/** `POST /api/loan-products/import` — upsert loan products from Excel. */
+
 export function useImportLoanProducts() {
     const invalidate = useInvalidateLoanProducts();
     return useMutation<LoanProductImportResult, Error, File>({
