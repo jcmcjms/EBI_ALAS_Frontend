@@ -22,12 +22,7 @@ const Notifications = lazy(() => import("./features/notifications/pages/index"))
 const Account = lazy(() => import("./features/account/pages/index"));
 const Forbidden = lazy(() => import("./features/auth/pages/Forbidden"));
 
-/**
- * Layout route for all authenticated pages — provides sidebar + header chrome.
- * Pages render as children via `<Outlet />`, so they no longer need to
- * wrap themselves in `<AppShell>`.  This makes it structurally impossible
- * for a page to ship without chrome.
- */
+
 function AuthedShell() {
     return (
         <AppShell>
@@ -45,21 +40,18 @@ function App() {
                 </div>
             }>
                 <Routes>
-                    {/* Public routes — no chrome */}
+                    {}
                     <Route path="/login" element={<Login />} />
                     <Route path="/forbidden" element={<Forbidden />} />
 
-                    {/* Gate pages — chromeless by design. A user mid-forced-change must never
-                        see app navigation; keep these OUTSIDE the AuthedShell layout route. */}
+                    {}
                     <Route path="/change-password" element={
                         <ProtectedRoute>
                             <ChangePassword />
                         </ProtectedRoute>
                     } />
 
-                    {/* All authenticated routes share the AppShell layout.
-                        The shell provides sidebar, header, SignalR, presence,
-                        and notification hooks — mounted once per session. */}
+                    {}
                     <Route element={<AuthedShell />}>
 
                         <Route path="/dashboard" element={
@@ -70,7 +62,7 @@ function App() {
                             </ProtectedRoute>
                         } />
 
-                        {/* Loan Routes */}
+                        {}
                         <Route path="/loans/monitoring" element={
                             <ProtectedRoute>
                                 <FeatureErrorBoundary featureName="Loan Monitoring">
@@ -85,9 +77,7 @@ function App() {
                                 </FeatureErrorBoundary>
                             </ProtectedRoute>
                         } />
-                        {/* /loans/queue — the reviewer's FIFO desk.
-                            Gated to Recommender/Evaluator/Approver by the backend
-                            endpoints; the frontend route only requires auth. */}
+                        {}
                         <Route path="/loans/queue" element={
                             <ProtectedRoute>
                                 <FeatureErrorBoundary featureName="Review Desk">
@@ -95,13 +85,7 @@ function App() {
                                 </FeatureErrorBoundary>
                             </ProtectedRoute>
                         } />
-                        {/* /loans/approval/:loanId is reachable by every workflow role
-                            (Encoder / Recommender / Evaluator / Approver / Admin).
-                            The frontend route only requires auth; the backend
-                            `LoanWorkflowService.IsValidTransition` is the
-                            authoritative gate — it checks both the loan's
-                            current status AND the actor's role before letting
-                            `PUT /api/loans/{id}/status` through. */}
+                        {}
                         <Route path="/loans/approval/:loanId" element={
                             <ProtectedRoute>
                                 <FeatureErrorBoundary featureName="Loan Approval">
@@ -131,8 +115,7 @@ function App() {
                             </ProtectedRoute>
                         } />
 
-                        {/* Admin Routes — guards mirror backend policies:
-                            user list requires `user.view` (CanViewUsers). */}
+                        {}
                         <Route path="/admin/users" element={
                             <ProtectedRoute requiredPermission={PERMISSIONS.userView}>
                                 <FeatureErrorBoundary featureName="User Management">
@@ -163,7 +146,7 @@ function App() {
                         } />
                     </Route>
 
-                    {/* Catch-all redirect */}
+                    {}
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             </Suspense>
