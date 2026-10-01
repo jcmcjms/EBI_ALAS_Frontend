@@ -1,40 +1,40 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
-import { Button } from "@/src/components/ui/button";
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Button } from '@/src/components/ui/button'
 
 interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: ReactNode
+  fallback?: ReactNode
 }
 
 interface State {
-  hasError: boolean;
-  error: Error | null;
+  hasError: boolean
+  error: Error | null
 }
 
-
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, error: null };
+  state: State = { hasError: false, error: null }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    
-    
-    
     if (import.meta.env.DEV) {
-      console.error("[ErrorBoundary] Unhandled rendering error:", error, errorInfo);
+      console.error(
+        '[ErrorBoundary] Unhandled rendering error:',
+        error,
+        errorInfo,
+      )
     }
   }
 
   private handleReload = () => {
-    window.location.reload();
-  };
+    window.location.reload()
+  }
 
   private handleReset = () => {
-    this.setState({ hasError: false, error: null });
-  };
+    this.setState({ hasError: false, error: null })
+  }
 
   render() {
     if (this.state.hasError) {
@@ -66,7 +66,7 @@ export class ErrorBoundary extends Component<Props, State> {
             {import.meta.env.DEV && this.state.error && (
               <pre className="max-w-lg overflow-auto rounded-md border border-destructive/20 bg-destructive/5 p-4 text-left text-xs text-destructive">
                 {this.state.error.message}
-                {"\n"}
+                {'\n'}
                 {this.state.error.stack}
               </pre>
             )}
@@ -78,9 +78,9 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
           </div>
         )
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
 }

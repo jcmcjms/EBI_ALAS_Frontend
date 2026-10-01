@@ -1,119 +1,117 @@
-
-
-import { apiClient } from "@/src/lib/apiClient";
-import type { PagedResult } from "@/src/lib/api/types";
-
-
+import { apiClient } from '@/src/lib/apiClient'
+import type { PagedResult } from '@/src/lib/api/types'
 
 export interface AccountProfile {
-    id: number;
-    username: string;
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    branchId: string;
-    role: string;
-    email?: string;
-    phone?: string;
-    emergencyContact?: string;
-    profilePhotoUrl?: string;
-    createdAt: string;
-    passwordChangedAt?: string;
-    stats: AccountStats;
+  id: number
+  username: string
+  firstName: string
+  middleName?: string
+  lastName: string
+  branchId: string
+  role: string
+  email?: string
+  phone?: string
+  emergencyContact?: string
+  profilePhotoUrl?: string
+  createdAt: string
+  passwordChangedAt?: string
+  stats: AccountStats
 }
 
 export interface AccountStats {
-    processedLoans: number;
-    pendingLoans: number;
-    approvalRate: number;
+  processedLoans: number
+  pendingLoans: number
+  approvalRate: number
 }
 
 export interface Session {
-    id: number;
-    
-    deviceInfo: string | null;
-    createdAt: string;
-    expiresAt: string;
-    isCurrent: boolean;
+  id: number
+
+  deviceInfo: string | null
+  createdAt: string
+  expiresAt: string
+  isCurrent: boolean
 }
 
-export type PagedSessionsResponse = PagedResult<Session>;
+export type PagedSessionsResponse = PagedResult<Session>
 
 export interface Activity {
-    id: number;
-    
-    lamId: string;
-    action: string;
-    fromStatus?: string;
-    toStatus?: string;
-    comments?: string;
-    actionDate: string;
-    loanClientName: string;
+  id: number
+
+  lamId: string
+  action: string
+  fromStatus?: string
+  toStatus?: string
+  comments?: string
+  actionDate: string
+  loanClientName: string
 }
 
 export interface ProcessedLoan {
-    id: number;
-    lamId: string;
-    clientName: string;
-    status: string;
-    applicationDate: string;
-    proposedAmount: number;
+  id: number
+  lamId: string
+  clientName: string
+  status: string
+  applicationDate: string
+  proposedAmount: number
 }
 
 export interface UpdateProfilePayload {
-    email: string | null;
-    phone: string | null;
-    emergencyContact: string | null;
+  email: string | null
+  phone: string | null
+  emergencyContact: string | null
 }
 
 export interface RecentClient {
-    cisId: string;
-    name: string;
-    agency: string;
-    lastInteraction: string;
+  cisId: string
+  name: string
+  agency: string
+  lastInteraction: string
 }
-
-
 
 export async function getAccountProfile(): Promise<AccountProfile> {
-    const response = await apiClient.get("/api/account/me");
-    return response.data.data;
+  const response = await apiClient.get('/api/account/me')
+  return response.data.data
 }
 
-export async function updateAccountProfile(data: UpdateProfilePayload): Promise<void> {
-    await apiClient.put("/api/account/me", data);
+export async function updateAccountProfile(
+  data: UpdateProfilePayload,
+): Promise<void> {
+  await apiClient.put('/api/account/me', data)
 }
 
 export async function getAccountSessions(
-    pageNumber = 1,
-    pageSize = 10,
+  pageNumber = 1,
+  pageSize = 10,
 ): Promise<PagedSessionsResponse> {
-    const response = await apiClient.get(
-        `/api/account/me/sessions?pageNumber=${pageNumber}&pageSize=${pageSize}`,
-    );
-    return response.data.data;
+  const response = await apiClient.get(
+    `/api/account/me/sessions?pageNumber=${pageNumber}&pageSize=${pageSize}`,
+  )
+  return response.data.data
 }
 
 export async function revokeAccountSession(sessionId: number): Promise<void> {
-    await apiClient.delete(`/api/account/me/sessions/${sessionId}`);
+  await apiClient.delete(`/api/account/me/sessions/${sessionId}`)
 }
 
 export async function revokeOtherSessions(): Promise<number> {
-    const response = await apiClient.delete("/api/account/me/sessions/others");
-    return response.data.data?.revokedCount ?? 0;
+  const response = await apiClient.delete('/api/account/me/sessions/others')
+  return response.data.data?.revokedCount ?? 0
 }
 
 export async function getAccountActivity(limit = 10): Promise<Activity[]> {
-    const response = await apiClient.get(`/api/account/me/activity?limit=${limit}`);
-    return response.data.data;
+  const response = await apiClient.get(
+    `/api/account/me/activity?limit=${limit}`,
+  )
+  return response.data.data
 }
 
 export async function getAccountLoans(limit = 10): Promise<ProcessedLoan[]> {
-    const response = await apiClient.get(`/api/account/me/loans?limit=${limit}`);
-    return response.data.data;
+  const response = await apiClient.get(`/api/account/me/loans?limit=${limit}`)
+  return response.data.data
 }
 
 export async function getAccountClients(limit = 5): Promise<RecentClient[]> {
-    const response = await apiClient.get(`/api/account/me/clients?limit=${limit}`);
-    return response.data.data;
+  const response = await apiClient.get(`/api/account/me/clients?limit=${limit}`)
+  return response.data.data
 }

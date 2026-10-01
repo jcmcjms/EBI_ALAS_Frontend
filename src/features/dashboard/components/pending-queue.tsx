@@ -1,132 +1,205 @@
-import { memo, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Badge } from "@/src/components/ui/badge";
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
-import { cn } from "@/src/shared/lib/utils";
-import { initialsOf } from "@/src/shared/lib/name-utils";
-import type { PendingQueueItem, LoanStatus } from "../types";
-import type { LoanStatus as LoanStatusKey } from "@/src/features/loans/utils/loan-status";
-import { assessAging } from "@/src/features/loans/utils/loan-aging";
-import { useSlaPolicy } from "@/src/features/loans/api/loan-review";
-import { useAuthStore } from "@/src/store/authStore";
+import { memo, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Badge } from '@/src/components/ui/badge'
+import { Button } from '@/src/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/src/components/ui/card'
+import { Avatar, AvatarFallback } from '@/src/components/ui/avatar'
+import { cn } from '@/src/shared/lib/utils'
+import { initialsOf } from '@/src/shared/lib/name-utils'
+import type { PendingQueueItem, LoanStatus } from '../types'
+import type { LoanStatus as LoanStatusKey } from '@/src/features/loans/utils/loan-status'
+import { assessAging } from '@/src/features/loans/utils/loan-aging'
+import { useSlaPolicy } from '@/src/features/loans/api/loan-review'
+import { useAuthStore } from '@/src/store/authStore'
 
 const statusStyles: Record<LoanStatus, string> = {
-    "On Going": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
-    "For Recommendation": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-    "For Checking": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-    "For Approval": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-    "Approved": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
-    "Rejected": "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
-    "Cancelled": "bg-slate-500/10 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400",
-    "Expired": "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
-    "For Revision": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-    "For Disbursement": "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-    "Disbursed": "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
-    "For Incomplete Documents": "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
-};
+  'On Going':
+    'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400',
+  'For Recommendation':
+    'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
+  'For Checking':
+    'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
+  'For Approval':
+    'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
+  Approved:
+    'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400',
+  Rejected: 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400',
+  Cancelled:
+    'bg-slate-500/10 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400',
+  Expired: 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400',
+  'For Revision':
+    'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
+  'For Disbursement':
+    'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
+  Disbursed:
+    'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400',
+  'For Incomplete Documents':
+    'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
+}
 
 export function waitingMinutes(date: string): number {
-    return Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 60_000));
+  return Math.max(
+    0,
+    Math.floor((Date.now() - new Date(date).getTime()) / 60_000),
+  )
 }
 
 export function formatWaiting(mins: number): string {
-    const h = Math.floor(mins / 60);
-    return h > 0 ? `${h}h ${mins % 60}m` : `${mins}m`;
+  const h = Math.floor(mins / 60)
+  return h > 0 ? `${h}h ${mins % 60}m` : `${mins}m`
 }
 
-interface PendingQueueProps { data: PendingQueueItem[]; }
+interface PendingQueueProps {
+  data: PendingQueueItem[]
+}
 
+export const PendingQueue = memo(function PendingQueue({
+  data,
+}: PendingQueueProps) {
+  const navigate = useNavigate()
+  const user = useAuthStore((state) => state.user)
+  const displayData = useMemo(() => data.slice(0, 5), [data])
 
-export const PendingQueue = memo(function PendingQueue({ data }: PendingQueueProps) {
-    const navigate = useNavigate();
-    const user = useAuthStore((state) => state.user);
-    const displayData = useMemo(() => data.slice(0, 5), [data]);
+  const pendingStatuses = useMemo(
+    () => [...new Set(data.map((d) => d.statusKey))].join(','),
+    [data],
+  )
 
-    
-    
-    const pendingStatuses = useMemo(
-        () => [...new Set(data.map((d) => d.statusKey))].join(","),
-        [data],
-    );
+  const slaPolicy = useSlaPolicy()
 
-    
-    
-    
-    const slaPolicy = useSlaPolicy();
-
-    return (
-        <Card id="pending-queue" className="scroll-mt-24 flex flex-col">
-            <CardHeader className="flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                    Pending Queue
-                    {data.length > 0 && <Badge variant="secondary" className="tabular-nums">{data.length}</Badge>}
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 flex-1">
-                {data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                        <p className="text-sm text-muted-foreground mb-4">Queue is clear — no pending applications.</p>
-                        {user?.role === "Encoder" && (
-                            <Button variant="outline" size="sm" onClick={() => navigate("/loans/create")}>Create New Loan</Button>
-                        )}
-                    </div>
-                ) : (
-                    <ul className="divide-y">
-                        {displayData.map((item) => {
-                            const mins = waitingMinutes(item.date);
-                            
-                            
-                            
-                            const assessment = assessAging(
-                                item.statusKey as LoanStatusKey,
-                                item.date,
-                                Date.now(),
-                                slaPolicy.data ?? null,
-                            );
-                            return (
-                                <li
-                                    key={item.lamId}
-                                    onClick={() => navigate(`/loans/monitoring?status=${pendingStatuses}`)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/loans/monitoring?status=${pendingStatuses}`); } }}
-                                    tabIndex={0}
-                                    role="link"
-                                    className={cn("flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", item.position === 1 && "bg-primary/[0.04]")}
-                                >
-                                    <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">#{item.position}</span>
-                                    <Avatar size="sm" className="border"><AvatarFallback>{initialsOf(item.clientName)}</AvatarFallback></Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <p className="text-sm font-medium truncate">{item.lamId}</p>
-                                            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-4 font-normal", statusStyles[item.status])}>{item.status}</Badge>
-                                        </div>
-                                        <p
-                                            className="text-xs truncate"
-                                            title={`${item.clientName} · encoded by ${item.encoderName} · ${item.branch}`}
-                                        >
-                                            <span className="font-medium text-foreground/90">{item.clientName}</span>
-                                            <span className="text-muted-foreground"> · by {item.encoderName}</span>
-                                        </p>
-                                    </div>
-                                    <div className="text-right shrink-0">
-                                        <span className={cn(
-                                            "text-sm font-medium tabular-nums",
-                                            assessment.tier === "warning" && "text-amber-600 dark:text-amber-400",
-                                            assessment.tier === "breach" && "text-red-600 dark:text-red-400",
-                                        )}>{formatWaiting(mins)}</span>
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                )}
-            </CardContent>
-            {data.length > 5 && (
-                <CardFooter className="border-t p-3 justify-center">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/loans/monitoring?status=${pendingStatuses}`)} className="w-full text-sm">View all {data.length} pending loans</Button>
-                </CardFooter>
+  return (
+    <Card id="pending-queue" className="scroll-mt-24 flex flex-col">
+      <CardHeader className="flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2 text-xl">
+          Pending Queue
+          {data.length > 0 && (
+            <Badge variant="secondary" className="tabular-nums">
+              {data.length}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 flex-1">
+        {data.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Queue is clear — no pending applications.
+            </p>
+            {user?.role === 'Encoder' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/loans/create')}
+              >
+                Create New Loan
+              </Button>
             )}
-        </Card>
-    );
-});
+          </div>
+        ) : (
+          <ul className="divide-y">
+            {displayData.map((item) => {
+              const mins = waitingMinutes(item.date)
+
+              const assessment = assessAging(
+                item.statusKey as LoanStatusKey,
+                item.date,
+                Date.now(),
+                slaPolicy.data ?? null,
+              )
+              return (
+                <li
+                  key={item.lamId}
+                  onClick={() =>
+                    navigate(`/loans/monitoring?status=${pendingStatuses}`)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate(`/loans/monitoring?status=${pendingStatuses}`)
+                    }
+                  }}
+                  tabIndex={0}
+                  role="link"
+                  className={cn(
+                    'flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                    item.position === 1 && 'bg-primary/[0.04]',
+                  )}
+                >
+                  <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">
+                    #{item.position}
+                  </span>
+                  <Avatar size="sm" className="border">
+                    <AvatarFallback>
+                      {initialsOf(item.clientName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-medium truncate">
+                        {item.lamId}
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'text-[10px] px-1.5 py-0 h-4 font-normal',
+                          statusStyles[item.status],
+                        )}
+                      >
+                        {item.status}
+                      </Badge>
+                    </div>
+                    <p
+                      className="text-xs truncate"
+                      title={`${item.clientName} · encoded by ${item.encoderName} · ${item.branch}`}
+                    >
+                      <span className="font-medium text-foreground/90">
+                        {item.clientName}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {' '}
+                        · by {item.encoderName}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span
+                      className={cn(
+                        'text-sm font-medium tabular-nums',
+                        assessment.tier === 'warning' &&
+                          'text-amber-600 dark:text-amber-400',
+                        assessment.tier === 'breach' &&
+                          'text-red-600 dark:text-red-400',
+                      )}
+                    >
+                      {formatWaiting(mins)}
+                    </span>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </CardContent>
+      {data.length > 5 && (
+        <CardFooter className="border-t p-3 justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              navigate(`/loans/monitoring?status=${pendingStatuses}`)
+            }
+            className="w-full text-sm"
+          >
+            View all {data.length} pending loans
+          </Button>
+        </CardFooter>
+      )}
+    </Card>
+  )
+})

@@ -1,84 +1,90 @@
-import { formatDistanceToNowStrict } from "date-fns";
-import type { TimelineEvent } from "../api/loan-review";
-import { LOAN_STATUS_META, type LoanStatus } from "./loan-status";
+import { formatDistanceToNowStrict } from 'date-fns'
+import type { TimelineEvent } from '../api/loan-review'
+import { LOAN_STATUS_META, type LoanStatus } from './loan-status'
 
 const statusLabel = (s: string | null) =>
-    s && s in LOAN_STATUS_META ? LOAN_STATUS_META[s as LoanStatus].label : (s ?? "");
+  s && s in LOAN_STATUS_META
+    ? LOAN_STATUS_META[s as LoanStatus].label
+    : (s ?? '')
 
 export interface TimelineSentence {
-    headline: string;
-    subject?: string;
+  headline: string
+  subject?: string
 }
 
 export function describeEvent(e: TimelineEvent): TimelineSentence {
-    if (e.type === "deviation")
-        return { headline: "Declared a policy deviation", subject: e.subject ?? undefined };
-    if (e.type === "deviationRemark")
-        return { headline: "Commented on a deviation", subject: e.subject ?? undefined };
-    if (e.type === "documentRemark")
-        return { headline: "Left a note on a requirement", subject: e.subject ?? undefined };
-    if (e.type === "remark")
-        return { headline: e.subject ?? "Added remarks" };
-
-    
-    const { action, fromStatus, toStatus } = e;
-    if (action === "Created")
-        return { headline: "Created the loan application" };
-    if (action === "DocumentsFlagged")
-        return { headline: "Flagged missing documents" };
-    if (action === "DocumentFlagCleared")
-        return { headline: "Document flag cleared — all requirements uploaded" };
-    if (action === "PushedBack" || toStatus === "ForRevision")
-        return { headline: "Returned the application to the encoder for revision" };
-    if (action === "EvaluatedRecommended")
-        return { headline: "Evaluation complete — recommended for approval" };
-    if (action === "EvaluatedNotRecommended")
-        return { headline: "Evaluation complete — forwarded as NOT recommended" };
-    if (fromStatus === "Draft") {
-        if (toStatus === "ForChecking")
-            return { headline: "Submitted for evaluation" };
-        if (toStatus === "ForRecommendation")
-            return { headline: "Submitted for recommendation" };
-        if (toStatus === "ForApproval")
-            return { headline: "Submitted for approval" };
-        return { headline: `Submitted the application to ${statusLabel(toStatus)}` };
+  if (e.type === 'deviation')
+    return {
+      headline: 'Declared a policy deviation',
+      subject: e.subject ?? undefined,
     }
-    if (toStatus === "ForChecking")
-        return { headline: "Recommended — sent for credit checking" };
-    if (toStatus === "ForApproval")
-        return { headline: "Sent to the approving officer" };
-    if (toStatus === "Approved") return { headline: "Approved the application" };
-    if (toStatus === "Rejected") return { headline: "Rejected the application" };
-    if (toStatus === "Cancelled") return { headline: "Cancelled the application (client withdrawal)" };
-    if (toStatus === "ForDisbursement") return { headline: "Released for disbursement setup" };
-    if (toStatus === "Disbursed") return { headline: "Proceeds released" };
-    if (toStatus === "OnGoing") return { headline: "Loan is now ongoing" };
-    return { headline: `Moved the application to ${statusLabel(toStatus)}` };
+  if (e.type === 'deviationRemark')
+    return {
+      headline: 'Commented on a deviation',
+      subject: e.subject ?? undefined,
+    }
+  if (e.type === 'documentRemark')
+    return {
+      headline: 'Left a note on a requirement',
+      subject: e.subject ?? undefined,
+    }
+  if (e.type === 'remark') return { headline: e.subject ?? 'Added remarks' }
+
+  const { action, fromStatus, toStatus } = e
+  if (action === 'Created') return { headline: 'Created the loan application' }
+  if (action === 'DocumentsFlagged')
+    return { headline: 'Flagged missing documents' }
+  if (action === 'DocumentFlagCleared')
+    return { headline: 'Document flag cleared — all requirements uploaded' }
+  if (action === 'PushedBack' || toStatus === 'ForRevision')
+    return { headline: 'Returned the application to the encoder for revision' }
+  if (action === 'EvaluatedRecommended')
+    return { headline: 'Evaluation complete — recommended for approval' }
+  if (action === 'EvaluatedNotRecommended')
+    return { headline: 'Evaluation complete — forwarded as NOT recommended' }
+  if (fromStatus === 'Draft') {
+    if (toStatus === 'ForChecking')
+      return { headline: 'Submitted for evaluation' }
+    if (toStatus === 'ForRecommendation')
+      return { headline: 'Submitted for recommendation' }
+    if (toStatus === 'ForApproval')
+      return { headline: 'Submitted for approval' }
+    return { headline: `Submitted the application to ${statusLabel(toStatus)}` }
+  }
+  if (toStatus === 'ForChecking')
+    return { headline: 'Recommended — sent for credit checking' }
+  if (toStatus === 'ForApproval')
+    return { headline: 'Sent to the approving officer' }
+  if (toStatus === 'Approved') return { headline: 'Approved the application' }
+  if (toStatus === 'Rejected') return { headline: 'Rejected the application' }
+  if (toStatus === 'Cancelled')
+    return { headline: 'Cancelled the application (client withdrawal)' }
+  if (toStatus === 'ForDisbursement')
+    return { headline: 'Released for disbursement setup' }
+  if (toStatus === 'Disbursed') return { headline: 'Proceeds released' }
+  if (toStatus === 'OnGoing') return { headline: 'Loan is now ongoing' }
+  return { headline: `Moved the application to ${statusLabel(toStatus)}` }
 }
 
 export const relativeTime = (iso: string) =>
-    formatDistanceToNowStrict(new Date(iso), { addSuffix: true });
-
-
-
+  formatDistanceToNowStrict(new Date(iso), { addSuffix: true })
 
 const QUEUE_DESK_SENTENCE: Record<string, (owner: string | null) => string> = {
-    Recommendation: (o) =>
-        `Waiting at the Recommendation desk${o ? ` — next up: ${o}` : ""}.`,
-    Evaluation: (o) =>
-        `Waiting at the Credit Checking desk${o ? ` — reviewing: ${o}` : ""}.`,
-    Approval: (o) =>
-        `Waiting at the Approval desk${o ? ` — reviewing: ${o}` : ""}.`,
-    DocumentCompletion: (o) =>
-        `On hold for missing documents${o ? ` — ${o} is uploading the requirements` : ""}.`,
-};
-
+  Recommendation: (o) =>
+    `Waiting at the Recommendation desk${o ? ` — next up: ${o}` : ''}.`,
+  Evaluation: (o) =>
+    `Waiting at the Credit Checking desk${o ? ` — reviewing: ${o}` : ''}.`,
+  Approval: (o) =>
+    `Waiting at the Approval desk${o ? ` — reviewing: ${o}` : ''}.`,
+  DocumentCompletion: (o) =>
+    `On hold for missing documents${o ? ` — ${o} is uploading the requirements` : ''}.`,
+}
 
 export function queueDeskSentence(
-    stage: string | null | undefined,
-    owner: string | null | undefined,
+  stage: string | null | undefined,
+  owner: string | null | undefined,
 ): string | null {
-    if (!stage) return null;
-    const build = QUEUE_DESK_SENTENCE[stage];
-    return build ? build(owner ?? null) : null;
+  if (!stage) return null
+  const build = QUEUE_DESK_SENTENCE[stage]
+  return build ? build(owner ?? null) : null
 }

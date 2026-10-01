@@ -1,44 +1,56 @@
-import type { QueuedLoanDto } from "../hooks/use-desk-queue";
-import { assessAging } from "./loan-aging";
-import type { LoanStatus } from "./loan-status";
+import type { QueuedLoanDto } from '../hooks/use-desk-queue'
+import { assessAging } from './loan-aging'
+import type { LoanStatus } from './loan-status'
 
-const phpFormatter = new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-});
+const phpFormatter = new Intl.NumberFormat('en-PH', {
+  style: 'currency',
+  currency: 'PHP',
+  maximumFractionDigits: 0,
+})
 
 export function formatPhp(amount: number): string {
-    return Number.isFinite(amount) ? phpFormatter.format(amount) : "\u2014";
+  return Number.isFinite(amount) ? phpFormatter.format(amount) : '\u2014'
 }
 
 export function minutesSince(iso: string, now: number): number {
-    return Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000));
+  return Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000))
 }
 
 export interface DeskQueueStats {
-    fileCount: number;
-    longestWaitMinutes: number;
-    slaBreachCount: number;
-    totalExposure: number;
+  fileCount: number
+  longestWaitMinutes: number
+  slaBreachCount: number
+  totalExposure: number
 }
 
-
 export function summarizeDeskQueue(
-    items: readonly QueuedLoanDto[],
-    now: number = Date.now(),
+  items: readonly QueuedLoanDto[],
+  now: number = Date.now(),
 ): DeskQueueStats {
-    let longestWaitMinutes = 0;
-    let slaBreachCount = 0;
-    let totalExposure = 0;
+  let longestWaitMinutes = 0
+  let slaBreachCount = 0
+  let totalExposure = 0
 
-    for (const item of items) {
-        longestWaitMinutes = Math.max(longestWaitMinutes, minutesSince(item.enqueuedAt, now));
-        if (assessAging(item.status as LoanStatus, item.enqueuedAt, now).tier === "breach") {
-            slaBreachCount += 1;
-        }
-        totalExposure += Number.isFinite(item.proposedAmount) ? item.proposedAmount : 0;
+  for (const item of items) {
+    longestWaitMinutes = Math.max(
+      longestWaitMinutes,
+      minutesSince(item.enqueuedAt, now),
+    )
+    if (
+      assessAging(item.status as LoanStatus, item.enqueuedAt, now).tier ===
+      'breach'
+    ) {
+      slaBreachCount += 1
     }
+    totalExposure += Number.isFinite(item.proposedAmount)
+      ? item.proposedAmount
+      : 0
+  }
 
-    return { fileCount: items.length, longestWaitMinutes, slaBreachCount, totalExposure };
+  return {
+    fileCount: items.length,
+    longestWaitMinutes,
+    slaBreachCount,
+    totalExposure,
+  }
 }

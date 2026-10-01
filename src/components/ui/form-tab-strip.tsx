@@ -1,53 +1,69 @@
-import { useRef } from "react";
-import { cn } from "@/src/shared/lib/utils";
+import { useRef } from 'react'
+import { cn } from '@/src/shared/lib/utils'
 
 export interface FormTabItem {
-  value: string;
-  
-  label: string;
-  
-  hint?: string;
-  
-  metric?: string;
-  title?: string;
-  
-  hasError?: boolean;
-  
-  hasWarning?: boolean;
+  value: string
+
+  label: string
+
+  hint?: string
+
+  metric?: string
+  title?: string
+
+  hasError?: boolean
+
+  hasWarning?: boolean
 }
 
 interface FormTabStripProps {
-  items: FormTabItem[];
-  value: string;
-  onValueChange: (value: string) => void;
-  ariaLabel: string;
-  
-  idPrefix?: string;
-  
-  activeSurface?: "sheet" | "card";
-  
-  trailing?: React.ReactNode;
+  items: FormTabItem[]
+  value: string
+  onValueChange: (value: string) => void
+  ariaLabel: string
+
+  idPrefix?: string
+
+  activeSurface?: 'sheet' | 'card'
+
+  trailing?: React.ReactNode
 }
 
-
 export function FormTabStrip({
-  items, value, onValueChange, ariaLabel,
-  idPrefix = "form", activeSurface = "card", trailing,
+  items,
+  value,
+  onValueChange,
+  ariaLabel,
+  idPrefix = 'form',
+  activeSurface = 'card',
+  trailing,
 }: FormTabStripProps) {
-  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const refs = useRef<(HTMLButtonElement | null)[]>([])
 
   const focusAndSelect = (index: number) => {
-    const next = (index + items.length) % items.length;
-    onValueChange(items[next].value);
-    refs.current[next]?.focus();
-  };
+    const next = (index + items.length) % items.length
+    onValueChange(items[next].value)
+    refs.current[next]?.focus()
+  }
 
   const onKeyDown = (e: React.KeyboardEvent, index: number) => {
-    if (e.key === "ArrowLeft") { e.preventDefault(); focusAndSelect(index - 1); }
-    if (e.key === "ArrowRight") { e.preventDefault(); focusAndSelect(index + 1); }
-    if (e.key === "Home") { e.preventDefault(); focusAndSelect(0); }
-    if (e.key === "End") { e.preventDefault(); focusAndSelect(items.length - 1); }
-  };
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      focusAndSelect(index - 1)
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      focusAndSelect(index + 1)
+    }
+    if (e.key === 'Home') {
+      e.preventDefault()
+      focusAndSelect(0)
+    }
+    if (e.key === 'End') {
+      e.preventDefault()
+      focusAndSelect(items.length - 1)
+    }
+  }
 
   return (
     <div className="flex items-end gap-2 print:hidden">
@@ -60,11 +76,13 @@ export function FormTabStrip({
           className="-mb-px flex items-end gap-1 overflow-x-auto [scrollbar-width:thin]"
         >
           {items.map((item, i) => {
-            const active = item.value === value;
+            const active = item.value === value
             return (
               <button
                 key={item.value}
-                ref={(el) => { refs.current[i] = el; }}
+                ref={(el) => {
+                  refs.current[i] = el
+                }}
                 type="button"
                 role="tab"
                 id={`${idPrefix}-tab-${item.value}`}
@@ -75,33 +93,48 @@ export function FormTabStrip({
                 onClick={() => onValueChange(item.value)}
                 onKeyDown={(e) => onKeyDown(e, i)}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-none border px-3 py-2 text-xs font-medium transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                  
-                  
+                  'flex shrink-0 items-center gap-2 rounded-none border px-3 py-2 text-xs font-medium transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+
                   active
                     ? cn(
-                        "border-border border-t-2 border-t-primary text-foreground shadow-none",
-                        activeSurface === "sheet" ? "border-b-white bg-white" : "border-b-card bg-card"
+                        'border-border border-t-2 border-t-primary text-foreground shadow-none',
+                        activeSurface === 'sheet'
+                          ? 'border-b-white bg-white'
+                          : 'border-b-card bg-card',
                       )
-                    : "border-border border-t-2 border-t-transparent bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    : 'border-border border-t-2 border-t-transparent bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground',
                 )}
               >
                 <span className="font-semibold">{item.label}</span>
-                {item.hint && <span className="font-mono tabular-nums opacity-70">{item.hint}</span>}
-                {item.metric && <span className="tabular-nums opacity-70">{item.metric}</span>}
+                {item.hint && (
+                  <span className="font-mono tabular-nums opacity-70">
+                    {item.hint}
+                  </span>
+                )}
+                {item.metric && (
+                  <span className="tabular-nums opacity-70">{item.metric}</span>
+                )}
                 {item.hasError && (
-                  <span className="size-1.5 rounded-full bg-destructive" aria-label="Has validation errors" />
+                  <span
+                    className="size-1.5 rounded-full bg-destructive"
+                    aria-label="Has validation errors"
+                  />
                 )}
                 {!item.hasError && item.hasWarning && (
-                  <span className="size-1.5 rounded-full bg-amber-500" aria-label="Needs attention" />
+                  <span
+                    className="size-1.5 rounded-full bg-amber-500"
+                    aria-label="Needs attention"
+                  />
                 )}
               </button>
-            );
+            )
           })}
         </div>
       </div>
-      {trailing && <div className="flex shrink-0 items-center gap-1 pb-1">{trailing}</div>}
+      {trailing && (
+        <div className="flex shrink-0 items-center gap-1 pb-1">{trailing}</div>
+      )}
     </div>
-  );
+  )
 }

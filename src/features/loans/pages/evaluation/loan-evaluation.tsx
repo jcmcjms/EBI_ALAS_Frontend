@@ -1,701 +1,662 @@
-import { useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-    CheckCircle,
-    ArrowRight,
-    ArrowCounterClockwise,
-    FilePdf,
-    Printer,
-    Clock,
-    UserCircle,
-    WarningCircle,
-    ThumbsDown,
-    ThumbsUp,
-    ArrowLeft,
-    MagnifyingGlassMinus,
-    MagnifyingGlassPlus,
-} from "@phosphor-icons/react";
-import { toastSuccess, toastError } from "@/src/components/ui/toast";
-import { RichText } from "@/src/components/ui/rich-text";
-import axios from "axios";
-import { getErrorMessage } from "@/src/lib/apiClient";
+  CheckCircle,
+  ArrowRight,
+  ArrowCounterClockwise,
+  FilePdf,
+  Printer,
+  Clock,
+  UserCircle,
+  WarningCircle,
+  ThumbsDown,
+  ThumbsUp,
+  ArrowLeft,
+  MagnifyingGlassMinus,
+  MagnifyingGlassPlus,
+} from '@phosphor-icons/react'
+import { toastSuccess, toastError } from '@/src/components/ui/toast'
+import { RichText } from '@/src/components/ui/rich-text'
+import axios from 'axios'
+import { getErrorMessage } from '@/src/lib/apiClient'
 
 import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-} from "@/src/components/ui/card";
-import { Button } from "@/src/components/ui/button";
-import { Textarea } from "@/src/components/ui/textarea";
-import { Label } from "@/src/components/ui/label";
-import { Badge } from "@/src/components/ui/badge";
-import { Spinner } from "@/src/components/ui/spinner";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/src/components/ui/card'
+import { Button } from '@/src/components/ui/button'
+import { Textarea } from '@/src/components/ui/textarea'
+import { Label } from '@/src/components/ui/label'
+import { Badge } from '@/src/components/ui/badge'
+import { Spinner } from '@/src/components/ui/spinner'
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/src/components/ui/alert-dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/src/components/ui/alert-dialog'
 
-import { useAuthStore } from "@/src/store/authStore";
-import { ApprovalFormDocument } from "../approval/components/approval-form-document";
-import { ApprovalFormViewport } from "@/src/features/loans/components/approval-form-sheet";
-import { useCatLoanClass } from "@/src/features/loans/hooks/use-cat-loan-class";
-import { parseProductCode } from "@/src/features/loans/utils/loan-product-display";
+import { useAuthStore } from '@/src/store/authStore'
+import { ApprovalFormDocument } from '../approval/components/approval-form-document'
+import { ApprovalFormViewport } from '@/src/features/loans/components/approval-form-sheet'
+import { useCatLoanClass } from '@/src/features/loans/hooks/use-cat-loan-class'
+import { parseProductCode } from '@/src/features/loans/utils/loan-product-display'
 import {
-    getLoanDetail,
-    getLoanHistory,
-    updateLoanStatus,
-    flagDocuments,
-} from "@/src/features/loans/api/loan-review";
-import { queryKeys } from "@/src/shared/lib/query/queryKeys";
-import { useLoanSignatureChain, signatureKeys } from "@/src/features/loans/api/signatures";
-import { mapLoanDetailToFormData } from "@/src/features/loans/utils/map-detail-to-form";
-import { FlagIncompleteDocumentsDialog } from "../approval/components/flag-incomplete-documents-dialog";
-import { IncompleteDocumentsWarning } from "../review/components/incomplete-documents-warning";
-import { getChecklistDocuments } from "@/src/features/loans/api/loan-review";
-import type { LoanStatus } from "@/src/features/loans/utils/loan-status";
-import { apiClient } from "@/src/lib/apiClient";
-import { unwrapApiData, type ApiResponse } from "@/src/lib/api/types";
+  getLoanDetail,
+  getLoanHistory,
+  updateLoanStatus,
+  flagDocuments,
+} from '@/src/features/loans/api/loan-review'
+import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import {
+  useLoanSignatureChain,
+  signatureKeys,
+} from '@/src/features/loans/api/signatures'
+import { mapLoanDetailToFormData } from '@/src/features/loans/utils/map-detail-to-form'
+import { FlagIncompleteDocumentsDialog } from '../approval/components/flag-incomplete-documents-dialog'
+import { IncompleteDocumentsWarning } from '../review/components/incomplete-documents-warning'
+import { getChecklistDocuments } from '@/src/features/loans/api/loan-review'
+import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
+import { apiClient } from '@/src/lib/apiClient'
+import { unwrapApiData, type ApiResponse } from '@/src/lib/api/types'
 
-type EvaluationAction = "recommended" | "notRecommended" | "pushback";
+type EvaluationAction = 'recommended' | 'notRecommended' | 'pushback'
 
-
-const TERMINAL = ["Approved", "Rejected", "Disbursed", "OnGoing"];
+const TERMINAL = ['Approved', 'Rejected', 'Disbursed', 'OnGoing']
 
 export function LoanEvaluationPage() {
-    const { loanId } = useParams<{ loanId: string }>();
-    const id = Number(loanId);
-    const navigate = useNavigate();
-    const qc = useQueryClient();
+  const { loanId } = useParams<{ loanId: string }>()
+  const id = Number(loanId)
+  const navigate = useNavigate()
+  const qc = useQueryClient()
 
-    const [comments, setComments] = useState("");
-    const [pendingAction, setPendingAction] = useState<EvaluationAction | null>(null);
-    const [zoom, setZoom] = useState(1);
-    const [flagOpen, setFlagOpen] = useState(false);
-    const user = useAuthStore((s) => s.user);
+  const [comments, setComments] = useState('')
+  const [pendingAction, setPendingAction] = useState<EvaluationAction | null>(
+    null,
+  )
+  const [zoom, setZoom] = useState(1)
+  const [flagOpen, setFlagOpen] = useState(false)
+  const user = useAuthStore((s) => s.user)
 
-    const loan = useQuery({
-        queryKey: queryKeys.loans.review.detail(id),
-        queryFn: () => getLoanDetail(id),
-        enabled: Number.isFinite(id) && id > 0,
-    });
+  const loan = useQuery({
+    queryKey: queryKeys.loans.review.detail(id),
+    queryFn: () => getLoanDetail(id),
+    enabled: Number.isFinite(id) && id > 0,
+  })
 
-    const checklist = useQuery({
-        queryKey: queryKeys.loans.review.checklistDocuments(id),
-        queryFn: () => getChecklistDocuments(id),
-        enabled: Number.isFinite(id) && id > 0,
-    });
+  const checklist = useQuery({
+    queryKey: queryKeys.loans.review.checklistDocuments(id),
+    queryFn: () => getChecklistDocuments(id),
+    enabled: Number.isFinite(id) && id > 0,
+  })
 
-    const history = useQuery({
-        queryKey: queryKeys.loans.review.history(id),
-        queryFn: () => getLoanHistory(id),
-        enabled: Number.isFinite(id) && id > 0,
-    });
+  const history = useQuery({
+    queryKey: queryKeys.loans.review.history(id),
+    queryFn: () => getLoanHistory(id),
+    enabled: Number.isFinite(id) && id > 0,
+  })
 
-    
-    const { data: signatureSlots } = useLoanSignatureChain(id);
+  const { data: signatureSlots } = useLoanSignatureChain(id)
 
-    const detail = loan.data;
-    const frozen = detail ? TERMINAL.includes(detail.status) : false;
-    const formData = useMemo(
-        () => (detail ? mapLoanDetailToFormData(detail) : null),
-        [detail]
-    );
+  const detail = loan.data
+  const frozen = detail ? TERMINAL.includes(detail.status) : false
+  const formData = useMemo(
+    () => (detail ? mapLoanDetailToFormData(detail) : null),
+    [detail],
+  )
 
-    const loanClass = useCatLoanClass(
-        detail?.branchCode ?? "",
-        detail?.loanNo ?? "",
-        parseProductCode(detail?.product ?? "")
-    );
+  const loanClass = useCatLoanClass(
+    detail?.branchCode ?? '',
+    detail?.loanNo ?? '',
+    parseProductCode(detail?.product ?? ''),
+  )
 
-    const updateStatus = useMutation({
-        mutationFn: ({ status, comments }: { status: string; comments: string }) =>
-            updateLoanStatus(id, { status: status as LoanStatus, comments }),
-        onSuccess: (_data, { status }) => {
-            const actionLabel =
-                status === "ForApproval"
-                    ? "forwarded to Approver"
-                    : "Pushed back to Encoder";
-            toastSuccess(`Application ${actionLabel}.`);
-            setComments("");
-            setPendingAction(null);
-            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
-            qc.invalidateQueries({ queryKey: signatureKeys.loan(id) });
-        },
-        onError: (e: Error) => {
-            if (axios.isAxiosError(e) && e.response?.data) {
-                const data = e.response.data as {
-                    message?: string;
-                    errors?: string[];
-                };
-                const msg = data.message || getErrorMessage(e);
-                const details = Array.isArray(data.errors) && data.errors.length > 0
-                    ? data.errors
-                    : null;
-
-                if (details) {
-                    toastError(
-                        <div className="space-y-1.5">
-                            <p className="font-semibold">{msg}</p>
-                            <ul className="list-disc pl-4 text-xs opacity-90">
-                                {details.map((d, i) => <li key={i}>{d}</li>)}
-                            </ul>
-                        </div>,
-                        
-                        { timeout: 10_000 },
-                    );
-                } else {
-                    toastError(msg);
-                }
-            } else {
-                toastError(getErrorMessage(e));
-            }
-            setPendingAction(null);
-        },
-    });
-
-    const recheck = useMutation({
-        mutationFn: async () => {
-            const res = await apiClient.post<ApiResponse<{ complete: boolean; missing: string[] }>>(
-                `/api/loans/${id}/documents/verify`);
-            return unwrapApiData(res.data);
-        },
-        onSuccess: (r) => {
-            toastSuccess(r.complete
-                ? "All requirements uploaded — flag cleared."
-                : `Still missing: ${r.missing.join(", ")}`);
-            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
-        },
-        onError: (e: unknown) => toastError(getErrorMessage(e)),
-    });
-
-    const flagDocs = useMutation({
-        mutationFn: ({ codes, reason }: { codes: string[]; reason: string }) =>
-            flagDocuments(id, { missingRequirementCodes: codes, reason }),
-        onSuccess: () => {
-            toastSuccess("Documents flagged — the encoder has been notified. Review continues.");
-            setFlagOpen(false);
-            qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.review.checklistDocuments(id) });
-            qc.invalidateQueries({ queryKey: queryKeys.dashboard.full });
-            qc.invalidateQueries({ queryKey: queryKeys.loans.all });
-        },
-        onError: (e: unknown) => toastError(getErrorMessage(e)),
-    });
-
-    const handleAction = (action: EvaluationAction) => {
-        const trimmed = comments.trim();
-
-        if ((action === "pushback" || action === "notRecommended") && trimmed.length < 10) {
-            toastError("Comments are required (minimum 10 characters) for this action.");
-            return;
+  const updateStatus = useMutation({
+    mutationFn: ({ status, comments }: { status: string; comments: string }) =>
+      updateLoanStatus(id, { status: status as LoanStatus, comments }),
+    onSuccess: (_data, { status }) => {
+      const actionLabel =
+        status === 'ForApproval'
+          ? 'forwarded to Approver'
+          : 'Pushed back to Encoder'
+      toastSuccess(`Application ${actionLabel}.`)
+      setComments('')
+      setPendingAction(null)
+      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+      qc.invalidateQueries({ queryKey: signatureKeys.loan(id) })
+    },
+    onError: (e: Error) => {
+      if (axios.isAxiosError(e) && e.response?.data) {
+        const data = e.response.data as {
+          message?: string
+          errors?: string[]
         }
+        const msg = data.message || getErrorMessage(e)
+        const details =
+          Array.isArray(data.errors) && data.errors.length > 0
+            ? data.errors
+            : null
 
-        setPendingAction(action);
+        if (details) {
+          toastError(
+            <div className="space-y-1.5">
+              <p className="font-semibold">{msg}</p>
+              <ul className="list-disc pl-4 text-xs opacity-90">
+                {details.map((d, i) => (
+                  <li key={i}>{d}</li>
+                ))}
+              </ul>
+            </div>,
 
-        if (action === "pushback") {
-            updateStatus.mutate({ status: "ForRevision", comments: trimmed });
+            { timeout: 10_000 },
+          )
         } else {
-            
-            const finalComments =
-                action === "notRecommended"
-                    ? trimmed
-                    : trimmed || "Recommended for approval.";
-            updateStatus.mutate({ status: "ForApproval", comments: finalComments });
+          toastError(msg)
         }
-    };
+      } else {
+        toastError(getErrorMessage(e))
+      }
+      setPendingAction(null)
+    },
+  })
 
-    
-    if (!Number.isFinite(id) || id <= 0) {
-        return (
-            <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
-                <div className="text-center space-y-4">
-                    <WarningCircle size={48} className="mx-auto text-destructive" />
-                    <h2 className="text-xl font-semibold">Invalid Application ID</h2>
-                    <Button onClick={() => navigate("/loans/monitoring")}>
-                        Return to Monitoring
-                    </Button>
-                </div>
-            </div>
-        );
+  const recheck = useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.post<
+        ApiResponse<{ complete: boolean; missing: string[] }>
+      >(`/api/loans/${id}/documents/verify`)
+      return unwrapApiData(res.data)
+    },
+    onSuccess: (r) => {
+      toastSuccess(
+        r.complete
+          ? 'All requirements uploaded — flag cleared.'
+          : `Still missing: ${r.missing.join(', ')}`,
+      )
+      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
+      qc.invalidateQueries({
+        queryKey: queryKeys.loans.review.checklistDocuments(id),
+      })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+    },
+    onError: (e: unknown) => toastError(getErrorMessage(e)),
+  })
+
+  const flagDocs = useMutation({
+    mutationFn: ({ codes, reason }: { codes: string[]; reason: string }) =>
+      flagDocuments(id, { missingRequirementCodes: codes, reason }),
+    onSuccess: () => {
+      toastSuccess(
+        'Documents flagged — the encoder has been notified. Review continues.',
+      )
+      setFlagOpen(false)
+      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) })
+      qc.invalidateQueries({
+        queryKey: queryKeys.loans.review.checklistDocuments(id),
+      })
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard.full })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+    },
+    onError: (e: unknown) => toastError(getErrorMessage(e)),
+  })
+
+  const handleAction = (action: EvaluationAction) => {
+    const trimmed = comments.trim()
+
+    if (
+      (action === 'pushback' || action === 'notRecommended') &&
+      trimmed.length < 10
+    ) {
+      toastError(
+        'Comments are required (minimum 10 characters) for this action.',
+      )
+      return
     }
 
-    if (loan.isLoading) {
-        return (
-            <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
-                <Spinner className="size-8" />
-            </div>
-        );
+    setPendingAction(action)
+
+    if (action === 'pushback') {
+      updateStatus.mutate({ status: 'ForRevision', comments: trimmed })
+    } else {
+      const finalComments =
+        action === 'notRecommended'
+          ? trimmed
+          : trimmed || 'Recommended for approval.'
+      updateStatus.mutate({ status: 'ForApproval', comments: finalComments })
     }
+  }
 
-    if (loan.isError || !detail || !formData) {
-        const isForbidden = loan.error && typeof loan.error === 'object' && 'response' in loan.error
-            && (loan.error as { response?: { status?: number } }).response?.status === 403;
+  if (!Number.isFinite(id) || id <= 0) {
+    return (
+      <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
+        <div className="text-center space-y-4">
+          <WarningCircle size={48} className="mx-auto text-destructive" />
+          <h2 className="text-xl font-semibold">Invalid Application ID</h2>
+          <Button onClick={() => navigate('/loans/monitoring')}>
+            Return to Monitoring
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
-        return (
-            <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
-                <div className="text-center space-y-4 max-w-md">
-                    <WarningCircle size={48} className="mx-auto text-destructive" />
-                    <h2 className="text-xl font-semibold">
-                        {isForbidden ? "Access Denied" : "Failed to Load Application"}
-                    </h2>
-                    <p className="text-muted-foreground">
-                        {isForbidden
-                            ? "You don't have permission to view this loan application. This may be because your account doesn't have the required role, or the application belongs to a different branch. Please contact your administrator if you believe this is a mistake."
-                            : "We couldn't load this loan application. Please try again or return to the monitoring page."}
-                    </p>
-                    <Button onClick={() => navigate("/loans/monitoring")}>
-                        Return to Monitoring
-                    </Button>
-                </div>
-            </div>
-        );
-    }
+  if (loan.isLoading) {
+    return (
+      <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
+        <Spinner className="size-8" />
+      </div>
+    )
+  }
 
-    
-    const isEvaluator = user?.role === "Evaluator";
-    const isForChecking = detail.status === "ForChecking";
-    const showEvaluatorActions = isEvaluator && isForChecking && !frozen;
-
-    const hasDocumentFlag = detail.documentFlag != null;
-
-    const commentsRequired = pendingAction === "pushback" || pendingAction === "notRecommended";
-    const canAct =
-        (!commentsRequired || comments.trim().length >= 10) && !updateStatus.isPending;
-
-    const deviationCount =
-        detail.deviationDetails.length +
-        (detail.feeDeviationJustification ? 1 : 0);
+  if (loan.isError || !detail || !formData) {
+    const isForbidden =
+      loan.error &&
+      typeof loan.error === 'object' &&
+      'response' in loan.error &&
+      (loan.error as { response?: { status?: number } }).response?.status ===
+        403
 
     return (
-        <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40">
-            {}
-            <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
-                <div className="container mx-auto flex h-16 flex-wrap items-center justify-between gap-3 px-6">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => navigate("/loans/monitoring")}
-                            aria-label="Back to monitoring"
-                        >
-                            <ArrowLeft size={18} weight="bold" />
-                        </Button>
-                        <h1 className="text-xl font-semibold tracking-tight">
-                            Loan Evaluation
-                        </h1>
-                        <Badge variant="outline" className="text-xs">
-                            {detail.lamId}
-                        </Badge>
-                        <Badge
-                            variant="secondary"
-                            className="gap-1.5 border-blue-200 bg-blue-50 text-blue-700"
-                        >
-                            <Clock size={12} weight="fill" />
-                            {detail.status}
-                        </Badge>
-                        {detail.hasDeviations && (
-                            <Badge
-                                variant="secondary"
-                                className="gap-1.5 border-amber-200 bg-amber-50 text-amber-700"
-                            >
-                                <WarningCircle size={12} weight="fill" />{" "}
-                                {deviationCount} deviation
-                                {deviationCount === 1 ? "" : "s"}
-                            </Badge>
-                        )}
-                    </div>
-                    <Badge variant="outline" className="gap-1.5 font-normal">
-                        <UserCircle size={14} />
-                        {detail.createdByName} (Encoder)
-                    </Badge>
-                </div>
-            </header>
-
-            <div className="container mx-auto px-6 py-8">
-                <div className="mb-6 flex items-start gap-3">
-                    <IncompleteDocumentsWarning
-                        status={detail.status}
-                        checklist={checklist.data}
-                        documentFlag={detail.documentFlag}
-                    />
-                    {hasDocumentFlag && !frozen && (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 shrink-0"
-                            onClick={() => recheck.mutate()}
-                            disabled={recheck.isPending}
-                            title="Re-verify document completeness"
-                        >
-                            <ArrowCounterClockwise size={14} weight="bold" />
-                            Re-check documents
-                        </Button>
-                    )}
-                </div>
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
-                    {}
-                    <div className="space-y-4">
-                        <Card className="overflow-hidden">
-                            <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 p-4">
-                                <CardTitle className="flex items-center gap-2 text-lg">
-                                    <FilePdf
-                                        size={20}
-                                        weight="bold"
-                                        className="text-primary"
-                                    />
-                                    Approval Form Document
-                                </CardTitle>
-                                <div className="flex items-center gap-1.5">
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        aria-label="Zoom out"
-                                        onClick={() =>
-                                            setZoom((z) =>
-                                                Math.max(0.6, +(z - 0.1).toFixed(2))
-                                            )
-                                        }
-                                    >
-                                        <MagnifyingGlassMinus size={15} />
-                                    </Button>
-                                    <span className="w-12 text-center text-xs tabular-nums text-muted-foreground">
-                                        {Math.round(zoom * 100)}%
-                                    </span>
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        aria-label="Zoom in"
-                                        onClick={() =>
-                                            setZoom((z) =>
-                                                Math.min(1.5, +(z + 0.1).toFixed(2))
-                                            )
-                                        }
-                                    >
-                                        <MagnifyingGlassPlus size={15} />
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="ml-2 gap-1.5"
-                                        onClick={() => window.print()}
-                                    >
-                                        <Printer size={14} weight="bold" /> Print
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                <ApprovalFormViewport zoom={zoom}>
-                                    <ApprovalFormDocument
-                                        data={formData}
-                                        catLoanClass={loanClass.data?.catLoanClass ?? null}
-                                        signatureSlots={signatureSlots ?? undefined}
-                                    />
-                                </ApprovalFormViewport>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {}
-                    <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit lg:self-start">
-                        <Card>
-                            <CardHeader className="border-b pb-4">
-                                <CardTitle className="flex items-center gap-2 text-base">
-                                    <CheckCircle
-                                        size={18}
-                                        weight="bold"
-                                        className="text-primary"
-                                    />
-                                    Evaluation Actions
-                                </CardTitle>
-                                <CardDescription className="pt-1 text-xs">
-                                    Review the application and provide your
-                                    evaluation recommendation.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 pt-4">
-                                {}
-                                <div className="space-y-3">
-                                    <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        <Clock size={12} /> History
-                                    </h3>
-                                    {history.isLoading ? (
-                                        <div className="flex justify-center py-4">
-                                            <Spinner className="size-5" />
-                                        </div>
-                                    ) : (
-                                        <ul className="space-y-3 text-xs">
-                                            {(history.data ?? []).map((h) => (
-                                                <li
-                                                    key={h.id}
-                                                    className="flex gap-3"
-                                                >
-                                                    {h.toStatus === "Rejected" ? (
-                                                        <WarningCircle
-                                                            size={16}
-                                                            weight="fill"
-                                                            className="mt-0.5 shrink-0 text-destructive"
-                                                        />
-                                                    ) : h.toStatus ===
-                                                      "ForRevision" ? (
-                                                        <ArrowCounterClockwise
-                                                            size={16}
-                                                            weight="bold"
-                                                            className="mt-0.5 shrink-0 text-amber-500"
-                                                        />
-                                                    ) : (
-                                                        <ArrowRight
-                                                            size={16}
-                                                            weight="bold"
-                                                            className="mt-0.5 shrink-0 text-blue-500"
-                                                        />
-                                                    )}
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="font-medium">
-                                                            {h.actionBy}
-                                                        </p>
-                                                        <p className="text-muted-foreground">
-                                                            {h.action}
-                                                            {h.toStatus
-                                                                ? ` → ${h.toStatus}`
-                                                                : ""}{" "}
-                                                            &bull;{" "}
-                                                            {new Date(
-                                                                h.actionDate
-                                                            ).toLocaleString()}
-                                                        </p>
-                                                        {h.comments && (
-                                                            <div className="mt-1 border-l-2 border-border pl-2 italic text-muted-foreground">
-                                                                <RichText value={h.comments} emptyFallback={null} />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-
-                                <div className="h-px bg-border" />
-
-                                {}
-                                <div className="space-y-2">
-                                    <Label
-                                        htmlFor="eval-comments"
-                                        className="flex items-center gap-1.5 text-sm font-semibold"
-                                    >
-                                        Remarks / Evaluation Notes
-                                        {commentsRequired && (
-                                            <span className="text-destructive">
-                                                *
-                                            </span>
-                                        )}
-                                    </Label>
-                                    <Textarea
-                                        id="eval-comments"
-                                        rows={5}
-                                        disabled={frozen || updateStatus.isPending}
-                                        placeholder="Provide your evaluation, findings, or conditions for approval…"
-                                        value={comments}
-                                        onChange={(e) =>
-                                            setComments(e.target.value)
-                                        }
-                                        maxLength={2000}
-                                    />
-                                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                                        {commentsRequired &&
-                                            comments.trim().length < 10 && (
-                                                <p className="flex items-center gap-1">
-                                                    <WarningCircle
-                                                        size={12}
-                                                        weight="fill"
-                                                    />{" "}
-                                                    Required for this action (min
-                                                    10 characters)
-                                                </p>
-                                            )}
-                                        <span className="ml-auto">
-                                            {comments.length}/2000
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {}
-                                <div className="space-y-2">
-                                    {frozen && (
-                                        <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
-                                            This application is{" "}
-                                            <strong>{detail.status}</strong>{" "}
-                                            — no further actions.
-                                        </p>
-                                    )}
-
-                                    {showEvaluatorActions ? (
-                                        <>
-                                            {}
-                                            <Button
-                                                className="w-full gap-2"
-                                                size="lg"
-                                                onClick={() =>
-                                                    handleAction("recommended")
-                                                }
-                                                disabled={
-                                                    !canAct || pendingAction !== null
-                                                }
-                                            >
-                                                {updateStatus.isPending &&
-                                                pendingAction === "recommended" ? (
-                                                    <span className="animate-pulse">
-                                                        Processing...
-                                                    </span>
-                                                ) : (
-                                                    <>
-                                                        <ThumbsUp
-                                                            size={18}
-                                                            weight="bold"
-                                                        />
-                                                        Recommended for Approval
-                                                    </>
-                                                )}
-                                            </Button>
-
-                                            <Button
-                                                variant="outline"
-                                                className="w-full gap-2"
-                                                onClick={() =>
-                                                    handleAction("notRecommended")
-                                                }
-                                                disabled={
-                                                    !canAct || pendingAction !== null
-                                                }
-                                            >
-                                                {updateStatus.isPending &&
-                                                pendingAction ===
-                                                    "notRecommended" ? (
-                                                    <span className="animate-pulse">
-                                                        Processing...
-                                                    </span>
-                                                ) : (
-                                                    <>
-                                                        <ThumbsDown size={16} />
-                                                        Not Recommended
-                                                    </>
-                                                )}
-                                            </Button>
-
-                                            <AlertDialog>
-                                                <AlertDialogTrigger
-                                                    render={
-                                                        <Button
-                                                            variant="destructive"
-                                                            className="w-full gap-2"
-                                                            disabled={
-                                                                !canAct ||
-                                                                pendingAction !==
-                                                                    null
-                                                            }
-                                                        />
-                                                    }
-                                                >
-                                                    <ArrowCounterClockwise
-                                                        size={16}
-                                                    />
-                                                    Push Back to Encoder
-                                                </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>
-                                                                    Push back this
-                                                                    application?
-                                                                </AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    This returns the
-                                                                    application to the
-                                                                    encoder for revision.
-                                                                    The encoder will be
-                                                                    notified with your
-                                                                    evaluation comments.
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel
-                                                                    disabled={
-                                                                        updateStatus.isPending
-                                                                    }
-                                                                >
-                                                                    Cancel
-                                                                </AlertDialogCancel>
-                                                                <AlertDialogAction
-                                                                    onClick={() =>
-                                                                        handleAction(
-                                                                            "pushback"
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        updateStatus.isPending
-                                                                    }
-                                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                                                >
-                                                                    Confirm Pushback
-                                                                </AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-
-                                                    <Button
-                                                        variant="outline"
-                                                        className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
-                                                        disabled={!canAct || pendingAction !== null}
-                                                        onClick={() => setFlagOpen(true)}
-                                                    >
-                                                        <WarningCircle size={16} />
-                                                        Flag as lacking documents
-                                                    </Button>
-                                                </>
-                                        ) : (
-                                        !frozen && (
-                                            <div className="rounded-md bg-muted p-4 text-center text-xs text-muted-foreground">
-                                                No actions available for your
-                                                role on this application status.
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </aside>
-                </div>
-            </div>
-
-            {}
-            <FlagIncompleteDocumentsDialog
-                open={flagOpen}
-                onOpenChange={setFlagOpen}
-                items={checklist.data ?? []}
-                isSubmitting={flagDocs.isPending}
-                onSubmit={({ missingRequirementCodes, comments: flagComments }) =>
-                    flagDocs.mutate(
-                        { codes: missingRequirementCodes, reason: flagComments },
-                    )
-                }
-            />
+      <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
+        <div className="text-center space-y-4 max-w-md">
+          <WarningCircle size={48} className="mx-auto text-destructive" />
+          <h2 className="text-xl font-semibold">
+            {isForbidden ? 'Access Denied' : 'Failed to Load Application'}
+          </h2>
+          <p className="text-muted-foreground">
+            {isForbidden
+              ? "You don't have permission to view this loan application. This may be because your account doesn't have the required role, or the application belongs to a different branch. Please contact your administrator if you believe this is a mistake."
+              : "We couldn't load this loan application. Please try again or return to the monitoring page."}
+          </p>
+          <Button onClick={() => navigate('/loans/monitoring')}>
+            Return to Monitoring
+          </Button>
         </div>
-    );
+      </div>
+    )
+  }
+
+  const isEvaluator = user?.role === 'Evaluator'
+  const isForChecking = detail.status === 'ForChecking'
+  const showEvaluatorActions = isEvaluator && isForChecking && !frozen
+
+  const hasDocumentFlag = detail.documentFlag != null
+
+  const commentsRequired =
+    pendingAction === 'pushback' || pendingAction === 'notRecommended'
+  const canAct =
+    (!commentsRequired || comments.trim().length >= 10) &&
+    !updateStatus.isPending
+
+  const deviationCount =
+    detail.deviationDetails.length + (detail.feeDeviationJustification ? 1 : 0)
+
+  return (
+    <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40">
+      {}
+      <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
+        <div className="container mx-auto flex h-16 flex-wrap items-center justify-between gap-3 px-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => navigate('/loans/monitoring')}
+              aria-label="Back to monitoring"
+            >
+              <ArrowLeft size={18} weight="bold" />
+            </Button>
+            <h1 className="text-xl font-semibold tracking-tight">
+              Loan Evaluation
+            </h1>
+            <Badge variant="outline" className="text-xs">
+              {detail.lamId}
+            </Badge>
+            <Badge
+              variant="secondary"
+              className="gap-1.5 border-blue-200 bg-blue-50 text-blue-700"
+            >
+              <Clock size={12} weight="fill" />
+              {detail.status}
+            </Badge>
+            {detail.hasDeviations && (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 border-amber-200 bg-amber-50 text-amber-700"
+              >
+                <WarningCircle size={12} weight="fill" /> {deviationCount}{' '}
+                deviation
+                {deviationCount === 1 ? '' : 's'}
+              </Badge>
+            )}
+          </div>
+          <Badge variant="outline" className="gap-1.5 font-normal">
+            <UserCircle size={14} />
+            {detail.createdByName} (Encoder)
+          </Badge>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-6 py-8">
+        <div className="mb-6 flex items-start gap-3">
+          <IncompleteDocumentsWarning
+            status={detail.status}
+            checklist={checklist.data}
+            documentFlag={detail.documentFlag}
+          />
+          {hasDocumentFlag && !frozen && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5 shrink-0"
+              onClick={() => recheck.mutate()}
+              disabled={recheck.isPending}
+              title="Re-verify document completeness"
+            >
+              <ArrowCounterClockwise size={14} weight="bold" />
+              Re-check documents
+            </Button>
+          )}
+        </div>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
+          {}
+          <div className="space-y-4">
+            <Card className="overflow-hidden">
+              <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 p-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <FilePdf size={20} weight="bold" className="text-primary" />
+                  Approval Form Document
+                </CardTitle>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Zoom out"
+                    onClick={() =>
+                      setZoom((z) => Math.max(0.6, +(z - 0.1).toFixed(2)))
+                    }
+                  >
+                    <MagnifyingGlassMinus size={15} />
+                  </Button>
+                  <span className="w-12 text-center text-xs tabular-nums text-muted-foreground">
+                    {Math.round(zoom * 100)}%
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Zoom in"
+                    onClick={() =>
+                      setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(2)))
+                    }
+                  >
+                    <MagnifyingGlassPlus size={15} />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="ml-2 gap-1.5"
+                    onClick={() => window.print()}
+                  >
+                    <Printer size={14} weight="bold" /> Print
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ApprovalFormViewport zoom={zoom}>
+                  <ApprovalFormDocument
+                    data={formData}
+                    catLoanClass={loanClass.data?.catLoanClass ?? null}
+                    signatureSlots={signatureSlots ?? undefined}
+                  />
+                </ApprovalFormViewport>
+              </CardContent>
+            </Card>
+          </div>
+
+          {}
+          <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit lg:self-start">
+            <Card>
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <CheckCircle
+                    size={18}
+                    weight="bold"
+                    className="text-primary"
+                  />
+                  Evaluation Actions
+                </CardTitle>
+                <CardDescription className="pt-1 text-xs">
+                  Review the application and provide your evaluation
+                  recommendation.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6 pt-4">
+                {}
+                <div className="space-y-3">
+                  <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Clock size={12} /> History
+                  </h3>
+                  {history.isLoading ? (
+                    <div className="flex justify-center py-4">
+                      <Spinner className="size-5" />
+                    </div>
+                  ) : (
+                    <ul className="space-y-3 text-xs">
+                      {(history.data ?? []).map((h) => (
+                        <li key={h.id} className="flex gap-3">
+                          {h.toStatus === 'Rejected' ? (
+                            <WarningCircle
+                              size={16}
+                              weight="fill"
+                              className="mt-0.5 shrink-0 text-destructive"
+                            />
+                          ) : h.toStatus === 'ForRevision' ? (
+                            <ArrowCounterClockwise
+                              size={16}
+                              weight="bold"
+                              className="mt-0.5 shrink-0 text-amber-500"
+                            />
+                          ) : (
+                            <ArrowRight
+                              size={16}
+                              weight="bold"
+                              className="mt-0.5 shrink-0 text-blue-500"
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium">{h.actionBy}</p>
+                            <p className="text-muted-foreground">
+                              {h.action}
+                              {h.toStatus ? ` → ${h.toStatus}` : ''} &bull;{' '}
+                              {new Date(h.actionDate).toLocaleString()}
+                            </p>
+                            {h.comments && (
+                              <div className="mt-1 border-l-2 border-border pl-2 italic text-muted-foreground">
+                                <RichText
+                                  value={h.comments}
+                                  emptyFallback={null}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="h-px bg-border" />
+
+                {}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="eval-comments"
+                    className="flex items-center gap-1.5 text-sm font-semibold"
+                  >
+                    Remarks / Evaluation Notes
+                    {commentsRequired && (
+                      <span className="text-destructive">*</span>
+                    )}
+                  </Label>
+                  <Textarea
+                    id="eval-comments"
+                    rows={5}
+                    disabled={frozen || updateStatus.isPending}
+                    placeholder="Provide your evaluation, findings, or conditions for approval…"
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value)}
+                    maxLength={2000}
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    {commentsRequired && comments.trim().length < 10 && (
+                      <p className="flex items-center gap-1">
+                        <WarningCircle size={12} weight="fill" /> Required for
+                        this action (min 10 characters)
+                      </p>
+                    )}
+                    <span className="ml-auto">{comments.length}/2000</span>
+                  </div>
+                </div>
+
+                {}
+                <div className="space-y-2">
+                  {frozen && (
+                    <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
+                      This application is <strong>{detail.status}</strong> — no
+                      further actions.
+                    </p>
+                  )}
+
+                  {showEvaluatorActions ? (
+                    <>
+                      {}
+                      <Button
+                        className="w-full gap-2"
+                        size="lg"
+                        onClick={() => handleAction('recommended')}
+                        disabled={!canAct || pendingAction !== null}
+                      >
+                        {updateStatus.isPending &&
+                        pendingAction === 'recommended' ? (
+                          <span className="animate-pulse">Processing...</span>
+                        ) : (
+                          <>
+                            <ThumbsUp size={18} weight="bold" />
+                            Recommended for Approval
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={() => handleAction('notRecommended')}
+                        disabled={!canAct || pendingAction !== null}
+                      >
+                        {updateStatus.isPending &&
+                        pendingAction === 'notRecommended' ? (
+                          <span className="animate-pulse">Processing...</span>
+                        ) : (
+                          <>
+                            <ThumbsDown size={16} />
+                            Not Recommended
+                          </>
+                        )}
+                      </Button>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger
+                          render={
+                            <Button
+                              variant="destructive"
+                              className="w-full gap-2"
+                              disabled={!canAct || pendingAction !== null}
+                            />
+                          }
+                        >
+                          <ArrowCounterClockwise size={16} />
+                          Push Back to Encoder
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Push back this application?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This returns the application to the encoder for
+                              revision. The encoder will be notified with your
+                              evaluation comments.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel
+                              disabled={updateStatus.isPending}
+                            >
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleAction('pushback')}
+                              disabled={updateStatus.isPending}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Confirm Pushback
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                        disabled={!canAct || pendingAction !== null}
+                        onClick={() => setFlagOpen(true)}
+                      >
+                        <WarningCircle size={16} />
+                        Flag as lacking documents
+                      </Button>
+                    </>
+                  ) : (
+                    !frozen && (
+                      <div className="rounded-md bg-muted p-4 text-center text-xs text-muted-foreground">
+                        No actions available for your role on this application
+                        status.
+                      </div>
+                    )
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
+        </div>
+      </div>
+
+      {}
+      <FlagIncompleteDocumentsDialog
+        open={flagOpen}
+        onOpenChange={setFlagOpen}
+        items={checklist.data ?? []}
+        isSubmitting={flagDocs.isPending}
+        onSubmit={({ missingRequirementCodes, comments: flagComments }) =>
+          flagDocs.mutate({
+            codes: missingRequirementCodes,
+            reason: flagComments,
+          })
+        }
+      />
+    </div>
+  )
 }

@@ -1,83 +1,62 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
-import { toastSuccess, toastError, toastInfo } from "@/src/components/ui/toast";
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useFormContext, useWatch } from 'react-hook-form'
+import { toastSuccess, toastError, toastInfo } from '@/src/components/ui/toast'
 import {
   ArrowCounterClockwise,
   CloudCheck,
   IdentificationCard,
   MagnifyingGlass,
   WarningCircle,
-} from "@phosphor-icons/react";
+} from '@phosphor-icons/react'
 
-import { Badge } from "@/src/components/ui/badge";
-import { Button } from "@/src/components/ui/button";
-import { Input } from "@/src/components/ui/input";
-import { Skeleton } from "@/src/components/ui/skeleton";
-import { getErrorMessage } from "@/src/lib/apiClient";
-import { getWebLoanByCis } from "@/src/features/loans/api/webloans";
+import { Badge } from '@/src/components/ui/badge'
+import { Button } from '@/src/components/ui/button'
+import { Input } from '@/src/components/ui/input'
+import { Skeleton } from '@/src/components/ui/skeleton'
+import { getErrorMessage } from '@/src/lib/apiClient'
+import { getWebLoanByCis } from '@/src/features/loans/api/webloans'
 import {
   WEBLOAN_BRANCHES,
   type PreLoanItem,
   type WebLoanAccount,
   type WebLoanCisSearchResponse,
-} from "@/src/lib/api/types";
-import { cn } from "@/src/shared/lib/utils";
+} from '@/src/lib/api/types'
+import { cn } from '@/src/shared/lib/utils'
 
-import { ActiveLoansTable } from "./active-loans-table";
-import {
-  ReadOnlyField,
-  SectionCard,
-  SubSectionHeading,
-} from "./section-card";
-import { getSection } from "@/src/features/loans/constants/sections";
-import type { LoanApplicationFormData } from "@/src/features/loans/schemas/schema";
-
+import { ActiveLoansTable } from './active-loans-table'
+import { ReadOnlyField, SectionCard, SubSectionHeading } from './section-card'
+import { getSection } from '@/src/features/loans/constants/sections'
+import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 
 function toDateInput(iso?: string | null): string {
-  return iso ? iso.slice(0, 10) : "";
+  return iso ? iso.slice(0, 10) : ''
 }
 
 interface CISLookupProps {
-  
-  onPreLoanChange: (id: string, preloan: PreLoanItem | null) => void;
+  onPreLoanChange: (id: string, preloan: PreLoanItem | null) => void
 }
 
-export function CISLookup({
-  onPreLoanChange,
-}: CISLookupProps) {
-  const { control, setValue } = useFormContext<LoanApplicationFormData>();
+export function CISLookup({ onPreLoanChange }: CISLookupProps) {
+  const { control, setValue } = useFormContext<LoanApplicationFormData>()
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [lookupError, setLookupError] = useState<string | null>(null);
-  const [confirmClear, setConfirmClear] = useState(false);
-  
-  
-  
-  
-  
-  const [laiAccounts, setLaiAccounts] = useState<WebLoanAccount[]>([]);
-  
-  
-  const [outstandingCount, setOutstandingCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [lookupError, setLookupError] = useState<string | null>(null)
+  const [confirmClear, setConfirmClear] = useState(false)
 
-  
-  
-  
-  
-  const onPreLoanChangeRef = useRef(onPreLoanChange);
+  const [laiAccounts, setLaiAccounts] = useState<WebLoanAccount[]>([])
+
+  const [outstandingCount, setOutstandingCount] = useState(0)
+
+  const onPreLoanChangeRef = useRef(onPreLoanChange)
   useEffect(() => {
-    onPreLoanChangeRef.current = onPreLoanChange;
-  }, [onPreLoanChange]);
+    onPreLoanChangeRef.current = onPreLoanChange
+  }, [onPreLoanChange])
 
-  
-  
-  const client = useWatch({ control, name: "client" });
-  
-  
-  
-  const branchType = useWatch({ control, name: "branchType" });
-  const isLoaded = !!client.cisId;
+  const client = useWatch({ control, name: 'client' })
+
+  const branchType = useWatch({ control, name: 'branchType' })
+  const isLoaded = !!client.cisId
 
   const fullName = [
     client.firstName,
@@ -86,194 +65,138 @@ export function CISLookup({
     client.suffix,
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(' ')
   const initials =
     [client.firstName?.[0], client.lastName?.[0]]
       .filter(Boolean)
-      .join("")
-      .toUpperCase() || "?";
+      .join('')
+      .toUpperCase() || '?'
 
-  
-  
-  
-  
-
-  
-  const CONFIRM_RESET_MS = 3000;
+  const CONFIRM_RESET_MS = 3000
 
   useEffect(() => {
-    if (!confirmClear) return;
-    const timer = setTimeout(() => setConfirmClear(false), CONFIRM_RESET_MS);
-    return () => clearTimeout(timer);
-  }, [confirmClear]);
+    if (!confirmClear) return
+    const timer = setTimeout(() => setConfirmClear(false), CONFIRM_RESET_MS)
+    return () => clearTimeout(timer)
+  }, [confirmClear])
 
-  
   const clearForm = useCallback(() => {
-    
-    
-    
-    
-    
-    
-    setValue("branchType.creationTypeCode", null);
-    setValue("branchType.creationTypeLabel", "");
-    setValue("branchType.branch", "");
-    setValue("branchType.requestingOfficer", "");
-    setValue("branchType.lai", "");
-    setValue("client.cisId", "");
-    setValue("client.firstName", "");
-    setValue("client.middleName", "");
-    setValue("client.lastName", "");
-    setValue("client.suffix", "");
-    setValue("client.birthdate", "");
-    setValue("client.address", "");
-    setValue("client.agency", "");
-    setValue("client.position", "");
-    setValue("client.employeeId", "");
-    setValue("client.region", "");
-    setValue("client.divisionCode", "");
-    setValue("client.stationCode", "");
-    setValue("client.misAgency", "");
-    
-    
-    
-    setValue("outstandingLoans", []);
-    setValue("preLoan", undefined);
-    setLaiAccounts([]);
-    setOutstandingCount(0);
-    
-    onPreLoanChangeRef.current("", null);
-  }, [setValue]);
+    setValue('branchType.creationTypeCode', null)
+    setValue('branchType.creationTypeLabel', '')
+    setValue('branchType.branch', '')
+    setValue('branchType.requestingOfficer', '')
+    setValue('branchType.lai', '')
+    setValue('client.cisId', '')
+    setValue('client.firstName', '')
+    setValue('client.middleName', '')
+    setValue('client.lastName', '')
+    setValue('client.suffix', '')
+    setValue('client.birthdate', '')
+    setValue('client.address', '')
+    setValue('client.agency', '')
+    setValue('client.position', '')
+    setValue('client.employeeId', '')
+    setValue('client.region', '')
+    setValue('client.divisionCode', '')
+    setValue('client.stationCode', '')
+    setValue('client.misAgency', '')
+
+    setValue('outstandingLoans', [])
+    setValue('preLoan', undefined)
+    setLaiAccounts([])
+    setOutstandingCount(0)
+
+    onPreLoanChangeRef.current('', null)
+  }, [setValue])
 
   const handleChangeClient = () => {
     if (!confirmClear) {
-      setConfirmClear(true);
-      return;
+      setConfirmClear(true)
+      return
     }
-    clearForm();
-    setConfirmClear(false);
-    setSearchQuery("");
-    setLookupError(null);
-    toastInfo("Client cleared. Search for a new CIS number.");
-  };
+    clearForm()
+    setConfirmClear(false)
+    setSearchQuery('')
+    setLookupError(null)
+    toastInfo('Client cleared. Search for a new CIS number.')
+  }
 
   const handleLookup = async () => {
-    const query = searchQuery.trim();
-    if (!query || isLoading) return;
+    const query = searchQuery.trim()
+    if (!query || isLoading) return
 
-    setIsLoading(true);
-    setLookupError(null);
+    setIsLoading(true)
+    setLookupError(null)
 
     try {
-      const result = await getWebLoanByCis(query);
-      applySearchResult(result, query);
-      toastSuccess("Client profile loaded successfully.");
+      const result = await getWebLoanByCis(query)
+      applySearchResult(result, query)
+      toastSuccess('Client profile loaded successfully.')
     } catch (error) {
-      const message = getErrorMessage(error);
-      clearForm();
-      setLookupError(message);
-      toastError(message);
+      const message = getErrorMessage(error)
+      clearForm()
+      setLookupError(message)
+      toastError(message)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  
   const applySearchResult = (
     result: WebLoanCisSearchResponse,
-    query: string
+    query: string,
   ) => {
-    const b = result.borrower;
-    const accounts = result.accounts ?? [];
+    const b = result.borrower
+    const accounts = result.accounts ?? []
 
-    
-    
-    
-    
-    
-    setLaiAccounts(accounts);
+    setLaiAccounts(accounts)
 
-    
-    
-    
-    
-    setOutstandingCount(0);
+    setOutstandingCount(0)
 
-    
-    
-    
-    
-    const firstBranchCode = accounts[0]?.branchCode ?? "";
+    const firstBranchCode = accounts[0]?.branchCode ?? ''
     const branchName = firstBranchCode
-      ? WEBLOAN_BRANCHES.find((x) => x.code === firstBranchCode)?.name ??
-        firstBranchCode
-      : "";
-    setValue("branchType.creationTypeCode", null);
-    setValue("branchType.creationTypeLabel", "");
-    setValue("branchType.branch", branchName);
-    
-    
-    
-    setValue(
-      "branchType.lai",
-      accounts.map((a) => a.accountId).join(", ")
-    );
-    
-    
-    
-    setValue("branchType.requestingOfficer", b.requestingOfficer ?? "");
+      ? (WEBLOAN_BRANCHES.find((x) => x.code === firstBranchCode)?.name ??
+        firstBranchCode)
+      : ''
+    setValue('branchType.creationTypeCode', null)
+    setValue('branchType.creationTypeLabel', '')
+    setValue('branchType.branch', branchName)
 
-    setValue("client.cisId", b.cisNo || query);
-    setValue("client.firstName", b.firstName ?? "");
-    setValue("client.middleName", b.middleName ?? "");
-    setValue("client.lastName", b.lastName ?? "");
-    
-    
-    
-    setValue("client.suffix", b.appelation ?? "");
-    setValue("client.birthdate", toDateInput(b.birthDate));
-    setValue("client.address", b.address ?? "");
-    
-    
-    
-    setValue("client.agency", b.agencyType ?? "");
-    setValue("client.position", b.positionTitle ?? "");
-    setValue("client.employeeId", b.employeeNumber ?? "");
-    setValue("client.region", b.regionCode ?? "");
-    setValue("client.divisionCode", b.divisionCode ?? "");
-    setValue("client.stationCode", b.stationCode ?? "");
-    
-    
-    setValue("client.lengthOfService", b.lengthOfService ?? "");
-    
-    
-    
-    setValue("client.misAgency", b.misAgency ?? "");
+    setValue('branchType.lai', accounts.map((a) => a.accountId).join(', '))
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    setValue('branchType.requestingOfficer', b.requestingOfficer ?? '')
 
-    
-    
-  };
+    setValue('client.cisId', b.cisNo || query)
+    setValue('client.firstName', b.firstName ?? '')
+    setValue('client.middleName', b.middleName ?? '')
+    setValue('client.lastName', b.lastName ?? '')
 
-  const section = getSection("cis-lookup");
+    setValue('client.suffix', b.appelation ?? '')
+    setValue('client.birthdate', toDateInput(b.birthDate))
+    setValue('client.address', b.address ?? '')
+
+    setValue('client.agency', b.agencyType ?? '')
+    setValue('client.position', b.positionTitle ?? '')
+    setValue('client.employeeId', b.employeeNumber ?? '')
+    setValue('client.region', b.regionCode ?? '')
+    setValue('client.divisionCode', b.divisionCode ?? '')
+    setValue('client.stationCode', b.stationCode ?? '')
+
+    setValue('client.lengthOfService', b.lengthOfService ?? '')
+
+    setValue('client.misAgency', b.misAgency ?? '')
+  }
+
+  const section = getSection('cis-lookup')
 
   return (
     <SectionCard
       step={section.step}
       title={section.label}
       description={section.description}
-      icon={<IdentificationCard size={20} weight="bold" className="text-primary" />}
+      icon={
+        <IdentificationCard size={20} weight="bold" className="text-primary" />
+      }
     >
       <div className="space-y-6">
         {}
@@ -292,11 +215,11 @@ export function CISLookup({
                 aria-label="CIS number"
                 value={searchQuery}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  setSearchQuery(val);
-                  if (!val.trim() && isLoaded) clearForm();
+                  const val = e.target.value
+                  setSearchQuery(val)
+                  if (!val.trim() && isLoaded) clearForm()
                 }}
-                onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                 className="h-10 pl-9 tabular-nums"
                 disabled={isLoading}
               />
@@ -306,7 +229,7 @@ export function CISLookup({
               disabled={isLoading || !searchQuery.trim()}
               className="h-10 shrink-0 px-6"
             >
-              {isLoading ? "Fetching…" : "Fetch Profile"}
+              {isLoading ? 'Fetching…' : 'Fetch Profile'}
             </Button>
           </div>
 
@@ -316,7 +239,11 @@ export function CISLookup({
               className="flex items-start justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
             >
               <div className="flex items-start gap-2">
-                <WarningCircle size={16} weight="fill" className="mt-0.5 shrink-0" />
+                <WarningCircle
+                  size={16}
+                  weight="fill"
+                  className="mt-0.5 shrink-0"
+                />
                 <div>
                   <p className="font-medium">Unable to load client profile</p>
                   <p className="text-xs opacity-90">{lookupError}</p>
@@ -374,7 +301,7 @@ export function CISLookup({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">
-                  {fullName || "—"}
+                  {fullName || '—'}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
                   {[
@@ -383,7 +310,7 @@ export function CISLookup({
                     client.employeeId && `ID ${client.employeeId}`,
                   ]
                     .filter(Boolean)
-                    .join(" • ") || "No agency details on file"}
+                    .join(' • ') || 'No agency details on file'}
                 </p>
               </div>
               <Badge variant="outline" className="tabular-nums">
@@ -395,8 +322,8 @@ export function CISLookup({
                 size="sm"
                 onClick={handleChangeClient}
                 className={cn(
-                  "gap-1.5",
-                  confirmClear && "text-destructive hover:text-destructive"
+                  'gap-1.5',
+                  confirmClear && 'text-destructive hover:text-destructive',
                 )}
               >
                 {confirmClear ? (
@@ -435,7 +362,7 @@ export function CISLookup({
                   hint={
                     branchType.creationTypeLabel
                       ? undefined
-                      : "Set from the selected preloan"
+                      : 'Set from the selected preloan'
                   }
                 />
                 <ReadOnlyField label="Branch" value={branchType.branch} />
@@ -457,5 +384,5 @@ export function CISLookup({
         )}
       </div>
     </SectionCard>
-  );
+  )
 }

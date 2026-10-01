@@ -1,11 +1,13 @@
+import { apiClient } from '@/src/lib/apiClient'
+import {
+  unwrapApiData,
+  type ApiResponse,
+  type RoleInfo,
+} from '@/src/lib/api/types'
 
-
-import { apiClient } from "@/src/lib/apiClient";
-import { unwrapApiData, type ApiResponse, type RoleInfo } from "@/src/lib/api/types";
-
-export type { RoleInfo };
+export type { RoleInfo }
 
 export async function listRoles(): Promise<RoleInfo[]> {
-    const res = await apiClient.get<ApiResponse<RoleInfo[]>>("/api/roles");
-    return unwrapApiData(res.data);
+  const res = await apiClient.get<ApiResponse<RoleInfo[]>>('/api/roles')
+  return unwrapApiData(res.data)
 }

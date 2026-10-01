@@ -1,1 +1,1 @@
-export { LoanCreationPage as default } from "./loan-creation";
+export { LoanCreationPage as default } from './loan-creation'

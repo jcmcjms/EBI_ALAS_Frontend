@@ -1,1 +1,1 @@
-export { PersonalInfoSection } from "./personal-info";
+export { PersonalInfoSection } from './personal-info'

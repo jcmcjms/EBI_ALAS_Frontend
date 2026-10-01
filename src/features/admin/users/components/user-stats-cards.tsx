@@ -1,32 +1,30 @@
-
-
-import { Card } from "@/src/components/ui/card";
+import { Card } from '@/src/components/ui/card'
 
 interface UserStatsCardsProps {
-    totalCount: number;
-    activeCount: number;
-    suspendedCount: number;
+  totalCount: number
+  activeCount: number
+  suspendedCount: number
 }
 
 export function UserStatsCards({
-    totalCount,
-    activeCount,
-    suspendedCount,
+  totalCount,
+  activeCount,
+  suspendedCount,
 }: UserStatsCardsProps) {
-    return (
-        <div className="grid grid-cols-3 gap-4">
-            <Card className="flex items-center justify-between border p-3 shadow-none">
-                <div className="text-sm text-muted-foreground">Total Users</div>
-                <div className="text-xl font-bold">{totalCount}</div>
-            </Card>
-            <Card className="flex items-center justify-between border p-3 shadow-none">
-                <div className="text-sm text-muted-foreground">Active</div>
-                <div className="text-xl font-bold text-emerald-600">{activeCount}</div>
-            </Card>
-            <Card className="flex items-center justify-between border p-3 shadow-none">
-                <div className="text-sm text-muted-foreground">Suspended</div>
-                <div className="text-xl font-bold text-red-600">{suspendedCount}</div>
-            </Card>
-        </div>
-    );
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      <Card className="flex items-center justify-between border p-3 shadow-none">
+        <div className="text-sm text-muted-foreground">Total Users</div>
+        <div className="text-xl font-bold">{totalCount}</div>
+      </Card>
+      <Card className="flex items-center justify-between border p-3 shadow-none">
+        <div className="text-sm text-muted-foreground">Active</div>
+        <div className="text-xl font-bold text-emerald-600">{activeCount}</div>
+      </Card>
+      <Card className="flex items-center justify-between border p-3 shadow-none">
+        <div className="text-sm text-muted-foreground">Suspended</div>
+        <div className="text-xl font-bold text-red-600">{suspendedCount}</div>
+      </Card>
+    </div>
+  )
 }

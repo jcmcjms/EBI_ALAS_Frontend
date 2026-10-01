@@ -1,29 +1,28 @@
-import type { ReactNode } from "react";
-import { CloudCheck } from "@phosphor-icons/react";
+import type { ReactNode } from 'react'
+import { CloudCheck } from '@phosphor-icons/react'
 
-import { Badge } from "@/src/components/ui/badge";
+import { Badge } from '@/src/components/ui/badge'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/src/components/ui/card";
-import { cn } from "@/src/shared/lib/utils";
+} from '@/src/components/ui/card'
+import { cn } from '@/src/shared/lib/utils'
 
 interface SectionCardProps {
-  step: number;
-  title: string;
-  description?: string;
-  icon?: ReactNode;
-  
-  systemSourced?: boolean;
-  
-  badge?: ReactNode;
-  contentClassName?: string;
-  children: ReactNode;
-}
+  step: number
+  title: string
+  description?: string
+  icon?: ReactNode
 
+  systemSourced?: boolean
+
+  badge?: ReactNode
+  contentClassName?: string
+  children: ReactNode
+}
 
 export function SectionCard({
   step,
@@ -62,13 +61,12 @@ export function SectionCard({
           </CardDescription>
         )}
       </CardHeader>
-      <CardContent className={cn("space-y-6 pt-6", contentClassName)}>
+      <CardContent className={cn('space-y-6 pt-6', contentClassName)}>
         {children}
       </CardContent>
     </Card>
-  );
+  )
 }
-
 
 export function SubSectionHeading({
   step,
@@ -76,10 +74,10 @@ export function SubSectionHeading({
   icon,
   actions,
 }: {
-  step: string;
-  title: string;
-  icon?: ReactNode;
-  actions?: ReactNode;
+  step: string
+  title: string
+  icon?: ReactNode
+  actions?: ReactNode
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -90,18 +88,17 @@ export function SubSectionHeading({
       </h3>
       {actions}
     </div>
-  );
+  )
 }
-
 
 export function ReadOnlyField({
   label,
   value,
   hint,
 }: {
-  label: string;
-  value?: string;
-  hint?: string;
+  label: string
+  value?: string
+  hint?: string
 }) {
   return (
     <div className="space-y-0.5">
@@ -113,9 +110,7 @@ export function ReadOnlyField({
           <span className="font-normal text-muted-foreground">—</span>
         )}
       </dd>
-      {hint && (
-        <p className="text-[11px] text-muted-foreground/80">{hint}</p>
-      )}
+      {hint && <p className="text-[11px] text-muted-foreground/80">{hint}</p>}
     </div>
-  );
+  )
 }

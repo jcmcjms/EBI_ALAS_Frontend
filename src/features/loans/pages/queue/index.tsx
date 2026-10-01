@@ -1,1 +1,1 @@
-export { ReviewDeskPage as default } from "./review-desk";
+export { ReviewDeskPage as default } from './review-desk'

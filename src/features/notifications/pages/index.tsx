@@ -1,1 +1,1 @@
-export { NotificationsPage as default } from "./notifications-page";
+export { NotificationsPage as default } from './notifications-page'

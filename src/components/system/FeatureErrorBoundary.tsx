@@ -1,47 +1,45 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
-import { Button } from "@/src/components/ui/button";
-import { WarningCircle, ArrowClockwise } from "@phosphor-icons/react";
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Button } from '@/src/components/ui/button'
+import { WarningCircle, ArrowClockwise } from '@phosphor-icons/react'
 
 interface Props {
-  children: ReactNode;
-  
-  featureName: string;
-  
-  fallback?: ReactNode;
+  children: ReactNode
+
+  featureName: string
+
+  fallback?: ReactNode
 }
 
 interface State {
-  hasError: boolean;
-  error: Error | null;
+  hasError: boolean
+  error: Error | null
 }
 
-
 export class FeatureErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, error: null };
+  state: State = { hasError: false, error: null }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    
     if (import.meta.env.DEV) {
       console.error(
         `[${this.props.featureName}] Feature error:`,
         error,
-        errorInfo
-      );
+        errorInfo,
+      )
     }
   }
 
   private handleRetry = () => {
-    this.setState({ hasError: false, error: null });
-  };
+    this.setState({ hasError: false, error: null })
+  }
 
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
-        return this.props.fallback;
+        return this.props.fallback
       }
 
       return (
@@ -77,9 +75,9 @@ export class FeatureErrorBoundary extends Component<Props, State> {
             Try again
           </Button>
         </div>
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
 }

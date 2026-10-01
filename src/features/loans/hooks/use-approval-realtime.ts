@@ -1,38 +1,38 @@
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEscalationStore } from "@/src/features/loans/store/escalationStore";
-import { queryKeys } from "@/src/shared/lib/query/queryKeys";
+import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useEscalationStore } from '@/src/features/loans/store/escalationStore'
+import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 
+export function useApprovalRealtime(
+  getConnection: () => import('@microsoft/signalr').HubConnection | null,
+) {
+  const qc = useQueryClient()
+  const markEscalated = useEscalationStore((s) => s.markEscalated)
 
-export function useApprovalRealtime(getConnection: () => import("@microsoft/signalr").HubConnection | null) {
-    const qc = useQueryClient();
-    const markEscalated = useEscalationStore((s) => s.markEscalated);
+  useEffect(() => {
+    const conn = getConnection()
+    if (!conn) return
 
-    useEffect(() => {
-        const conn = getConnection();
-        if (!conn) return;
+    const onAssigned = (
+      payload: { loanId?: number; escalated?: boolean } | undefined,
+    ) => {
+      if (payload?.escalated && payload.loanId) {
+        markEscalated(payload.loanId)
+      }
 
-        const onAssigned = (payload: { loanId?: number; escalated?: boolean } | undefined) => {
-            
-            if (payload?.escalated && payload.loanId) {
-                markEscalated(payload.loanId);
-            }
-            
-            qc.invalidateQueries({ queryKey: ["loans"] });
-        };
+      qc.invalidateQueries({ queryKey: ['loans'] })
+    }
 
-        const onDashboardUpdated = () => {
-            
-            
-            qc.invalidateQueries({ queryKey: queryKeys.loans.desk });
-        };
+    const onDashboardUpdated = () => {
+      qc.invalidateQueries({ queryKey: queryKeys.loans.desk })
+    }
 
-        conn.on("LoanAssigned", onAssigned);
-        conn.on("DashboardUpdated", onDashboardUpdated);
+    conn.on('LoanAssigned', onAssigned)
+    conn.on('DashboardUpdated', onDashboardUpdated)
 
-        return () => {
-            conn.off("LoanAssigned", onAssigned);
-            conn.off("DashboardUpdated", onDashboardUpdated);
-        };
-    }, [getConnection, qc, markEscalated]);
+    return () => {
+      conn.off('LoanAssigned', onAssigned)
+      conn.off('DashboardUpdated', onDashboardUpdated)
+    }
+  }, [getConnection, qc, markEscalated])
 }

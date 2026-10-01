@@ -1,30 +1,26 @@
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
-import { queryKeys } from "@/src/shared/lib/query/queryKeys";
-
+import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 
 export function useDashboardRealtime(
-    getConnection: () => import("@microsoft/signalr").HubConnection | null,
+  getConnection: () => import('@microsoft/signalr').HubConnection | null,
 ) {
-    const qc = useQueryClient();
+  const qc = useQueryClient()
 
-    useEffect(() => {
-        const conn = getConnection();
-        if (!conn) return;
+  useEffect(() => {
+    const conn = getConnection()
+    if (!conn) return
 
-        const onDashboardUpdated = () => {
-            
-            
-            
-            qc.invalidateQueries({ queryKey: queryKeys.dashboard.full });
-            qc.invalidateQueries({ queryKey: queryKeys.dashboard.summary });
-        };
+    const onDashboardUpdated = () => {
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard.full })
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard.summary })
+    }
 
-        conn.on("DashboardUpdated", onDashboardUpdated);
+    conn.on('DashboardUpdated', onDashboardUpdated)
 
-        return () => {
-            conn.off("DashboardUpdated", onDashboardUpdated);
-        };
-    }, [getConnection, qc]);
+    return () => {
+      conn.off('DashboardUpdated', onDashboardUpdated)
+    }
+  }, [getConnection, qc])
 }

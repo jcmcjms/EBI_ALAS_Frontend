@@ -1,40 +1,44 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/src/shared/lib/query/queryKeys";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import {
-    getDocumentRemarks,
-    postDocumentRemark,
-    getDocumentChecklist,
-    type DocumentRemarkDto,
-    type DocumentChecklistItem,
-} from "@/src/features/loans/api/loan-review";
-
+  getDocumentRemarks,
+  postDocumentRemark,
+  getDocumentChecklist,
+  type DocumentRemarkDto,
+  type DocumentChecklistItem,
+} from '@/src/features/loans/api/loan-review'
 
 export function useDocumentRemarks(loanId: number) {
-    const qc = useQueryClient();
-    const query = useQuery<DocumentRemarkDto[]>({
+  const qc = useQueryClient()
+  const query = useQuery<DocumentRemarkDto[]>({
+    queryKey: queryKeys.loans.documentRemarks(loanId),
+    queryFn: () => getDocumentRemarks(loanId),
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  })
+
+  const mutate = useMutation({
+    mutationFn: (payload: {
+      checklistIdCode: string
+      body: string
+      parentRemarkId?: number
+    }) => postDocumentRemark(loanId, payload),
+    onSettled: () =>
+      qc.invalidateQueries({
         queryKey: queryKeys.loans.documentRemarks(loanId),
-        queryFn: () => getDocumentRemarks(loanId),
-        staleTime: 10_000,
-        refetchInterval: 30_000,
-        refetchIntervalInBackground: false,
-    });
+      }),
+  })
 
-    const mutate = useMutation({
-        mutationFn: (payload: { checklistIdCode: string; body: string; parentRemarkId?: number }) =>
-            postDocumentRemark(loanId, payload),
-        onSettled: () => qc.invalidateQueries({ queryKey: queryKeys.loans.documentRemarks(loanId) }),
-    });
-
-    return { ...query, postRemark: mutate };
+  return { ...query, postRemark: mutate }
 }
 
-
 export function useDocumentChecklist(loanId: number) {
-    return useQuery<DocumentChecklistItem[]>({
-        queryKey: queryKeys.loans.documentChecklist(loanId),
-        queryFn: () => getDocumentChecklist(loanId),
-        staleTime: 10_000,
-        refetchInterval: 30_000,
-        refetchIntervalInBackground: false,
-    });
+  return useQuery<DocumentChecklistItem[]>({
+    queryKey: queryKeys.loans.documentChecklist(loanId),
+    queryFn: () => getDocumentChecklist(loanId),
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  })
 }
