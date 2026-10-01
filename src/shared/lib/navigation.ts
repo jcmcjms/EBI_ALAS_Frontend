@@ -8,17 +8,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 
-/**
- * Single source of truth for the app's primary navigation.
- * Consumed by the sidebar (AppSidebar/NavMain) and the top bar
- * (SiteHeader) so titles stay consistent everywhere.
- *
- * Placeholder entries ("#") have no page yet and never match a route.
- *
- * Each item can have a `requiredPermission` string (or `items` with individual
- * `requiredPermission` values). Items the current user lacks are hidden from
- * the sidebar entirely — no "forbidden" fallback is shown.
- */
+
 export type NavItem = {
   title: string;
   url: string;
@@ -26,12 +16,12 @@ export type NavItem = {
   items?: {
     title: string;
     url: string;
-    /** Permission required to see this sub-item. Omit to make it public. */
+    
     requiredPermission?: string;
   }[];
-  /** Permission required to see this item. Omit to make it public. */
+  
   requiredPermission?: string;
-  /** ANY-of gate: item is visible when the user holds at least one listed permission. */
+  
   requiredPermissions?: string[];
 };
 
@@ -94,11 +84,7 @@ export const navMain: NavItem[] = [
   },
 ];
 
-/**
- * Resolves the display title for a pathname by walking the nav tree
- * (top-level links first, then their sub-items). Returns null when the
- * route has no nav entry — callers decide how to render that case.
- */
+
 export function getActiveNavTitle(pathname: string): string | null {
   for (const item of navMain) {
     if (item.url === pathname) return item.title;

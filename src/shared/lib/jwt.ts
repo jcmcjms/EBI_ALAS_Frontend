@@ -1,6 +1,4 @@
-/**
- * Decode a JWT token payload (no signature verification — that's the backend's job).
- */
+
 export function decodeJwtPayload(token: string): Record<string, unknown> | null {
     try {
         const base64Url = token.split('.')[1];
@@ -18,9 +16,7 @@ export function decodeJwtPayload(token: string): Record<string, unknown> | null 
     }
 }
 
-/**
- * Extract a UserSession-compatible object from a decoded JWT.
- */
+
 export interface JwtUserSession {
     userId: string;
     firstName: string;
@@ -37,8 +33,8 @@ export function extractUserFromToken(token: string): JwtUserSession | null {
     const payload = decodeJwtPayload(token);
     if (!payload) return null;
 
-    // Collect all "permission" claims (backend emits multiple Claim("permission", ...))
-    // When multiple claims share the same key, JWT serialization produces a JSON array.
+    
+    
     const permissions: string[] = [];
     for (const [key, value] of Object.entries(payload)) {
         if (key === 'permission') {
@@ -50,7 +46,7 @@ export function extractUserFromToken(token: string): JwtUserSession | null {
         }
     }
 
-    // Handle boolean claim properly - avoid JS "false" === true trap
+    
     const mustChangePassword = payload.mustChangePassword === true || String(payload.mustChangePassword) === "true";
 
     return {

@@ -132,8 +132,7 @@
     }
 }
 
-/* ── Rich text (TipTap editor + RichText renderer + PDF export) ──────────
-   Mirrors the editor's allowed schema: p, strong, em, ul, ol, li, br. */
+
 .rich-text p { margin: 0; }
 .rich-text > * + * { margin-top: 0.375em; }
 .rich-text ul { list-style: disc; padding-left: 1.25rem; }
@@ -147,20 +146,7 @@
     pointer-events: none;
 }
 
-/* ── Print scoping: emit ONLY the approval-form sheet ──────────────────
-   While a page opts in via `body.print-form-only`, printing emits only
-   the subtree marked [data-print-root] (the 800px LOAN APPROVAL FORM
-   sheet):
-   1. everything outside the root's ancestor chain is display:none
-      (shell, sidebar, headers, right rail, toast/dialog portals);
-   2. chrome *ancestors* (card, grid, scroll/zoom viewport, shell) are
-      neutralized — block flow, no clipping, zoom/transform reset — so
-      the sheet paginates at true size;
-   3. the root itself loses screen padding; @page margins provide the
-      paper whitespace.
-   Descendants of the root keep their own print: utilities, so page 2's
-   break-before-page and the print-only continuation header now work as
-   designed instead of being buried under app chrome. */
+
 @media print {
     body.print-form-only :not([data-print-root], [data-print-root] *, :has([data-print-root])) {
         display: none !important;
@@ -194,9 +180,7 @@
     }
 }
 
-/* Paper whitespace for bank documents. Deliberately no `size:` — the
-   branch's paper choice (Letter vs A4) stays under the user's control in
-   the print dialog; the sheet's max-w-full adapts to either. */
+
 @page {
     margin: 10mm;
 }

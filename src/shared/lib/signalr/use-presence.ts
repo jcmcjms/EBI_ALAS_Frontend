@@ -5,23 +5,13 @@ import { getSharedConnection } from "@/src/shared/lib/signalr/connection";
 import { useAuthStore } from "@/src/store/authStore";
 import { usePresenceStore } from "@/src/features/notifications/store/presenceStore";
 
-/**
- * Entity viewer — a user currently watching a specific record.
- */
+
 export interface EntityViewer {
     userId: number;
     name: string;
 }
 
-/**
- * Mount once (in AppShell): hydrate + live deltas + reconnect resync + logout reset.
- *
- * This is the single source of truth for presence state. It:
- * 1. Fetches the full online directory via REST on mount.
- * 2. Listens for `PresenceSnapshot` (on connect) and `PresenceChanged` (deltas).
- * 3. Re-hydrates on reconnect to heal any missed deltas.
- * 4. Resets the store on logout.
- */
+
 export function usePresenceSync() {
     const token = useAuthStore((s) => s.accessToken);
 
@@ -48,14 +38,14 @@ export function usePresenceSync() {
                         );
                 })
                 .catch(() => {
-                    // REST hydration failed — the hub snapshot will catch up.
+                    
                 });
         };
 
-        // Initial hydration via REST (faster than waiting for hub connect).
+        
         hydrateFromApi();
 
-        // Hub events.
+        
         const onSnapshot = (list: PresenceEntry[]) => {
             usePresenceStore
                 .getState()
@@ -78,7 +68,7 @@ export function usePresenceSync() {
         conn.on("PresenceSnapshot", onSnapshot);
         conn.on("PresenceChanged", onChange);
 
-        // Re-hydrate on reconnect to heal any missed deltas.
+        
         conn.onreconnected(() => hydrateFromApi());
 
         return () => {
@@ -88,22 +78,14 @@ export function usePresenceSync() {
     }, [token]);
 }
 
-/**
- * Returns the presence entry for a single user, or undefined if offline.
- */
+
 export function useUserPresence(userId?: number | null) {
     return usePresenceStore((s) =>
         userId != null ? s.online[userId] : undefined,
     );
 }
 
-/**
- * Returns all online users sorted by name.
- *
- * Uses `useMemo` to stabilize the sorted array reference — without it,
- * `Object.values().sort()` creates a new array every render, which
- * `useSyncExternalStore` treats as a change and triggers an infinite loop.
- */
+
 export function useOnlineUsers() {
     const online = usePresenceStore((s) => s.online);
     return useMemo(
@@ -112,12 +94,7 @@ export function useOnlineUsers() {
     );
 }
 
-/**
- * "Who is looking at this record right now" — any entity, any page.
- *
- * Mounts a watch/unwatch lifecycle around the entity and returns
- * the current viewer list (excluding the current user).
- */
+
 export function useEntityViewers(
     entityType: string,
     entityId: number | null,
@@ -154,11 +131,11 @@ export function useEntityViewers(
         };
     }, [entityType, entityId]);
 
-    // Filter out the current user from the viewer list.
+    
     return viewers.filter((v) => v.userId !== me);
 }
 
-// ── Internal types matching the backend payload shapes ─────────────────────
+
 
 interface PresenceEntry {
     user: PresenceUserInfo;

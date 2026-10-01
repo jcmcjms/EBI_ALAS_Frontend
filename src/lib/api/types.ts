@@ -1,17 +1,8 @@
-/**
- * Shared API contracts mirroring EBI.ALAS.Api backend models.
- *
- * Source of truth:
- *   - Common/Models/ApiResponse.cs
- *   - Common/Models/PagedResult.cs
- *   - Features/Users/UserDtos.cs
- *   - Features/WebLoans/WebLoanBorrowerResponse.cs
- *   - Common/Constants/{Permissions,Roles}.cs
- */
 
-// ─── Response envelope ───────────────────────────────────────────────────────
 
-/** Standard wrapper returned by every endpoint (ApiResponse<T>). */
+
+
+
 export interface ApiResponse<T> {
     success: boolean;
     message: string;
@@ -20,7 +11,7 @@ export interface ApiResponse<T> {
     timestamp: string;
 }
 
-/** Generic paged result wrapper (PagedResult<T>). */
+
 export interface PagedResult<T> {
     items: T[];
     currentPage: number;
@@ -31,7 +22,7 @@ export interface PagedResult<T> {
     hasNextPage: boolean;
 }
 
-/** Unwraps the ApiResponse envelope; throws when the backend reports failure. */
+
 export function unwrapApiData<T>(body: ApiResponse<T>): T {
     if (!body.success || body.data === null) {
         throw new Error(body.message || "Request failed");
@@ -39,9 +30,9 @@ export function unwrapApiData<T>(body: ApiResponse<T>): T {
     return body.data;
 }
 
-// ─── Users ───────────────────────────────────────────────────────────────────
 
-/** GET /api/users query parameters (UserQueryParameters). */
+
+
 export interface UserQueryParams {
     search?: string;
     role?: string;
@@ -51,7 +42,7 @@ export interface UserQueryParams {
     pageSize?: number;
 }
 
-/** POST /api/users body (CreateUserRequest). */
+
 export interface CreateUserPayload {
     username: string;
     password: string;
@@ -60,28 +51,15 @@ export interface CreateUserPayload {
     lastName: string;
     branchId: string;
     role: string;
-    /** Free-text role label (e.g. "Senior Credit Analyst"). Complements
-     *  the workflow `role` field. Validated server-side, max 100 chars. */
+    
     jobTitle?: string | null;
-    /** Base64-encoded PNG of the user's signature. Optional at create
-     *  time; admin typically captures this later via the edit drawer. */
+    
     eSignature?: string | null;
-    /** Branch codes this approver covers (only for Branch-scope approvers).
-     *  Null/empty for Area/Global scope or non-approvers. */
+    
     coveredBranches?: string[] | null;
 }
 
-/** PUT /api/users/{id} body (UpdateUserRequest).
- *
- *  `eSignature` has three states that map directly onto the backend's
- *  "no-change" semantics:
- *   - `undefined` (key omitted)  → keep the existing signature
- *   - `null`                     → clear the signature
- *   - `string`                   → replace with this base64 PNG
- *
- *  The frontend only sets the key when the user actually edited or
- *  cleared the signature — minor profile edits never round-trip the
- *  ~100KB PNG through the API. */
+
 export interface UpdateUserPayload {
     firstName: string;
     middleName?: string | null;
@@ -90,24 +68,23 @@ export interface UpdateUserPayload {
     role: string;
     jobTitle?: string | null;
     eSignature?: string | null;
-    /** Branch codes this approver covers (only for Branch-scope approvers).
-     *  Null/empty for Area/Global scope or non-approvers. */
+    
     coveredBranches?: string[] | null;
 }
 
-/** PATCH /api/users/{id}/status body (UserStatusRequest). */
+
 export interface UserStatusPayload {
     isActive: boolean;
 }
 
-/** Response from POST /api/users/{id}/reset-password (ResetPasswordResponse). */
+
 export interface ResetPasswordResponse {
     username: string;
     temporaryPassword: string;
     mustChangePassword: boolean;
 }
 
-/** Lightweight approval authority info embedded in UserResponse. */
+
 export interface ApprovalAuthorityInfo {
     key: string;
     displayName: string;
@@ -116,7 +93,7 @@ export interface ApprovalAuthorityInfo {
     maxTotalExposure: number;
 }
 
-/** User record returned by all user endpoints (UserResponse). */
+
 export interface UserResponse {
     id: number;
     username: string;
@@ -127,17 +104,17 @@ export interface UserResponse {
     role: string;
     isActive: boolean;
     createdAt: string;
-    /** Free-text role label (e.g. "Branch Manager") or authority display name for Approvers. */
+    
     jobTitle?: string | null;
-    /** Base64-encoded PNG of the user's e-signature. Null when none. */
+    
     eSignature?: string | null;
-    /** Approval authority info for Approver users. Null for non-approvers. */
+    
     approvalAuthority?: ApprovalAuthorityInfo | null;
-    /** Branch codes this Branch-scope approver covers. Null for non-approvers or Area/Global scope. */
+    
     coveredBranches?: string[] | null;
 }
 
-/** Audit log record for a specific user (UserAuditLogResponse). */
+
 export interface UserAuditLogResponse {
     id: number;
     action: string;
@@ -148,16 +125,16 @@ export interface UserAuditLogResponse {
     ipAddress: string | null;
 }
 
-// ─── User Import/Export ──────────────────────────────────────────────────────
 
-/** Validation error for a specific row and field during import. */
+
+
 export interface UserImportValidationError {
     rowNumber: number;
     field: string;
     error: string;
 }
 
-/** Result of a batch import operation (UserImportResult). */
+
 export interface UserImportResult {
     totalRows: number;
     successfulImports: number;
@@ -166,22 +143,22 @@ export interface UserImportResult {
     createdUsernames: string[];
 }
 
-// ─── Roles & permissions ─────────────────────────────────────────────────────
 
-/** Entry from GET /api/roles ({ name, displayName }). */
+
+
 export interface RoleInfo {
     name: string;
     displayName: string;
 }
 
-/** Entry from GET /api/roles/matrix. Permissions are static — defined in backend code. */
+
 export interface RoleMatrixEntry {
     role: string;
     displayName: string;
     permissions: string[];
 }
 
-// ─── Permission constants (mirror Common/Constants/Permissions.cs) ──────────
+
 
 export const PERMISSIONS = {
     loansCreate: "loans.create",
@@ -202,11 +179,7 @@ export const PERMISSIONS = {
     workflowManage: "workflow.manage",
 } as const;
 
-/**
- * Static branch list — mirrors the backend Branch entity (Features/Branches).
- * BranchId is stored as a plain string on users (matches Branch.Code).
- * Kept in sync with WEBLOAN_BRANCHES for the WebLoan database.
- */
+
 export const BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
     { code: "000", name: "Lianga Branch" },
     { code: "002", name: "Barobo Branch" },
@@ -241,9 +214,9 @@ export const BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
     { code: "991", name: "Corporate Center" },
 ] as const;
 
-// ─── Branches API ──────────────────────────────────────────────────────────────
 
-/** Branch record returned by GET /api/branches (BranchListResponse). */
+
+
 export interface BranchListResponse {
     id: number;
     code: string;
@@ -251,7 +224,7 @@ export interface BranchListResponse {
     isActive: boolean;
 }
 
-/** Branch record returned by GET /api/branches/{id} (BranchResponse). */
+
 export interface BranchResponse {
     id: number;
     code: string;
@@ -260,14 +233,14 @@ export interface BranchResponse {
     createdAt: string;
 }
 
-/** GET /api/branches query parameters. */
+
 export interface BranchQueryParams {
     pageNumber?: number;
     pageSize?: number;
     isActive?: boolean;
 }
 
-/** Paged result for branches (ApiResponse<PagedResult<BranchListResponse>>). */
+
 export interface BranchesPagedResult {
     items: BranchListResponse[];
     currentPage: number;
@@ -278,18 +251,7 @@ export interface BranchesPagedResult {
     hasNextPage: boolean;
 }
 
-/**
- * Static webloan branch list — mirrors dbo.branch_set (bk='088') in the WebLoan
- * database, generated 2026-08-26. `code` = branch code (bch, same format as
- * cis_info.bch); `name` = branch display name.
- *
- * ⚠️ webloan quirk: the NAME lives in the `bch_add` column (`bch_add_full`
- * holds the address, `bch_name` is empty).
- *
- * The frontend cannot query the WebLoan DB directly, so this is a snapshot.
- * If a new branch appears in webloan, add it here — or expose it via the API
- * (join branch_set in WebLoanService) to make this dynamic.
- */
+
 export const WEBLOAN_BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
     { code: "000", name: "Lianga Branch" },
     { code: "002", name: "Barobo Branch" },
@@ -324,35 +286,21 @@ export const WEBLOAN_BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
     { code: "991", name: "Corporate Center" },
 ];
 
-// ─── WebLoans (CIS lookup) ───────────────────────────────────────────────────
-//
-// Mirrors `EBI.ALAS.Api.Features.WebLoans.WebLoanDtos.cs` —
-// `CisSearchResponse(BorrowerDto, IReadOnlyList<AccountDto>)`. The backend
-// returns the search payload as a flat `{ borrower, accounts[] }` envelope;
-// nested "sections" (branchAndType / personalInformation / loanInformation /
-// ...) were a planned shape that was never implemented on the server side,
-// so the frontend MUST treat these two top-level keys as the contract.
 
-/**
- * One account (Loan Account Info / LAI) attached to a CIS.
- *
- * `accountNo` is the bare webloan account number; `accountId` is the
- * combined "<branchCode>-<accountNo>" form (e.g. "011-05-13081-1") that
- * the two drill-down endpoints (outstanding-loans, pending-loan) expect
- * on their route. Use `accountId` when calling those endpoints; use
- * `accountNo` everywhere else (form fields, preloan lookups, etc.).
- *
- * Mirrors `AccountDto` on the backend (Features/WebLoans/WebLoanDtos.cs).
- */
+
+
+
+
+
+
+
+
+
 export interface WebLoanAccount {
     bankCode: string;
     branchCode: string;
     accountNo: string;
-    /**
-     * Combined "<branchCode>-<accountNo>" identifier. Pass this to the
-     * `/outstanding-loans` and `/pending-loan` endpoints. The backend
-     * splits on the first dash to recover the (bch, acctNo) pair.
-     */
+    
     accountId: string;
     name: string | null;
     creditLimit: number | null;
@@ -360,393 +308,212 @@ export interface WebLoanAccount {
     borrowerType: string | null;
 }
 
-/**
- * Borrower section of the CIS search payload. Mirrors `BorrowerDto` on
- * the backend.
- *
- * Fields are nullable because the webloan DB itself is nullable on every
- * one of them — `cis_info.b_*` columns allow nulls and many borrowers
- * simply have no `cis_info_misc_data` row, etc. The frontend must always
- * default missing values to "" / 0 before rendering.
- */
+
 export interface WebLoanBorrower {
-    /** CIS number (cis_info.cis_no). */
+    
     cisNo: string;
     firstName: string;
     middleName: string | null;
     lastName: string;
-    /** Title (Mr/Ms/...) — surfaced but rarely displayed. */
+    
     title: string | null;
-    /** Suffix / appelation. */
+    
     appelation: string | null;
-    /** ISO 8601 datetime (date portion is the birthday). */
+    
     birthDate: string | null;
-    /** Pre-joined address (zip, street, city, province, brgy, village). */
+    
     address: string | null;
-    /**
-     * Agency-type description resolved from `cis_info_misc_data`
-     * (id_code=14) → `mis_group.id_code` in the agency-type group.
-     * e.g. "RPSU". Null when the borrower has no misc row or the id_code
-     * is unknown.
-     */
+    
     agencyType: string | null;
     positionTitle: string | null;
-    /** Human-readable region label (e.g. "Region 1", "NCR"). */
+    
     region: string | null;
     regionCode: string | null;
     divisionCode: string | null;
     stationCode: string | null;
-    /** Employee number (cis_info.employee_no). */
+    
     employeeNumber: string | null;
-    /** Resolved secondary MIS agency name (cat_mis_group2 → mis_group.path). */
+    
     misAgency: string | null;
-    /**
-     * Requesting officer's full name. Resolved from
-     * `loan_acct_info.solicitor` → `mis_group.path` (group_no=2) →
-     * `description`. Falls back to null when the borrower's account has
-     * no solicitor or the path cannot be resolved.
-     */
+    
     requestingOfficer: string | null;
-    /** "<years> years, <months> months" — sourced from check_list_data CCR10. */
+    
     lengthOfService: string | null;
 }
 
-/**
- * Full payload returned by `GET /api/webloans/cis/{cisNo}/search`.
- *
- * NOTE: the legacy comment block above this contract mentioned several
- * nested sections (`branchAndType.lai`, `personalInformation.firstName`,
- * `outstandingLoans`, `ebiReloanAccounts`, `buyOutAccounts`,
- * `incomingLoans`, `deviation`, `optionalInformation`). Those do NOT
- * exist on the wire — the backend returns ONLY the two flat keys below.
- * Outstanding loans are sourced from the dedicated
- * `GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/pending-loan`
- * endpoint once the AO picks an account; EBI reloan / buy-out /
- * incoming-loan sections are entered manually in ALAS (no backend
- * endpoint exposes them yet).
- */
+
 export interface WebLoanCisSearchResponse {
     borrower: WebLoanBorrower;
     accounts: WebLoanAccount[];
 }
 
-// ─── Active Loans (CIS + Account) ────────────────────────────────────────────
 
-/**
- * One row from GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/active-loans.
- * Mirrors ActiveLoanItem on the backend. Backed by the reference SQL:
- *   SELECT TOP 10 ... FROM dbo.loan_data
- *    WHERE acct_no + bch='000' + is_loan=1 + loan_status != 10
- *    ORDER BY date_granted DESC.
- */
+
+
 export interface ActiveLoan {
-    /** Promissory Note number (loan_data.loan_no). */
+    
     loanNo: string;
-    /** Original principal amount (loan_data.principal). */
+    
     principal: number | null;
-    /** Current principal balance (loan_data.principal_bal). */
+    
     principalBalance: number | null;
-    /** Date the loan was granted (ISO 8601, date portion). */
+    
     dateGranted: string | null;
-    /** Maturity date (ISO 8601, date portion). */
+    
     dateMaturity: string | null;
-    /** Loan product code (loan_data.loan_product, e.g. "PL", "MPL"). */
+    
     loanProduct: string | null;
-    /** Loan product description resolved from dbo.loan_product. */
+    
     loanProductDescription: string | null;
-    /** Raw loan status code (loan_data.loan_status). */
+    
     statusCode: number | null;
-    /** Human-readable status label (e.g. "Current", "Pastdue Performing"). */
+    
     statusDescription: string | null;
-    /** Pre-joined "<product> - <status>" display string from the backend. */
+    
     productStatus: string | null;
 }
 
-/** Response from GET /api/webloans/cis/{cisNo}/accounts/{accountNo}/active-loans. */
+
 export interface ActiveLoansResponse {
     accountNo: string;
     cisNo: string;
     loans: ActiveLoan[];
 }
 
-// ─── Outstanding Loans (CIS + Account + bch) ─────────────────────────────────
 
-/**
- * One row from GET
- * `/api/webloans/cis/{cisNo}/accounts/{accountNo}/outstanding-loans`.
- *
- * Mirrors `OutstandingLoanDto` on the backend. Backed by the reference SQL
- * (see `WebLoanRepository.GetOutstandingLoansAsync`):
- *
- *   SELECT ... FROM webloan.dbo.loan_data
- *    WHERE acct_no = @acct
- *      AND (@bch IS NULL OR bch = @bch)
- *      AND webloan.dbo.is_loan(loan_no) = 1
- *      AND loan_status != 10
- *    ORDER BY date_granted DESC
- *
- * The list is branch-scoped server-side: non-Admin callers only see their
- * own branch's outstanding balances (== JWT `branchId`); Admin bypasses
- * the branch filter and `branchCode` echoes `"ALL"`.
- *
- * **Field mapping note — `principalBalance` IS the OUTSTANDING BALANCE.**
- * `principalBalance` mirrors `loan_data.principal_bal` (current principal
- * balance, not original). The frontend uses this value to populate the
- * "Outstanding Balance" column of the obligations table on the new-loan
- * form. `principal` mirrors `loan_data.principal` (original loan amount)
- * and feeds the "Principal Balance" column so the AO can see both side by
- * side.
- *
- * `productStatus` is a pre-joined `"<productCode> - <status label>"`
- * display string the backend assembles in `WebLoanService`. The
- * `productCode` field is the bare loan_product code (e.g. `"PL"`).
- */
+
+
 export interface OutstandingLoan {
-    /** Promissory Note number (loan_data.loan_no). */
+    
     loanNo: string | null;
-    /** Original loan principal (loan_data.principal). */
+    
     principal: number | null;
-    /** Current principal balance — i.e. OUTSTANDING BALANCE (loan_data.principal_bal). */
+    
     principalBalance: number | null;
-    /**
-     * Monthly amortization amount (CASE-computed on the backend). For
-     * C35/C23 products this mirrors `principal`; for everything else
-     * it mirrors `amort_data.total_amort` for the first scheduled
-     * installment (amort_no = 1). Null when no amort_data row exists
-     * for a non-C35/C23 loan — the form should render this as "—".
-     */
+    
     amortAmount: number | null;
-    /** Date the loan was granted (ISO 8601, full datetime — slice to yyyy-MM-dd for <input type="date">). */
+    
     dateGranted: string | null;
-    /** Maturity date (ISO 8601, full datetime). */
+    
     dateMaturity: string | null;
-    /** Loan product code (loan_data.loan_product, e.g. "PL"). */
+    
     productCode: string;
-    /** Pre-joined "<productCode> - <status label>" display string. */
+    
     productStatus: string;
-    /**
-     * Pre-joined "<productCode> - <description>" display string (e.g.
-     * "C35 - Quick Loan"). Sourced from a LEFT JOIN to
-     * webloan.dbo.loan_product on (ld.loan_product = lp.id_code); falls
-     * back to the bare product code when no description resolves.
-     *
-     * Frontend contract: this is the *product description* we display
-     * for the obligation's "name" when it is moved into the EBI Reloans
-     * section. `productStatus` is the loan's *status* label (e.g. "C35
-     * - Active") and is intentionally distinct from the product
-     * description — see `mapToEbi` in `loan-transfer-utils.ts` for the
-     * transfer that wires this through.
-     */
+    
     productWithDescription: string;
 }
 
-/**
- * Response from GET
- * `/api/webloans/cis/{cisNo}/accounts/{accountId}/outstanding-loans`.
- *
- * The backend returns:
- *   - 200 with `{ loans: [] }` when the (cisNo, accountId) pair is valid
- *     but has no outstanding balances; the frontend treats this as a
- *     successful empty list.
- *   - 404 when the account↔CIS pair is unknown (anti-enumeration guard
- *     runs before any loan row is read). The caller surfaces that as
- *     an error.
- */
+
 export interface OutstandingLoansResponse {
-    /** Echo of the cis filter. */
+    
     cisNo: string;
-    /**
-     * Combined "<branchCode>-<accountNo>" identifier echoed from the
-     * URL. Pass this back unchanged for any follow-up call.
-     */
+    
     accountId: string;
-    /**
-     * Branch code parsed from `accountId` (== webloan `bch`). The
-     * backend no longer consults the JWT `branchId` claim for this
-     * endpoint — the URL branch is the only filter.
-     */
+    
     branchCode: string;
-    /** Account number parsed from `accountId` (== webloan `acct_no`). */
+    
     accountNo: string;
-    /** Active `loan_data` rows for the (cisNo, accountId) pair. */
+    
     loans: OutstandingLoan[];
 }
 
-// ─── PreLoans (CIS + Account + bch) ──────────────────────────────────────────
 
-/**
- * One row from GET /api/preloans.
- *
- * A "preloan" is a draft / in-progress loan application that was previously
- * saved against a (CIS, account, bch) triple. When creating a new application
- * the AO picks the existing preloan they want to resume; the backend then
- * hydrates the rest of the form from it.
- *
- * The list is **always pre-filtered** by the backend for the acting officer's
- * `bch` (branch code) — i.e. a user only ever sees preloans whose `bch`
- * matches `user.branchId`. The frontend never filters by branch itself.
- */
+
+
 export interface PreLoanItem {
-    /** Stable preloan id (PK on the preloan table). */
+    
     id: number;
-    /** CIS number this preloan belongs to. */
+    
     cisNo: string;
-    /** Account number (loan_acct_info.acct_no) this preloan is tied to. */
+    
     accountNo: string;
-    /** Branch code (loan_acct_info.bch) — server-asserted to match the JWT user. */
+    
     bch: string;
-    /** Human-readable branch name (resolved from dbo.branch_set). */
+    
     branchName: string;
-    /** Optional reference form number, if the preloan was already routed through a draft. */
+    
     formNumber?: string | null;
-    /** Loan product code / description copied from webloan at preloan time. */
+    
     productCode?: string | null;
     productDescription?: string | null;
-    /** Last proposed terms captured in the draft. */
+    
     proposedAmount?: number | null;
     termDays?: number | null;
     interestRate?: number | null;
     purpose?: string | null;
-    /** When the preloan was last edited (ISO 8601). */
+    
     lastModifiedAt: string;
-    /** Officer that last edited the preloan (display-only — server re-asserts). */
+    
     lastModifiedBy?: string | null;
 }
 
-/** Response wrapper for GET /api/preloans. */
+
 export interface PreLoansResponse {
-    /** Echo of the cis filter that produced this list (null when omitted). */
+    
     cisNo: string | null;
-    /** Echo of the accountNo filter (null when omitted). */
+    
     accountNo: string | null;
-    /** Echo of the bch filter that the server enforced (== acting user's branchId). */
+    
     bch: string;
     preLoans: PreLoanItem[];
 }
 
-/** Query parameters for GET /api/preloans. */
+
 export interface PreLoansQuery {
-    /** Filter by CIS number. */
+    
     cisNo?: string;
-    /** Filter by account number (typically the LAI account selected in the UI). */
+    
     accountNo?: string;
 }
 
-// ─── Pending Loans (CIS + Account + bch) ───────────────────────────────────
 
-/**
- * One row from GET
- * `/api/webloans/cis/{cisNo}/accounts/{accountId}/pending-loan`.
- *
- * Mirrors `PendingLoanDto` on the backend. Each row represents one
- * in-flight pre_loan_data row enriched with loan_data fields
- * (principal, granted rate, product, purpose, creation type).
- *
- * **Important — `principalBalance` is the OUTSTANDING BALANCE.**
- * On the backend, `Principal` (loan_data.principal) is the **current
- * principal balance** (i.e. `principal_bal`) for an active loan — it is
- * NOT the original loan amount. The frontend treats this field as the
- * outstanding balance when pre-filling the obligation rows.
- */
+
+
 export interface PendingLoan {
-    /** Loan number (loan_data.loan_no / pre_loan_data.loan_no). */
+    
     loanNo: string;
-    /**
-     * Current principal balance. Mirrors `loan_data.principal` on the
-     * backend, which is `principal_bal` (the outstanding balance) for
-     * an active loan, not the original principal.
-     */
+    
     principal: number | null;
-    /** Interest rate as a number (loan_data.granted_rate). */
+    
     grantedRate: number | null;
-    /**
-     * Exact term in days — `DATEDIFF(DAY, date_granted, date_maturity)`
-     * from the consolidated SQL. Replaces the legacy
-     * `total_amortization * 30` approximation. NULL when either
-     * loan_data date is missing (LEFT JOIN miss).
-     */
+    
     totalTermDays: number | null;
-    /**
-     * Policy term in months — `loan_data.total_amortization`, surfaced
-     * verbatim from the backend under the more descriptive name
-     * `PolicyTermMonths` (matches the SQL's "policy months" label).
-     * This is the authoritative input to amortization calculations;
-     * distinct from `totalTermDays` (the day-count derived from grant
-     * / maturity dates) which can drift by a day or two for short-term
-     * products. NULL when no loan_data row exists for the (bch,
-     * acct_no, loan_no) tuple.
-     */
+    
     policyTermMonths: number | null;
-    /** webloan loan_data.c_doc_stamp — documentary stamp for the approval form. */
+    
     cDocStamp: number | null;
-    /**
-     * "<loan_product> - <description>" display string, pre-joined on the
-     * backend (e.g. "PL - Payroll Loan"). Falls back to the bare product
-     * code when no description resolves.
-     */
+    
     productWithDescription: string;
-    /** Loan purpose description (loan_data.cat_loan_purpose → mis_group). */
+    
     loanPurpose: string | null;
-    /**
-     * Raw creation type code (loan_data.creation_type). One of:
-     * 0 = New Loan, 1 = Reloan, 2 = Restructured, 6 = Additional Loan.
-     * Null when no loan_data row joined onto the pre_loan_data row.
-     */
+    
     creationType: number | null;
-    /**
-     * Human-readable creation type label, e.g. "New Loan", "Reloan",
-     * "Restructured", "Additional Loan", or "Unknown" when the code is
-     * unrecognized / null. Mirrors the CASE block in the backend
-     * service.
-     */
+    
     creationTypeLabel: string;
 }
 
-/**
- * Response wrapper for
- * GET /api/webloans/cis/{cisNo}/accounts/{accountId}/pending-loan.
- *
- * The endpoint returns a 200 with `loans: []` when the (cisNo, accountId)
- * pair is valid but has no in-flight loans; the frontend treats this as
- * a successful empty list. A 404 means the account↔CIS pair is unknown —
- * that is a real error and surfaces in the same way as the other webloan
- * endpoints.
- */
+
 export interface PendingLoanResponse {
-    /** Echo of the cis filter. */
+    
     cisNo: string;
-    /** Combined "<branchCode>-<accountNo>" identifier echoed from the URL. */
+    
     accountId: string;
-    /**
-     * Branch code parsed from `accountId` (== webloan `bch`). The
-     * backend no longer consults the JWT `branchId` claim for this
-     * endpoint — the URL branch is the only filter.
-     */
+    
     branchCode: string;
-    /** Account number parsed from `accountId` (== webloan `acct_no`). */
+    
     accountNo: string;
-    /** In-flight pre_loan_data rows enriched with loan_data fields. */
+    
     loans: PendingLoan[];
-    /** CIS-level NTHP (Net Take-Home Pay) amount (CCR07 row). */
+    
     nthp: string | null;
-    /** CCR07 expiration — NTHP date. */
+    
     nthpDate: string | null;
 }
 
-// ─── Loan Class (CIS + Account + bch) ─────────────────────────────────────────
 
-/**
- * Response from GET /api/webloans/loan-class.
- * Mirrors `CatLoanClassResponse` on the backend.
- *
- * Resolves `cat_loan_class` for a single (bch, loan_no, loan_product)
- * tuple in dbo.loan_data. All three parameters are required query params.
- *
- * 200 with data when the loan is found (cat_loan_class may be null if the
- * DB column is NULL).
- * 400 when any param is missing or whitespace.
- * 404 when no row matches the (bch, loan_no, loan_product) triple.
- */
+
+
 export interface CatLoanClassResponse {
     bch: string;
     loanNo: string;
@@ -754,44 +521,33 @@ export interface CatLoanClassResponse {
     catLoanClass: string | null;
 }
 
-// ─── COCREE Completion Status ────────────────────────────────────────────────
 
-/**
- * One COCREE checklist item (CCR01–CCR11) from
- * GET /api/webloans/cis/{cisNo}/cocree-status.
- *
- * Mirrors `CocreeItemStatus` on the backend.
- */
+
+
 export interface CocreeItemStatus {
-    /** Checklist item code (e.g. "CCR01", "CCR11"). */
+    
     itemCode: string;
-    /** ISO 8601 datetime when the item was submitted. Null = incomplete. */
+    
     submitted: string | null;
-    /** Item description from check_list_data.description. */
+    
     description: string | null;
-    /** Expiration date from check_list_data.expiration. */
+    
     expiration: string | null;
 }
 
-/**
- * Response from GET /api/webloans/cis/{cisNo}/cocree-status.
- *
- * Mirrors `CocreeStatusResponse` on the backend.
- * A CIS with zero checklist rows returns isComplete=false with all
- * items having submitted=null.
- */
+
 export interface CocreeStatusResponse {
-    /** CIS number echoed from the URL. */
+    
     cisNo: string;
-    /** True only when ALL 11 items have a non-null submitted date. */
+    
     isComplete: boolean;
-    /** Full 11-item list with per-item completion state. */
+    
     items: CocreeItemStatus[];
 }
 
-// ─── Audit Logs ─────────────────────────────────────────────────────────────────
 
-/** Audit log record returned by GET /api/audit-logs (AuditLogResponse). */
+
+
 export interface AuditLogRecord {
     id: number;
     timestamp: string;
@@ -807,7 +563,7 @@ export interface AuditLogRecord {
     userAgent: string | null;
 }
 
-/** Query parameters for GET /api/audit-logs. */
+
 export interface AuditLogQueryParams {
     page?: number;
     pageSize?: number;
@@ -818,102 +574,70 @@ export interface AuditLogQueryParams {
     endDate?: string;
 }
 
-// ─── Loan Products (bank policy mirror) ──────────────────────────────────────
-//
-// Mirrors the backend `Features/Loans/ILoanProductService.cs` and
-// `Features/Loans/LoanProduct.cs` contract. The ALAS backend is the *mirror*
-// of webloan's `dbo.loan_product` catalog — it owns the policy columns
-// (eligibility bounds, fees, advance-interest rate) and webloan is the
-// source of truth for existence + retirement.
-//
-// Two responsibilities are split between the two systems:
-//   - **Existence & retirement** — driven by the webloan sync
-//     (`POST /api/loan-products/sync`). Updates `IsRetired` and
-//     `LastSyncedAt` on every run. The admin UI cannot change these.
-//   - **Policy fields** — owned by ALAS. Updated by ops through the admin
-//     UI via `PUT /api/loan-products/{code}`. The PK in the URL is the
-//     webloan `id_code` (e.g. "C35"), NOT a surrogate int — the entity
-//     has no int id column.
-//
-// Editable surface (UpdateLoanProductPayload) is the exact 8-field shape
-// of `UpdateLoanProductRequest` on the backend, validated by
-// `UpdateLoanProductValidator` server-side:
-//   - MinAmount, MaxAmount                  (eligibility bounds, PHP)
-//   - MinTermDays, MaxTermDays              (eligibility bounds, days)
-//   - NotarialFee, DocStampFee, InsuranceFee (flat fees, PHP)
-//   - AdvanceInterestRate                   (decimal fraction, 0-1)
-//
-// `IsRetired` and `LastSyncedAt` are **read-only** from the admin surface
-// — they are owned by the sync. The admin row shows them as a
-// staleness/retirement chip so ops can spot a stale row at a glance.
 
-/**
- * Mirrors `LoanProductResponse` on the backend (the list/get response
- * for `/api/loan-products`).
- *
- * PK is `code` (string), matching the backend's choice of
- * `webloan.loan_product.id_code` as the natural key. The mirror
- * deliberately does NOT carry an `id: number` — the entity has no
- * surrogate id, and adding one on the FE would silently mask the
- * `string`-keyed URL the backend actually routes on.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export interface LoanProductResponse {
-    /** webloan `id_code` (e.g. "PL", "MPL", "C35", "C23"). Natural key. */
+    
     code: string;
-    /** Human-readable description (synced from webloan; admin cannot edit). */
+    
     description: string;
-    /** Floor on the principal an AO can request (PHP). */
+    
     minAmount: number;
-    /** Ceiling on the principal (PHP). */
+    
     maxAmount: number;
-    /** Shortest term an AO can request (whole days). */
+    
     minTermDays: number;
-    /** Longest term (days). Capped at 2617 by the validator (7-year + 2-month grace-period bank rule). */
+    
     maxTermDays: number;
-    /** Flat notarial fee (PHP). */
+    
     notarialFee: number;
-    /** Flat documentary-stamps fee (PHP). */
+    
     docStampFee: number;
-    /** Flat insurance fee (PHP). */
+    
     insuranceFee: number;
-    /** Advance-interest annual rate as a decimal fraction (0.12 = 12% p.a.). */
+    
     advanceInterestRate: number;
-    /**
-     * Application charge rate as a decimal fraction of proposed amount.
-     * 0.06 = 6% (A16 default), 0.065 = 6.5% (C23), 0.075 = 7.5% (C35).
-     */
+    
     applicationChargeRate: number;
-    /**
-     * Amortization computation mode:
-     *   "DIM" = Diminishing balance (standard annuity formula)
-     *   "MIC" = Minimum Installment Check (max of DIM and tiered minimum)
-     */
+    
     amortizationMode: string;
-    /**
-     * Whether this product charges advance interest at disbursement.
-     * True for add-on/MIC products (e.g. C35 @ 18%), false for standard
-     * diminishing-balance products (e.g. A16 @ 7%).
-     */
+    
     chargeAdvanceInterest: boolean;
-    /**
-     * Mirrored from webloan. Read-only on the admin surface.
-     * True when webloan has a non-null `expiration` on the source row.
-     */
+    
     isRetired: boolean;
-    /** When the row was last touched by the sync. Drives the staleness chip. */
+    
     lastSyncedAt: string;
 }
 
-/**
- * Admin write payload for `PUT /api/loan-products/{code}`.
- *
- * This is intentionally narrow: the endpoint can ONLY change policy
- * fields. Sync-owned fields (code, description, isRetired, lastSyncedAt)
- * are preserved by `LoanProductService.UpdateAsync` — sending them here
- * would be ignored, so we don't accept them in the type.
- *
- * Mirrors `UpdateLoanProductRequest` (`Features/Loans/ILoanProductService.cs`).
- */
+
 export interface UpdateLoanProductPayload {
     minAmount: number;
     maxAmount: number;
@@ -925,50 +649,34 @@ export interface UpdateLoanProductPayload {
     advanceInterestRate: number;
 }
 
-/**
- * Result of a manual sync run (`POST /api/loan-products/sync`).
- * Mirrors `LoanProductSyncResult` on the backend.
- */
+
 export interface LoanProductSyncResult {
-    /** Brand-new rows added to the ALAS mirror. */
+    
     added: number;
-    /** Existing rows whose IsRetired or Description changed during the run. */
+    
     updated: number;
-    /** Rows whose policy fields were left untouched by the sync. */
+    
     preserved: number;
-    /** When the run finished (UTC, ISO-8601). */
+    
     syncedAt: string;
 }
 
-/**
- * Query parameters for `GET /api/loan-products`.
- *
- * The list endpoint returns every row in the mirror (active + retired).
- * The admin catalog page filters client-side via the "Include retired"
- * toggle. The AO-facing loan-creation form no longer fetches the
- * catalog — it uses the pending-loan feed and `/loan-class` instead.
- */
+
 export interface LoanProductsQuery {
-    /** Filter hint for client-side toggle (not sent to the API). */
+    
     isActive?: boolean;
-    /** Optional filter by code (e.g. "PL"). */
+    
     code?: string;
 }
 
-/**
- * Per-row validation error from the loan product import.
- * Mirrors `LoanProductImportValidationError` on the backend.
- */
+
 export interface LoanProductImportValidationError {
     rowNumber: number;
     field: string;
     error: string;
 }
 
-/**
- * Result of a batch loan product import.
- * Mirrors `LoanProductImportResult` on the backend.
- */
+
 export interface LoanProductImportResult {
     totalRows: number;
     created: number;
@@ -977,10 +685,10 @@ export interface LoanProductImportResult {
     errors: LoanProductImportValidationError[];
 }
 
-// ─── Loan submission (POST /api/loans) ───────────────────────────
-// Mirrors EBI.ALAS.Api/Features/Loans/LoanSubmissionDtos.cs.
-// branchType.requestingOfficer is sent for shape-compat only; the server
-// overwrites officer + branch from the JWT.
+
+
+
+
 
 export interface LoanSubmissionPayload {
     branchType: {
@@ -1029,89 +737,72 @@ export interface LoanSubmissionPayload {
         status: string; productWithDescription?: string;
     }>;
     preLoan?: { id: number; accountNo: string; bch: string; formNumber?: string; productDescription?: string };
-    // ── Delegation-of-authority routing ──────────────────────────
-    /** "New" or "Renewal" — determines approval tier routing. */
+    
+    
     loanType?: "New" | "Renewal";
 }
 
-/**
- * One loan in a {@link LoanSubmissionResponse}. Mirrors the backend
- * `CreatedLoan` record (`Features/Loans/LoanSubmissionDtos.cs`).
- *
- * Required fields are populated on BOTH POST and GET responses (they
- * were either submitted by the AO or generated by the server). The
- * optional fields are populated by GET /api/loans only — POST does not
- * read them back from the DB, so a POST response deserializes cleanly
- * with them all null.
- *
- * The monitoring table hook (`use-loan-monitoring`) relies on the
- * optional list-view fields (branchCode, product, customer name parts,
- * creationTypeLabel, applicationDate, lastActionDate, createdByName,
- * lastActionByName, lastAction) to populate every column. Without them
- * the "App. Date", "Time Lapsed" and "Last Action By" columns render
- * empty.
- */
+
 export interface CreatedLoanSummary {
     id: number;
-    lamId: string;          // server-generated LAM ID (FormNumber)
+    lamId: string;          
     loanNo: string;
     productCode: string;
     proposedAmount: number;
     status: string;
 
-    // ── List-view enrichment (GET only, null on POST) ─────────────────
-    /** Owning branch code (e.g. "011"). */
+    
+    
     branchCode?: string | null;
-    /** Product description (e.g. "Quick Loan"). */
+    
     product?: string | null;
-    /** Creation type code (0/1/2/6). */
+    
     creationTypeCode?: number | null;
-    /** Creation type label (e.g. "New Loan", "Renewal"). */
+    
     creationTypeLabel?: string | null;
-    /** Borrower first name (CIS snapshot). */
+    
     firstName?: string | null;
-    /** Borrower middle name. */
+    
     middleName?: string | null;
-    /** Borrower last name (CIS snapshot). */
+    
     lastName?: string | null;
-    /** Borrower suffix (Jr / Sr / III / ...). */
+    
     suffix?: string | null;
-    /** ISO-8601 datetime — drives the "App. Date" column. */
+    
     applicationDate?: string | null;
-    /** ISO-8601 datetime — drives the "Time Lapsed" calc. */
+    
     lastActionDate?: string | null;
-    /** Resolved officer full name — used as fallback when no audit actions exist yet. */
+    
     createdByName?: string | null;
-    /** Officer the application last flowed through (server-resolved from audit trail). */
+    
     lastActionByName?: string | null;
-    /** Verb of the latest workflow action (Created, PushedBack, EvaluatedRecommended, …). */
+    
     lastAction?: string | null;
-    /** User ID of the encoder who created this application. */
+    
     createdById?: number | null;
-    // ── Delegation-of-authority routing fields ──────────────────────
-    /** Whether all required checklist documents are uploaded.
-     *  null = not yet verified (distinct from false = verified missing). */
+    
+    
     documentsComplete?: boolean | null;
-    /** ISO-8601 datetime when document completeness was last verified. */
+    
     documentsCompleteAt?: string | null;
-    /** Display name of the assigned approver, or null if unassigned. */
+    
     assignedApproverName?: string | null;
-    /** Required approval tier (1-5), or null if not yet routed. */
+    
     requiredApprovalTier?: number | null;
-    /** User ID of the assigned approver (active lease). */
+    
     assignedApproverId?: number | null;
-    // ── Workflow queue fields (GET /api/loans) ────────────────────────
-    /** Current queue stage (Recommendation / Evaluation / Approval). */
+    
+    
     queueStage?: string | null;
-    /** Position in the queue (1 = on the desk right now). */
+    
     queuePosition?: number | null;
-    /** Total number of items in the current queue stage. */
+    
     queueLength?: number | null;
-    /** Display name of the officer currently reviewing this file. */
+    
     queueOwnerName?: string | null;
-    /** True when this file is at position 1 — the "head" of the queue. */
+    
     isQueueHead?: boolean;
-    /** Document flag state. Null when no active flag. */
+    
     documentFlag?: {
         flaggedAt: string;
         flaggedById: number | null;
@@ -1120,20 +811,7 @@ export interface CreatedLoanSummary {
     } | null;
 }
 
-/**
- * Alias for {@link LoanSubmissionPayload} used by mutation hooks
- * (e.g. `useCreateLoan`) that frame the action as "create one new
- * loan application" rather than "submit a payload". Same shape on the
- * wire — the alias exists so call sites read naturally:
- *
- * ```ts
- *   mutate: (payload: CreateLoanPayload) => loanApi.createLoan(payload, key)
- * ```
- *
- * Keep this as a `type` alias (not an interface) so the contract stays
- * structurally identical to `LoanSubmissionPayload` — adding a field to
- * one automatically propagates to the other.
- */
+
 export type CreateLoanPayload = LoanSubmissionPayload;
 
 export interface LoanSubmissionResponse {

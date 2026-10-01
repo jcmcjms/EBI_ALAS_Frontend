@@ -1,13 +1,9 @@
 import DOMPurify from "dompurify";
 
-/**
- * The only tags the findings field may persist. Marks (strong/em) are tags
- * too. Deliberately no anchors/heads/images: a loan file has no business
- * carrying links or media, and every tag we allow is a tag we must defend.
- */
+
 const ALLOWED_TAGS = ["p", "strong", "em", "ul", "ol", "li", "br"];
 
-/** Text-content cap for §6 findings (audit trail, not an essay). */
+
 export const RICH_TEXT_MAX_CHARS = 2000;
 
 const TAG_PATTERN = /<[^>]*>/g;

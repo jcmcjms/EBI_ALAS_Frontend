@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -10,7 +10,7 @@ import {
     toRichText,
 } from "@/src/shared/lib/rich-text";
 
-// ── sanitizeRichText ────────────────────────────────────────────
+
 
 describe("sanitizeRichText", () => {
     it("keeps the allowed formatting subset", () => {
@@ -53,7 +53,7 @@ describe("sanitizeRichText", () => {
     });
 });
 
-// ── escapeHtml ──────────────────────────────────────────────────
+
 
 describe("escapeHtml", () => {
     it("escapes ampersand, angle brackets, quotes", () => {
@@ -65,7 +65,7 @@ describe("escapeHtml", () => {
     });
 });
 
-// ── richTextToPlainText ─────────────────────────────────────────
+
 
 describe("richTextToPlainText", () => {
     it("strips all tags", () => {
@@ -97,7 +97,7 @@ describe("richTextToPlainText", () => {
     });
 });
 
-// ── isRichTextEmpty ─────────────────────────────────────────────
+
 
 describe("isRichTextEmpty", () => {
     it("returns true for empty string", () => {
@@ -125,7 +125,7 @@ describe("isRichTextEmpty", () => {
     });
 });
 
-// ── toRichText ──────────────────────────────────────────────────
+
 
 describe("toRichText", () => {
     it("returns empty string for empty input", () => {
@@ -157,7 +157,7 @@ describe("toRichText", () => {
     });
 });
 
-// ── RICH_TEXT_MAX_CHARS ─────────────────────────────────────────
+
 
 describe("RICH_TEXT_MAX_CHARS", () => {
     it("is 2000", () => {
