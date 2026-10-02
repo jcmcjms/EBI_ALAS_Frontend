@@ -224,8 +224,6 @@ export function UserEditDrawer({
               authorities={authorities}
               authoritiesLoading={authoritiesLoading}
               onFieldChange={handleFieldChange}
-              roleSelectItems={roleSelectItems}
-              roles={roles}
             />
           </TabsContent>
 
