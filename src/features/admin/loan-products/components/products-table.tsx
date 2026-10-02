@@ -1,29 +1,11 @@
 import { useMemo, useState } from 'react'
 import { toastSuccess, toastError } from '@/src/shared/ui/toast'
-import { FlexRender, useTable } from '@tanstack/react-table'
-import { Database } from '@phosphor-icons/react'
-
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { useTable } from '@tanstack/react-table'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from '@/src/shared/ui/card'
-import { Spinner } from '@/src/shared/ui/spinner'
-import { EmptyState, ErrorState } from '@/src/shared/ui/empty-state'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/src/shared/ui/table'
-import { cn } from '@/src/shared/lib/utils'
-import { getErrorMessage } from '@/src/shared/lib/apiClient'
-import { TablePagination } from '@/src/shared/ui/table-pagination'
 import { PERMISSIONS, type UpdateLoanProductPayload } from '@/src/shared/lib/api/types'
 import { useAuthStore } from '@/src/features/auth/store/authStore'
 import {
@@ -32,7 +14,7 @@ import {
   useUpdateLoanProduct,
 } from '../hooks/use-loan-products'
 import { features, columns } from './product-columns'
-import { ProductsToolbar } from './products-toolbar'
+import { ProductsTableCard } from './products-table-card'
 import { ProductEditSheet } from './product-edit-sheet'
 import { ImportProductsSheet } from './import-products-sheet'
 import { ConfirmActionSheet } from '../../users/components/confirm-action-sheet'
@@ -126,16 +108,6 @@ export function ProductsTable() {
     }
   }
 
-  const handleGlobalFilterChange = (value: string) => {
-    setGlobalFilter(value)
-    setPagination((p) => ({ ...p, pageIndex: 0 }))
-  }
-
-  const handleShowRetiredChange = (value: boolean) => {
-    setShowRetired(value)
-    setPagination((p) => ({ ...p, pageIndex: 0 }))
-  }
-
   if (!canViewProducts) {
     return (
       <Card className="border shadow-sm">
@@ -146,7 +118,6 @@ export function ProductsTable() {
     )
   }
 
-  const pagedRows = table.getRowModel().rows
   const totalRows = products.length
   const firstRow =
     totalRows === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1
@@ -159,153 +130,39 @@ export function ProductsTable() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="border shadow-sm">
-          <CardHeader className="border-b bg-muted/30 pb-3">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Database
-                  size={18}
-                  weight="bold"
-                  className="text-muted-foreground"
-                />
-                Loan Product Catalog
-                <Badge variant="outline" className="ml-1 font-normal">
-                  {totalRows} {totalRows === 1 ? 'product' : 'products'}
-                </Badge>
-                {isFetching && !isLoading && (
-                  <Spinner className="ml-1 size-3 text-muted-foreground" />
-                )}
-              </CardTitle>
-
-              <ProductsToolbar
-                globalFilter={globalFilter}
-                onGlobalFilterChange={handleGlobalFilterChange}
-                showRetired={showRetired}
-                onShowRetiredChange={handleShowRetiredChange}
-                canManageProducts={canManageProducts}
-                isSyncing={syncMutation.isPending}
-                onSyncNow={() => table.options.meta?.onSyncNow?.()}
-                onImport={() => setIsImportSheetOpen(true)}
-              />
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader className="bg-muted/40">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow
-                    key={headerGroup.id}
-                    className="border-b hover:bg-transparent"
-                  >
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="h-9 px-4 text-xs font-semibold text-muted-foreground"
-                      >
-                        {header.isPlaceholder ? null : (
-                          <FlexRender header={header} />
-                        )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="py-12 text-center"
-                    >
-                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <Spinner className="size-4" />
-                        <span>Loading loan products…</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : isError ? (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="p-0">
-                      <ErrorState
-                        message={getErrorMessage(error)}
-                        onRetry={() => refetch()}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : pagedRows.length ? (
-                  pagedRows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      onClick={() =>
-                        table.options.meta?.onEditProduct?.(row.original)
-                      }
-                      className={cn(
-                        'cursor-pointer transition-colors hover:bg-muted/30',
-                        row.original.isRetired && 'opacity-70',
-                      )}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className="h-14 px-4 py-2 align-middle"
-                        >
-                          <FlexRender cell={cell} />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="p-0">
-                      <EmptyState
-                        icon={Database}
-                        title="No loan products found"
-                        hint={
-                          globalFilter
-                            ? 'No products match your search query. Try searching with a different term.'
-                            : showRetired
-                              ? 'No loan products have been synced yet. Run a sync to pull catalog records from webloan.'
-                              : 'No active loan products. Enable "Include retired" to view inactive products, or run a manual sync.'
-                        }
-                        action={
-                          globalFilter ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setGlobalFilter('')}
-                            >
-                              Clear search
-                            </Button>
-                          ) : undefined
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-
-          <TablePagination
-            firstRow={firstRow}
-            lastRow={lastRow}
-            totalRows={totalRows}
-            currentPage={pagination.pageIndex + 1}
-            totalPages={totalPages}
-            canPreviousPage={table.getCanPreviousPage()}
-            canNextPage={table.getCanNextPage()}
-            onPreviousPage={() =>
-              setPagination((p) => ({
-                ...p,
-                pageIndex: Math.max(0, p.pageIndex - 1),
-              }))
-            }
-            onNextPage={() =>
-              setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))
-            }
-          />
-        </Card>
+        <ProductsTableCard
+          table={table}
+          columnCount={columns.length}
+          isLoading={isLoading}
+          isError={isError}
+          errorMessage={getErrorMessage(error)}
+          isFetching={isFetching}
+          totalRows={totalRows}
+          firstRow={firstRow}
+          lastRow={lastRow}
+          totalPages={totalPages}
+          pagination={pagination}
+          globalFilter={globalFilter}
+          setPagination={setPagination}
+          setGlobalFilter={setGlobalFilter}
+          onRetry={() => refetch()}
+          toolbarProps={{
+            globalFilter,
+            onGlobalFilterChange: (value) => {
+              setGlobalFilter(value)
+              setPagination((p) => ({ ...p, pageIndex: 0 }))
+            },
+            showRetired,
+            onShowRetiredChange: (value) => {
+              setShowRetired(value)
+              setPagination((p) => ({ ...p, pageIndex: 0 }))
+            },
+            canManageProducts,
+            isSyncing: syncMutation.isPending,
+            onSyncNow: () => table.options.meta?.onSyncNow?.(),
+            onImport: () => setIsImportSheetOpen(true),
+          }}
+        />
       </div>
 
       <ProductEditSheet

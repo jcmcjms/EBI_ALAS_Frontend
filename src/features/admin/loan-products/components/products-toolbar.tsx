@@ -14,7 +14,7 @@ import { Spinner } from '@/src/shared/ui/spinner'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { exportLoanProducts } from '../api/loan-products'
 
-interface ProductsToolbarProps {
+export interface ProductsToolbarProps {
   globalFilter: string
   onGlobalFilterChange: (value: string) => void
   showRetired: boolean

@@ -18,7 +18,7 @@ import { BRANCHES } from '@/src/shared/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import type { RoleInfo } from '@/src/shared/lib/api/types'
 
-interface UsersToolbarProps {
+export interface UsersToolbarProps {
   searchInput: string
   onSearchInputChange: (value: string) => void
   branchFilter: string

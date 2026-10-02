@@ -3,20 +3,12 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   CheckCircle,
-  Database,
   PencilSimple,
   WarningCircle,
 } from '@phosphor-icons/react'
 
 import { Badge } from '@/src/shared/ui/badge'
 import { Button } from '@/src/shared/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/src/shared/ui/card'
 import { Separator } from '@/src/shared/ui/separator'
 import {
   Sheet,
@@ -34,9 +26,9 @@ import {
   emptyValues,
   valuesFromProduct,
   SectionHeading,
-  ReadOnlyField,
   NumberField,
 } from './product-form-fields'
+import { SyncedDataCard } from './synced-data-card'
 
 interface ProductEditSheetProps {
   product: LoanProductResponse | null
@@ -135,44 +127,10 @@ export function ProductEditSheet({
           className="flex flex-1 flex-col overflow-hidden"
         >
           <div className="flex-1 space-y-6 overflow-y-auto p-6">
-            <Card className="border bg-muted/10">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Database
-                    size={14}
-                    weight="bold"
-                    className="text-muted-foreground"
-                  />
-                  Synced from webloan (read-only)
-                </CardTitle>
-                <CardDescription>
-                  Code, description, and retirement status are mirrored from the
-                  webloan catalog by the background sync. Run a manual sync to
-                  refresh.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4 pt-0">
-                <ReadOnlyField
-                  label="Product Code"
-                  value={product?.code ?? '—'}
-                />
-                <ReadOnlyField
-                  label="Description"
-                  value={product?.description ?? '—'}
-                />
-                <ReadOnlyField label="Last Synced" value={lastSyncedDisplay} />
-                <ReadOnlyField
-                  label="Retirement"
-                  value={
-                    product
-                      ? product.isRetired
-                        ? 'Retired (webloan marked this product expired)'
-                        : 'Active'
-                      : '—'
-                  }
-                />
-              </CardContent>
-            </Card>
+            <SyncedDataCard
+              product={product}
+              lastSyncedDisplay={lastSyncedDisplay}
+            />
 
             <section className="space-y-4">
               <SectionHeading

@@ -1,30 +1,12 @@
 import { useEffect, useState } from 'react'
-import { FlexRender, useTable } from '@tanstack/react-table'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/src/shared/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/src/shared/ui/table'
+import { useTable } from '@tanstack/react-table'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
-import { TablePagination } from '@/src/shared/ui/table-pagination'
 import { PERMISSIONS, type UserResponse } from '@/src/shared/lib/api/types'
 import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { useRoles } from './hooks/use-roles'
 import { useUsers, useUserStats } from './hooks/use-users'
 import { exportUsers } from './api/users'
 import { features, columns } from './components/user-columns'
-import { UsersToolbar } from './components/users-toolbar'
 import { UserStatsCards } from './components/user-stats-cards'
 import { UserEditDrawer } from './components/user-edit-drawer'
 import { UserCreateDrawer } from './components/user-create-drawer'
@@ -34,9 +16,7 @@ import { TemporaryPasswordDialog } from './components/temporary-password-dialog'
 import { ImportUsersSheet } from './components/import-users-sheet'
 import { useUserActions } from './hooks/use-user-actions'
 import { toastSuccess, toastError } from '@/src/shared/ui/toast'
-import { Spinner } from '@/src/shared/ui/spinner'
-import { EmptyState, ErrorState } from '@/src/shared/ui/empty-state'
-import { Users } from '@phosphor-icons/react'
+import { UsersTableCard } from './components/users-table-card'
 
 function useDebouncedValue<T>(value: T, delayMs = 300): T {
   const [debounced, setDebounced] = useState(value)
@@ -110,15 +90,6 @@ export function UsersDataTable() {
     itemCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1
   const lastRowIndex = firstRowIndex === 0 ? 0 : firstRowIndex + itemCount - 1
 
-  const applyRoleFilter = (value: string | null) => {
-    setRoleFilter(value ?? 'all')
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }
-  const applyBranchFilter = (value: string | null) => {
-    setBranchFilter(value ?? 'all')
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }
-
   const handleExport = () => {
     exportUsers({
       search,
@@ -138,149 +109,58 @@ export function UsersDataTable() {
           suspendedCount={stats.suspendedCount}
         />
 
-        <Card className="border shadow-sm">
-          <CardHeader className="border-b bg-muted/30 pb-3">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                User Directory
-                <Badge variant="outline" className="font-normal">
-                  {totalRows} records
-                </Badge>
-              </CardTitle>
-
-              <UsersToolbar
-                searchInput={searchInput}
-                onSearchInputChange={(v) => {
-                  setSearchInput(v)
-                  setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-                }}
-                branchFilter={branchFilter}
-                onBranchFilterChange={applyBranchFilter}
-                roleFilter={roleFilter}
-                onRoleFilterChange={applyRoleFilter}
-                roles={roles}
-                canCreateUsers={canCreateUsers}
-                onImport={() => setIsImportSheetOpen(true)}
-                onExport={handleExport}
-                onCreateUser={() => setIsCreateDrawerOpen(true)}
-              />
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader className="bg-muted/40">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow
-                    key={headerGroup.id}
-                    className="border-b hover:bg-transparent"
-                  >
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="h-9 px-4 text-xs font-semibold text-muted-foreground"
-                      >
-                        {header.isPlaceholder ? null : (
-                          <FlexRender header={header} />
-                        )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {usersQuery.isLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="py-12 text-center"
-                    >
-                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <Spinner className="size-4" />
-                        <span>Loading user accounts…</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : usersQuery.isError ? (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="p-0">
-                      <ErrorState
-                        message={getErrorMessage(usersQuery.error)}
-                        onRetry={() => usersQuery.refetch()}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      className="transition-colors hover:bg-muted/30"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="h-12 px-4 py-2">
-                          <FlexRender cell={cell} />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="p-0">
-                      <EmptyState
-                        icon={Users}
-                        title="No users found"
-                        hint={
-                          search.trim() || roleFilter !== 'all' || branchFilter !== 'all'
-                            ? 'No user accounts match your search or filter criteria. Try adjusting or clearing your filters.'
-                            : 'There are currently no registered users in this directory.'
-                        }
-                        action={
-                          search.trim() || roleFilter !== 'all' || branchFilter !== 'all' ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSearchInput('')
-                                setRoleFilter('all')
-                                setBranchFilter('all')
-                              }}
-                            >
-                              Clear filters
-                            </Button>
-                          ) : canCreateUsers ? (
-                            <Button
-                              size="sm"
-                              onClick={() => setIsCreateDrawerOpen(true)}
-                              className="gap-2"
-                            >
-                              Create User
-                            </Button>
-                          ) : undefined
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-
-          <TablePagination
-            firstRow={firstRowIndex}
-            lastRow={lastRowIndex}
-            totalRows={totalRows}
-            currentPage={paged?.currentPage ?? pagination.pageIndex + 1}
-            totalPages={paged?.totalPages ?? 1}
-            canPreviousPage={canPreviousPage}
-            canNextPage={canNextPage}
-            onPreviousPage={() => shiftPage(-1)}
-            onNextPage={() => shiftPage(1)}
-            isFetching={usersQuery.isFetching}
-          />
-        </Card>
+        <UsersTableCard
+          table={table}
+          columnCount={columns.length}
+          isLoading={usersQuery.isLoading}
+          isError={usersQuery.isError}
+          errorMessage={getErrorMessage(usersQuery.error)}
+          isFetching={usersQuery.isFetching}
+          totalRows={totalRows}
+          firstRowIndex={firstRowIndex}
+          lastRowIndex={lastRowIndex}
+          currentPage={paged?.currentPage ?? pagination.pageIndex + 1}
+          totalPages={paged?.totalPages ?? 1}
+          canPreviousPage={canPreviousPage}
+          canNextPage={canNextPage}
+          search={search}
+          roleFilter={roleFilter}
+          branchFilter={branchFilter}
+          canCreateUsers={canCreateUsers}
+          onPreviousPage={() => shiftPage(-1)}
+          onNextPage={() => shiftPage(1)}
+          onRetry={() => usersQuery.refetch()}
+          onClearFilters={() => {
+            setSearchInput('')
+            setRoleFilter('all')
+            setBranchFilter('all')
+          }}
+          onCreateUser={() => setIsCreateDrawerOpen(true)}
+          toolbarProps={{
+            searchInput,
+            onSearchInputChange: (v) => {
+              setSearchInput(v)
+              setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+            },
+            branchFilter,
+            onBranchFilterChange: (value) => {
+              setBranchFilter(value ?? 'all')
+              setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+            },
+            roleFilter,
+            onRoleFilterChange: (value) => {
+              setRoleFilter(value ?? 'all')
+              setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+            },
+            roles,
+            canCreateUsers,
+            onImport: () => setIsImportSheetOpen(true),
+            onExport: handleExport,
+            onCreateUser: () => setIsCreateDrawerOpen(true),
+          }}
+        />
       </div>
 
-      {}
       <UserEditDrawer
         user={selectedUser}
         canEdit={hasPermission(PERMISSIONS.userEdit)}
