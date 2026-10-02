@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import {
   CheckCircle,
   Database,
@@ -18,8 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/src/shared/ui/card'
-import { Input } from '@/src/shared/ui/input'
-import { Label } from '@/src/shared/ui/label'
 import { Separator } from '@/src/shared/ui/separator'
 import {
   Sheet,
@@ -31,67 +28,21 @@ import {
 } from '@/src/shared/ui/sheet'
 import { Spinner } from '@/src/shared/ui/spinner'
 import type { LoanProductResponse } from '@/src/shared/lib/api/types'
-
-const productFormSchema = z
-  .object({
-    minAmount: z.coerce
-      .number({ message: 'Min amount is required.' })
-      .min(0, 'Min amount cannot be negative.'),
-    maxAmount: z.coerce
-      .number({ message: 'Max amount is required.' })
-      .min(0, 'Max amount cannot be negative.'),
-
-    minTermDays: z.coerce
-      .number({ message: 'Min term is required.' })
-      .int('Min term must be a whole number of days.')
-      .min(0, 'Min term cannot be negative.'),
-    maxTermDays: z.coerce
-      .number({ message: 'Max term is required.' })
-      .int('Max term must be a whole number of days.')
-      .min(0, 'Max term cannot be negative.')
-      .max(
-        2617,
-        'Max term cannot exceed 2617 days (7 years + 2 months grace period).',
-      ),
-
-    notarialFee: z.coerce
-      .number({ message: 'Notarial fee is required.' })
-      .min(0, 'Notarial fee cannot be negative.'),
-    docStampFee: z.coerce
-      .number({ message: 'Doc-stamp fee is required.' })
-      .min(0, 'Doc-stamp fee cannot be negative.'),
-    insuranceFee: z.coerce
-      .number({ message: 'Insurance fee is required.' })
-      .min(0, 'Insurance fee cannot be negative.'),
-
-    advanceInterestRate: z.coerce
-      .number({ message: 'Advance interest rate is required.' })
-      .min(0, 'Advance interest rate cannot be negative.')
-      .max(
-        1,
-        'Advance interest rate must be between 0 and 1 (e.g. 0.12 for 12% p.a.).',
-      ),
-  })
-  .refine((v) => v.maxAmount >= v.minAmount, {
-    message: 'Max amount must be greater than or equal to min amount.',
-    path: ['maxAmount'],
-  })
-  .refine((v) => v.maxTermDays >= v.minTermDays, {
-    message: 'Max term must be greater than or equal to min term.',
-    path: ['maxTermDays'],
-  })
-
-type ProductFormValues = z.infer<typeof productFormSchema>
+import {
+  productFormSchema,
+  type ProductFormValues,
+  emptyValues,
+  valuesFromProduct,
+  SectionHeading,
+  ReadOnlyField,
+  NumberField,
+} from './product-form-fields'
 
 interface ProductEditSheetProps {
   product: LoanProductResponse | null
-
   canEdit: boolean
-
   onClose: () => void
-
   onSave: (productCode: string, values: ProductFormValues) => Promise<boolean>
-
   isSaving?: boolean
 }
 
@@ -110,7 +61,6 @@ export function ProductEditSheet({
     formState: { errors, isDirty, isSubmitting },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
-
     mode: 'onBlur',
     defaultValues: emptyValues(),
   })
@@ -185,7 +135,6 @@ export function ProductEditSheet({
           className="flex flex-1 flex-col overflow-hidden"
         >
           <div className="flex-1 space-y-6 overflow-y-auto p-6">
-            {}
             <Card className="border bg-muted/10">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm">
@@ -225,7 +174,6 @@ export function ProductEditSheet({
               </CardContent>
             </Card>
 
-            {}
             <section className="space-y-4">
               <SectionHeading
                 title="Eligibility Bounds"
@@ -270,7 +218,6 @@ export function ProductEditSheet({
 
             <Separator />
 
-            {}
             <section className="space-y-4">
               <SectionHeading
                 title="Bank Fees (Flat, PHP)"
@@ -306,7 +253,6 @@ export function ProductEditSheet({
 
             <Separator />
 
-            {}
             <section className="space-y-4">
               <SectionHeading
                 title="Advance Interest Rate"
@@ -329,7 +275,6 @@ export function ProductEditSheet({
               </div>
             </section>
 
-            {}
             {!canEdit && (
               <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
                 <WarningCircle
@@ -375,103 +320,5 @@ export function ProductEditSheet({
         </form>
       </SheetContent>
     </Sheet>
-  )
-}
-
-function emptyValues(): ProductFormValues {
-  return {
-    minAmount: 0,
-    maxAmount: 0,
-    minTermDays: 0,
-    maxTermDays: 0,
-    notarialFee: 0,
-    docStampFee: 0,
-    insuranceFee: 0,
-    advanceInterestRate: 0,
-  }
-}
-
-function valuesFromProduct(p: LoanProductResponse): ProductFormValues {
-  return {
-    minAmount: p.minAmount,
-    maxAmount: p.maxAmount,
-    minTermDays: p.minTermDays,
-    maxTermDays: p.maxTermDays,
-    notarialFee: p.notarialFee,
-    docStampFee: p.docStampFee,
-    insuranceFee: p.insuranceFee,
-    advanceInterestRate: p.advanceInterestRate,
-  }
-}
-
-function SectionHeading({
-  title,
-  description,
-}: {
-  title: string
-  description?: string
-}) {
-  return (
-    <div>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      {description && (
-        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
-      )}
-    </div>
-  )
-}
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-        {label}
-      </Label>
-      <div className="rounded-md border bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground/80">
-        {value}
-      </div>
-    </div>
-  )
-}
-
-function NumberField({
-  id,
-  label,
-  error,
-  hint,
-  disabled,
-  step,
-  ...inputProps
-}: {
-  id: string
-  label: string
-  error?: string
-  hint?: string
-  disabled?: boolean
-  step?: string
-} & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs">
-        {label}
-      </Label>
-      <Input
-        id={id}
-        type="number"
-        step={step}
-        disabled={disabled}
-        className="h-9"
-        aria-invalid={error ? true : undefined}
-        {...inputProps}
-      />
-      {error ? (
-        <p className="flex items-center gap-1 text-[11px] text-destructive">
-          <WarningCircle size={11} weight="fill" />
-          {error}
-        </p>
-      ) : hint ? (
-        <p className="text-[11px] text-muted-foreground">{hint}</p>
-      ) : null}
-    </div>
   )
 }
