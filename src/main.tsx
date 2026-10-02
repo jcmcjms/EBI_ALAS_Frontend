@@ -4,8 +4,8 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/src/shared/ui/toast'
 import './index.css'
 import App from '@/src/App'
-import { AuthInitProvider } from '@/src/components/system/AuthInitProvider'
-import { ErrorBoundary } from '@/src/components/system/ErrorBoundary'
+import { AuthInitProvider } from '@/src/app/system/AuthInitProvider'
+import { ErrorBoundary } from '@/src/app/system/ErrorBoundary'
 import { queryClient } from '@/src/lib/queryClient'
 
 createRoot(document.getElementById('root')!).render(
