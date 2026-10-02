@@ -1,20 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  BellSimple,
-  CaretDown,
-  ChatCircle,
   Check,
-  ClipboardText,
   GearSix,
   ListDashes,
   MagnifyingGlass,
   Rows,
-  WarningCircle,
-  type Icon,
 } from '@phosphor-icons/react'
 
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
 import { Badge } from '@/src/shared/ui/badge'
 import { Button } from '@/src/shared/ui/button'
 import { Card } from '@/src/shared/ui/card'
@@ -24,97 +17,26 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/src/shared/ui/dropdown-menu'
 import { Input } from '@/src/shared/ui/input'
-import { formatRelativeTime, initialsOf, type NotificationType } from '../types'
-import { cn } from '@/src/shared/lib/utils'
+import { type NotificationType } from '../types'
 import {
   useNotificationInbox,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from '../hooks/use-notifications'
 import { useDebouncedValue } from '@/src/shared/hooks/use-debounced'
+import {
+  FilterMenu,
+  NotificationList,
+  type StatusFilter,
+  type TypeFilter,
+} from './notification-list'
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
-
-const TYPE_META: Record<
-  NotificationType,
-  { label: string; icon: Icon; iconWrap: string; dot: string }
-> = {
-  application: {
-    label: 'Application',
-    icon: ClipboardText,
-    iconWrap: 'bg-blue-100 text-blue-600',
-    dot: 'bg-blue-500',
-  },
-  action: {
-    label: 'Action Required',
-    icon: WarningCircle,
-    iconWrap: 'bg-amber-100 text-amber-600',
-    dot: 'bg-amber-500',
-  },
-  message: {
-    label: 'Message',
-    icon: ChatCircle,
-    iconWrap: 'bg-green-100 text-green-600',
-    dot: 'bg-green-500',
-  },
-  system: {
-    label: 'System',
-    icon: GearSix,
-    iconWrap: 'bg-violet-100 text-violet-600',
-    dot: 'bg-violet-500',
-  },
-}
-
-type StatusFilter = 'all' | 'unread' | 'read'
-type TypeFilter = 'all' | NotificationType
-
-interface FilterMenuProps<T extends string> {
-  label: string
-  value: T
-  options: { value: T; label: string }[]
-  onChange: (value: T) => void
-}
-
-function FilterMenu<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-}: FilterMenuProps<T>) {
-  const active = options.find((o) => o.value === value)
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={<Button variant="outline" className="gap-2" />}
-      >
-        {value !== 'all' && (
-          <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-        )}
-        {active?.label ?? label}
-        <CaretDown size={14} weight="bold" className="text-muted-foreground" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-36">
-        <DropdownMenuRadioGroup
-          value={value}
-          onValueChange={(v) => v && onChange(v as T)}
-        >
-          {options.map((o) => (
-            <DropdownMenuRadioItem key={o.value} value={o.value}>
-              {o.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
 
 export function NotificationsPage() {
   const navigate = useNavigate()
@@ -187,6 +109,9 @@ export function NotificationsPage() {
 
   const from = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
   const to = Math.min(totalCount, page * PAGE_SIZE)
+
+  const hasActiveFilters =
+    status !== 'all' || type !== 'all' || debouncedSearch.trim().length > 0
 
   return (
     <div className="flex flex-1 flex-col bg-muted/40">
@@ -306,132 +231,15 @@ export function NotificationsPage() {
 
         {}
         <Card className="mt-6 overflow-hidden">
-          {isLoading ? (
-            <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <p className="text-sm text-muted-foreground">
-                Loading notifications...
-              </p>
-            </div>
-          ) : items.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <BellSimple size={22} className="text-muted-foreground" />
-              </div>
-              <div>
-                {totalCount === 0 &&
-                status === 'all' &&
-                type === 'all' &&
-                !debouncedSearch.trim() ? (
-                  <>
-                    <p className="text-sm font-medium">No notifications yet</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Notifications about loan applications and approvals will
-                      appear here.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-medium">
-                      No notifications match your filters
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Try adjusting the search or filters.
-                    </p>
-                  </>
-                )}
-              </div>
-              {(status !== 'all' ||
-                type !== 'all' ||
-                debouncedSearch.trim()) && (
-                <Button variant="outline" size="sm" onClick={clearFilters}>
-                  Clear filters
-                </Button>
-              )}
-            </div>
-          ) : (
-            <ul className="divide-y">
-              {items.map((n) => {
-                const meta = TYPE_META[n.type]
-                const TypeIcon = meta.icon
-                return (
-                  <li
-                    key={n.id}
-                    onClick={() => openNotification(n.id, n.link)}
-                    className={cn(
-                      'flex cursor-pointer gap-4 px-5 transition-colors hover:bg-muted/40',
-                      density === 'comfortable' ? 'py-4' : 'py-2.5',
-                      !n.read && 'bg-primary/[0.04]',
-                    )}
-                  >
-                    {n.actor ? (
-                      <Avatar className="mt-0.5">
-                        <AvatarFallback>{initialsOf(n.actor)}</AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <div
-                        className={cn(
-                          'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
-                          meta.iconWrap,
-                        )}
-                      >
-                        <TypeIcon size={16} weight="bold" />
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            openNotification(n.id, n.link)
-                          }}
-                          className={cn(
-                            'truncate text-left text-sm hover:underline',
-                            n.read
-                              ? 'font-medium text-foreground/80'
-                              : 'font-semibold',
-                          )}
-                        >
-                          {n.title}
-                        </button>
-                        {!n.read && (
-                          <span
-                            className="h-2 w-2 shrink-0 rounded-full bg-primary"
-                            aria-label="Unread"
-                          />
-                        )}
-                      </div>
-                      <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                        {n.description}
-                      </p>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-3 self-center sm:gap-4">
-                      <Badge
-                        variant="outline"
-                        className="hidden gap-1.5 font-normal sm:flex"
-                      >
-                        <span
-                          className={cn('h-1.5 w-1.5 rounded-full', meta.dot)}
-                          aria-hidden
-                        />
-                        {meta.label}
-                      </Badge>
-                      <time
-                        dateTime={n.createdAt}
-                        title={new Date(n.createdAt).toLocaleString('en-PH')}
-                        className="w-24 text-right text-xs text-muted-foreground"
-                      >
-                        {formatRelativeTime(n.createdAt)}
-                      </time>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
+          <NotificationList
+            items={items}
+            isLoading={isLoading}
+            totalCount={totalCount}
+            hasActiveFilters={hasActiveFilters}
+            density={density}
+            onOpen={openNotification}
+            onClearFilters={clearFilters}
+          />
         </Card>
 
         {}

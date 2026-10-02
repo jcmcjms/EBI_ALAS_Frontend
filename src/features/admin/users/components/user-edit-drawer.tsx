@@ -8,99 +8,41 @@ import {
   SheetFooter,
 } from '@/src/shared/ui/sheet'
 import { Button } from '@/src/shared/ui/button'
-import { Input } from '@/src/shared/ui/input'
-import { Label } from '@/src/shared/ui/label'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '@/src/shared/ui/tabs'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/src/shared/ui/select'
-import { SignaturePad } from '@/src/shared/ui/signature-pad'
-import { BranchMultiSelect } from '@/src/shared/ui/branch-multi-select'
 import { toastError } from '@/src/shared/ui/toast'
-import { BRANCHES, type UserResponse } from '@/src/shared/lib/api/types'
+import type { UserResponse } from '@/src/shared/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import { useRoles } from '../hooks/use-roles'
 import { useApprovalAuthorities } from '../hooks/use-approval-authorities'
+import {
+  type EditableProfile,
+  type UserProfileChanges,
+  profileFrom,
+  emptyProfile,
+} from './user-edit-drawer.types'
+import {
+  ProfileTab,
+  SignatureTab,
+  RolesTab,
+  SecurityTab,
+} from './user-edit-drawer-tabs'
 
-const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
-  value: branch.code,
-  label: branch.name,
-}))
-
-function formatPhp(amount: number): string {
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-export interface UserProfileChanges {
-  firstName: string
-  middleName: string
-  lastName: string
-  branchId: string
-  role: string
-  jobTitle?: string | null
-  eSignature?: string | null
-  coveredBranches?: string[] | null
-}
+export type { UserProfileChanges }
 
 interface UserEditDrawerProps {
   user: UserResponse | null
-
   canEdit: boolean
   onClose: () => void
-
   onSave: (userId: number, changes: UserProfileChanges) => Promise<boolean>
-
   onToggleStatus: (user: UserResponse) => void
   onResetPassword: (user: UserResponse) => void
   onForcePasswordReset: (user: UserResponse) => void
   onRevokeSessions: (user: UserResponse) => void
-}
-
-type EditableProfile = {
-  firstName: string
-  middleName: string
-  lastName: string
-  branchId: string
-  role: string
-  jobTitle: string
-  coveredBranches: string[]
-}
-
-function profileFrom(user: UserResponse): EditableProfile {
-  return {
-    firstName: user.firstName,
-    middleName: user.middleName ?? '',
-    lastName: user.lastName,
-    branchId: user.branchId,
-    role: user.role,
-
-    jobTitle: user.approvalAuthority?.key ?? user.jobTitle ?? '',
-    coveredBranches: user.coveredBranches ?? [],
-  }
-}
-
-const emptyProfile: EditableProfile = {
-  firstName: '',
-  middleName: '',
-  lastName: '',
-  branchId: '',
-  role: '',
-  jobTitle: '',
-  coveredBranches: [],
 }
 
 export function UserEditDrawer({
@@ -124,9 +66,7 @@ export function UserEditDrawer({
     [roles],
   )
   const [profile, setProfile] = useState<EditableProfile>(emptyProfile)
-
   const [eSignature, setESignature] = useState<string | null>(null)
-
   const [isSignatureDirty, setIsSignatureDirty] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -225,7 +165,6 @@ export function UserEditDrawer({
         branchId: profile.branchId,
         role: profile.role,
         jobTitle: profile.jobTitle.trim() || null,
-
         ...(isBranchScope && profile.coveredBranches.length > 0
           ? { coveredBranches: profile.coveredBranches }
           : {}),
@@ -276,312 +215,60 @@ export function UserEditDrawer({
             value="profile"
             className="mt-0 flex-1 space-y-4 overflow-y-auto p-6"
           >
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-firstName">First Name *</Label>
-                <Input
-                  id="edit-firstName"
-                  value={profile.firstName}
-                  onChange={(e) =>
-                    handleFieldChange('firstName', e.target.value)
-                  }
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-middleName">Middle Name</Label>
-                <Input
-                  id="edit-middleName"
-                  value={profile.middleName}
-                  onChange={(e) =>
-                    handleFieldChange('middleName', e.target.value)
-                  }
-                  className="h-9"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-lastName">Last Name *</Label>
-              <Input
-                id="edit-lastName"
-                value={profile.lastName}
-                onChange={(e) => handleFieldChange('lastName', e.target.value)}
-                className="h-9"
-              />
-            </div>
-
-            {}
-            <div className="space-y-2">
-              <Label htmlFor="edit-jobTitle">
-                {isApprover ? 'Approval Authority' : 'Job Title'}
-              </Label>
-              {isApprover ? (
-                <Select
-                  value={profile.jobTitle}
-                  onValueChange={(value) =>
-                    handleFieldChange('jobTitle', value ?? '')
-                  }
-                >
-                  <SelectTrigger className="h-9 w-full">
-                    <SelectValue
-                      placeholder={
-                        authoritiesLoading
-                          ? 'Loading authorities...'
-                          : 'Select approval authority'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(authorities ?? []).map((auth) => (
-                      <SelectItem key={auth.key} value={auth.key}>
-                        {auth.displayName} — Tier {auth.tier}, up to{' '}
-                        {formatPhp(auth.maxTotalExposure)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  id="edit-jobTitle"
-                  value={profile.jobTitle}
-                  onChange={(e) =>
-                    handleFieldChange('jobTitle', e.target.value)
-                  }
-                  placeholder="e.g. Senior Credit Evaluator"
-                  maxLength={100}
-                  className="h-9"
-                />
-              )}
-              <p className="text-xs text-muted-foreground">
-                {isApprover
-                  ? 'Determines which loans this approver can authorize (delegation of authority).'
-                  : 'Complements the workflow role and appears in loan history.'}
-              </p>
-            </div>
-
-            {}
-            {isBranchScope && (
-              <div className="space-y-2">
-                <Label>Covered Branches *</Label>
-                <BranchMultiSelect
-                  branches={BRANCHES}
-                  selected={profile.coveredBranches}
-                  onChange={(codes) =>
-                    handleFieldChange('coveredBranches', codes)
-                  }
-                  placeholder="Select branches this approver covers"
-                  disabled={!canEdit}
-                />
-                <p className="text-xs text-muted-foreground">
-                  This approver can authorize loans from the selected branches.
-                </p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-username">Username</Label>
-                <Input
-                  id="edit-username"
-                  value={user?.username ?? ''}
-                  className="h-9"
-                  disabled
-                />
-                <p className="text-xs text-muted-foreground">
-                  Usernames cannot be changed.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-created">Created</Label>
-                <Input
-                  id="edit-created"
-                  value={
-                    user && !Number.isNaN(new Date(user.createdAt).getTime())
-                      ? new Date(user.createdAt).toLocaleDateString()
-                      : ''
-                  }
-                  className="h-9"
-                  disabled
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-branch">Assigned Branch</Label>
-              <Select
-                value={profile.branchId}
-                onValueChange={(value) =>
-                  handleFieldChange('branchId', value ?? '')
-                }
-                items={BRANCH_SELECT_ITEMS}
-              >
-                <SelectTrigger className="h-9 w-full">
-                  <SelectValue placeholder="Select branch" />
-                </SelectTrigger>
-                <SelectContent>
-                  {BRANCHES.map((b) => (
-                    <SelectItem key={b.code} value={b.code}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <ProfileTab
+              profile={profile}
+              user={user}
+              canEdit={canEdit}
+              isApprover={isApprover}
+              isBranchScope={isBranchScope}
+              authorities={authorities}
+              authoritiesLoading={authoritiesLoading}
+              onFieldChange={handleFieldChange}
+              roleSelectItems={roleSelectItems}
+              roles={roles}
+            />
           </TabsContent>
 
           <TabsContent
             value="signature"
             className="mt-0 flex-1 space-y-4 overflow-y-auto p-6"
           >
-            <div className="space-y-2">
-              <Label>E-Signature</Label>
-              <SignaturePad
-                value={eSignature}
-                onChange={handleSignatureChange}
-                disabled={!canEdit}
-              />
-              <p className="text-xs text-muted-foreground">
-                Captured as a small PNG and stamped on generated documents
-                (approvals, recommendation sheets, etc.).
-              </p>
-              {isSignatureDirty && (
-                <p className="text-xs font-medium text-amber-600">
-                  Unsaved signature changes will be applied on Save.
-                </p>
-              )}
-            </div>
+            <SignatureTab
+              eSignature={eSignature}
+              canEdit={canEdit}
+              isSignatureDirty={isSignatureDirty}
+              onSignatureChange={handleSignatureChange}
+            />
           </TabsContent>
 
           <TabsContent
             value="roles"
             className="mt-0 flex-1 space-y-4 overflow-y-auto p-6"
           >
-            <div className="space-y-2">
-              <Label htmlFor="edit-role">Primary Role</Label>
-              <Select
-                value={profile.role}
-                onValueChange={(value) =>
-                  handleFieldChange('role', value ?? '')
-                }
-                items={roleSelectItems}
-              >
-                <SelectTrigger className="h-9 w-full">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((r) => (
-                    <SelectItem key={r.name} value={r.name}>
-                      {stripRoleDisplayName(r.displayName)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Role determines the baseline permissions. The full mapping is
-                visible in the Role Matrix.
-              </p>
-            </div>
-
-            {}
-            {isApprover && (
-              <div className="space-y-2">
-                <Label htmlFor="edit-authority">Approval Authority</Label>
-                <Select
-                  value={profile.jobTitle}
-                  onValueChange={(value) =>
-                    handleFieldChange('jobTitle', value ?? '')
-                  }
-                >
-                  <SelectTrigger className="h-9 w-full">
-                    <SelectValue
-                      placeholder={
-                        authoritiesLoading ? 'Loading...' : 'Select authority'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(authorities ?? []).map((auth) => (
-                      <SelectItem key={auth.key} value={auth.key}>
-                        {auth.displayName} — Tier {auth.tier}, up to{' '}
-                        {formatPhp(auth.maxTotalExposure)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Determines which loans this approver can authorize based on
-                  exposure and tier.
-                </p>
-              </div>
-            )}
-
-            {}
-            {isBranchScope && (
-              <div className="space-y-2">
-                <Label>Covered Branches *</Label>
-                <BranchMultiSelect
-                  branches={BRANCHES}
-                  selected={profile.coveredBranches}
-                  onChange={(codes) =>
-                    handleFieldChange('coveredBranches', codes)
-                  }
-                  placeholder="Select branches this approver covers"
-                  disabled={!canEdit}
-                />
-                <p className="text-xs text-muted-foreground">
-                  This approver can authorize loans from the selected branches.
-                </p>
-              </div>
-            )}
+            <RolesTab
+              profile={profile}
+              isApprover={isApprover}
+              isBranchScope={isBranchScope}
+              canEdit={canEdit}
+              authorities={authorities}
+              authoritiesLoading={authoritiesLoading}
+              onFieldChange={handleFieldChange}
+              roleSelectItems={roleSelectItems}
+              roles={roles}
+            />
           </TabsContent>
 
           <TabsContent
             value="security"
             className="mt-0 flex-1 space-y-4 overflow-y-auto p-6"
           >
-            <div className="space-y-4">
-              <Button
-                variant="outline"
-                className="h-9 w-full justify-start text-sm"
-                onClick={() => user && onForcePasswordReset(user)}
-              >
-                Force Password Reset on Next Login
-              </Button>
-              <Button
-                variant="outline"
-                className="h-9 w-full justify-start text-sm"
-                onClick={() => user && onRevokeSessions(user)}
-              >
-                Revoke All Active Sessions
-              </Button>
-              <Button
-                variant="outline"
-                className="h-9 w-full justify-start text-sm"
-                onClick={() => user && onResetPassword(user)}
-              >
-                Send Password Reset Email
-              </Button>
-            </div>
-
-            <div className="space-y-2 border-t pt-4">
-              <Label className="text-red-600">Danger Zone</Label>
-              {user?.isActive ? (
-                <Button
-                  variant="destructive"
-                  className="h-9 w-full justify-start text-sm"
-                  onClick={() => user && onToggleStatus(user)}
-                >
-                  Suspend Account
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  className="h-9 w-full justify-start text-sm"
-                  onClick={() => user && onToggleStatus(user)}
-                >
-                  Reactivate Account
-                </Button>
-              )}
-            </div>
+            <SecurityTab
+              user={user}
+              onForcePasswordReset={onForcePasswordReset}
+              onRevokeSessions={onRevokeSessions}
+              onResetPassword={onResetPassword}
+              onToggleStatus={onToggleStatus}
+            />
           </TabsContent>
         </Tabs>
 
