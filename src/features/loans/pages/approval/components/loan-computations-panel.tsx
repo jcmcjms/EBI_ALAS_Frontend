@@ -3,7 +3,9 @@ import type {
   LoanApplicationFormData,
   SelectedLoan,
 } from '@/src/features/loans/schemas/schema'
-import type { LoanMetrics } from '@/src/features/loans/utils/loan-approval-utils'
+import { computeLoanMetrics } from '@/src/features/loans/utils/loan-approval-utils'
+
+type LoanMetrics = ReturnType<typeof computeLoanMetrics>
 import {
   BLUE,
   B,

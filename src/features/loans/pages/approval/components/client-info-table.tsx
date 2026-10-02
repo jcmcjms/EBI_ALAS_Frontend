@@ -1,7 +1,4 @@
-import type {
-  ClientFormData,
-  LoanApplicationFormData,
-} from '@/src/features/loans/schemas/schema'
+import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import type { SelectedLoan } from '@/src/features/loans/schemas/schema'
 import { cn } from '@/src/shared/lib/utils'
 import {

@@ -5,14 +5,12 @@ import type {
   LoanApplicationFormData,
 } from '@/src/features/loans/schemas/schema'
 import type { SelectedLoan } from '@/src/features/loans/schemas/schema'
-import type { SignatureSlotDto } from '@/src/features/loans/api/signatures'
 import type {
   LoanDeviationDto,
   DocumentRemarkDto,
 } from '@/src/features/loans/api/loan-review'
 import {
   B,
-  BLUE,
   buildUnifiedAuditTrail,
   dash,
   formatActionTime,

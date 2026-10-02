@@ -1,5 +1,7 @@
 import { cn } from '@/src/shared/lib/utils'
-import type { LoanMetrics } from '@/src/features/loans/utils/loan-approval-utils'
+import { computeLoanMetrics } from '@/src/features/loans/utils/loan-approval-utils'
+
+type LoanMetrics = ReturnType<typeof computeLoanMetrics>
 import {
   DOUBLE_UNDERLINE,
   TOP_DOUBLE,
