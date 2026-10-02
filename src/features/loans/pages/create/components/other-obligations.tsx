@@ -93,7 +93,6 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
       <EbiReloansTable
         rows={ebi}
         loanPath={P}
-        loanIndex={loanIndex}
         setCell={setCell}
         handleTransfer={handleTransfer}
       />
