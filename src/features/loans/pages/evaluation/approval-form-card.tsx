@@ -2,14 +2,15 @@ import { useState } from 'react'
 import { FilePdf, Printer, MagnifyingGlassMinus, MagnifyingGlassPlus } from '@phosphor-icons/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card'
 import { Button } from '@/src/shared/ui/button'
-import { ApprovalFormDocument } from '../../approval/components/approval-form-document'
+import { ApprovalFormDocument } from '../approval/components/approval-form-document'
 import { ApprovalFormViewport } from '@/src/features/loans/components/approval-form-sheet'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
+import type { SignatureSlotDto } from '@/src/features/loans/api/signatures'
 
 interface ApprovalFormCardProps {
   formData: LoanApplicationFormData
   catLoanClass: string | null
-  signatureSlots: unknown[] | undefined
+  signatureSlots?: SignatureSlotDto[]
 }
 
 export function ApprovalFormCard({

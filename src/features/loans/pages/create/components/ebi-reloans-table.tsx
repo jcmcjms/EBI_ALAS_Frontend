@@ -15,10 +15,9 @@ import type { EbiReloan } from '@/src/features/loans/schemas/schema'
 interface EbiReloansTableProps {
   rows: EbiReloan[]
   loanPath: string
-  loanIndex: number
   setCell: (path: string, value: unknown) => void
   handleTransfer: (
-    source: string,
+    source: 'outstanding' | 'ebi',
     index: number,
     target: 'outstanding' | 'ebi',
   ) => void
@@ -27,7 +26,6 @@ interface EbiReloansTableProps {
 export function EbiReloansTable({
   rows,
   loanPath,
-  loanIndex,
   setCell,
   handleTransfer,
 }: EbiReloansTableProps) {

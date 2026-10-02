@@ -11,13 +11,14 @@ import { Button } from '@/src/shared/ui/button'
 import { CreditCard, Plus, Trash } from '@phosphor-icons/react'
 import { SubSectionHeading } from './section-card'
 import type { BuyOut } from '@/src/features/loans/schemas/schema'
+import type { PerLoanArrayKind } from '@/src/features/loans/hooks/use-loan-transfers'
 
 interface BuyoutAccountsTableProps {
   rows: BuyOut[]
   loanPath: string
   setCell: (path: string, value: unknown) => void
   addBuyOut: () => void
-  removeRow: (section: string, index: number) => void
+  removeRow: (kind: PerLoanArrayKind, index: number) => void
 }
 
 export function BuyoutAccountsTable({

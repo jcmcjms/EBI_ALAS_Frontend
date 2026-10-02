@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
 import { toastSuccess, toastError, toastInfo } from '@/src/shared/ui/toast'
-import { IdentificationCard } from '@phosphor-icons/react'
+import { IdentificationCard, CloudCheck } from '@phosphor-icons/react'
 
-import { Button } from '@/src/shared/ui/button'
 import { Badge } from '@/src/shared/ui/badge'
-import { CloudCheck } from '@phosphor-icons/react'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { getWebLoanByCis } from '@/src/features/loans/api/webloans'
 import {
