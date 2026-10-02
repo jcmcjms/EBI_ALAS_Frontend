@@ -132,12 +132,12 @@ export function UsersTableCard({
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map((row: any) => (
                 <TableRow
                   key={row.id}
                   className="transition-colors hover:bg-muted/30"
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {row.getVisibleCells().map((cell: any) => (
                     <TableCell key={cell.id} className="h-12 px-4 py-2">
                       <FlexRender cell={cell} />
                     </TableCell>

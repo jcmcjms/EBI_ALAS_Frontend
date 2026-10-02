@@ -1,11 +1,4 @@
-import {
-  CalendarBlank,
-  Envelope,
-  IdentificationCard,
-  MapPin,
-  PencilSimple,
-  Phone,
-} from '@phosphor-icons/react'
+import { Envelope, PencilSimple } from '@phosphor-icons/react'
 import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
 import { Badge } from '@/src/shared/ui/badge'
 import { Button } from '@/src/shared/ui/button'
