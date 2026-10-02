@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/src/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/lib/api/types'
+import { apiClient } from '@/src/shared/lib/apiClient'
+import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 
 export interface SignatureSlotDto {
   order: number

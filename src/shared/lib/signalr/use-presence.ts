@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { apiClient } from '@/src/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/lib/api/types'
+import { apiClient } from '@/src/shared/lib/apiClient'
+import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 import { getSharedConnection } from '@/src/shared/lib/signalr/connection'
 import { useAuthStore } from '@/src/store/authStore'
 import { usePresenceStore } from '@/src/features/notifications/store/presenceStore'

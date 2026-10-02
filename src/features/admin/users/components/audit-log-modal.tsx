@@ -15,7 +15,7 @@ import {
 } from '@/src/shared/ui/table'
 import { format } from 'date-fns'
 import { useUserAuditLog } from '../hooks/use-users'
-import type { UserResponse } from '@/src/lib/api/types'
+import type { UserResponse } from '@/src/shared/lib/api/types'
 
 interface AuditLogModalProps {
   user: UserResponse | null

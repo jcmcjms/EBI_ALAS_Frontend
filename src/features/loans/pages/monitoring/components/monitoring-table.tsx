@@ -43,7 +43,7 @@ import type {
   MonitoringFilters,
 } from '@/src/features/loans/types/monitoring'
 import { useLoanMonitoring } from '@/src/features/loans/hooks/use-loan-monitoring'
-import { BRANCHES } from '@/src/lib/api/types'
+import { BRANCHES } from '@/src/shared/lib/api/types'
 import { cn } from '@/src/shared/lib/utils'
 import { LOAN_STATUS_META } from '@/src/features/loans/utils/loan-status'
 import {

@@ -1,4 +1,4 @@
-import { apiClient } from '@/src/lib/apiClient'
+import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
   type ApiResponse,
@@ -9,7 +9,7 @@ import {
   type UserAuditLogResponse,
   type UserQueryParams,
   type UserResponse,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 
 export type {
   CreateUserPayload,
@@ -18,7 +18,7 @@ export type {
   UserResponse,
   UserAuditLogResponse,
   ResetPasswordResponse,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 
 export async function listUsers(
   params: UserQueryParams,

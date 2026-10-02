@@ -36,7 +36,7 @@ import {
 import axios from 'axios'
 
 import { cn } from '@/src/shared/lib/utils'
-import { getErrorMessage } from '@/src/lib/apiClient'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import {
   getOutstandingLoans,
   getPendingLoan,
@@ -45,7 +45,7 @@ import type {
   OutstandingLoan,
   PendingLoan,
   WebLoanAccount,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 
 import type {
   LoanApplicationFormData,
@@ -55,7 +55,7 @@ import {
   CREATION_TYPE,
   createPerLoanSectionDefaults,
 } from '@/src/features/loans/schemas/schema'
-import type { PreLoanItem } from '@/src/lib/api/types'
+import type { PreLoanItem } from '@/src/shared/lib/api/types'
 
 interface ActiveLoansTableProps {
   cisNo: string

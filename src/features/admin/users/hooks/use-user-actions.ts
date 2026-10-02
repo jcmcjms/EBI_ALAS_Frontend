@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { toastSuccess, toastError } from '@/src/shared/ui/toast'
-import { getErrorMessage } from '@/src/lib/apiClient'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import {
   PERMISSIONS,
   type CreateUserPayload,
   type UpdateUserPayload,
   type UserResponse,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 import { useAuthStore } from '@/src/store/authStore'
 import {
   useCreateUser,

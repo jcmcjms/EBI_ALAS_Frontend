@@ -28,7 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/src/shared/ui/dropdown-menu'
-import { BRANCHES, type UserResponse } from '@/src/lib/api/types'
+import { BRANCHES, type UserResponse } from '@/src/shared/lib/api/types'
 import { cn } from '@/src/shared/lib/utils'
 
 export function formatFullName(

@@ -14,9 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/src/shared/ui/select'
-import { BRANCHES } from '@/src/lib/api/types'
+import { BRANCHES } from '@/src/shared/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
-import type { RoleInfo } from '@/src/lib/api/types'
+import type { RoleInfo } from '@/src/shared/lib/api/types'
 
 interface UsersToolbarProps {
   searchInput: string

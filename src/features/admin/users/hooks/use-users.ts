@@ -6,7 +6,7 @@ import type {
   UserImportResult,
   UserQueryParams,
   UserResponse,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 import {
   createUser,
   forcePasswordReset,

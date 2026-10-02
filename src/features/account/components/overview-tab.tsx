@@ -21,7 +21,7 @@ import {
 } from '@/src/shared/ui/card'
 import { LOAN_STATUS_META } from '@/src/features/loans/utils/loan-status'
 import { initialsOf } from '@/src/features/notifications/types'
-import { BRANCHES } from '@/src/lib/api/types'
+import { BRANCHES } from '@/src/shared/lib/api/types'
 import { cn } from '@/src/shared/lib/utils'
 import { useAuthStore } from '@/src/store/authStore'
 import {

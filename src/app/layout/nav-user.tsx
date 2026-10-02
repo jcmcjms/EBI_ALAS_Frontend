@@ -24,7 +24,7 @@ import {
 } from '@/src/shared/components/layout/sidebar'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/src/store/authStore'
-import { apiClient } from '@/src/lib/apiClient'
+import { apiClient } from '@/src/shared/lib/apiClient'
 
 export function NavUser({
   user,

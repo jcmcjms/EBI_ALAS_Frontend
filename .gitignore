@@ -31,3 +31,6 @@ dist-ssr
 docs/
 docs
 files/
+IMPLEMENTATION-NOTES.md
+AGENTS.md
+.ai/

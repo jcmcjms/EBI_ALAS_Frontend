@@ -30,7 +30,7 @@ import {
   SheetTitle,
 } from '@/src/shared/ui/sheet'
 import { Spinner } from '@/src/shared/ui/spinner'
-import type { LoanProductResponse } from '@/src/lib/api/types'
+import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 
 const productFormSchema = z
   .object({

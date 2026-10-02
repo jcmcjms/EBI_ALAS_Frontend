@@ -11,7 +11,7 @@ import { Checkbox } from '@/src/shared/ui/checkbox'
 import { Input } from '@/src/shared/ui/input'
 import { Label } from '@/src/shared/ui/label'
 import { Spinner } from '@/src/shared/ui/spinner'
-import { getErrorMessage } from '@/src/lib/apiClient'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { exportLoanProducts } from '../api/loan-products'
 
 interface ProductsToolbarProps {

@@ -4,7 +4,7 @@ import type {
   LoanProductImportResult,
   LoanProductResponse,
   UpdateLoanProductPayload,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 import {
   getLoanProductByCode,
   getLoanProducts,

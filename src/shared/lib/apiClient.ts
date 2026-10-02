@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { toastError } from '@/src/shared/ui/toast'
-import { useAuthStore } from '../store/authStore.ts'
+import { useAuthStore } from '@/src/store/authStore'
 import { decodeJwtPayload } from '@/src/shared/lib/jwt.ts'
 
 const baseURL = import.meta.env.DEV ? '' : import.meta.env.VITE_API_BASE_URL

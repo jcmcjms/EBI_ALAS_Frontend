@@ -11,7 +11,7 @@ import { Button } from '@/src/shared/ui/button'
 import { Separator } from '@/src/shared/ui/separator'
 import { ScrollArea } from '@/src/shared/ui/scroll-area'
 import { Clock, Code, Devices, Globe, UserCircle } from '@phosphor-icons/react'
-import type { AuditLogRecord } from '@/src/lib/api/types'
+import type { AuditLogRecord } from '@/src/shared/lib/api/types'
 
 interface Props {
   log: AuditLogRecord | null

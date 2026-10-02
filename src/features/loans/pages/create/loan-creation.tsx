@@ -22,8 +22,8 @@ import { Badge } from '@/src/shared/ui/badge'
 import { Button } from '@/src/shared/ui/button'
 import { cn } from '@/src/shared/lib/utils'
 import { useAuthStore } from '@/src/store/authStore'
-import { WEBLOAN_BRANCHES } from '@/src/lib/api/types'
-import type { PreLoanItem } from '@/src/lib/api/types'
+import { WEBLOAN_BRANCHES } from '@/src/shared/lib/api/types'
+import type { PreLoanItem } from '@/src/shared/lib/api/types'
 
 import {
   loanApplicationSchema,

@@ -6,7 +6,7 @@ import './index.css'
 import App from '@/src/App'
 import { AuthInitProvider } from '@/src/app/system/AuthInitProvider'
 import { ErrorBoundary } from '@/src/app/system/ErrorBoundary'
-import { queryClient } from '@/src/lib/queryClient'
+import { queryClient } from '@/src/shared/lib/queryClient'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,5 +1,5 @@
-import { apiClient } from '@/src/lib/apiClient'
-import type { PagedResult } from '@/src/lib/api/types'
+import { apiClient } from '@/src/shared/lib/apiClient'
+import type { PagedResult } from '@/src/shared/lib/api/types'
 
 export interface AccountProfile {
   id: number

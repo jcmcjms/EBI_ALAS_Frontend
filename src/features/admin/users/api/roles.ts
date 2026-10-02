@@ -1,9 +1,9 @@
-import { apiClient } from '@/src/lib/apiClient'
+import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
   type ApiResponse,
   type RoleInfo,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 
 export type { RoleInfo }
 

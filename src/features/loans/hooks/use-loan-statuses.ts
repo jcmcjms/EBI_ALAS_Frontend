@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/src/lib/apiClient'
+import { apiClient } from '@/src/shared/lib/apiClient'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
-import { unwrapApiData, type ApiResponse } from '@/src/lib/api/types'
+import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 
 const LOAN_STATUSES_STALE_TIME = 60 * 60 * 1000
 

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiClient, getErrorMessage } from '@/src/lib/apiClient'
+import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
-import { unwrapApiData, type ApiResponse } from '@/src/lib/api/types'
+import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 import { toastError, toastSuccess, toastInfo } from '@/src/shared/ui/toast'
 
 export interface QueuedLoanDto {

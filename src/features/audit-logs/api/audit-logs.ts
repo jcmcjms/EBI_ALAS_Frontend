@@ -1,13 +1,13 @@
-import { apiClient } from '@/src/lib/apiClient'
+import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
   type ApiResponse,
   type AuditLogQueryParams,
   type AuditLogRecord,
   type PagedResult,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 
-export type { AuditLogQueryParams, AuditLogRecord } from '@/src/lib/api/types'
+export type { AuditLogQueryParams, AuditLogRecord } from '@/src/shared/lib/api/types'
 
 export async function listAuditLogs(
   params: AuditLogQueryParams,

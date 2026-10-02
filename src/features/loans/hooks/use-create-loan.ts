@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toastSuccess, toastError } from '@/src/shared/ui/toast'
 
 import { loanApi } from '@/src/features/loans/api/loans'
-import { getErrorMessage } from '@/src/lib/apiClient'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import { generateUUID } from '@/src/shared/lib/utils'
 import {
@@ -14,7 +14,7 @@ import {
 import type {
   CreateLoanPayload,
   LoanSubmissionResponse,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 
 export function useCreateLoan() {
   const queryClient = useQueryClient()

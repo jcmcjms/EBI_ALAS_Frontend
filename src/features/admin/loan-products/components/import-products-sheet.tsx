@@ -16,7 +16,7 @@ import {
   importLoanProducts,
   type LoanProductImportResult,
 } from '../api/loan-products'
-import { getErrorMessage } from '@/src/lib/apiClient'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { cn } from '@/src/shared/lib/utils'
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024

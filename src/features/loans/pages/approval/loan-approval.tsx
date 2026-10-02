@@ -88,8 +88,8 @@ import {
 } from '@/src/features/loans/api/loan-review'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import { cn } from '@/src/shared/lib/utils'
-import { apiClient, getErrorMessage } from '@/src/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/lib/api/types'
+import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
+import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
 import { mapLoanDetailToFormData } from '@/src/features/loans/utils/map-detail-to-form'
 

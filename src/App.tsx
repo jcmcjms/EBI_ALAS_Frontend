@@ -10,7 +10,7 @@ import { Spinner } from '@/src/shared/ui/spinner'
 import { ProtectedRoute } from '@/src/features/auth/components/ProtectedRoute'
 import { FeatureErrorBoundary } from '@/src/app/system/FeatureErrorBoundary'
 import { AppShell } from '@/src/app/layout/AppShell'
-import { PERMISSIONS } from '@/src/lib/api/types'
+import { PERMISSIONS } from '@/src/shared/lib/api/types'
 
 const Login = lazy(() => import('./features/auth/pages/login'))
 const ChangePassword = lazy(

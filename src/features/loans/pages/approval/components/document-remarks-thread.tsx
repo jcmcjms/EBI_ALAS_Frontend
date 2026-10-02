@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ChatCenteredText, ArrowBendLeftUp } from '@phosphor-icons/react'
 import { toastSuccess, toastError } from '@/src/shared/ui/toast'
-import { getErrorMessage } from '@/src/lib/apiClient'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 
 import { Button } from '@/src/shared/ui/button'
 import { Badge } from '@/src/shared/ui/badge'

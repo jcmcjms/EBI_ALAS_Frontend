@@ -30,7 +30,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/src/shared/ui/tooltip'
-import type { LoanProductResponse } from '@/src/lib/api/types'
+import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 
 export type ProductsTableMeta = {
   onEditProduct?: (product: LoanProductResponse) => void

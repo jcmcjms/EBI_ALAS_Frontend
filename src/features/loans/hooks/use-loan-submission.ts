@@ -6,7 +6,7 @@ import { generateUUID } from '@/src/shared/lib/utils'
 import type {
   LoanSubmissionPayload,
   LoanSubmissionResponse,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 
 export function useLoanSubmission() {
   const queryClient = useQueryClient()

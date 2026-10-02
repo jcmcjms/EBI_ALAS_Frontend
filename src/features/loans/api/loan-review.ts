@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/src/lib/apiClient'
+import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
   type ApiResponse,
   type PagedResult,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
 import { LOAN_STATUS_META } from '@/src/features/loans/utils/loan-status'

@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/src/store/authStore'
 import { useNavigate } from 'react-router-dom'
-import { BRANCHES } from '@/src/lib/api/types'
+import { BRANCHES } from '@/src/shared/lib/api/types'
 import { Plus } from '@phosphor-icons/react'
 import { Button } from '@/src/shared/ui/button'
 import { Skeleton } from '@/src/shared/ui/skeleton'

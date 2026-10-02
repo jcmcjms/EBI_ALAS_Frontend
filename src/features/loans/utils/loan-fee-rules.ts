@@ -1,4 +1,4 @@
-import type { LoanProductResponse } from '@/src/lib/api/types'
+import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 
 export function roundCurrency(value: number): number {
   if (!Number.isFinite(value)) return 0

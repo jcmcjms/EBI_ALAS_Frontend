@@ -28,7 +28,7 @@ import {
 } from '@phosphor-icons/react'
 import { EmptyState } from '@/src/shared/ui/empty-state'
 import { cn } from '@/src/shared/lib/utils'
-import type { AuditLogRecord } from '@/src/lib/api/types'
+import type { AuditLogRecord } from '@/src/shared/lib/api/types'
 import { useAuditLogs } from '../hooks/use-audit-logs'
 import {
   ACTION_CONFIG,

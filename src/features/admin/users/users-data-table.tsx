@@ -16,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/src/shared/ui/table'
-import { getErrorMessage } from '@/src/lib/apiClient'
-import { PERMISSIONS, type UserResponse } from '@/src/lib/api/types'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
+import { PERMISSIONS, type UserResponse } from '@/src/shared/lib/api/types'
 import { useAuthStore } from '@/src/store/authStore'
 import { useRoles } from './hooks/use-roles'
 import { useUsers, useUserStats } from './hooks/use-users'

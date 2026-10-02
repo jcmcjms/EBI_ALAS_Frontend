@@ -1,4 +1,4 @@
-import { apiClient } from '@/src/lib/apiClient'
+import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
   type ApiResponse,
@@ -6,7 +6,7 @@ import {
   type LoanSubmissionPayload,
   type CreatedLoanSummary,
   type LoanSubmissionResponse,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 import type { LoanDetailResponse } from './loan-review'
 
 export type {

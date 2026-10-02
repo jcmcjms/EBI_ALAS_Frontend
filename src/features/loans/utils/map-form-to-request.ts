@@ -1,4 +1,4 @@
-import type { LoanSubmissionPayload } from '@/src/lib/api/types'
+import type { LoanSubmissionPayload } from '@/src/shared/lib/api/types'
 import type { LoanApplicationFormData } from '../schemas/schema'
 
 export function mapFormToSubmissionPayload(

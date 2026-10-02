@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
-import { BRANCHES } from '@/src/lib/api/types'
+import { BRANCHES } from '@/src/shared/lib/api/types'
 import {
   getDashboardOverview,
   type DashboardOverviewDto,

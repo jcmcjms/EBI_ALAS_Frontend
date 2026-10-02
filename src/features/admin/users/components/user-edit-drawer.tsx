@@ -26,7 +26,7 @@ import {
 import { SignaturePad } from '@/src/shared/ui/signature-pad'
 import { BranchMultiSelect } from '@/src/shared/ui/branch-multi-select'
 import { toastError } from '@/src/shared/ui/toast'
-import { BRANCHES, type UserResponse } from '@/src/lib/api/types'
+import { BRANCHES, type UserResponse } from '@/src/shared/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import { useRoles } from '../hooks/use-roles'
 import { useApprovalAuthorities } from '../hooks/use-approval-authorities'

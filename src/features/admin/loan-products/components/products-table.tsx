@@ -22,8 +22,8 @@ import {
   TableRow,
 } from '@/src/shared/ui/table'
 import { cn } from '@/src/shared/lib/utils'
-import { getErrorMessage } from '@/src/lib/apiClient'
-import { PERMISSIONS, type UpdateLoanProductPayload } from '@/src/lib/api/types'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
+import { PERMISSIONS, type UpdateLoanProductPayload } from '@/src/shared/lib/api/types'
 import { useAuthStore } from '@/src/store/authStore'
 import {
   useLoanProducts,

@@ -1,12 +1,12 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/src/lib/apiClient'
+import { apiClient } from '@/src/shared/lib/apiClient'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import type {
   ApiResponse,
   CreatedLoanSummary,
   LoanSubmissionResponse,
   PagedResult,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 import type {
   LoanMonitoringRecord,
   MonitoringFilters,

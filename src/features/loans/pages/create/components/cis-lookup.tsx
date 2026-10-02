@@ -13,14 +13,14 @@ import { Badge } from '@/src/shared/ui/badge'
 import { Button } from '@/src/shared/ui/button'
 import { Input } from '@/src/shared/ui/input'
 import { Skeleton } from '@/src/shared/ui/skeleton'
-import { getErrorMessage } from '@/src/lib/apiClient'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { getWebLoanByCis } from '@/src/features/loans/api/webloans'
 import {
   WEBLOAN_BRANCHES,
   type PreLoanItem,
   type WebLoanAccount,
   type WebLoanCisSearchResponse,
-} from '@/src/lib/api/types'
+} from '@/src/shared/lib/api/types'
 import { cn } from '@/src/shared/lib/utils'
 
 import { ActiveLoansTable } from './active-loans-table'

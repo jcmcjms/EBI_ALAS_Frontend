@@ -19,7 +19,7 @@ import {
 import { toastSuccess, toastError } from '@/src/shared/ui/toast'
 import { RichText } from '@/src/shared/ui/rich-text'
 import axios from 'axios'
-import { getErrorMessage } from '@/src/lib/apiClient'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 
 import {
   Card,
@@ -67,8 +67,8 @@ import { FlagIncompleteDocumentsDialog } from '../approval/components/flag-incom
 import { IncompleteDocumentsWarning } from '../review/components/incomplete-documents-warning'
 import { getChecklistDocuments } from '@/src/features/loans/api/loan-review'
 import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
-import { apiClient } from '@/src/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/lib/api/types'
+import { apiClient } from '@/src/shared/lib/apiClient'
+import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 
 type EvaluationAction = 'recommended' | 'notRecommended' | 'pushback'
 
