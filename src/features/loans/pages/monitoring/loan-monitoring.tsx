@@ -52,7 +52,7 @@ export function LoanMonitoringPage() {
     search: '',
     dateRange: { from: undefined, to: undefined },
     branchCode: 'all',
-    status: urlStatus ?? queueDefaultForRole(role),
+    status: urlStatus ?? [],
     myTurn: false,
   }))
 
@@ -97,7 +97,7 @@ export function LoanMonitoringPage() {
         <MonitoringToolbar
           filters={filters}
           onFiltersChange={handleFiltersChange}
-          roleQueue={queueDefault.data ?? queueDefaultForRole(role)}
+          roleQueue={queueDefaultForRole(role)}
         />
         <MonitoringTable
           filters={filters}
