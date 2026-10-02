@@ -17,6 +17,7 @@ import {
   TableRow,
 } from '@/src/shared/ui/table'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
+import { TablePagination } from '@/src/shared/ui/table-pagination'
 import { PERMISSIONS, type UserResponse } from '@/src/shared/lib/api/types'
 import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { useRoles } from './hooks/use-roles'
@@ -264,34 +265,18 @@ export function UsersDataTable() {
             </Table>
           </CardContent>
 
-          {}
-          <div className="flex items-center justify-between border-t bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
-            <div>
-              Showing {firstRowIndex} to {lastRowIndex} of {totalRows} entries
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() => shiftPage(-1)}
-                disabled={!canPreviousPage || usersQuery.isFetching}
-              >
-                Previous
-              </Button>
-              <span>
-                Page {paged?.currentPage ?? pagination.pageIndex + 1} of{' '}
-                {paged?.totalPages ?? 1}
-              </span>
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() => shiftPage(1)}
-                disabled={!canNextPage || usersQuery.isFetching}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <TablePagination
+            firstRow={firstRowIndex}
+            lastRow={lastRowIndex}
+            totalRows={totalRows}
+            currentPage={paged?.currentPage ?? pagination.pageIndex + 1}
+            totalPages={paged?.totalPages ?? 1}
+            canPreviousPage={canPreviousPage}
+            canNextPage={canNextPage}
+            onPreviousPage={() => shiftPage(-1)}
+            onNextPage={() => shiftPage(1)}
+            isFetching={usersQuery.isFetching}
+          />
         </Card>
       </div>
 

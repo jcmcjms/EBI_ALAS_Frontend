@@ -23,6 +23,7 @@ import {
 } from '@/src/shared/ui/table'
 import { cn } from '@/src/shared/lib/utils'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
+import { TablePagination } from '@/src/shared/ui/table-pagination'
 import { PERMISSIONS, type UpdateLoanProductPayload } from '@/src/shared/lib/api/types'
 import { useAuthStore } from '@/src/features/auth/store/authStore'
 import {
@@ -286,41 +287,24 @@ export function ProductsTable() {
             </Table>
           </CardContent>
 
-          {}
-          <div className="flex items-center justify-between border-t bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
-            <div>
-              Showing {firstRow}–{lastRow} of {totalRows}{' '}
-              {totalRows === 1 ? 'entry' : 'entries'}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() =>
-                  setPagination((p) => ({
-                    ...p,
-                    pageIndex: Math.max(0, p.pageIndex - 1),
-                  }))
-                }
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </Button>
-              <span>
-                Page {pagination.pageIndex + 1} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() =>
-                  setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))
-                }
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <TablePagination
+            firstRow={firstRow}
+            lastRow={lastRow}
+            totalRows={totalRows}
+            currentPage={pagination.pageIndex + 1}
+            totalPages={totalPages}
+            canPreviousPage={table.getCanPreviousPage()}
+            canNextPage={table.getCanNextPage()}
+            onPreviousPage={() =>
+              setPagination((p) => ({
+                ...p,
+                pageIndex: Math.max(0, p.pageIndex - 1),
+              }))
+            }
+            onNextPage={() =>
+              setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))
+            }
+          />
         </Card>
       </div>
 
