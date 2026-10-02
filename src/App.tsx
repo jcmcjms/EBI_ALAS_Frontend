@@ -92,7 +92,7 @@ function App() {
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredPermission={PERMISSIONS.loansView}>
                   <FeatureErrorBoundary featureName="Dashboard">
                     <Dashboard />
                   </FeatureErrorBoundary>
@@ -104,7 +104,7 @@ function App() {
             <Route
               path="/loans/monitoring"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredPermission={PERMISSIONS.loansView}>
                   <FeatureErrorBoundary featureName="Loan Monitoring">
                     <LoanMonitoring />
                   </FeatureErrorBoundary>
@@ -114,7 +114,7 @@ function App() {
             <Route
               path="/loans/create"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredPermission={PERMISSIONS.loansCreate}>
                   <FeatureErrorBoundary featureName="Loan Creation">
                     <LoanCreation />
                   </FeatureErrorBoundary>
@@ -125,7 +125,13 @@ function App() {
             <Route
               path="/loans/queue"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  requiredAnyPermission={[
+                    PERMISSIONS.loansRecommend,
+                    PERMISSIONS.loansEvaluate,
+                    PERMISSIONS.loansApprove,
+                  ]}
+                >
                   <FeatureErrorBoundary featureName="Review Desk">
                     <ReviewDesk />
                   </FeatureErrorBoundary>
@@ -136,7 +142,13 @@ function App() {
             <Route
               path="/loans/approval/:loanId"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  requiredAnyPermission={[
+                    PERMISSIONS.loansRecommend,
+                    PERMISSIONS.loansEvaluate,
+                    PERMISSIONS.loansApprove,
+                  ]}
+                >
                   <FeatureErrorBoundary featureName="Loan Approval">
                     <LoanApproval />
                   </FeatureErrorBoundary>
@@ -146,7 +158,7 @@ function App() {
             <Route
               path="/loans/evaluation/:loanId"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredPermission={PERMISSIONS.loansEvaluate}>
                   <FeatureErrorBoundary featureName="Loan Evaluation">
                     <LoanEvaluation />
                   </FeatureErrorBoundary>

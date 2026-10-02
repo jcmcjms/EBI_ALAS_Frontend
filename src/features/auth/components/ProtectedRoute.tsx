@@ -4,18 +4,23 @@ import { useAuthStore } from '@/src/store/authStore'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
+  /** All listed permissions are required (AND). */
   requiredPermission?: string | string[]
+  /** At least one listed permission is required (OR). */
+  requiredAnyPermission?: string[]
 }
 
 export function ProtectedRoute({
   children,
   requiredPermission,
+  requiredAnyPermission,
 }: ProtectedRouteProps) {
   const location = useLocation()
   const isInitializing = useAuthStore((state) => state.isInitializing)
   const accessToken = useAuthStore((state) => state.accessToken)
   const user = useAuthStore((state) => state.user)
   const hasPermission = useAuthStore((state) => state.hasPermission)
+  const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission)
 
   if (isInitializing) {
     return (
@@ -41,6 +46,16 @@ export function ProtectedRoute({
     if (import.meta.env.DEV) {
       console.warn('[Security] Unauthorized access attempt:', {
         requiredPermission,
+        path: window.location.pathname,
+      })
+    }
+    return <Navigate to="/forbidden" replace />
+  }
+
+  if (requiredAnyPermission?.length && !hasAnyPermission(requiredAnyPermission)) {
+    if (import.meta.env.DEV) {
+      console.warn('[Security] Unauthorized access attempt:', {
+        requiredAnyPermission,
         path: window.location.pathname,
       })
     }
