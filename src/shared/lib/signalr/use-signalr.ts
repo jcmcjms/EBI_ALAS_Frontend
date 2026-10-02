@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import * as signalR from '@microsoft/signalr'
 import { toastInfo } from '@/src/shared/ui/toast'
 
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { useNotificationStore } from '@/src/features/notifications/store/notification-store'
 import {
   classifyNotification,

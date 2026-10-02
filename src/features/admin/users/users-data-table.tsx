@@ -18,7 +18,7 @@ import {
 } from '@/src/shared/ui/table'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { PERMISSIONS, type UserResponse } from '@/src/shared/lib/api/types'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { useRoles } from './hooks/use-roles'
 import { useUsers, useUserStats } from './hooks/use-users'
 import { exportUsers } from './api/users'

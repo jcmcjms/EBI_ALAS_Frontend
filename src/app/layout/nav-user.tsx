@@ -23,7 +23,7 @@ import {
   useSidebar,
 } from '@/src/shared/components/layout/sidebar'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { apiClient } from '@/src/shared/lib/apiClient'
 
 export function NavUser({

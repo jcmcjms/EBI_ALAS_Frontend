@@ -16,7 +16,7 @@ import { Button } from '@/src/shared/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/src/shared/ui/field'
 import { Input } from '@/src/shared/ui/input'
 import { cn } from '@/src/shared/lib/utils'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { changePasswordSchema, type ChangePasswordFormData } from '../schemas'
 

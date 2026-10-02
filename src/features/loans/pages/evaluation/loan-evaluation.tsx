@@ -45,7 +45,7 @@ import {
   AlertDialogTrigger,
 } from '@/src/shared/ui/alert-dialog'
 
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'
 import { ApprovalFormDocument } from '../approval/components/approval-form-document'
 import { ApprovalFormViewport } from '@/src/features/loans/components/approval-form-sheet'

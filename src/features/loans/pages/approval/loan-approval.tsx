@@ -56,7 +56,7 @@ import {
   AlertDialogTrigger,
 } from '@/src/shared/ui/alert-dialog'
 
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'
 import { ApprovalFormDocument } from './components/approval-form-document'
 import { AttachmentsPanel } from './components/attachments-panel'

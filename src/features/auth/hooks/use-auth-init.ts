@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import { extractUserFromToken } from '@/src/shared/lib/jwt'
 import { toastError } from '@/src/shared/ui/toast'

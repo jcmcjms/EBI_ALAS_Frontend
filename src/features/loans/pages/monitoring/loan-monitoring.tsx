@@ -25,7 +25,7 @@ import {
   useQueueDefault,
 } from '@/src/features/loans/api/loan-review'
 import { cancelLoanApplication } from '@/src/features/loans/api/loan-review'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import {
   queueDefaultForRole,
   sameStatusSet,

@@ -11,7 +11,7 @@ import { useDashboardRealtime } from '@/src/features/dashboard/hooks/use-dashboa
 import { useNotifications } from '@/src/features/notifications/hooks/use-notifications'
 import { usePresenceSync } from '@/src/shared/lib/signalr/use-presence'
 import { useSignalR } from '@/src/shared/lib/signalr/use-signalr'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 
 const APP_SHELL_STYLE = {
   '--sidebar-width': 'calc(var(--spacing) * 72)',

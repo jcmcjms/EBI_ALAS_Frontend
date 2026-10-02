@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 import { getSharedConnection } from '@/src/shared/lib/signalr/connection'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { usePresenceStore } from '@/src/features/notifications/store/presenceStore'
 
 export interface EntityViewer {

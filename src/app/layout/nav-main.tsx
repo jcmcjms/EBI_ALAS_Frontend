@@ -13,7 +13,7 @@ import {
   SidebarMenuSubButton,
 } from '@/src/shared/components/layout/sidebar'
 import type { NavItem } from '@/src/shared/lib/navigation'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 
 export function NavMain({ items }: { items: NavItem[] }) {
   const location = useLocation()

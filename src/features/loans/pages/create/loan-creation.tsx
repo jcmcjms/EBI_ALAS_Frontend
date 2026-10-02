@@ -21,7 +21,7 @@ import { toastError } from '@/src/shared/ui/toast'
 import { Badge } from '@/src/shared/ui/badge'
 import { Button } from '@/src/shared/ui/button'
 import { cn } from '@/src/shared/lib/utils'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { WEBLOAN_BRANCHES } from '@/src/shared/lib/api/types'
 import type { PreLoanItem } from '@/src/shared/lib/api/types'
 

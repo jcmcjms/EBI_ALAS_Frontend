@@ -31,7 +31,7 @@ import {
   printableObligationRows,
   type ProductFeeConfig,
 } from '@/src/features/loans/utils/loan-approval-utils'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import {
   useSignatureChain,
   withDraftEncoder,

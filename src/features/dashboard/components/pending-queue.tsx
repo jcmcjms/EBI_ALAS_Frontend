@@ -16,7 +16,7 @@ import type { PendingQueueItem, LoanStatus } from '../types'
 import type { LoanStatus as LoanStatusKey } from '@/src/features/loans/utils/loan-status'
 import { assessAging } from '@/src/features/loans/utils/loan-aging'
 import { useSlaPolicy } from '@/src/features/loans/api/loan-review'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 
 const statusStyles: Record<LoanStatus, string> = {
   'On Going':

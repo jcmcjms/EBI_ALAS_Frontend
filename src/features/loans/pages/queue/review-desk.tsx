@@ -50,7 +50,7 @@ import {
 } from '@/src/features/loans/utils/loan-status'
 import { initialsOf } from '@/src/shared/lib/name-utils'
 import { cn } from '@/src/shared/lib/utils'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 
 export function ReviewDeskPage() {
   const navigate = useNavigate()

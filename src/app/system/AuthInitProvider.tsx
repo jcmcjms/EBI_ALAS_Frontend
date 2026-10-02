@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { useAuthInit } from '@/src/features/auth/hooks/use-auth-init'
 import { Spinner } from '@/src/shared/ui/spinner'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 
 interface AuthInitProviderProps {
   children: ReactNode

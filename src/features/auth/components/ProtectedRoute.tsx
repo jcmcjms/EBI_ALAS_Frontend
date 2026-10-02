@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { Spinner } from '@/src/shared/ui/spinner'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 
 interface ProtectedRouteProps {
   children: React.ReactNode

@@ -24,7 +24,7 @@ import {
 import { cn } from '@/src/shared/lib/utils'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { PERMISSIONS, type UpdateLoanProductPayload } from '@/src/shared/lib/api/types'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import {
   useLoanProducts,
   useSyncLoanProducts,

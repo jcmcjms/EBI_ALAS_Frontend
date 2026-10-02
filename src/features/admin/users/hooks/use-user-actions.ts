@@ -7,7 +7,7 @@ import {
   type UpdateUserPayload,
   type UserResponse,
 } from '@/src/shared/lib/api/types'
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 import {
   useCreateUser,
   useForcePasswordReset,
