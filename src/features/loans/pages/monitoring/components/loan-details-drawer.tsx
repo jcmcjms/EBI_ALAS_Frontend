@@ -20,6 +20,7 @@ import {
   type LoanStatus,
 } from '@/src/features/loans/utils/loan-status'
 import type { LoanMonitoringRecord } from '@/src/features/loans/types/monitoring'
+import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'
 
 interface LoanDetailsDrawerProps {
   applicationId: number | null
@@ -35,6 +36,7 @@ export function LoanDetailsDrawer({
 }: LoanDetailsDrawerProps) {
   const isOpen = applicationId !== null
   const navigate = useNavigate()
+  useEntityViewers('LoanApplication', applicationId)
 
   const detail = useQuery({
     queryKey: ['loan-detail', applicationId],

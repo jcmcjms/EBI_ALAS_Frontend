@@ -46,6 +46,7 @@ import {
 } from '@/src/components/ui/alert-dialog'
 
 import { useAuthStore } from '@/src/store/authStore'
+import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'
 import { ApprovalFormDocument } from '../approval/components/approval-form-document'
 import { ApprovalFormViewport } from '@/src/features/loans/components/approval-form-sheet'
 import { useCatLoanClass } from '@/src/features/loans/hooks/use-cat-loan-class'
@@ -86,6 +87,7 @@ export function LoanEvaluationPage() {
   const [zoom, setZoom] = useState(1)
   const [flagOpen, setFlagOpen] = useState(false)
   const user = useAuthStore((s) => s.user)
+  useEntityViewers('LoanApplication', Number.isFinite(id) && id > 0 ? id : null)
 
   const loan = useQuery({
     queryKey: queryKeys.loans.review.detail(id),
