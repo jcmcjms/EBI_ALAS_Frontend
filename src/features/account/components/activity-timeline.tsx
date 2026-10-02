@@ -7,7 +7,7 @@ import {
   SignIn,
 } from '@phosphor-icons/react'
 import type { Activity } from '../api/account'
-import { formatRelativeTime } from '@/src/features/notifications/types'
+import { formatRelativeTime } from '@/src/shared/lib/format'
 import type { ActivityKind } from '../types'
 
 export interface TimelineItem {

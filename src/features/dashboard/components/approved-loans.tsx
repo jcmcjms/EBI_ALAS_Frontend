@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
 import {
   formatRelativeTime,
   initialsOf,
-} from '@/src/features/notifications/types'
+} from '@/src/shared/lib/format'
 import type { ApprovedLoanItem } from '../types'
 
 interface ApprovedLoansProps {

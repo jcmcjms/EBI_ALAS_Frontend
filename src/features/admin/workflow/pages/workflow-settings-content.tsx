@@ -33,7 +33,7 @@ import { useWorkflowConfiguration } from '../hooks/use-workflow'
 import {
   LOAN_STATUS_META,
   type LoanStatus,
-} from '@/src/features/loans/utils/loan-status'
+} from '@/src/shared/lib/api/types'
 
 function PipelinePreview({
   requireRecommendation,

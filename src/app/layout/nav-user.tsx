@@ -6,7 +6,7 @@ import {
 } from '@phosphor-icons/react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/shared/ui/avatar'
-import { initialsOf } from '@/src/features/notifications/types'
+import { initialsOf } from '@/src/shared/lib/format'
 import {
   DropdownMenu,
   DropdownMenuContent,

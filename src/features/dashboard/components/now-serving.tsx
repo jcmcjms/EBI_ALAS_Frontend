@@ -6,7 +6,7 @@ import {
 } from '@/src/shared/ui/card'
 import { Badge } from '@/src/shared/ui/badge'
 import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
-import { initialsOf } from '@/src/features/notifications/types'
+import { initialsOf } from '@/src/shared/lib/format'
 import type { NowServingItem } from '../types'
 
 interface NowServingProps {

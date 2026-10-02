@@ -10,7 +10,7 @@ import {
 } from '@/src/shared/ui/card'
 import { Button } from '@/src/shared/ui/button'
 import { Badge } from '@/src/shared/ui/badge'
-import { formatRelativeTime } from '@/src/features/notifications/types'
+import { formatRelativeTime } from '@/src/shared/lib/format'
 import type { PushBackItem } from '../types'
 
 interface PushBackProps {

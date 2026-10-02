@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/src/shared/ui/card'
-import { formatRelativeTime } from '@/src/features/notifications/types'
+import { formatRelativeTime } from '@/src/shared/lib/format'
 import {
   useAccountProfile,
   useAccountSessions,

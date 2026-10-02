@@ -20,7 +20,7 @@ import {
 import { useAccountLoans } from '../hooks/use-account'
 import { EmptyState, ErrorState, LoadingState } from './account-states'
 import { useAuthStore } from '@/src/features/auth/store/authStore'
-import { LOAN_STATUS_META, type LoanStatus } from '@/src/features/loans/utils/loan-status'
+import { LOAN_STATUS_META, type LoanStatus } from '@/src/shared/lib/api/types'
 import { cn } from '@/src/shared/lib/utils'
 
 export function MyApplicationsTab() {
