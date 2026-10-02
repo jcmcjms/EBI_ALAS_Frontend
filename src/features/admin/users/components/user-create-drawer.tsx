@@ -24,78 +24,21 @@ import { BRANCHES } from '@/src/shared/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import { useRoles } from '../hooks/use-roles'
 import { useApprovalAuthorities } from '../hooks/use-approval-authorities'
+import {
+  type UserCreatePayload,
+  emptyForm,
+  USERNAME_PATTERN,
+  BRANCH_SELECT_ITEMS,
+  formatPhp,
+  generateTempPassword,
+} from './user-create-drawer.types'
 
-export interface UserCreatePayload {
-  username: string
-  password: string
-  firstName: string
-  middleName: string
-  lastName: string
-  branchId: string
-  role: string
-  jobTitle: string
-  eSignature: string | null
-  coveredBranches: string[] | null
-}
+export type { UserCreatePayload }
 
 interface UserCreateDrawerProps {
   open: boolean
   onClose: () => void
-
   onCreate: (payload: UserCreatePayload) => Promise<boolean>
-}
-
-const emptyForm = {
-  username: '',
-  firstName: '',
-  middleName: '',
-  lastName: '',
-  jobTitle: '',
-  branchId: '',
-  role: '',
-  eSignature: null as string | null,
-  coveredBranches: [] as string[],
-}
-
-const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/
-
-const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
-  value: branch.code,
-  label: branch.name,
-}))
-
-function formatPhp(amount: number): string {
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-function generateTempPassword(length = 12): string {
-  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
-  const lower = 'abcdefghijkmnopqrstuvwxyz'
-  const digits = '23456789'
-  const specials = '!?*.'
-  const all = upper + lower + digits + specials
-
-  const pick = (set: string) => {
-    const buf = new Uint32Array(1)
-    crypto.getRandomValues(buf)
-    return set[buf[0] % set.length]
-  }
-
-  const chars = [pick(upper), pick(lower), pick(digits), pick(specials)]
-  while (chars.length < length) chars.push(pick(all))
-
-  for (let i = chars.length - 1; i > 0; i--) {
-    const buf = new Uint32Array(1)
-    crypto.getRandomValues(buf)
-    const j = buf[0] % (i + 1)
-    ;[chars[i], chars[j]] = [chars[j], chars[i]]
-  }
-  return chars.join('')
 }
 
 export function UserCreateDrawer({
@@ -221,7 +164,6 @@ export function UserCreateDrawer({
         branchId: form.branchId,
         role: form.role,
         eSignature: form.eSignature,
-
         coveredBranches:
           isBranchScope && form.coveredBranches.length > 0
             ? form.coveredBranches
@@ -344,7 +286,6 @@ export function UserCreateDrawer({
             </p>
           </div>
 
-          {}
           <div className="space-y-2">
             <Label htmlFor="create-jobTitle">
               {isApprover ? 'Approval Authority *' : 'Job Title'}
@@ -391,7 +332,6 @@ export function UserCreateDrawer({
             </p>
           </div>
 
-          {}
           {isBranchScope && (
             <div className="space-y-2">
               <Label>Covered Branches *</Label>
@@ -409,7 +349,6 @@ export function UserCreateDrawer({
             </div>
           )}
 
-          {}
           <div className="space-y-2">
             <Label htmlFor="create-signature">E-Signature *</Label>
             <SignaturePad
