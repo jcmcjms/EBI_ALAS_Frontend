@@ -3,7 +3,7 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import { Label } from '@/src/shared/ui/label'
 import { Checkbox } from '@/src/shared/ui/checkbox'
 import { Badge } from '@/src/shared/ui/badge'
-import { Warning, Check, Receipt } from '@phosphor-icons/react'
+import { Warning, Check } from '@phosphor-icons/react'
 
 import {
   DEVIATION_REASONS,
@@ -14,6 +14,7 @@ import { SectionCard } from './section-card'
 import { PerLoanTabs } from './per-loan-tabs'
 import { DeviationSeverityGroup } from './deviation-severity-group'
 import { DeviationItem } from './deviation-item'
+import { FeeDeviationJustification } from './fee-deviation-justification'
 import { RichTextEditor } from '@/src/shared/ui/rich-text-editor'
 import { getSection } from '@/src/features/loans/constants/sections'
 import { useActiveLoan } from '../active-loan-context'
@@ -156,66 +157,18 @@ function DeviationsFields({
     minorItems.some((item) => item.description === r),
   ).length
 
-  const renderDeviationItem = (reason: string) => {
-    const id = `deviation-${loanNo}-${reason}`
-    const checked = selected.includes(reason as DeviationReason)
-    const justificationError = justificationErrorFor(reason as DeviationReason)
-
-    return (
-      <div key={reason} className="space-y-2">
-        <div className="flex items-start gap-2">
-          <Checkbox
-            id={id}
-            checked={checked}
-            onCheckedChange={(c) =>
-              toggleReason(reason as DeviationReason, !!c)
-            }
-            className="mt-0.5"
-          />
-          <label
-            htmlFor={id}
-            className="text-sm leading-snug peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-          >
-            {reason}
-          </label>
-        </div>
-
-        {checked && (
-          <div
-            key={`${reason}-justification`}
-            className="ml-6 mt-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200"
-          >
-            <Label
-              htmlFor={`${id}-justification`}
-              className="text-xs text-muted-foreground"
-            >
-              Justification for &quot;{reason}&quot;
-            </Label>
-            <textarea
-              id={`${id}-justification`}
-              {...register(`${path}.deviationJustifications.${reason}`)}
-              placeholder='Explain why this deviation is allowed (e.g., "Borrower is 66 but has strong co-maker and collateral.").'
-              rows={2}
-              aria-invalid={!!justificationError}
-              className={
-                'w-full rounded-md border bg-transparent px-3 py-2 text-sm ' +
-                'placeholder:text-muted-foreground focus-visible:border-ring ' +
-                'focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y ' +
-                (justificationError
-                  ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50'
-                  : 'border-input')
-              }
-            />
-            {justificationError && (
-              <p role="alert" className="text-xs text-destructive font-medium">
-                {justificationError}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    )
-  }
+  const renderItem = (reason: string) => (
+    <DeviationItem
+      key={reason}
+      reason={reason}
+      loanNo={loanNo}
+      path={path}
+      checked={selected.includes(reason as DeviationReason)}
+      justificationError={justificationErrorFor(reason as DeviationReason)}
+      register={register}
+      onToggle={toggleReason}
+    />
+  )
 
   return (
     <div className="space-y-5">
@@ -273,7 +226,7 @@ function DeviationsFields({
                     severity="major"
                     items={majorItems}
                     description="Requires COO or higher approval"
-                    renderItem={renderDeviationItem}
+                    renderItem={renderItem}
                   />
                 )}
 
@@ -284,7 +237,7 @@ function DeviationsFields({
                     severity="minor"
                     items={minorItems}
                     description="Requires RBG/Product/Credit Head"
-                    renderItem={renderDeviationItem}
+                    renderItem={renderItem}
                   />
                 )}
               </div>
@@ -294,7 +247,7 @@ function DeviationsFields({
                 aria-label="Deviation reasons"
                 className="space-y-3 rounded-md border border-input bg-background p-4"
               >
-                {fallbackReasons.map((reason) => renderDeviationItem(reason))}
+                {fallbackReasons.map((reason) => renderItem(reason))}
               </div>
             )}
 
@@ -325,40 +278,11 @@ function DeviationsFields({
 
       {}
       {hasFeeOverride && (
-        <div className="rounded-md border border-red-500/30 bg-red-500/5 p-4 space-y-3">
-          <div className="flex items-center gap-2 text-sm text-red-700">
-            <Receipt size={14} weight="fill" />
-            <span className="font-medium">
-              Fee override detected (Major). Justification required.
-            </span>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">
-                Fee Deviation Justification
-              </Label>
-              {feeJustificationError && (
-                <span className="text-xs font-medium text-destructive">
-                  {feeJustificationError}
-                </span>
-              )}
-            </div>
-            <textarea
-              {...register(`${path}.feeDeviationJustification`)}
-              placeholder="Why does the actual fee differ from the bank's standard rate? (e.g. 'Notary charged ₱750 because the loan documents were 4 pages instead of the usual 2.')"
-              rows={3}
-              aria-invalid={!!feeJustificationError}
-              className={
-                'w-full rounded-md border bg-transparent px-3 py-2 text-sm ' +
-                'placeholder:text-muted-foreground focus-visible:border-ring ' +
-                'focus-visible:ring-1 focus-visible:ring-ring/50 outline-none resize-y ' +
-                (feeJustificationError
-                  ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50'
-                  : 'border-input')
-              }
-            />
-          </div>
-        </div>
+        <FeeDeviationJustification
+          path={path}
+          feeJustificationError={feeJustificationError}
+          register={register}
+        />
       )}
 
       {}

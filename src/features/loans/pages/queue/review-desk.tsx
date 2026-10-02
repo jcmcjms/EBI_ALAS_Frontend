@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowClockwise,
@@ -7,50 +7,41 @@ import {
   CurrencyCircleDollar,
   Globe,
   Info,
-  PlayCircle,
   Queue,
   Timer,
   Tray,
-  UserCircle,
   WarningCircle,
 } from '@phosphor-icons/react'
 
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
 import { Badge } from '@/src/shared/ui/badge'
 import { Button } from '@/src/shared/ui/button'
+import { Spinner } from '@/src/shared/ui/spinner'
+import {
+  formatWaiting,
+} from '@/src/features/dashboard/components/pending-queue'
+import { useSlaPolicy } from '@/src/features/loans/api/loan-review'
+import {
+  useClaimNext,
+  useDeskQueue,
+} from '@/src/features/loans/hooks/use-desk-queue'
+import {
+  summarizeDeskQueue,
+  formatPhp,
+} from '@/src/features/loans/utils/desk-queue'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { NextUpCard, StatCard } from './review-desk-cards'
+import {
+  DeskQueueRow,
+  DeskMessage,
+  DeskSkeleton,
+  formatClock,
+} from './review-desk-queue'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/src/shared/ui/card'
-import { Skeleton } from '@/src/shared/ui/skeleton'
-import { Spinner } from '@/src/shared/ui/spinner'
-import {
-  formatWaiting,
-  waitingMinutes,
-} from '@/src/features/dashboard/components/pending-queue'
-import { useSlaPolicy } from '@/src/features/loans/api/loan-review'
-import {
-  useClaimNext,
-  useDeskQueue,
-  type QueuedLoanDto,
-} from '@/src/features/loans/hooks/use-desk-queue'
-import {
-  AGING_BADGE_CLASS,
-  assessAging,
-} from '@/src/features/loans/utils/loan-aging'
-import {
-  formatPhp,
-  summarizeDeskQueue,
-} from '@/src/features/loans/utils/desk-queue'
-import {
-  LOAN_STATUS_META,
-  type LoanStatus,
-} from '@/src/features/loans/utils/loan-status'
-import { initialsOf } from '@/src/shared/lib/name-utils'
-import { cn } from '@/src/shared/lib/utils'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
 
 export function ReviewDeskPage() {
   const navigate = useNavigate()
@@ -205,7 +196,6 @@ export function ReviewDeskPage() {
           />
         ) : (
           <div className="container mx-auto w-full max-w-5xl flex-1 space-y-5 px-6 py-6">
-            {}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="space-y-0.5" aria-live="polite">
                 <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight tabular-nums">
@@ -239,7 +229,6 @@ export function ReviewDeskPage() {
               </Button>
             </div>
 
-            {}
             {stats && (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
@@ -268,7 +257,6 @@ export function ReviewDeskPage() {
               </div>
             )}
 
-            {}
             {head && (
               <NextUpCard
                 item={head}
@@ -281,7 +269,6 @@ export function ReviewDeskPage() {
               />
             )}
 
-            {}
             <Card className="shadow-none">
               <CardHeader className="flex-row items-center justify-between space-y-0 py-4">
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -331,416 +318,4 @@ export function ReviewDeskPage() {
       {body}
     </div>
   )
-}
-
-interface NextUpCardProps {
-  item: QueuedLoanDto
-  canServe: boolean
-  claiming: boolean
-  onServe: () => void
-  currentUserId?: number
-  slaPolicy: Record<string, number> | null
-  now: number
-}
-
-function NextUpCard({
-  item,
-  canServe,
-  claiming,
-  onServe,
-  currentUserId,
-  slaPolicy,
-  now,
-}: NextUpCardProps) {
-  const assessment = assessAging(
-    item.status as LoanStatus,
-    item.enqueuedAt,
-    now,
-    slaPolicy,
-  )
-  const isMine = item.ownerUserId != null && item.ownerUserId === currentUserId
-  const heldByOther = item.ownerUserId != null && !isMine
-
-  return (
-    <section
-      aria-label="Next up"
-      className="relative overflow-hidden rounded-xl border bg-card shadow-sm"
-    >
-      <div className="absolute inset-y-0 left-0 w-1 bg-primary" aria-hidden />
-      <div className="flex flex-col gap-4 p-5 pl-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Avatar className="size-10 border">
-              <AvatarFallback>{initialsOf(item.clientName)}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-sm font-semibold tracking-tight">
-                  {item.lamId}
-                </span>
-                <StatusBadge status={item.status} />
-                {item.hasDeviations && (
-                  <Badge
-                    variant="outline"
-                    className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
-                  >
-                    <WarningCircle size={12} weight="bold" /> warnings
-                  </Badge>
-                )}
-              </div>
-              <p
-                className="truncate text-sm text-muted-foreground"
-                title={item.clientName}
-              >
-                {item.clientName}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-end gap-2">
-            {item.ownerName ? (
-              isMine ? (
-                <Badge variant="secondary" className="gap-1">
-                  <PlayCircle size={12} weight="bold" /> handling — resume
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="gap-1">
-                  <UserCircle size={12} /> {item.ownerName}
-                </Badge>
-              )
-            ) : (
-              <Badge variant="outline" className="text-primary">
-                next up
-              </Badge>
-            )}
-            <Button
-              className="gap-1.5"
-              disabled={!canServe}
-              onClick={onServe}
-              aria-keyshortcuts="Enter"
-              title={
-                heldByOther
-                  ? `Currently with ${item.ownerName} — available after the lock expires`
-                  : undefined
-              }
-            >
-              {claiming ? (
-                <Spinner className="size-4" />
-              ) : (
-                <PlayCircle size={16} weight="bold" />
-              )}
-              Serve next
-              <kbd className="ml-0.5 rounded-sm border border-primary-foreground/40 px-1 text-[10px] font-normal text-primary-foreground/70">
-                Enter
-              </kbd>
-            </Button>
-          </div>
-        </div>
-
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
-          <Fact label="Amount" value={formatPhp(item.proposedAmount)} strong />
-          <Fact
-            label="Product"
-            value={item.product || '\u2014'}
-            title={`${item.productCode} \u2014 ${item.product}`}
-          />
-          <Fact label="Loan type" value={item.loanType ?? '\u2014'} />
-          <Fact label="Branch" value={item.branchCode || '\u2014'} />
-          <Fact
-            label="Term"
-            value={item.termDays != null ? `${item.termDays} d` : '\u2014'}
-          />
-          <Fact
-            label="Waiting"
-            value={formatWaiting(waitingMinutes(item.enqueuedAt))}
-            title={assessment.label}
-            tone={
-              assessment.tier === 'breach'
-                ? 'destructive'
-                : assessment.tier === 'warning'
-                  ? 'warning'
-                  : 'default'
-            }
-          />
-        </dl>
-
-        {item.purpose && (
-          <p
-            className="line-clamp-2 text-xs text-muted-foreground"
-            title={item.purpose}
-          >
-            Purpose: {item.purpose}
-          </p>
-        )}
-      </div>
-    </section>
-  )
-}
-
-interface DeskQueueRowProps {
-  item: QueuedLoanDto
-  slaPolicy: Record<string, number> | null
-  now: number
-}
-
-const DeskQueueRow = memo(function DeskQueueRow({
-  item,
-  slaPolicy,
-  now,
-}: DeskQueueRowProps) {
-  const assessment = assessAging(
-    item.status as LoanStatus,
-    item.enqueuedAt,
-    now,
-    slaPolicy,
-  )
-  const waitTone =
-    assessment.tier === 'breach'
-      ? 'text-destructive'
-      : assessment.tier === 'warning'
-        ? 'text-amber-600 dark:text-amber-400'
-        : 'text-muted-foreground'
-
-  return (
-    <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted/60 text-xs font-semibold tabular-nums text-muted-foreground">
-        #{item.position}
-      </span>
-
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-xs font-medium">{item.lamId}</span>
-          <StatusBadge status={item.status} />
-          {item.hasDeviations && (
-            <WarningCircle
-              size={12}
-              weight="bold"
-              className="text-amber-600 dark:text-amber-400"
-              aria-label="Has warnings"
-            />
-          )}
-        </div>
-        <p
-          className="truncate text-xs text-muted-foreground"
-          title={`${item.clientName} · ${item.product} · Branch ${item.branchCode}`}
-        >
-          <span className="font-medium text-foreground/85">
-            {item.clientName}
-          </span>
-          {' · '}
-          {item.product}
-          {' · '}
-          {item.loanType ?? '—'}
-          {' · '}
-          {item.branchCode}
-        </p>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-3">
-        <span className="hidden text-sm font-medium tabular-nums sm:block">
-          {formatPhp(item.proposedAmount)}
-        </span>
-        <span
-          className={cn(
-            'flex items-center gap-1 text-xs tabular-nums',
-            waitTone,
-          )}
-        >
-          <Clock size={12} /> {formatWaiting(waitingMinutes(item.enqueuedAt))}
-        </span>
-        <AgingPill assessment={assessment} />
-      </div>
-    </li>
-  )
-})
-
-function StatusBadge({ status }: { status: string }) {
-  const meta = LOAN_STATUS_META[status as LoanStatus]
-  if (!meta) return <Badge variant="outline">{status}</Badge>
-  return (
-    <Badge
-      variant="outline"
-      className={cn('font-normal', meta.className)}
-      title={meta.hint}
-    >
-      {meta.label}
-    </Badge>
-  )
-}
-
-function AgingPill({
-  assessment,
-}: {
-  assessment: ReturnType<typeof assessAging>
-}) {
-  if (assessment.tier !== 'warning' && assessment.tier !== 'breach') return null
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        'h-4 px-1.5 text-[10px] font-normal',
-        AGING_BADGE_CLASS[assessment.tier],
-      )}
-    >
-      {assessment.tier === 'breach' ? 'Overdue' : 'Watch'}
-    </Badge>
-  )
-}
-
-interface StatCardProps {
-  icon: ReactNode
-  label: string
-  value: string
-  hint?: string
-  tone?: 'default' | 'destructive'
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  hint,
-  tone = 'default',
-}: StatCardProps) {
-  return (
-    <Card className="shadow-none">
-      <CardContent className="flex items-center gap-3 p-4">
-        <span
-          className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-md border',
-            tone === 'destructive'
-              ? 'border-destructive/30 bg-destructive/10 text-destructive'
-              : 'border-border bg-muted/60 text-muted-foreground',
-          )}
-        >
-          {icon}
-        </span>
-        <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-          <p
-            className="truncate text-lg font-semibold tabular-nums tracking-tight"
-            title={hint}
-          >
-            {value}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-interface FactProps {
-  label: string
-  value: string
-  title?: string
-  strong?: boolean
-  tone?: 'default' | 'warning' | 'destructive'
-}
-
-function Fact({ label, value, title, strong, tone = 'default' }: FactProps) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </dt>
-      <dd
-        className={cn(
-          'truncate text-sm tabular-nums',
-          strong ? 'font-semibold' : 'font-medium',
-          tone === 'destructive' && 'text-destructive',
-          tone === 'warning' && 'text-amber-600 dark:text-amber-400',
-        )}
-        title={title ?? value}
-      >
-        {value}
-      </dd>
-    </div>
-  )
-}
-
-interface DeskMessageProps {
-  icon: ReactNode
-  title: string
-  description: string
-  tone?: 'muted' | 'destructive'
-  meta?: string
-  action?: ReactNode
-}
-
-function DeskMessage({
-  icon,
-  title,
-  description,
-  tone = 'muted',
-  meta,
-  action,
-}: DeskMessageProps) {
-  return (
-    <div className="flex flex-1 items-center justify-center px-6 py-12">
-      <div className="flex w-full max-w-sm flex-col items-center gap-3 text-center">
-        <div
-          className={cn(
-            'flex size-11 items-center justify-center rounded-full border',
-            tone === 'destructive'
-              ? 'border-destructive/30 bg-destructive/10 text-destructive'
-              : 'border-border bg-background text-muted-foreground',
-          )}
-        >
-          {icon}
-        </div>
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
-        {meta && <p className="text-xs text-muted-foreground">{meta}</p>}
-        {action}
-      </div>
-    </div>
-  )
-}
-
-function DeskSkeleton() {
-  return (
-    <div
-      className="container mx-auto w-full max-w-5xl space-y-5 px-6 py-6"
-      aria-busy="true"
-      aria-label="Loading desk queue"
-    >
-      <div className="flex items-center justify-between">
-        <div className="space-y-1.5">
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-3 w-64" />
-        </div>
-        <Skeleton className="h-8 w-8" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-[76px]" />
-        ))}
-      </div>
-      <Skeleton className="h-40" />
-      <Card className="shadow-none">
-        <CardContent className="divide-y p-0">
-          {[0, 1].map((row) => (
-            <div key={row} className="flex items-center gap-3 px-4 py-3">
-              <Skeleton className="size-7" />
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 flex-1" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-12" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-function formatClock(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }

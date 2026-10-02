@@ -1,7 +1,7 @@
 import { Checkbox } from '@/src/shared/ui/checkbox'
 import { Label } from '@/src/shared/ui/label'
 import type { DeviationReason } from '@/src/features/loans/schemas/schema'
-import type { UseFormRegister } from 'react-hook-form'
+import type { UseFormRegister, FieldPath } from 'react-hook-form'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 
 interface DeviationItemProps {
@@ -57,7 +57,9 @@ export function DeviationItem({
           </Label>
           <textarea
             id={`${id}-justification`}
-            {...register(`${path}.deviationJustifications.${reason}`)}
+            {...register(
+              `${path}.deviationJustifications.${reason}` as FieldPath<LoanApplicationFormData>,
+            )}
             placeholder='Explain why this deviation is allowed (e.g., "Borrower is 66 but has strong co-maker and collateral.").'
             rows={2}
             aria-invalid={!!justificationError}
