@@ -6,26 +6,26 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from '@/src/components/ui/sheet'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
+} from '@/src/shared/ui/sheet'
+import { Button } from '@/src/shared/ui/button'
+import { Input } from '@/src/shared/ui/input'
+import { Label } from '@/src/shared/ui/label'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@/src/components/ui/tabs'
+} from '@/src/shared/ui/tabs'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/components/ui/select'
-import { SignaturePad } from '@/src/components/ui/signature-pad'
-import { BranchMultiSelect } from '@/src/components/ui/branch-multi-select'
-import { toastError } from '@/src/components/ui/toast'
+} from '@/src/shared/ui/select'
+import { SignaturePad } from '@/src/shared/ui/signature-pad'
+import { BranchMultiSelect } from '@/src/shared/ui/branch-multi-select'
+import { toastError } from '@/src/shared/ui/toast'
 import { BRANCHES, type UserResponse } from '@/src/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import { useRoles } from '../hooks/use-roles'

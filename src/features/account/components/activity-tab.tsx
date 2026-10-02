@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Button } from '@/src/components/ui/button'
+import { Button } from '@/src/shared/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
+} from '@/src/shared/ui/card'
 import { useAccountActivity } from '../hooks/use-account'
 import { ActivityTimeline, toTimelineItems } from './activity-timeline'
 import { EmptyState, ErrorState, LoadingState } from './account-states'

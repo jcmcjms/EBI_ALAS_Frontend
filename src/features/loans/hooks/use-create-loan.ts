@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { toastSuccess, toastError } from '@/src/components/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/toast'
 
 import { loanApi } from '@/src/features/loans/api/loans'
 import { getErrorMessage } from '@/src/lib/apiClient'

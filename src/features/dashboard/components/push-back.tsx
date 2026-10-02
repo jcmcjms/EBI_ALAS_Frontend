@@ -7,9 +7,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Badge } from '@/src/components/ui/badge'
+} from '@/src/shared/ui/card'
+import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
 import { formatRelativeTime } from '@/src/features/notifications/types'
 import type { PushBackItem } from '../types'
 

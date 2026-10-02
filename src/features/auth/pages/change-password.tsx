@@ -11,10 +11,10 @@ import {
   SignOut,
   WarningCircle,
 } from '@phosphor-icons/react'
-import { toastSuccess, toastError } from '@/src/components/ui/toast'
-import { Button } from '@/src/components/ui/button'
-import { Field, FieldGroup, FieldLabel } from '@/src/components/ui/field'
-import { Input } from '@/src/components/ui/input'
+import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { Button } from '@/src/shared/ui/button'
+import { Field, FieldGroup, FieldLabel } from '@/src/shared/ui/field'
+import { Input } from '@/src/shared/ui/input'
 import { cn } from '@/src/shared/lib/utils'
 import { useAuthStore } from '@/src/store/authStore'
 import { apiClient, getErrorMessage } from '@/src/lib/apiClient'

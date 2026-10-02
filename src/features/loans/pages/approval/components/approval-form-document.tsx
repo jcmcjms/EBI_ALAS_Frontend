@@ -1,5 +1,5 @@
 import React, { forwardRef, memo } from 'react'
-import { RichText } from '@/src/components/ui/rich-text'
+import { RichText } from '@/src/shared/ui/rich-text'
 import { cn } from '@/src/shared/lib/utils'
 import {
   parseProductCode,

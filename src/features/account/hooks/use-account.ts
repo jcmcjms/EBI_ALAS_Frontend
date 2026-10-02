@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toastError, toastSuccess } from '@/src/components/ui/toast'
+import { toastError, toastSuccess } from '@/src/shared/ui/toast'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import { getErrorMessage } from '@/src/lib/apiClient'
 import {

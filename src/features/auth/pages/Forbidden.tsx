@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/src/components/ui/button'
+import { Button } from '@/src/shared/ui/button'
 import { ShieldSlash, ArrowLeft, House } from '@phosphor-icons/react'
 
 export default function Forbidden() {

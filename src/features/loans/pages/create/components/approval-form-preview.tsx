@@ -2,9 +2,9 @@ import { forwardRef, useMemo, useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
 import { FilePdf, Printer, CaretLeft, CaretRight } from '@phosphor-icons/react'
 
-import { Button } from '@/src/components/ui/button'
-import { FormTabStrip } from '@/src/components/ui/form-tab-strip'
-import { RichText } from '@/src/components/ui/rich-text'
+import { Button } from '@/src/shared/ui/button'
+import { FormTabStrip } from '@/src/shared/ui/form-tab-strip'
+import { RichText } from '@/src/shared/ui/rich-text'
 import { cn } from '@/src/shared/lib/utils'
 import { ApprovalFormSheet } from '@/src/features/loans/components/approval-form-sheet'
 

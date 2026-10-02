@@ -15,17 +15,17 @@ import {
   WarningCircle,
 } from '@phosphor-icons/react'
 
-import { Avatar, AvatarFallback } from '@/src/components/ui/avatar'
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
-import { Skeleton } from '@/src/components/ui/skeleton'
-import { Spinner } from '@/src/components/ui/spinner'
+} from '@/src/shared/ui/card'
+import { Skeleton } from '@/src/shared/ui/skeleton'
+import { Spinner } from '@/src/shared/ui/spinner'
 import {
   formatWaiting,
   waitingMinutes,

@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { toastSuccess, toastError } from '@/src/components/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/toast'
 import { Download, FileArrowUp, WarningCircle } from '@phosphor-icons/react'
-import { Button } from '@/src/components/ui/button'
+import { Button } from '@/src/shared/ui/button'
 import {
   Sheet,
   SheetContent,
@@ -9,8 +9,8 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/src/components/ui/sheet'
-import { Spinner } from '@/src/components/ui/spinner'
+} from '@/src/shared/ui/sheet'
+import { Spinner } from '@/src/shared/ui/spinner'
 import {
   downloadLoanProductTemplate,
   importLoanProducts,

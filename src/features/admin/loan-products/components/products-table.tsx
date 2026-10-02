@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react'
-import { toastSuccess, toastError } from '@/src/components/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/toast'
 import { FlexRender, useTable } from '@tanstack/react-table'
 import { Database } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
-import { Spinner } from '@/src/components/ui/spinner'
-import { EmptyState, ErrorState } from '@/src/components/ui/empty-state'
+} from '@/src/shared/ui/card'
+import { Spinner } from '@/src/shared/ui/spinner'
+import { EmptyState, ErrorState } from '@/src/shared/ui/empty-state'
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/components/ui/table'
+} from '@/src/shared/ui/table'
 import { cn } from '@/src/shared/lib/utils'
 import { getErrorMessage } from '@/src/lib/apiClient'
 import { PERMISSIONS, type UpdateLoanProductPayload } from '@/src/lib/api/types'

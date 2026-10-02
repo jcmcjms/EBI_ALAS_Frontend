@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react'
 import { CloudCheck } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/components/ui/badge'
+import { Badge } from '@/src/shared/ui/badge'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
+} from '@/src/shared/ui/card'
 import { cn } from '@/src/shared/lib/utils'
 
 interface SectionCardProps {

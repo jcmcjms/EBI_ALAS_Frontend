@@ -1,6 +1,6 @@
 import { DotsThreeVertical } from '@phosphor-icons/react'
 
-import { Button } from '@/src/components/ui/button'
+import { Button } from '@/src/shared/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/src/components/ui/dropdown-menu'
+} from '@/src/shared/ui/dropdown-menu'
 
 import {
   LOAN_SECTION_LABELS,

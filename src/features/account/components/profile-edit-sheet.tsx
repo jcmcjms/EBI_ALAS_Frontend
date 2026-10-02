@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { z } from 'zod'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
+import { Button } from '@/src/shared/ui/button'
+import { Input } from '@/src/shared/ui/input'
+import { Label } from '@/src/shared/ui/label'
 import {
   Sheet,
   SheetContent,
@@ -10,7 +10,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/src/components/ui/sheet'
+} from '@/src/shared/ui/sheet'
 import { useAccountProfile, useUpdateProfile } from '../hooks/use-account'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

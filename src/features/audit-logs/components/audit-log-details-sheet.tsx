@@ -5,11 +5,11 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from '@/src/components/ui/sheet'
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
-import { Separator } from '@/src/components/ui/separator'
-import { ScrollArea } from '@/src/components/ui/scroll-area'
+} from '@/src/shared/ui/sheet'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
+import { Separator } from '@/src/shared/ui/separator'
+import { ScrollArea } from '@/src/shared/ui/scroll-area'
 import { Clock, Code, Devices, Globe, UserCircle } from '@phosphor-icons/react'
 import type { AuditLogRecord } from '@/src/lib/api/types'
 

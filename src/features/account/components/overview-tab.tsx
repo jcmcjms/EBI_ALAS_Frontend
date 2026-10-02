@@ -10,15 +10,15 @@ import {
   Phone,
   Sparkle,
 } from '@phosphor-icons/react'
-import { Avatar, AvatarFallback } from '@/src/components/ui/avatar'
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
+} from '@/src/shared/ui/card'
 import { LOAN_STATUS_META } from '@/src/features/loans/utils/loan-status'
 import { initialsOf } from '@/src/features/notifications/types'
 import { BRANCHES } from '@/src/lib/api/types'

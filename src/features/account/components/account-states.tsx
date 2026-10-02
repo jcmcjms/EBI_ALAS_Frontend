@@ -1,6 +1,6 @@
-export { EmptyState, ErrorState } from '@/src/components/ui/empty-state'
+export { EmptyState, ErrorState } from '@/src/shared/ui/empty-state'
 
-import { Spinner } from '@/src/components/ui/spinner'
+import { Spinner } from '@/src/shared/ui/spinner'
 
 export function LoadingState({ label = 'Loading…' }: { label?: string }) {
   return (

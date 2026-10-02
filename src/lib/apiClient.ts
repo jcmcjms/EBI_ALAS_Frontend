@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { toastError } from '@/src/components/ui/toast'
+import { toastError } from '@/src/shared/ui/toast'
 import { useAuthStore } from '../store/authStore.ts'
 import { decodeJwtPayload } from '@/src/shared/lib/jwt.ts'
 

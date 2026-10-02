@@ -14,10 +14,10 @@ import {
   type Icon,
 } from '@phosphor-icons/react'
 
-import { Avatar, AvatarFallback } from '@/src/components/ui/avatar'
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
-import { Card } from '@/src/components/ui/card'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
+import { Card } from '@/src/shared/ui/card'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -28,8 +28,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/src/components/ui/dropdown-menu'
-import { Input } from '@/src/components/ui/input'
+} from '@/src/shared/ui/dropdown-menu'
+import { Input } from '@/src/shared/ui/input'
 import { formatRelativeTime, initialsOf, type NotificationType } from '../types'
 import { cn } from '@/src/shared/lib/utils'
 import {

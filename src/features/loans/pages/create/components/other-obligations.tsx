@@ -6,10 +6,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/components/ui/table'
-import { Input } from '@/src/components/ui/input'
-import { Button } from '@/src/components/ui/button'
-import { Badge } from '@/src/components/ui/badge'
+} from '@/src/shared/ui/table'
+import { Input } from '@/src/shared/ui/input'
+import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
 import {
   Bank,
   CreditCard,

@@ -19,15 +19,15 @@ import {
   UserCirclePlus,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/src/components/ui/dropdown-menu'
+} from '@/src/shared/ui/dropdown-menu'
 import { BRANCHES, type UserResponse } from '@/src/lib/api/types'
 import { cn } from '@/src/shared/lib/utils'
 

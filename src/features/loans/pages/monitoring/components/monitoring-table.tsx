@@ -25,9 +25,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/components/ui/table'
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+} from '@/src/shared/ui/table'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   CaretUp,
   CaretDown,
@@ -52,7 +52,7 @@ import {
 } from '@/src/features/loans/utils/loan-aging'
 import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
 import { CANCELLABLE_STATUSES } from '@/src/features/loans/api/loan-review'
-import { EmptyState } from '@/src/components/ui/empty-state'
+import { EmptyState } from '@/src/shared/ui/empty-state'
 
 type MonitoringColumnMeta = {
   className?: string

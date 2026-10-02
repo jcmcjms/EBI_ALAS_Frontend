@@ -14,7 +14,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
+} from '@/src/shared/ui/card'
 import { cn } from '@/src/shared/lib/utils'
 import type { DashboardSummary as DashboardSummaryType } from '../types'
 

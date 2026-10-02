@@ -9,18 +9,18 @@ import {
   WarningCircle,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { Separator } from '@/src/components/ui/separator'
+} from '@/src/shared/ui/card'
+import { Input } from '@/src/shared/ui/input'
+import { Label } from '@/src/shared/ui/label'
+import { Separator } from '@/src/shared/ui/separator'
 import {
   Sheet,
   SheetContent,
@@ -28,8 +28,8 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/src/components/ui/sheet'
-import { Spinner } from '@/src/components/ui/spinner'
+} from '@/src/shared/ui/sheet'
+import { Spinner } from '@/src/shared/ui/spinner'
 import type { LoanProductResponse } from '@/src/lib/api/types'
 
 const productFormSchema = z

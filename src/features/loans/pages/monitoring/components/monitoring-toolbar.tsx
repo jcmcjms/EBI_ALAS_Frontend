@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
+import { Button } from '@/src/shared/ui/button'
+import { Input } from '@/src/shared/ui/input'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/src/components/ui/popover.tsx'
-import { Calendar } from '@/src/components/ui/calendar.tsx'
-import { Badge } from '@/src/components/ui/badge'
-import { Checkbox } from '@/src/components/ui/checkbox'
+} from '@/src/shared/ui/popover.tsx'
+import { Calendar } from '@/src/shared/ui/calendar.tsx'
+import { Badge } from '@/src/shared/ui/badge'
+import { Checkbox } from '@/src/shared/ui/checkbox'
 import {
   MagnifyingGlass,
   CalendarBlank,

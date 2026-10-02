@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Toast as ToastPrimitive } from '@base-ui/react/toast'
 import { cn } from '@/src/shared/lib/utils'
 
-import { Button } from '@/src/components/ui/button'
+import { Button } from '@/src/shared/ui/button'
 import {
   XIcon,
   CheckCircleIcon,

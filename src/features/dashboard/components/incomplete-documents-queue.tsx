@@ -1,16 +1,16 @@
 import { memo, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { WarningCircle } from '@phosphor-icons/react'
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
-import { Avatar, AvatarFallback } from '@/src/components/ui/avatar'
+} from '@/src/shared/ui/card'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
 import { cn } from '@/src/shared/lib/utils'
 import { initialsOf } from '@/src/shared/lib/name-utils'
 import { formatWaiting, waitingMinutes } from './pending-queue'

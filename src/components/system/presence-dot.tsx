@@ -4,7 +4,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/src/components/ui/tooltip'
+} from '@/src/shared/ui/tooltip'
 
 export function PresenceDot({
   userId,

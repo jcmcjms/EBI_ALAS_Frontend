@@ -4,9 +4,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
+} from '@/src/shared/ui/card'
+import { Input } from '@/src/shared/ui/input'
+import { Label } from '@/src/shared/ui/label'
 import { LockSimple, Bank, UserCircle } from '@phosphor-icons/react'
 import { useAuthStore } from '@/src/store/authStore'
 

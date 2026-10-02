@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useFormContext, useWatch, useFieldArray } from 'react-hook-form'
-import { toastError } from '@/src/components/ui/toast'
+import { toastError } from '@/src/shared/ui/toast'
 import {
   CheckCircle,
   CircleNotch,
@@ -11,28 +11,28 @@ import {
   WarningCircle,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
+} from '@/src/shared/ui/card'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/components/ui/select'
-import { Skeleton } from '@/src/components/ui/skeleton'
+} from '@/src/shared/ui/select'
+import { Skeleton } from '@/src/shared/ui/skeleton'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/src/components/ui/tooltip'
+} from '@/src/shared/ui/tooltip'
 import axios from 'axios'
 
 import { cn } from '@/src/shared/lib/utils'

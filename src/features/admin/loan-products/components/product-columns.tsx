@@ -17,19 +17,19 @@ import {
   PencilSimple,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/src/components/ui/dropdown-menu'
+} from '@/src/shared/ui/dropdown-menu'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/src/components/ui/tooltip'
+} from '@/src/shared/ui/tooltip'
 import type { LoanProductResponse } from '@/src/lib/api/types'
 
 export type ProductsTableMeta = {

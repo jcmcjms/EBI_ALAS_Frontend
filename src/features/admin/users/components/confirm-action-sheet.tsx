@@ -5,8 +5,8 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from '@/src/components/ui/sheet'
-import { Button } from '@/src/components/ui/button'
+} from '@/src/shared/ui/sheet'
+import { Button } from '@/src/shared/ui/button'
 import { CircleNotch, WarningCircle } from '@phosphor-icons/react'
 
 interface ConfirmActionSheetProps {

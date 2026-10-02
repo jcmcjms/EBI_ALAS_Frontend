@@ -5,15 +5,15 @@ import {
   FileArrowUp,
   Funnel,
 } from '@phosphor-icons/react'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
+import { Button } from '@/src/shared/ui/button'
+import { Input } from '@/src/shared/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/components/ui/select'
+} from '@/src/shared/ui/select'
 import { BRANCHES } from '@/src/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import type { RoleInfo } from '@/src/lib/api/types'

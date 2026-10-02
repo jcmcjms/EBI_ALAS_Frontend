@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
-import { Label } from '@/src/components/ui/label'
-import { Checkbox } from '@/src/components/ui/checkbox'
-import { Badge } from '@/src/components/ui/badge'
+import { Label } from '@/src/shared/ui/label'
+import { Checkbox } from '@/src/shared/ui/checkbox'
+import { Badge } from '@/src/shared/ui/badge'
 import { Warning, Check, Receipt, Circle } from '@phosphor-icons/react'
 
 import {
@@ -12,7 +12,7 @@ import {
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import { SectionCard } from './section-card'
 import { PerLoanTabs } from './per-loan-tabs'
-import { RichTextEditor } from '@/src/components/ui/rich-text-editor'
+import { RichTextEditor } from '@/src/shared/ui/rich-text-editor'
 import { getSection } from '@/src/features/loans/constants/sections'
 import { useActiveLoan } from '../active-loan-context'
 import {

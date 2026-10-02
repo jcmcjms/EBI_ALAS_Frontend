@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { toastSuccess, toastError } from '@/src/components/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/toast'
 import { getErrorMessage } from '@/src/lib/apiClient'
 import {
   PERMISSIONS,

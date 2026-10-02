@@ -16,8 +16,8 @@ import {
   MagnifyingGlassMinus,
   MagnifyingGlassPlus,
 } from '@phosphor-icons/react'
-import { toastSuccess, toastError } from '@/src/components/ui/toast'
-import { RichText } from '@/src/components/ui/rich-text'
+import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { RichText } from '@/src/shared/ui/rich-text'
 import axios from 'axios'
 import { getErrorMessage } from '@/src/lib/apiClient'
 
@@ -27,12 +27,12 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Textarea } from '@/src/components/ui/textarea'
-import { Label } from '@/src/components/ui/label'
-import { Badge } from '@/src/components/ui/badge'
-import { Spinner } from '@/src/components/ui/spinner'
+} from '@/src/shared/ui/card'
+import { Button } from '@/src/shared/ui/button'
+import { Textarea } from '@/src/shared/ui/textarea'
+import { Label } from '@/src/shared/ui/label'
+import { Badge } from '@/src/shared/ui/badge'
+import { Spinner } from '@/src/shared/ui/spinner'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,7 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/src/components/ui/alert-dialog'
+} from '@/src/shared/ui/alert-dialog'
 
 import { useAuthStore } from '@/src/store/authStore'
 import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'

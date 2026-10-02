@@ -3,8 +3,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/src/components/ui/sheet'
-import { Badge } from '@/src/components/ui/badge'
+} from '@/src/shared/ui/sheet'
+import { Badge } from '@/src/shared/ui/badge'
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/components/ui/table'
+} from '@/src/shared/ui/table'
 import { format } from 'date-fns'
 import { useUserAuditLog } from '../hooks/use-users'
 import type { UserResponse } from '@/src/lib/api/types'

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent } from '@/src/components/ui/card'
-import { Input } from '@/src/components/ui/input'
-import { Button } from '@/src/components/ui/button'
-import { Badge } from '@/src/components/ui/badge'
+import { Card, CardContent } from '@/src/shared/ui/card'
+import { Input } from '@/src/shared/ui/input'
+import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
 import {
   Table,
   TableBody,
@@ -10,15 +10,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/components/ui/table'
+} from '@/src/shared/ui/table'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/components/ui/select'
-import { Spinner } from '@/src/components/ui/spinner'
+} from '@/src/shared/ui/select'
+import { Spinner } from '@/src/shared/ui/spinner'
 import {
   ArrowRight,
   MagnifyingGlass,
@@ -26,7 +26,7 @@ import {
   UserCircle,
   WarningCircle,
 } from '@phosphor-icons/react'
-import { EmptyState } from '@/src/components/ui/empty-state'
+import { EmptyState } from '@/src/shared/ui/empty-state'
 import { cn } from '@/src/shared/lib/utils'
 import type { AuditLogRecord } from '@/src/lib/api/types'
 import { useAuditLogs } from '../hooks/use-audit-logs'

@@ -5,7 +5,7 @@ import {
   UserCircle,
 } from '@phosphor-icons/react'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/src/shared/ui/avatar'
 import { initialsOf } from '@/src/features/notifications/types'
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/src/components/ui/dropdown-menu'
+} from '@/src/shared/ui/dropdown-menu'
 import {
   SidebarMenu,
   SidebarMenuButton,

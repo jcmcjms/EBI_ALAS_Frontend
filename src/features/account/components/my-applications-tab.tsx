@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ClipboardText, ArrowRight } from '@phosphor-icons/react'
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
+} from '@/src/shared/ui/card'
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/components/ui/table'
+} from '@/src/shared/ui/table'
 import { useAccountLoans } from '../hooks/use-account'
 import { EmptyState, ErrorState, LoadingState } from './account-states'
 import { useAuthStore } from '@/src/store/authStore'

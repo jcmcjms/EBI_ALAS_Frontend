@@ -7,9 +7,9 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from '@/src/components/ui/sheet'
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+} from '@/src/shared/ui/sheet'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import { ApplicationTimeline } from '@/src/features/loans/components/application-timeline'
 import { DocumentFlagBadge } from '@/src/features/loans/components/document-flag-badge'
 import { queueDeskSentence } from '@/src/features/loans/utils/loan-timeline'

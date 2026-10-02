@@ -1,4 +1,4 @@
-import { toastSuccess, toastError } from '@/src/components/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/toast'
 import {
   ArrowsClockwise,
   FileArrowUp,
@@ -6,11 +6,11 @@ import {
   MagnifyingGlass,
 } from '@phosphor-icons/react'
 
-import { Button } from '@/src/components/ui/button'
-import { Checkbox } from '@/src/components/ui/checkbox'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { Spinner } from '@/src/components/ui/spinner'
+import { Button } from '@/src/shared/ui/button'
+import { Checkbox } from '@/src/shared/ui/checkbox'
+import { Input } from '@/src/shared/ui/input'
+import { Label } from '@/src/shared/ui/label'
+import { Spinner } from '@/src/shared/ui/spinner'
 import { getErrorMessage } from '@/src/lib/apiClient'
 import { exportLoanProducts } from '../api/loan-products'
 

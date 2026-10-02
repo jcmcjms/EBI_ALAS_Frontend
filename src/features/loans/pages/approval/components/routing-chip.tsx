@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { Badge } from '@/src/components/ui/badge'
+import { Badge } from '@/src/shared/ui/badge'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/src/components/ui/popover'
+} from '@/src/shared/ui/popover'
 import { TreeStructure } from '@phosphor-icons/react'
 import {
   getLoanRouting,

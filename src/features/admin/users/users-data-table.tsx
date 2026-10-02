@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { FlexRender, useTable } from '@tanstack/react-table'
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
+} from '@/src/shared/ui/card'
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/components/ui/table'
+} from '@/src/shared/ui/table'
 import { getErrorMessage } from '@/src/lib/apiClient'
 import { PERMISSIONS, type UserResponse } from '@/src/lib/api/types'
 import { useAuthStore } from '@/src/store/authStore'
@@ -32,9 +32,9 @@ import { AuditLogModal } from './components/audit-log-modal'
 import { TemporaryPasswordDialog } from './components/temporary-password-dialog'
 import { ImportUsersSheet } from './components/import-users-sheet'
 import { useUserActions } from './hooks/use-user-actions'
-import { toastSuccess, toastError } from '@/src/components/ui/toast'
-import { Spinner } from '@/src/components/ui/spinner'
-import { EmptyState, ErrorState } from '@/src/components/ui/empty-state'
+import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { Spinner } from '@/src/shared/ui/spinner'
+import { EmptyState, ErrorState } from '@/src/shared/ui/empty-state'
 import { Users } from '@phosphor-icons/react'
 
 function useDebouncedValue<T>(value: T, delayMs = 300): T {

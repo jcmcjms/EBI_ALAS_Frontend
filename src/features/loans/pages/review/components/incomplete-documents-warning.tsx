@@ -1,5 +1,5 @@
 import { Warning } from '@phosphor-icons/react'
-import { Alert, AlertDescription, AlertTitle } from '@/src/components/ui/alert'
+import { Alert, AlertDescription, AlertTitle } from '@/src/shared/ui/alert'
 import type { LoanChecklistDocumentDto } from '@/src/features/loans/api/loan-review'
 
 const MAX_LISTED = 6

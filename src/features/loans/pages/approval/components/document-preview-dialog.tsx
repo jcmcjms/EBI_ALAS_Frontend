@@ -10,7 +10,7 @@ import {
   Spinner as SpinnerIcon,
 } from '@phosphor-icons/react'
 
-import { Button } from '@/src/components/ui/button'
+import { Button } from '@/src/shared/ui/button'
 import { cn } from '@/src/shared/lib/utils'
 import {
   canPreviewInline,

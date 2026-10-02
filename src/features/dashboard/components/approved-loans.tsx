@@ -6,10 +6,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Badge } from '@/src/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/src/components/ui/avatar'
+} from '@/src/shared/ui/card'
+import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/badge'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
 import {
   formatRelativeTime,
   initialsOf,

@@ -13,10 +13,10 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/src/components/ui/dialog'
-import { Button } from '@/src/components/ui/button'
-import { Checkbox } from '@/src/components/ui/checkbox'
-import { Label } from '@/src/components/ui/label'
+} from '@/src/shared/ui/dialog'
+import { Button } from '@/src/shared/ui/button'
+import { Checkbox } from '@/src/shared/ui/checkbox'
+import { Label } from '@/src/shared/ui/label'
 
 export interface TemporaryCredential {
   username: string

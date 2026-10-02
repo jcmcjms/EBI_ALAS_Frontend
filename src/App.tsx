@@ -6,7 +6,7 @@ import {
   Routes,
 } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
-import { Spinner } from '@/src/components/ui/spinner'
+import { Spinner } from '@/src/shared/ui/spinner'
 import { ProtectedRoute } from '@/src/features/auth/components/ProtectedRoute'
 import { FeatureErrorBoundary } from '@/src/components/system/FeatureErrorBoundary'
 import { AppShell } from '@/src/components/layout/AppShell'

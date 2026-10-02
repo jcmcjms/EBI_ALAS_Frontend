@@ -11,9 +11,9 @@ import {
   TextItalic,
 } from '@phosphor-icons/react'
 
-import { Button } from '@/src/components/ui/button'
-import { Separator } from '@/src/components/ui/separator'
-import { Toggle } from '@/src/components/ui/toggle'
+import { Button } from '@/src/shared/ui/button'
+import { Separator } from '@/src/shared/ui/separator'
+import { Toggle } from '@/src/shared/ui/toggle'
 import { cn } from '@/src/shared/lib/utils'
 import {
   isRichTextEmpty,

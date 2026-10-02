@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { toastSuccess, toastError } from '@/src/components/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/toast'
 import { MonitoringToolbar } from './components/monitoring-toolbar'
 import { MonitoringTable } from './components/monitoring-table'
 import { LoanDetailsDrawer } from './components/loan-details-drawer'
-import { Card } from '@/src/components/ui/card'
-import { Textarea } from '@/src/components/ui/textarea'
-import { Label } from '@/src/components/ui/label'
+import { Card } from '@/src/shared/ui/card'
+import { Textarea } from '@/src/shared/ui/textarea'
+import { Label } from '@/src/shared/ui/label'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -17,7 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from '@/src/components/ui/alert-dialog'
+} from '@/src/shared/ui/alert-dialog'
 import type { MonitoringFilters } from '@/src/features/loans/types/monitoring'
 import type { LoanMonitoringRecord } from '@/src/features/loans/types/monitoring'
 import {

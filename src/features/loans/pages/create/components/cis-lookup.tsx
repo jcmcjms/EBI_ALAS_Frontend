@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
-import { toastSuccess, toastError, toastInfo } from '@/src/components/ui/toast'
+import { toastSuccess, toastError, toastInfo } from '@/src/shared/ui/toast'
 import {
   ArrowCounterClockwise,
   CloudCheck,
@@ -9,10 +9,10 @@ import {
   WarningCircle,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Skeleton } from '@/src/components/ui/skeleton'
+import { Badge } from '@/src/shared/ui/badge'
+import { Button } from '@/src/shared/ui/button'
+import { Input } from '@/src/shared/ui/input'
+import { Skeleton } from '@/src/shared/ui/skeleton'
 import { getErrorMessage } from '@/src/lib/apiClient'
 import { getWebLoanByCis } from '@/src/features/loans/api/webloans'
 import {

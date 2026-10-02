@@ -13,7 +13,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/components/ui/card'
+} from '@/src/shared/ui/card'
 import type { WeeklyTrendPoint } from '../types'
 
 interface WeeklyTrendProps {
