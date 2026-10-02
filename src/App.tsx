@@ -142,13 +142,7 @@ function App() {
             <Route
               path="/loans/approval/:loanId"
               element={
-                <ProtectedRoute
-                  requiredAnyPermission={[
-                    PERMISSIONS.loansRecommend,
-                    PERMISSIONS.loansEvaluate,
-                    PERMISSIONS.loansApprove,
-                  ]}
-                >
+                <ProtectedRoute requiredPermission={PERMISSIONS.loansView}>
                   <FeatureErrorBoundary featureName="Loan Approval">
                     <LoanApproval />
                   </FeatureErrorBoundary>
