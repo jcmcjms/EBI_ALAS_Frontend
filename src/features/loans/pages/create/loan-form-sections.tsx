@@ -1,6 +1,6 @@
 import { type RefObject } from 'react'
 import type { PreLoanItem } from '@/src/shared/lib/api/types'
-import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
+import type { LoanApplicationFormData, CreationTypeCode } from '@/src/features/loans/schemas/schema'
 import { HidesOutstandingLoans } from '@/src/features/loans/schemas/schema'
 import { CISLookup } from './components/cis-lookup'
 import { PersonalInfoSection } from './components/personal-info-section'
@@ -16,8 +16,7 @@ import type { UseFormReturn } from 'react-hook-form'
 interface LoanFormSectionsProps {
   isClientLoaded: boolean
   isSubmitting: boolean
-  branchTypeCode: number | null
-  selectedPreLoan: { id: string; payload: PreLoanItem | null }
+  branchTypeCode: CreationTypeCode | null
   methods: UseFormReturn<LoanApplicationFormData>
   sectionRefs: RefObject<Record<string, HTMLElement | null>>
   approvalFormRef: RefObject<HTMLDivElement | null>
@@ -28,7 +27,6 @@ export function LoanFormSections({
   isClientLoaded,
   isSubmitting,
   branchTypeCode,
-  selectedPreLoan,
   methods,
   sectionRefs,
   approvalFormRef,

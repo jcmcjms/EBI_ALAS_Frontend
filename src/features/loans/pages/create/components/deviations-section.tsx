@@ -3,7 +3,7 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import { Label } from '@/src/shared/ui/label'
 import { Checkbox } from '@/src/shared/ui/checkbox'
 import { Badge } from '@/src/shared/ui/badge'
-import { Warning, Check, Receipt, Circle } from '@phosphor-icons/react'
+import { Warning, Check, Receipt } from '@phosphor-icons/react'
 
 import {
   DEVIATION_REASONS,
@@ -12,13 +12,12 @@ import {
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import { SectionCard } from './section-card'
 import { PerLoanTabs } from './per-loan-tabs'
+import { DeviationSeverityGroup } from './deviation-severity-group'
+import { DeviationItem } from './deviation-item'
 import { RichTextEditor } from '@/src/shared/ui/rich-text-editor'
 import { getSection } from '@/src/features/loans/constants/sections'
 import { useActiveLoan } from '../active-loan-context'
-import {
-  useDeviationCatalog,
-  type DeviationCatalogItemDto,
-} from '@/src/features/admin/users/hooks/use-deviation-catalog'
+import { useDeviationCatalog } from '@/src/features/admin/users/hooks/use-deviation-catalog'
 
 type DeviationsErrors = {
   otherRemarks?: { message?: string }
@@ -218,47 +217,6 @@ function DeviationsFields({
     )
   }
 
-  const renderSeverityGroup = (
-    title: string,
-    severity: 'major' | 'minor',
-    items: DeviationCatalogItemDto[],
-    description: string,
-  ) => {
-    const borderColor =
-      severity === 'major' ? 'border-red-500/30' : 'border-amber-500/30'
-    const bgColor = severity === 'major' ? 'bg-red-500/5' : 'bg-amber-500/5'
-    const headerBg = severity === 'major' ? 'bg-red-500/10' : 'bg-amber-500/10'
-    const textColor = severity === 'major' ? 'text-red-700' : 'text-amber-700'
-    const badgeVariant = severity === 'major' ? 'destructive' : 'secondary'
-    const dotColor = severity === 'major' ? 'text-red-500' : 'text-amber-500'
-
-    return (
-      <div
-        className={`rounded-md border ${borderColor} ${bgColor} overflow-hidden`}
-      >
-        <div
-          className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${borderColor}`}
-        >
-          <div className="flex items-center gap-2">
-            <Circle size={8} weight="fill" className={dotColor} />
-            <span className={`text-sm font-semibold ${textColor}`}>
-              {title}
-            </span>
-            <Badge variant={badgeVariant} className="text-[10px] px-1.5 py-0">
-              {severity === 'major' ? 'Major' : 'Minor'}
-            </Badge>
-          </div>
-          <span className={`text-xs ${textColor} opacity-80`}>
-            {description}
-          </span>
-        </div>
-        <div className="p-4 space-y-3">
-          {items.map((item) => renderDeviationItem(item.description))}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-5">
       {}
@@ -309,22 +267,26 @@ function DeviationsFields({
             ) : catalog && catalog.length > 0 ? (
               <div className="space-y-4">
                 {}
-                {majorItems.length > 0 &&
-                  renderSeverityGroup(
-                    'Major Deviations',
-                    'major',
-                    majorItems,
-                    'Requires COO or higher approval',
-                  )}
+                {majorItems.length > 0 && (
+                  <DeviationSeverityGroup
+                    title="Major Deviations"
+                    severity="major"
+                    items={majorItems}
+                    description="Requires COO or higher approval"
+                    renderItem={renderDeviationItem}
+                  />
+                )}
 
                 {}
-                {minorItems.length > 0 &&
-                  renderSeverityGroup(
-                    'Minor Deviations',
-                    'minor',
-                    minorItems,
-                    'Requires RBG/Product/Credit Head',
-                  )}
+                {minorItems.length > 0 && (
+                  <DeviationSeverityGroup
+                    title="Minor Deviations"
+                    severity="minor"
+                    items={minorItems}
+                    description="Requires RBG/Product/Credit Head"
+                    renderItem={renderDeviationItem}
+                  />
+                )}
               </div>
             ) : (
               <div

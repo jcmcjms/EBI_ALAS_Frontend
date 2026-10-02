@@ -293,11 +293,10 @@ export function LoanCreationPage() {
                 isClientLoaded={isClientLoaded}
                 isSubmitting={isSubmitting}
                 branchTypeCode={branchTypeCode}
-                selectedPreLoan={selectedPreLoan}
                 methods={methods}
                 sectionRefs={sectionRefs}
                 approvalFormRef={approvalFormRef}
-                onPreLoanChange={setSelectedPreLoan}
+                onPreLoanChange={(id, payload) => setSelectedPreLoan({ id, payload })}
               />
             </div>
 

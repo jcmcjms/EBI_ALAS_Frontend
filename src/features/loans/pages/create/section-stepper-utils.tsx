@@ -12,7 +12,6 @@ import type {
 } from '@/src/features/loans/schemas/schema'
 
 import {
-  SECTIONS,
   type SectionId,
   type SectionDef,
 } from '@/src/features/loans/constants/sections'
