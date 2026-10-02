@@ -1,6 +1,13 @@
 import { forwardRef, useMemo, useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
-import { FilePdf, Printer, CaretLeft, CaretRight } from '@phosphor-icons/react'
+import {
+  FilePdf,
+  Printer,
+  CaretLeft,
+  CaretRight,
+  MagnifyingGlassMinus,
+  MagnifyingGlassPlus,
+} from '@phosphor-icons/react'
 
 import { Button } from '@/src/shared/ui/button'
 import { FormTabStrip } from '@/src/shared/ui/form-tab-strip'
@@ -17,6 +24,7 @@ import {
   withDraftEncoder,
 } from '@/src/features/loans/api/signatures'
 
+import { ApprovalFormViewport } from '@/src/features/loans/components/approval-form-sheet'
 import { num } from './approval-form-preview-utils'
 import { SingleLoanApprovalForm } from './single-loan-approval-form'
 
@@ -47,6 +55,7 @@ export const ApprovalFormPreview = forwardRef<
 
   const [activeLoanNo, setActiveLoanNo] = useState('')
   const [captureAll, setCaptureAll] = useState(false)
+  const [zoom, setZoom] = useState(1)
 
   const effectiveActiveLoanNo = useMemo(
     () =>
@@ -82,6 +91,33 @@ export const ApprovalFormPreview = forwardRef<
       icon={<FilePdf size={20} weight="bold" className="text-primary" />}
       badge={
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              aria-label="Zoom out"
+              onClick={() =>
+                setZoom((z) => Math.max(0.6, +(z - 0.1).toFixed(2)))
+              }
+            >
+              <MagnifyingGlassMinus size={15} />
+            </Button>
+            <span className="w-12 text-center text-xs tabular-nums text-muted-foreground">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              aria-label="Zoom in"
+              onClick={() =>
+                setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(2)))
+              }
+            >
+              <MagnifyingGlassPlus size={15} />
+            </Button>
+          </div>
           <Button
             type="button"
             variant="outline"
@@ -180,41 +216,43 @@ export const ApprovalFormPreview = forwardRef<
             </div>
 
             {}
-            <div className="bg-white text-black">
-              {watchedLoans.map((loan, index) => {
-                if (!loan.loanNo) return null
-                return (
-                  <div
-                    key={loan.loanNo}
-                    id={`approval-panel-${loan.loanNo}`}
-                    role="tabpanel"
-                    aria-labelledby={`approval-tab-${loan.loanNo}`}
-                    className={cn(
-                      'p-5 text-[10px] leading-[1.4]',
-                      loan.loanNo !== effectiveActiveLoanNo &&
-                        !captureAll &&
-                        'hidden print:block',
-                      index > 0 && 'print:break-before-page',
-                    )}
-                  >
-                    {index > 0 && (
-                      <div className="mb-2 hidden text-center text-[9px] font-bold print:block">
-                        — Loan {index + 1} of {watchedLoans.length} —
-                      </div>
-                    )}
-                    <SingleLoanApprovalForm
-                      loan={loan}
-                      client={client}
-                      branchType={branchType}
-                      form={watchedForm}
-                      index={index}
-                      lamIdByLoanNo={lamIdByLoanNo}
-                      signatureSlots={signatureSlots}
-                    />
-                  </div>
-                )
-              })}
-            </div>
+            <ApprovalFormViewport zoom={zoom}>
+              <div className="bg-white text-black">
+                {watchedLoans.map((loan, index) => {
+                  if (!loan.loanNo) return null
+                  return (
+                    <div
+                      key={loan.loanNo}
+                      id={`approval-panel-${loan.loanNo}`}
+                      role="tabpanel"
+                      aria-labelledby={`approval-tab-${loan.loanNo}`}
+                      className={cn(
+                        'p-5 text-[10px] leading-[1.4]',
+                        loan.loanNo !== effectiveActiveLoanNo &&
+                          !captureAll &&
+                          'hidden print:block',
+                        index > 0 && 'print:break-before-page',
+                      )}
+                    >
+                      {index > 0 && (
+                        <div className="mb-2 hidden text-center text-[9px] font-bold print:block">
+                          — Loan {index + 1} of {watchedLoans.length} —
+                        </div>
+                      )}
+                      <SingleLoanApprovalForm
+                        loan={loan}
+                        client={client}
+                        branchType={branchType}
+                        form={watchedForm}
+                        index={index}
+                        lamIdByLoanNo={lamIdByLoanNo}
+                        signatureSlots={signatureSlots}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </ApprovalFormViewport>
           </>
         )}
       </div>
