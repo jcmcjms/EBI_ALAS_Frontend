@@ -2,20 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import type { FieldErrors, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  ArrowUp,
-  IdentificationBadge,
-  LockSimple,
-  PaperPlaneTilt,
-  WarningCircle,
-} from '@phosphor-icons/react'
+import { ArrowUp } from '@phosphor-icons/react'
 import { toastError } from '@/src/shared/ui/toast'
 
-import { Badge } from '@/src/shared/ui/badge'
 import { Button } from '@/src/shared/ui/button'
 import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { WEBLOAN_BRANCHES } from '@/src/shared/lib/api/types'
 import type { PreLoanItem } from '@/src/shared/lib/api/types'
+import { LoanCreationHeader } from './loan-creation-header'
+import { FormFooter } from './form-footer'
 
 import {
   loanApplicationSchema,
@@ -232,57 +227,12 @@ export function LoanCreationPage() {
             onSubmit={handleFormSubmit}
             className="flex min-h-[calc(100vh-var(--header-height))] flex-col bg-muted/40"
           >
-            <header className="border-b bg-background">
-              <div className="container mx-auto flex h-16 items-center justify-between px-6">
-                <div className="flex flex-wrap items-center gap-4">
-                  <h1 className="text-xl font-semibold tracking-tight">
-                    New Loan Application
-                  </h1>
-                  <Badge
-                    variant="outline"
-                    className="gap-1.5 border-amber-200 bg-amber-50 py-1 text-amber-800"
-                  >
-                    <span
-                      className="h-2 w-2 rounded-full bg-amber-500"
-                      aria-hidden
-                    />
-                    Draft
-                  </Badge>
-                  {userBranchId && (
-                    <Badge
-                      variant="outline"
-                      className="gap-1.5 border-primary/30 bg-primary/5 py-1 text-primary"
-                      title="Preloans are filtered to this branch"
-                    >
-                      <IdentificationBadge size={12} weight="bold" />
-                      <span>Branch</span>
-                      <span className="text-muted-foreground">·</span>
-                      <span>{userBranchName}</span>
-                    </Badge>
-                  )}
-                  {selectedPreLoan.payload && (
-                    <Badge
-                      variant="secondary"
-                      className="gap-1.5 py-1"
-                      title="Attached preloan"
-                    >
-                      <LockSimple size={12} weight="bold" />
-                      Preloan #{selectedPreLoan.payload.id}
-                      {selectedPreLoan.payload.formNumber && (
-                        <span className="text-[10px] text-muted-foreground">
-                          · {selectedPreLoan.payload.formNumber}
-                        </span>
-                      )}
-                    </Badge>
-                  )}
-                  {isDirty && (
-                    <span className="animate-in fade-in text-xs text-muted-foreground">
-                      Unsaved changes
-                    </span>
-                  )}
-                </div>
-              </div>
-            </header>
+            <LoanCreationHeader
+              userBranchId={userBranchId}
+              userBranchName={userBranchName}
+              selectedPreLoan={selectedPreLoan}
+              isDirty={isDirty}
+            />
 
             <MobileSectionNav {...stepperProps} />
 
@@ -300,52 +250,16 @@ export function LoanCreationPage() {
               />
             </div>
 
-            <footer className="sticky bottom-0 z-20 border-t bg-background/95 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="container mx-auto flex h-16 items-center justify-between px-6">
-                {totalErrors > 0 ? (
-                  <div
-                    className="hidden items-center gap-1.5 text-sm text-destructive md:flex"
-                    role="alert"
-                  >
-                    <WarningCircle size={16} weight="fill" />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        firstErrorSection &&
-                        scrollToSection(firstErrorSection.id)
-                      }
-                      className="underline-offset-4 hover:underline"
-                    >
-                      {totalErrors} field{totalErrors === 1 ? '' : 's'} need
-                      {totalErrors === 1 ? 's' : ''} attention — jump to first
-                    </button>
-                  </div>
-                ) : (
-                  <p
-                    id="submit-hint"
-                    className="hidden text-sm text-muted-foreground md:block"
-                  >
-                    {!isClientLoaded
-                      ? 'Search for a CIS number to begin.'
-                      : !preLoanSelected
-                        ? 'Select at least one loan to continue.'
-                        : `${loans.length} loan${loans.length === 1 ? '' : 's'} selected. Ready for processing.`}
-                  </p>
-                )}
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="gap-2 px-6"
-                    disabled={!canSubmit || isSubmitting}
-                    aria-describedby={canSubmit ? undefined : 'submit-hint'}
-                  >
-                    <PaperPlaneTilt size={16} weight="bold" />
-                    {isSubmitting ? 'Submitting…' : 'Submit for Recommendation'}
-                  </Button>
-                </div>
-              </div>
-            </footer>
+            <FormFooter
+              totalErrors={totalErrors}
+              isClientLoaded={isClientLoaded}
+              preLoanSelected={preLoanSelected}
+              loanCount={loans.length}
+              canSubmit={canSubmit}
+              isSubmitting={isSubmitting}
+              firstErrorSection={firstErrorSection?.id}
+              onNavigateToError={(id) => scrollToSection(id)}
+            />
 
             {showScrollTop && (
               <Button

@@ -2,10 +2,8 @@ import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowClockwise,
-  ArrowLeft,
   Clock,
   CurrencyCircleDollar,
-  Globe,
   Info,
   Queue,
   Timer,
@@ -16,32 +14,15 @@ import {
 import { Badge } from '@/src/shared/ui/badge'
 import { Button } from '@/src/shared/ui/button'
 import { Spinner } from '@/src/shared/ui/spinner'
-import {
-  formatWaiting,
-} from '@/src/features/dashboard/components/pending-queue'
+import { formatWaiting } from '@/src/features/dashboard/components/pending-queue'
 import { useSlaPolicy } from '@/src/features/loans/api/loan-review'
-import {
-  useClaimNext,
-  useDeskQueue,
-} from '@/src/features/loans/hooks/use-desk-queue'
-import {
-  summarizeDeskQueue,
-  formatPhp,
-} from '@/src/features/loans/utils/desk-queue'
+import { useClaimNext, useDeskQueue } from '@/src/features/loans/hooks/use-desk-queue'
+import { summarizeDeskQueue, formatPhp } from '@/src/features/loans/utils/desk-queue'
 import { useAuthStore } from '@/src/features/auth/store/authStore'
 import { NextUpCard, StatCard } from './review-desk-cards'
-import {
-  DeskQueueRow,
-  DeskMessage,
-  DeskSkeleton,
-  formatClock,
-} from './review-desk-queue'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/src/shared/ui/card'
+import { DeskHeader } from './desk-header'
+import { DeskQueueRow, DeskMessage, DeskSkeleton, formatClock } from './review-desk-queue'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card'
 
 export function ReviewDeskPage() {
   const navigate = useNavigate()
@@ -140,26 +121,11 @@ export function ReviewDeskPage() {
     />
   ) : desk.currentClaim ? null : (
     <>
-      <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-14 items-center gap-3 px-6">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => navigate('/loans/monitoring')}
-            aria-label="Back to monitoring"
-          >
-            <ArrowLeft size={16} weight="bold" />
-          </Button>
-          <h1 className="text-sm font-semibold tracking-tight">Review Desk</h1>
-          <Badge variant="secondary">{desk.deskLabel}</Badge>
-          {desk.scopeDescription && (
-            <span className="ml-auto flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
-              <Globe size={12} weight="bold" className="shrink-0" />
-              <span className="truncate">{desk.scopeDescription}</span>
-            </span>
-          )}
-        </div>
-      </header>
+      <DeskHeader
+        deskLabel={desk.deskLabel}
+        scopeDescription={desk.scopeDescription}
+        onBack={() => navigate('/loans/monitoring')}
+      />
 
       <main className="flex flex-1 flex-col">
         {desk.items.length === 0 ? (
