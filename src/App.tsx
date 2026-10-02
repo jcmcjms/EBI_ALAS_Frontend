@@ -9,7 +9,7 @@ import { lazy, Suspense } from 'react'
 import { Spinner } from '@/src/shared/ui/spinner'
 import { ProtectedRoute } from '@/src/features/auth/components/ProtectedRoute'
 import { FeatureErrorBoundary } from '@/src/components/system/FeatureErrorBoundary'
-import { AppShell } from '@/src/components/layout/AppShell'
+import { AppShell } from '@/src/app/layout/AppShell'
 import { PERMISSIONS } from '@/src/lib/api/types'
 
 const Login = lazy(() => import('./features/auth/pages/login'))

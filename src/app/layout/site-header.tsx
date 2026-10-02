@@ -4,7 +4,7 @@ import { Separator } from '@/src/shared/ui/separator'
 import { SidebarTrigger } from '@/src/shared/components/layout/sidebar'
 import { getActiveNavTitle } from '@/src/shared/lib/navigation'
 import { useNotificationStore } from '@/src/features/notifications/store/notification-store'
-import { OnlineUsers } from '@/src/components/layout/online-users'
+import { OnlineUsers } from '@/src/app/layout/online-users'
 
 export function SiteHeader() {
   const { pathname } = useLocation()
