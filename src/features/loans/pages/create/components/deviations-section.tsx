@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Controller, useFormContext, useWatch } from 'react-hook-form'
+import { useFormContext, useWatch } from 'react-hook-form'
 import { Label } from '@/src/shared/ui/label'
 import { Checkbox } from '@/src/shared/ui/checkbox'
 import { Badge } from '@/src/shared/ui/badge'
@@ -15,7 +15,7 @@ import { PerLoanTabs } from './per-loan-tabs'
 import { DeviationSeverityGroup } from './deviation-severity-group'
 import { DeviationItem } from './deviation-item'
 import { FeeDeviationJustification } from './fee-deviation-justification'
-import { RichTextEditor } from '@/src/shared/ui/rich-text-editor'
+import { DeviationOtherRemarks } from './deviation-other-remarks'
 import { getSection } from '@/src/features/loans/constants/sections'
 import { useActiveLoan } from '../active-loan-context'
 import { useDeviationCatalog } from '@/src/features/admin/users/hooks/use-deviation-catalog'
@@ -286,30 +286,12 @@ function DeviationsFields({
       )}
 
       {}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs text-muted-foreground">Other Remarks</Label>
-          {otherRemarksError && (
-            <span className="text-xs text-destructive font-medium">
-              {otherRemarksError}
-            </span>
-          )}
-        </div>
-        <Controller
-          control={control}
-          name={`${path}.otherRemarks`}
-          render={({ field }) => (
-            <RichTextEditor
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              invalid={!!otherRemarksError}
-              ariaLabel={`Other remarks for loan ${loanIndex + 1}`}
-              placeholder="Any other notes or special instructions for this application..."
-            />
-          )}
-        />
-      </div>
+      <DeviationOtherRemarks
+        path={path}
+        loanIndex={loanIndex}
+        control={control}
+        otherRemarksError={otherRemarksError}
+      />
     </div>
   )
 }
