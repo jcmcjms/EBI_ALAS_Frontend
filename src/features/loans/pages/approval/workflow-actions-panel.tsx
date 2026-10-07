@@ -49,6 +49,7 @@ interface WorkflowActionsPanelProps {
   canAct: boolean
   canCancel: boolean
   onCancel: () => void
+  onPushback: () => void
   queueState?: {
     isHead: boolean
     ownerName?: string
@@ -78,6 +79,7 @@ export function WorkflowActionsPanel({
   canAct,
   canCancel,
   onCancel,
+  onPushback,
   queueState,
   act,
   claimById,
@@ -126,7 +128,7 @@ export function WorkflowActionsPanel({
             onChange={onRemarksChange}
             disabled={frozen || act.isPending}
             ariaLabel="Workflow remarks"
-            placeholder="Add your comments, conditions, or reasons\u2026"
+            placeholder="Add your comments, conditions, or reasons"
           />
           {remarks.trim().length < MIN_REMARKS && !frozen && (
             <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -197,6 +199,22 @@ export function WorkflowActionsPanel({
                 <CheckCircle size={16} weight="bold" />
               )
 
+            // Push-back actions open the section-selection dialog instead of
+            // an inline AlertDialog.
+            if (a.kind === 'return') {
+              return (
+                <Button
+                  key={`${a.to}-${a.verdict ?? a.kind}`}
+                  className="w-full gap-2 border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  variant="outline"
+                  disabled={blocked}
+                  onClick={onPushback}
+                >
+                  {icon} {a.label}
+                </Button>
+              )
+            }
+
             const button = (
               <Button
                 key={`${a.to}-${a.verdict ?? a.kind}`}
@@ -204,14 +222,11 @@ export function WorkflowActionsPanel({
                   'w-full gap-2',
                   a.verdict === 'NotRecommended' &&
                     'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900',
-                  a.kind === 'return' &&
-                    'border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive',
                 )}
                 variant={
                   a.kind === 'reject'
                     ? 'destructive'
-                    : a.kind === 'return' ||
-                        a.verdict === 'NotRecommended'
+                    : a.verdict === 'NotRecommended'
                       ? 'outline'
                       : 'default'
                 }
@@ -244,11 +259,9 @@ export function WorkflowActionsPanel({
                       Confirm: {a.label}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      {a.kind === 'return'
-                        ? 'The application returns to the ENCODER (not the recommender) for revision. They will be notified with your remarks.'
-                        : a.verdict === 'NotRecommended'
-                          ? 'The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached.'
-                          : 'This will reject the loan and close the application. The encoder will be notified.'}
+                      {a.verdict === 'NotRecommended'
+                        ? 'The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached.'
+                        : 'This will reject the loan and close the application. The encoder will be notified.'}
                       {remarks.trim() && (
                         <span className="mt-2 block border-l-2 border-border pl-2 italic">
                           <RichText
@@ -263,7 +276,7 @@ export function WorkflowActionsPanel({
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       className={
-                        a.kind === 'return' || a.kind === 'reject'
+                        a.kind === 'reject'
                           ? 'bg-destructive text-destructive-foreground'
                           : 'bg-amber-600 text-white hover:bg-amber-700'
                       }

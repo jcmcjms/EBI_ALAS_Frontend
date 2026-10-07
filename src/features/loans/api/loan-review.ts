@@ -18,6 +18,10 @@ import type {
   UpdateStatusPayload,
   SyncDisbursementResult,
 } from './loan-review-types'
+import type {
+  CreateRevisionRequestPayload,
+  RevisionRequest,
+} from '../types/revision-request'
 
 export const loanReviewKeys = {
   detail: (id: number) => ['loans', 'review', id, 'detail'] as const,
@@ -135,6 +139,39 @@ export async function syncDisbursementStatus(
   if (!res.data.success)
     throw new Error(res.data.message || 'Failed to sync disbursement status')
   return res.data.data!
+}
+
+export async function pushbackWithRevision(
+  loanId: number,
+  payload: CreateRevisionRequestPayload,
+): Promise<RevisionRequest> {
+  const res = await apiClient.post<ApiResponse<RevisionRequest>>(
+    `/api/loans/${loanId}/pushback`,
+    payload,
+  )
+  if (!res.data.success)
+    throw new Error(res.data.message || 'Failed to push back application')
+  return unwrapApiData(res.data)
+}
+
+export async function getRevisionRequests(
+  loanId: number,
+): Promise<RevisionRequest[]> {
+  const res = await apiClient.get<ApiResponse<RevisionRequest[]>>(
+    `/api/loans/${loanId}/revision-requests`,
+  )
+  return unwrapApiData(res.data)
+}
+
+export async function resolveRevisionRequest(
+  loanId: number,
+  revisionId: number,
+): Promise<void> {
+  const res = await apiClient.put<ApiResponse<null>>(
+    `/api/loans/${loanId}/revision-requests/${revisionId}/resolve`,
+  )
+  if (!res.data.success)
+    throw new Error(res.data.message || 'Failed to resolve revision request')
 }
 
 export function useSlaPolicy() {

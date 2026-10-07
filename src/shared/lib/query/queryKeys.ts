@@ -66,6 +66,9 @@ export const queryKeys = {
 
     group: (groupNo: string) => ['loans', 'group', groupNo] as const,
 
+    revisionRequests: (id: number) =>
+      ['loans', id, 'revision-requests'] as const,
+
     desk: ['loans', 'desk'] as const,
   },
 

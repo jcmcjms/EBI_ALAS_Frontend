@@ -21,6 +21,7 @@ import {
   updateLoanStatus,
   cancelLoanApplication,
   flagDocuments,
+  pushbackWithRevision,
   CANCELLABLE_STATUSES,
 } from '@/src/features/loans/api/loan-review'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
@@ -29,6 +30,7 @@ import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
 import { mapLoanDetailToFormData } from '@/src/features/loans/utils/map-detail-to-form'
+import type { CreateRevisionRequestPayload } from '@/src/features/loans/types/revision-request'
 
 import {
   TERMINAL,
@@ -52,6 +54,7 @@ export function useLoanApprovalPage() {
   const [cancelPending, setCancelPending] = useState(false)
 
   const [flagOpen, setFlagOpen] = useState(false)
+  const [pushbackOpen, setPushbackOpen] = useState(false)
 
   const user = useAuthStore((s) => s.user)
   useEntityViewers('LoanApplication', Number.isFinite(id) && id > 0 ? id : null)
@@ -64,6 +67,13 @@ export function useLoanApprovalPage() {
     gcTime: 5 * 60_000,
     placeholderData: keepPreviousData,
   })
+
+  // Encoders should edit, not review. Redirect them to the creation page.
+  useEffect(() => {
+    if (user?.role === 'Encoder' && loan.data?.status === 'ForRevision') {
+      navigate(`/loans/create?loanId=${id}`, { replace: true })
+    }
+  }, [user?.role, loan.data?.status, id, navigate])
 
   const checklist = useQuery({
     queryKey: queryKeys.loans.review.checklistDocuments(id),
@@ -193,8 +203,25 @@ export function useLoanApprovalPage() {
     },
   })
 
-  const pushBackDocs = useMutation({
-    mutationFn: ({ codes, text }: { codes: string[]; text: string }) =>
+  const pushbackMutation = useMutation({
+    mutationFn: (payload: CreateRevisionRequestPayload) =>
+      pushbackWithRevision(id, payload),
+    onSuccess: () => {
+      toastSuccess('Application pushed back with revision instructions.')
+      setPushbackOpen(false)
+      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.revisionRequests(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+    },
+    onError: (e: unknown) => toastError(getErrorMessage(e)),
+  })
+
+  const handlePushbackSubmit = (payload: CreateRevisionRequestPayload) => {
+    pushbackMutation.mutate(payload)
+  }
+
+  const pushBackDocs = useMutation({    mutationFn: ({ codes, text }: { codes: string[]; text: string }) =>
       flagDocuments(id, { missingRequirementCodes: codes, reason: text }),
     onSuccess: () => {
       toastSuccess(
@@ -305,5 +332,9 @@ export function useLoanApprovalPage() {
     recheck,
     claimById,
     queueState,
+    pushbackOpen,
+    setPushbackOpen,
+    pushbackMutation,
+    handlePushbackSubmit,
   }
 }

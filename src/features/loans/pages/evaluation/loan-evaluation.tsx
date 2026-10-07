@@ -13,6 +13,7 @@ import { Spinner } from '@/src/shared/ui/spinner'
 
 import { FlagIncompleteDocumentsDialog } from '../approval/components/flag-incomplete-documents-dialog'
 import { IncompleteDocumentsWarning } from '../review/components/incomplete-documents-warning'
+import { PushbackDialog } from '../../components/pushback-dialog'
 import { EvaluationActionsPanel } from './evaluation-actions-panel'
 import { ApprovalFormCard } from './approval-form-card'
 import { useEvaluationPage } from './use-evaluation-page'
@@ -39,6 +40,10 @@ export function LoanEvaluationPage() {
     recheck,
     flagDocs,
     handleAction,
+    pushbackOpen,
+    setPushbackOpen,
+    pushbackMutation,
+    handlePushbackSubmit,
     showEvaluatorActions,
     commentsRequired,
     canAct,
@@ -204,6 +209,13 @@ export function LoanEvaluationPage() {
             reason: flagComments,
           })
         }
+      />
+
+      <PushbackDialog
+        open={pushbackOpen}
+        onOpenChange={setPushbackOpen}
+        onSubmit={handlePushbackSubmit}
+        isPending={pushbackMutation.isPending}
       />
     </div>
   )

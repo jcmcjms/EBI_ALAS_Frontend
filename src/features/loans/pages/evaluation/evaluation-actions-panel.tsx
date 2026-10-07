@@ -5,17 +5,6 @@ import { Button } from '@/src/shared/ui/button'
 import { Textarea } from '@/src/shared/ui/textarea'
 import { Label } from '@/src/shared/ui/label'
 import { Spinner } from '@/src/shared/ui/spinner'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/src/shared/ui/alert-dialog'
 
 type EvaluationAction = 'recommended' | 'notRecommended' | 'pushback'
 
@@ -204,46 +193,15 @@ export function EvaluationActionsPanel({
                   )}
                 </Button>
 
-                <AlertDialog>
-                  <AlertDialogTrigger
-                    render={
-                      <Button
-                        variant="destructive"
-                        className="w-full gap-2"
-                        disabled={!canAct || pendingAction !== null}
-                      />
-                    }
-                  >
-                    <ArrowCounterClockwise size={16} />
-                    Push Back to Encoder
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Push back this application?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This returns the application to the encoder for
-                        revision. The encoder will be notified with your
-                        evaluation comments.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel
-                        disabled={isPending}
-                      >
-                        Cancel
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => onAction('pushback')}
-                        disabled={isPending}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Confirm Pushback
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                  variant="destructive"
+                  className="w-full gap-2"
+                  onClick={() => onAction('pushback')}
+                  disabled={!canAct || pendingAction !== null}
+                >
+                  <ArrowCounterClockwise size={16} />
+                  Push Back to Encoder
+                </Button>
 
                 <Button
                   variant="outline"

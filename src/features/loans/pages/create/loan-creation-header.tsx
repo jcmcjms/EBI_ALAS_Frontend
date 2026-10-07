@@ -7,6 +7,8 @@ interface LoanCreationHeaderProps {
   userBranchName: string
   selectedPreLoan: { id: string; payload: PreLoanItem | null }
   isDirty: boolean
+  editLamId?: string
+  editStatus?: string
 }
 
 export function LoanCreationHeader({
@@ -14,13 +16,17 @@ export function LoanCreationHeader({
   userBranchName,
   selectedPreLoan,
   isDirty,
+  editLamId,
+  editStatus,
 }: LoanCreationHeaderProps) {
+  const isEditMode = !!editLamId
+
   return (
     <header className="border-b bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-6">
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="text-xl font-semibold tracking-tight">
-            New Loan Application
+            {isEditMode ? editLamId : 'New Loan Application'}
           </h1>
           <Badge
             variant="outline"
@@ -30,7 +36,7 @@ export function LoanCreationHeader({
               className="h-2 w-2 rounded-full bg-amber-500"
               aria-hidden
             />
-            Draft
+            {isEditMode ? (editStatus ?? 'ForRevision') : 'Draft'}
           </Badge>
           {userBranchId && (
             <Badge

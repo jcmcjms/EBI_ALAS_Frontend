@@ -14,6 +14,7 @@ import {
   updateLoanStatus,
   flagDocuments,
   getChecklistDocuments,
+  pushbackWithRevision,
 } from '@/src/features/loans/api/loan-review'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import {
@@ -22,6 +23,7 @@ import {
 } from '@/src/features/loans/api/signatures'
 import { mapLoanDetailToFormData } from '@/src/features/loans/utils/map-detail-to-form'
 import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
+import type { RevisionSectionId } from '@/src/features/loans/types/revision-request'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 
@@ -36,6 +38,7 @@ export function useEvaluationPage(id: number) {
   const [comments, setComments] = useState('')
   const [pendingAction, setPendingAction] = useState<EvaluationAction | null>(null)
   const [flagOpen, setFlagOpen] = useState(false)
+  const [pushbackOpen, setPushbackOpen] = useState(false)
 
   useEntityViewers('LoanApplication', Number.isFinite(id) && id > 0 ? id : null)
 
@@ -163,13 +166,32 @@ export function useEvaluationPage(id: number) {
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })
 
+  const pushbackMutation = useMutation({
+    mutationFn: (payload: {
+      sections: { sectionId: RevisionSectionId; comments: string }[]
+      overallComments: string
+    }) => pushbackWithRevision(id, payload),
+    onSuccess: () => {
+      toastSuccess('Application pushed back with revision instructions.')
+      setPushbackOpen(false)
+      setPendingAction(null)
+      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.review.history(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.revisionRequests(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+    },
+    onError: (e: unknown) => toastError(getErrorMessage(e)),
+  })
+
   const handleAction = (action: EvaluationAction) => {
+    if (action === 'pushback') {
+      setPushbackOpen(true)
+      return
+    }
+
     const trimmed = comments.trim()
 
-    if (
-      (action === 'pushback' || action === 'notRecommended') &&
-      trimmed.length < 10
-    ) {
+    if (action === 'notRecommended' && trimmed.length < 10) {
       toastError(
         'Comments are required (minimum 10 characters) for this action.',
       )
@@ -178,26 +200,29 @@ export function useEvaluationPage(id: number) {
 
     setPendingAction(action)
 
-    if (action === 'pushback') {
-      updateStatus.mutate({ status: 'ForRevision', comments: trimmed })
-    } else {
-      const finalComments =
-        action === 'notRecommended'
-          ? trimmed
-          : trimmed || 'Recommended for approval.'
-      updateStatus.mutate({ status: 'ForApproval', comments: finalComments })
-    }
+    const finalComments =
+      action === 'notRecommended'
+        ? trimmed
+        : trimmed || 'Recommended for approval.'
+    updateStatus.mutate({ status: 'ForApproval', comments: finalComments })
+  }
+
+  const handlePushbackSubmit = (payload: {
+    sections: { sectionId: RevisionSectionId; comments: string }[]
+    overallComments: string
+  }) => {
+    pushbackMutation.mutate(payload)
   }
 
   const isEvaluator = user?.role === 'Evaluator'
   const isForChecking = detail?.status === 'ForChecking'
   const showEvaluatorActions = isEvaluator && isForChecking && !frozen
 
-  const commentsRequired =
-    pendingAction === 'pushback' || pendingAction === 'notRecommended'
+  const commentsRequired = pendingAction === 'notRecommended'
   const canAct =
     (!commentsRequired || comments.trim().length >= 10) &&
-    !updateStatus.isPending
+    !updateStatus.isPending &&
+    !pushbackMutation.isPending
 
   return {
     user,
@@ -218,6 +243,10 @@ export function useEvaluationPage(id: number) {
     recheck,
     flagDocs,
     handleAction,
+    pushbackOpen,
+    setPushbackOpen,
+    pushbackMutation,
+    handlePushbackSubmit,
     isEvaluator,
     showEvaluatorActions,
     commentsRequired,

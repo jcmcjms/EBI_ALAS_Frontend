@@ -11,6 +11,7 @@ import {
 import { Button } from '@/src/shared/ui/button'
 import { Badge } from '@/src/shared/ui/badge'
 import { formatRelativeTime } from '@/src/shared/lib/format'
+import { richTextToPlainText } from '@/src/shared/lib/rich-text'
 import type { PushBackItem } from '../types'
 
 interface PushBackProps {
@@ -72,7 +73,7 @@ export function PushBack({ data }: PushBackProps) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{item.lamId}</p>
                   <p className="text-xs text-red-600 dark:text-red-400 truncate">
-                    {item.reason}
+                    {richTextToPlainText(item.reason)}
                   </p>
                 </div>
                 <div className="text-right shrink-0">

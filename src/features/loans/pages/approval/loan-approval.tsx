@@ -19,6 +19,7 @@ import { DeviationRemarksPanel } from './components/deviation-remarks-panel'
 import { IncompleteDocumentsWarning } from '../review/components/incomplete-documents-warning'
 import { GroupReviewSection } from '../review/components/group-review-section'
 import { FlagIncompleteDocumentsDialog } from './components/flag-incomplete-documents-dialog'
+import { PushbackDialog } from '@/src/features/loans/components/pushback-dialog'
 import { useLoanApprovalPage } from './use-loan-approval-page'
 import { ApprovalPageHeader } from './approval-page-header'
 import { WorkflowActionsPanel } from './workflow-actions-panel'
@@ -66,6 +67,10 @@ export function LoanApprovalPage() {
     recheck,
     claimById,
     queueState,
+    pushbackOpen,
+    setPushbackOpen,
+    pushbackMutation,
+    handlePushbackSubmit,
   } = useLoanApprovalPage()
 
   if (!Number.isFinite(id) || id <= 0) {
@@ -177,6 +182,7 @@ export function LoanApprovalPage() {
                   canAct={canAct}
                   canCancel={canCancel}
                   onCancel={() => setCancelOpen(true)}
+                  onPushback={() => setPushbackOpen(true)}
                   queueState={queueState}
                   act={act}
                   claimById={claimById}
@@ -273,6 +279,13 @@ export function LoanApprovalPage() {
             { onSuccess: () => setFlagOpen(false) },
           )
         }
+      />
+
+      <PushbackDialog
+        open={pushbackOpen}
+        onOpenChange={setPushbackOpen}
+        onSubmit={handlePushbackSubmit}
+        isPending={pushbackMutation.isPending}
       />
     </div>
   )

@@ -21,6 +21,7 @@ import {
 } from '@/src/features/loans/utils/loan-status'
 import type { LoanMonitoringRecord } from '@/src/features/loans/types/monitoring'
 import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'
+import { useAuthStore } from '@/src/features/auth/store/authStore'
 
 interface LoanDetailsDrawerProps {
   applicationId: number | null
@@ -36,6 +37,7 @@ export function LoanDetailsDrawer({
 }: LoanDetailsDrawerProps) {
   const isOpen = applicationId !== null
   const navigate = useNavigate()
+  const userRole = useAuthStore((s) => s.user?.role ?? '')
   useEntityViewers('LoanApplication', applicationId)
 
   const detail = useQuery({
@@ -44,6 +46,16 @@ export function LoanDetailsDrawer({
     enabled: applicationId !== null && applicationId > 0,
     staleTime: 30_000,
   })
+
+  const loanStatus = detail.data?.status ?? record?.status ?? ''
+  const isEncoderRevision =
+    userRole === 'Encoder' && loanStatus === 'ForRevision'
+
+  const reviewPath = isEncoderRevision
+    ? `/loans/create?loanId=${applicationId}`
+    : `/loans/approval/${applicationId}`
+
+  const reviewLabel = isEncoderRevision ? 'Edit application' : 'Review application'
 
   const deskSentence = queueDeskSentence(
     record?.queueStage,
@@ -128,10 +140,10 @@ export function LoanDetailsDrawer({
           <div className="border-t bg-background p-4">
             <Button
               className="w-full gap-2"
-              onClick={() => navigate(`/loans/approval/${applicationId}`)}
+              onClick={() => navigate(reviewPath)}
             >
               <ArrowRight size={16} weight="bold" />
-              Review application
+              {reviewLabel}
             </Button>
           </div>
         )}
