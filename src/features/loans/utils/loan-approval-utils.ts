@@ -26,6 +26,18 @@ export const GRACE_TOLERANCE_DAYS = 120
 export const LEGACY_TOTAL_DEDUCTION_RATE = 0.06
 export const LEGACY_NOTARIAL_FEE = 500
 
+export const DOC_STAMP_EXPOSURE_THRESHOLD = 250_000
+
+export function computeDocStamp(
+  principal: number,
+  totalExposure: number,
+): number {
+  if (!Number.isFinite(principal) || !Number.isFinite(totalExposure)) return 0
+  return totalExposure > DOC_STAMP_EXPOSURE_THRESHOLD
+    ? (principal / 200) * 1.5
+    : 0
+}
+
 export interface ProductFeeConfig {
   applicationChargeRate: number
 
@@ -130,6 +142,8 @@ export function computeLoanMetrics(
   const productCode = parseProductCode(params.product)
   const isC02 = productCode === 'C02'
 
+  const totalExposure = principal + totalPrincipal
+
   const totalDeductionRate =
     productFees?.applicationChargeRate ?? LEGACY_TOTAL_DEDUCTION_RATE
   const notarialFee = productFees?.notarialFee ?? LEGACY_NOTARIAL_FEE
@@ -137,7 +151,7 @@ export function computeLoanMetrics(
     ? (principal / 1000) * 3 * (approvalTermDays / 360)
     : productFees?.insuranceFee ?? 0
 
-  const docStamp = primaryLoan.cDocStamp ?? 0
+  const docStamp = computeDocStamp(principal, totalExposure)
 
   const advanceInterest =
     productFees?.chargeAdvanceInterest || isC02
@@ -157,7 +171,6 @@ export function computeLoanMetrics(
   const grossProceeds = principal - deductionsSubtotal
   const netProceedsDs = grossProceeds - ebiOb
   const netProceedsClient = netProceedsDs - buyOutBalance
-  const totalExposure = principal + totalPrincipal
 
   const amortization = computeMonthlyAmortization(
     principal,

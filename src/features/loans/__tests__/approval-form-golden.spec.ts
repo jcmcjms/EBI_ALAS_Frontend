@@ -102,8 +102,9 @@ describe('approval form golden figures (LAM-20260929-000001)', () => {
 
     expect(c.approvalTermDays).toBe(1800)
 
-    expect(c.docStamp).toBe(3000)
-    expect(c.applicationCharge).toBeCloseTo(15820, 2)
+    // Doc. Stamp is computed (0.75% of 322000) since exposure 322000 > 250k
+    expect(c.docStamp).toBeCloseTo(2415, 2)
+    expect(c.applicationCharge).toBeCloseTo(16405, 2)
 
     expect(c.deductionsSubtotal).toBeCloseTo(19320, 2)
     expect(c.deductionPct).toBeCloseTo(6, 2)

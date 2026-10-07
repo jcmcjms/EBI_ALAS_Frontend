@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   computeLoanMetrics,
+  computeDocStamp,
   resolveApprovalTermDays,
   toAnnualRatePercent,
   formatRatePercent,
@@ -9,6 +10,7 @@ import {
   GRACE_TOLERANCE_DAYS,
   LEGACY_TOTAL_DEDUCTION_RATE,
   LEGACY_NOTARIAL_FEE,
+  DOC_STAMP_EXPOSURE_THRESHOLD,
 } from '@/src/features/loans/utils/loan-approval-utils'
 import { computeMonthlyAmortization } from '@/src/features/loans/utils/loan-computations'
 
@@ -200,30 +202,49 @@ describe('computeLoanMetrics deduction convention', () => {
     expect(c.grossProceeds).toBeCloseTo(principal - c.deductionsSubtotal, 2)
   })
 
-  it('uses frozen cDocStamp as Doc. Stamp (no 0.75% generation)', () => {
+  it('computes Doc. Stamp as 0.75% of principal when total exposure exceeds 250k', () => {
     const c = computeLoanMetrics(
       { ...loan, cDocStamp: 3000 } as Parameters<typeof computeLoanMetrics>[0],
       obligations,
     )
-    expect(c.docStamp).toBe(3000)
-    expect(c.applicationCharge).toBeCloseTo(322000 * 0.06 - 3000 - 500, 2)
+    // principal 322000, no outstanding → total exposure 322000 > 250000
+    expect(c.docStamp).toBeCloseTo((322000 / 200) * 1.5, 2)
+    expect(c.docStamp).toBeCloseTo(2415, 2)
+    expect(c.applicationCharge).toBeCloseTo(322000 * 0.06 - 2415 - 500, 2)
   })
 
-  it('prints Doc. Stamp 0 when cDocStamp is missing or zero', () => {
-    const missing = computeLoanMetrics(
-      { ...loan, cDocStamp: undefined } as Parameters<
-        typeof computeLoanMetrics
-      >[0],
+  it('ignores frozen cDocStamp in favour of the formula', () => {
+    const withStamp = computeLoanMetrics(
+      { ...loan, cDocStamp: 9999 } as Parameters<typeof computeLoanMetrics>[0],
       obligations,
     )
-    expect(missing.docStamp).toBe(0)
-    expect(missing.applicationCharge).toBeCloseTo(322000 * 0.06 - 500, 2)
+    expect(withStamp.docStamp).toBeCloseTo(2415, 2)
+  })
 
-    const zero = computeLoanMetrics(
-      { ...loan, cDocStamp: 0 } as Parameters<typeof computeLoanMetrics>[0],
-      obligations,
-    )
-    expect(zero.docStamp).toBe(0)
+  it('prints Doc. Stamp 0 when total exposure is at or below 250k', () => {
+    const small = {
+      ...loan,
+      parameters: { ...loan.parameters, proposedAmount: 200000 },
+    } as Parameters<typeof computeLoanMetrics>[0]
+    const c = computeLoanMetrics(small, obligations)
+    expect(c.docStamp).toBe(0)
+    expect(c.applicationCharge).toBeCloseTo(200000 * 0.06 - 500, 2)
+  })
+
+  it('charges Doc. Stamp once outstanding principal pushes exposure over 250k', () => {
+    const small = {
+      ...loan,
+      parameters: { ...loan.parameters, proposedAmount: 200000 },
+    } as Parameters<typeof computeLoanMetrics>[0]
+    const c = computeLoanMetrics(small, {
+      ...obligations,
+      outstandingLoans: [
+        { outstandingBalance: 60000, principalBalance: 60000 },
+      ],
+    } as Parameters<typeof computeLoanMetrics>[1])
+    // exposure = 200000 + 60000 = 260000 > 250000
+    expect(c.totalExposure).toBe(260000)
+    expect(c.docStamp).toBeCloseTo((200000 / 200) * 1.5, 2)
   })
 
   it('prefers frozen approvalTermDays and annualRatePercent', () => {
@@ -247,5 +268,20 @@ describe('computeLoanMetrics deduction convention', () => {
     const c = computeLoanMetrics(legacy, obligations)
     expect(c.approvalTermDays).toBe(1800)
     expect(c.annualRatePercent).toBe(7.5)
+  })
+})
+
+describe('computeDocStamp', () => {
+  it('returns 0.75% of principal above the threshold', () => {
+    expect(computeDocStamp(322000, 322000)).toBeCloseTo(2415, 2)
+  })
+
+  it('returns 0 at or below the threshold', () => {
+    expect(computeDocStamp(200000, 250000)).toBe(0)
+    expect(computeDocStamp(200000, 100000)).toBe(0)
+  })
+
+  it('exposes the 250k threshold', () => {
+    expect(DOC_STAMP_EXPOSURE_THRESHOLD).toBe(250000)
   })
 })
