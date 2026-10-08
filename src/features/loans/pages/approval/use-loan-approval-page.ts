@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { keepPreviousData } from '@tanstack/react-query'
 import {
   useClaimById,
   useDeskQueue,
 } from '@/src/features/loans/hooks/use-desk-queue'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'
 import { useLoanGroup } from '@/src/features/loans/hooks/use-loan-group'
 import {
@@ -24,12 +24,13 @@ import {
   pushbackWithRevision,
   CANCELLABLE_STATUSES,
 } from '@/src/features/loans/api/loan-review'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
-import { toastError, toastSuccess } from '@/src/shared/ui/toast'
+import { toastError, toastSuccess } from '@/src/shared/ui/feedback/toast'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
-import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
-import { mapLoanDetailToFormData } from '@/src/features/loans/utils/map-detail-to-form'
+import type { LoanStatus } from '@/src/features/loans/model/loan-status'
+import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
 import type { CreateRevisionRequestPayload } from '@/src/features/loans/types/revision-request'
 
 import {
@@ -40,7 +41,7 @@ import {
 } from './workflow-constants'
 
 export function useLoanApprovalPage() {
-  const { loanId } = useParams<{ loanId: string }>()
+  const { loanId } = useParams({ strict: false }) as { loanId: string }
   const id = Number(loanId)
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -60,7 +61,7 @@ export function useLoanApprovalPage() {
   useEntityViewers('LoanApplication', Number.isFinite(id) && id > 0 ? id : null)
 
   const loan = useQuery({
-    queryKey: queryKeys.loans.review.detail(id),
+    queryKey: loanKeys.review.detail(id),
     queryFn: () => getLoanDetail(id),
     enabled: Number.isFinite(id) && id > 0,
     staleTime: 30_000,
@@ -71,12 +72,16 @@ export function useLoanApprovalPage() {
   // Encoders should edit, not review. Redirect them to the creation page.
   useEffect(() => {
     if (user?.role === 'Encoder' && loan.data?.status === 'ForRevision') {
-      navigate(`/loans/create?loanId=${id}`, { replace: true })
+      navigate({
+        to: '/loans/create',
+        search: { loanId: String(id) },
+        replace: true,
+      })
     }
   }, [user?.role, loan.data?.status, id, navigate])
 
   const checklist = useQuery({
-    queryKey: queryKeys.loans.review.checklistDocuments(id),
+    queryKey: loanKeys.review.checklistDocuments(id),
     queryFn: () => getChecklistDocuments(id),
     enabled: Number.isFinite(id) && id > 0,
     staleTime: 30_000,
@@ -85,14 +90,14 @@ export function useLoanApprovalPage() {
   const { data: signatureSlots } = useLoanSignatureChain(id)
 
   const { data: deviationsData } = useQuery({
-    queryKey: queryKeys.loans.review.deviations(id),
+    queryKey: loanKeys.review.deviations(id),
     queryFn: () => getLoanDeviations(id),
     enabled: Number.isFinite(id) && id > 0,
     staleTime: 30_000,
   })
 
   const { data: documentRemarksData } = useQuery({
-    queryKey: queryKeys.loans.documentRemarks(id),
+    queryKey: loanKeys.documentRemarks(id),
     queryFn: () => getDocumentRemarks(id),
     enabled: Number.isFinite(id) && id > 0,
     staleTime: 30_000,
@@ -114,7 +119,7 @@ export function useLoanApprovalPage() {
     for (const sibling of groupLoans) {
       if (sibling.id === id) continue
       void qc.prefetchQuery({
-        queryKey: queryKeys.loans.review.detail(sibling.id),
+        queryKey: loanKeys.review.detail(sibling.id),
         queryFn: () => getLoanDetail(sibling.id),
       })
     }
@@ -190,9 +195,9 @@ export function useLoanApprovalPage() {
             : 'Application forwarded successfully.',
       )
       setRemarks('')
-      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+      qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
       qc.invalidateQueries({ queryKey: signatureKeys.loan(id) })
     },
     onError: (e: unknown) => {
@@ -209,10 +214,10 @@ export function useLoanApprovalPage() {
     onSuccess: () => {
       toastSuccess('Application pushed back with revision instructions.')
       setPushbackOpen(false)
-      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.revisionRequests(id) })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+      qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.revisionRequests(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
     },
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })
@@ -227,13 +232,13 @@ export function useLoanApprovalPage() {
       toastSuccess(
         'Documents flagged — the encoder has been notified. Review continues.',
       )
-      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
       qc.invalidateQueries({
-        queryKey: queryKeys.loans.review.checklistDocuments(id),
+        queryKey: loanKeys.review.checklistDocuments(id),
       })
-      qc.invalidateQueries({ queryKey: queryKeys.dashboard.full })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardRoot })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
     },
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })
@@ -251,11 +256,11 @@ export function useLoanApprovalPage() {
           ? 'All requirements uploaded — application released to the review queue.'
           : `Still missing: ${r.missing.join(', ')}`,
       )
-      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
       qc.invalidateQueries({
-        queryKey: queryKeys.loans.review.checklistDocuments(id),
+        queryKey: loanKeys.review.checklistDocuments(id),
       })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
     },
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })
@@ -284,9 +289,9 @@ export function useLoanApprovalPage() {
       setCancelOpen(false)
       setCancelReason('')
       setCancelPending(false)
-      qc.invalidateQueries({ queryKey: queryKeys.loans.review.detail(id) })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.review.timeline(id) })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+      qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
     } catch (e) {
       toastError(e instanceof Error ? e.message : 'Could not cancel.')
       setCancelPending(false)

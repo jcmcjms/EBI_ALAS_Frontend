@@ -5,9 +5,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/shared/ui/table'
-import { Input } from '@/src/shared/ui/input'
-import { Button } from '@/src/shared/ui/button'
+} from '@/src/shared/ui/data-display/table'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { ArrowLineDown, Plus, Trash } from '@phosphor-icons/react'
 import { SubSectionHeading } from './section-card'
 import type { IncomingLoan } from '@/src/features/loans/schemas/schema'

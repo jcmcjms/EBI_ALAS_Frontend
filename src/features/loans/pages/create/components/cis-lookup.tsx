@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
-import { toastSuccess, toastError, toastInfo } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError, toastInfo } from '@/src/shared/ui/feedback/toast'
 import { IdentificationCard, CloudCheck } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/shared/ui/badge'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { getWebLoanByCis } from '@/src/features/loans/api/webloans'
 import {
@@ -11,7 +11,7 @@ import {
   type PreLoanItem,
   type WebLoanAccount,
   type WebLoanCisSearchResponse,
-} from '@/src/shared/lib/api/types'
+} from '../../../api/loan-types'
 
 import { ActiveLoansTable } from './active-loans-table'
 import { ReadOnlyField, SectionCard, SubSectionHeading } from './section-card'

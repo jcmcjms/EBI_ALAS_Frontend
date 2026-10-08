@@ -1,16 +1,16 @@
 import { Users } from '@phosphor-icons/react'
 
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useOnlineUsers } from '@/src/shared/lib/signalr/use-presence'
 import { PresenceDot } from '@/src/app/system/presence-dot'
-import { Avatar, AvatarFallback, AvatarGroup } from '@/src/shared/ui/avatar'
-import { Badge } from '@/src/shared/ui/badge'
+import { Avatar, AvatarFallback, AvatarGroup } from '@/src/shared/ui/data-display/avatar'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/src/shared/ui/popover'
-import { ScrollArea } from '@/src/shared/ui/scroll-area'
+} from '@/src/shared/ui/data-display/popover'
+import { ScrollArea } from '@/src/shared/ui/data-display/scroll-area'
 
 function initialsOf(name: string): string {
   return name

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import {
   getDocumentRemarks,
   postDocumentRemark,
@@ -11,7 +11,7 @@ import {
 export function useDocumentRemarks(loanId: number) {
   const qc = useQueryClient()
   const query = useQuery<DocumentRemarkDto[]>({
-    queryKey: queryKeys.loans.documentRemarks(loanId),
+    queryKey: loanKeys.documentRemarks(loanId),
     queryFn: () => getDocumentRemarks(loanId),
     staleTime: 10_000,
     refetchInterval: 30_000,
@@ -26,7 +26,7 @@ export function useDocumentRemarks(loanId: number) {
     }) => postDocumentRemark(loanId, payload),
     onSettled: () =>
       qc.invalidateQueries({
-        queryKey: queryKeys.loans.documentRemarks(loanId),
+        queryKey: loanKeys.documentRemarks(loanId),
       }),
   })
 
@@ -35,7 +35,7 @@ export function useDocumentRemarks(loanId: number) {
 
 export function useDocumentChecklist(loanId: number) {
   return useQuery<DocumentChecklistItem[]>({
-    queryKey: queryKeys.loans.documentChecklist(loanId),
+    queryKey: loanKeys.documentChecklist(loanId),
     queryFn: () => getDocumentChecklist(loanId),
     staleTime: 10_000,
     refetchInterval: 30_000,

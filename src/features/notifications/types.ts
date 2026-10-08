@@ -1,37 +1,16 @@
 import type { NotificationResponse } from './api/notifications'
-
-export type NotificationType = 'application' | 'action' | 'message' | 'system'
-
-export interface AppNotification {
-  id: string
-  type: NotificationType
-  title: string
-  description: string
-  createdAt: string
-  read: boolean
-  actor?: string
-  link?: string
-}
+import {
+  classifyNotification,
+  type AppNotification,
+  type NotificationType,
+} from '@/src/shared/store/notification-store'
 
 export { formatRelativeTime, initialsOf } from '@/src/shared/lib/format'
-
-export function classifyNotification(title: string): NotificationType {
-  const t = title.toLowerCase()
-  if (
-    t.includes('ready for') ||
-    t.includes('recommendation') ||
-    t.includes('approval')
-  )
-    return 'action'
-  if (
-    t.includes('submitted') ||
-    t.includes('application') ||
-    t.includes('returned')
-  )
-    return 'application'
-  if (t.includes('status update')) return 'message'
-  return 'system'
-}
+export {
+  classifyNotification,
+  type AppNotification,
+  type NotificationType,
+} from '@/src/shared/store/notification-store'
 
 export function mapApiNotification(n: NotificationResponse): AppNotification {
   return {

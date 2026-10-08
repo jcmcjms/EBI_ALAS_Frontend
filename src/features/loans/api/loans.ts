@@ -3,10 +3,12 @@ import {
   unwrapApiData,
   type ApiResponse,
   type PagedResult,
-  type LoanSubmissionPayload,
-  type CreatedLoanSummary,
-  type LoanSubmissionResponse,
 } from '@/src/shared/lib/api/types'
+import type {
+  CreatedLoanSummary,
+  LoanSubmissionPayload,
+  LoanSubmissionResponse,
+} from './loan-types'
 import type { LoanDetailResponse } from './loan-review'
 
 export type {

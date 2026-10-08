@@ -1,6 +1,6 @@
 import { DotsThreeVertical } from '@phosphor-icons/react'
 
-import { Button } from '@/src/shared/ui/button'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,12 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/src/shared/ui/dropdown-menu'
+} from '@/src/shared/ui/navigation/dropdown-menu'
 
 import {
   LOAN_SECTION_LABELS,
   type LoanSection,
-} from '@/src/features/loans/utils/loan-transfer-utils'
+} from '@/src/features/loans/model/loan-transfer-utils'
 
 interface TransferActionMenuProps {
   currentSection: LoanSection

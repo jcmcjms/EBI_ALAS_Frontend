@@ -3,8 +3,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/src/shared/ui/sheet'
-import { Badge } from '@/src/shared/ui/badge'
+} from '@/src/shared/ui/navigation/sheet'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import {
   Table,
   TableBody,
@@ -12,10 +12,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/shared/ui/table'
+} from '@/src/shared/ui/data-display/table'
 import { format } from 'date-fns'
 import { useUserAuditLog } from '../hooks/use-users'
-import type { UserResponse } from '@/src/shared/lib/api/types'
+import type { UserResponse } from '../api/users-types'
 
 interface AuditLogModalProps {
   user: UserResponse | null

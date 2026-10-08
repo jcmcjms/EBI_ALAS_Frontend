@@ -4,9 +4,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/shared/ui/select'
-import { Label } from '@/src/shared/ui/label'
-import { BranchMultiSelect } from '@/src/shared/ui/branch-multi-select'
+} from '@/src/shared/ui/forms/select'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { BranchMultiSelect } from '@/src/shared/ui/data-display/branch-multi-select'
 import { BRANCHES } from '@/src/shared/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import type { EditableProfile } from './user-edit-drawer.types'

@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
-import { Label } from '@/src/shared/ui/label'
-import { Checkbox } from '@/src/shared/ui/checkbox'
-import { Badge } from '@/src/shared/ui/badge'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import { Warning, Check } from '@phosphor-icons/react'
 
 import {
@@ -18,7 +18,7 @@ import { FeeDeviationJustification } from './fee-deviation-justification'
 import { DeviationOtherRemarks } from './deviation-other-remarks'
 import { getSection } from '@/src/features/loans/constants/sections'
 import { useActiveLoan } from '../active-loan-context'
-import { useDeviationCatalog } from '@/src/features/admin/users/hooks/use-deviation-catalog'
+import { useDeviationCatalog } from '@/src/shared/lib/api/approval-matrix-shared'
 
 type DeviationsErrors = {
   otherRemarks?: { message?: string }

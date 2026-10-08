@@ -11,8 +11,8 @@ import {
   LEGACY_TOTAL_DEDUCTION_RATE,
   LEGACY_NOTARIAL_FEE,
   DOC_STAMP_EXPOSURE_THRESHOLD,
-} from '@/src/features/loans/utils/loan-approval-utils'
-import { computeMonthlyAmortization } from '@/src/features/loans/utils/loan-computations'
+} from '@/src/features/loans/model/loan-approval-utils'
+import { computeMonthlyAmortization } from '@/src/features/loans/model/loan-computations'
 
 describe('resolveApprovalTermDays', () => {
   it.each([

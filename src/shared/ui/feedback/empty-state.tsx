@@ -4,7 +4,7 @@ import {
   Tray,
   WarningCircle,
 } from '@phosphor-icons/react'
-import { Button } from './button'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { cn } from '@/src/shared/lib/utils'
 
 interface EmptyStateProps {

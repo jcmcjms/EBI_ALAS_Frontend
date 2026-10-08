@@ -2,8 +2,8 @@ import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
   type ApiResponse,
-  type RoleInfo,
 } from '@/src/shared/lib/api/types'
+import type { RoleInfo } from './users-types'
 
 export type { RoleInfo }
 

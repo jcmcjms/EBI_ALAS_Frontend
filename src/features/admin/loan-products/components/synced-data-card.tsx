@@ -5,8 +5,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Label } from '@/src/shared/ui/label'
+} from '@/src/shared/ui/data-display/card'
+import { Label } from '@/src/shared/ui/primitives/label'
 import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 
 interface SyncedDataCardProps {

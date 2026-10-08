@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { LoanDetailResponse } from '../api/loan-review'
-import { mapLoanDetailToFormData } from '../utils/map-detail-to-form'
-import { computeLoanMetrics } from '../utils/loan-approval-utils'
+import { mapLoanDetailToFormData } from '../model/map-detail-to-form'
+import { computeLoanMetrics } from '../model/loan-approval-utils'
 
 function goldenDetail(): LoanDetailResponse {
   return {

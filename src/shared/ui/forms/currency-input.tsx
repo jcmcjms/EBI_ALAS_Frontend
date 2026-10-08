@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import { ArrowsClockwise, WarningCircle } from '@phosphor-icons/react'
 
-import { Button } from '@/src/shared/ui/button'
-import { Input } from '@/src/shared/ui/input'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Input } from '@/src/shared/ui/primitives/input'
 import { cn } from '@/src/shared/lib/utils'
 
 export interface CurrencyInputProps {

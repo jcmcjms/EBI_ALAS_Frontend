@@ -1,6 +1,6 @@
 import { useFormContext, useWatch } from 'react-hook-form'
-import { Input } from '@/src/shared/ui/input'
-import { Label } from '@/src/shared/ui/label'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Label } from '@/src/shared/ui/primitives/label'
 import {
   Buildings,
   LockSimple,
@@ -16,7 +16,7 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from '@/src/shared/ui/select'
+} from '@/src/shared/ui/forms/select'
 
 import { SectionCard } from './section-card'
 import { getSection } from '@/src/features/loans/constants/sections'

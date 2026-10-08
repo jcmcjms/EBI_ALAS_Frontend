@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { CircleNotch, Eye, EyeSlash } from '@phosphor-icons/react'
 import { cn } from '@/src/shared/lib/utils'
-import { Field, FieldGroup, FieldLabel } from '@/src/shared/ui/field'
-import { Input } from '@/src/shared/ui/input'
-import { Button } from '@/src/shared/ui/button'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { Field, FieldGroup, FieldLabel } from '@/src/shared/ui/forms/field'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { extractUserFromToken } from '@/src/shared/lib/jwt'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { loginSchema, type LoginFormData } from '../schemas'
 
 interface LoginFormProps extends React.ComponentProps<'form'> {
@@ -43,7 +43,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
         if (user) {
           setSession(token, user)
           toastSuccess('Login successful')
-          navigate('/dashboard', { replace: true })
+          navigate({ to: '/dashboard', replace: true })
         } else {
           toastError('Something went wrong. Please try again.')
         }

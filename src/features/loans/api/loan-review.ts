@@ -4,9 +4,9 @@ import {
   unwrapApiData,
   type ApiResponse,
 } from '@/src/shared/lib/api/types'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
-import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
-import { LOAN_STATUS_META } from '@/src/features/loans/utils/loan-status'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
+import type { LoanStatus } from '@/src/features/loans/model/loan-status'
+import { LOAN_STATUS_META } from '@/src/features/loans/model/loan-status'
 
 // Re-export all types and document operations
 export * from './loan-review-types'
@@ -185,7 +185,7 @@ export function useSlaPolicy() {
 
 export function useQueueDefault() {
   return useQuery({
-    queryKey: queryKeys.loans.queueDefault,
+    queryKey: loanKeys.queueDefault,
     queryFn: getQueueDefault,
     staleTime: Infinity,
     retry: 1,

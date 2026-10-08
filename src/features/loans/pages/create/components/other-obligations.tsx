@@ -1,5 +1,5 @@
 import { useFormContext, useWatch, type FieldPath } from 'react-hook-form'
-import { Badge } from '@/src/shared/ui/badge'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 
 import { useLoanTransfersContext } from '../loan-transfers-provider'
 import { SectionCard } from './section-card'

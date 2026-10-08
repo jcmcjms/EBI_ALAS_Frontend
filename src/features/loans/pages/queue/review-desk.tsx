@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import {
   ArrowClockwise,
   Clock,
@@ -11,18 +11,18 @@ import {
   WarningCircle,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
-import { Spinner } from '@/src/shared/ui/spinner'
-import { formatWaiting } from '@/src/features/dashboard/components/pending-queue'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
+import { formatWaiting } from '@/src/shared/lib/format'
 import { useSlaPolicy } from '@/src/features/loans/api/loan-review'
 import { useClaimNext, useDeskQueue } from '@/src/features/loans/hooks/use-desk-queue'
-import { summarizeDeskQueue, formatPhp } from '@/src/features/loans/utils/desk-queue'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { summarizeDeskQueue, formatPhp } from '@/src/features/loans/model/desk-queue'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { NextUpCard, StatCard } from './review-desk-cards'
 import { DeskHeader } from './desk-header'
 import { DeskQueueRow, DeskMessage, DeskSkeleton, formatClock } from './review-desk-queue'
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/data-display/card'
 
 export function ReviewDeskPage() {
   const navigate = useNavigate()
@@ -42,7 +42,11 @@ export function ReviewDeskPage() {
 
   useEffect(() => {
     if (desk?.currentClaim) {
-      navigate(`/loans/approval/${desk.currentClaim.loanId}`, { replace: true })
+      navigate({
+        to: '/loans/approval/$loanId',
+        params: { loanId: String(desk.currentClaim.loanId) },
+        replace: true,
+      })
     }
   }, [desk?.currentClaim, navigate])
 
@@ -114,7 +118,7 @@ export function ReviewDeskPage() {
       title="No queue for your role"
       description="Your role works from Loan Monitoring — the Review Desk serves Recommender, Evaluator and Approver queues."
       action={
-        <Button size="sm" onClick={() => navigate('/loans/monitoring')}>
+        <Button size="sm" onClick={() => navigate({ to: '/loans/monitoring' })}>
           Go to Loan Monitoring
         </Button>
       }
@@ -124,7 +128,7 @@ export function ReviewDeskPage() {
       <DeskHeader
         deskLabel={desk.deskLabel}
         scopeDescription={desk.scopeDescription}
-        onBack={() => navigate('/loans/monitoring')}
+        onBack={() => navigate({ to: '/loans/monitoring' })}
       />
 
       <main className="flex flex-1 flex-col">
@@ -153,7 +157,7 @@ export function ReviewDeskPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate('/loans/monitoring')}
+                  onClick={() => navigate({ to: '/loans/monitoring' })}
                 >
                   Loan Monitoring
                 </Button>

@@ -8,7 +8,7 @@ import {
   Stack,
 } from '@phosphor-icons/react'
 
-import { Button } from '@/src/shared/ui/button'
+import { Button } from '@/src/shared/ui/primitives/button'
 
 interface WorkflowStep {
   title: string

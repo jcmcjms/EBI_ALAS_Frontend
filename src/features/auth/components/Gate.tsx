@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 
 interface GateProps {
   permission: string | string[]

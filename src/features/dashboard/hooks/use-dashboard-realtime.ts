@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { dashboardKeys } from '@/src/features/dashboard/api/dashboard-queries'
 
 export function useDashboardRealtime(
   getConnection: () => import('@microsoft/signalr').HubConnection | null,
@@ -13,8 +13,8 @@ export function useDashboardRealtime(
     if (!conn) return
 
     const onDashboardUpdated = () => {
-      qc.invalidateQueries({ queryKey: queryKeys.dashboard.full })
-      qc.invalidateQueries({ queryKey: queryKeys.dashboard.summary })
+      qc.invalidateQueries({ queryKey: dashboardKeys.full })
+      qc.invalidateQueries({ queryKey: dashboardKeys.summary })
     }
 
     conn.on('DashboardUpdated', onDashboardUpdated)

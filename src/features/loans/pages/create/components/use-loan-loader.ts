@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useWatch, type UseFieldArrayReturn, type UseFormReturn } from 'react-hook-form'
-import { toastError } from '@/src/shared/ui/toast'
+import { toastError } from '@/src/shared/ui/feedback/toast'
 import axios from 'axios'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import {
@@ -11,7 +11,7 @@ import type {
   OutstandingLoan,
   PendingLoan,
   WebLoanAccount,
-} from '@/src/shared/lib/api/types'
+} from '../../../api/loan-types'
 import type {
   LoanApplicationFormData,
   CreationTypeCode,

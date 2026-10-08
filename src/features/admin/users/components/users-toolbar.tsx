@@ -5,18 +5,18 @@ import {
   FileArrowUp,
   Funnel,
 } from '@phosphor-icons/react'
-import { Button } from '@/src/shared/ui/button'
-import { Input } from '@/src/shared/ui/input'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Input } from '@/src/shared/ui/primitives/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/shared/ui/select'
+} from '@/src/shared/ui/forms/select'
 import { BRANCHES } from '@/src/shared/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
-import type { RoleInfo } from '@/src/shared/lib/api/types'
+import type { RoleInfo } from '../api/users-types'
 
 export interface UsersToolbarProps {
   searchInput: string

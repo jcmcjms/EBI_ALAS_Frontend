@@ -1,14 +1,14 @@
-import { Input } from '@/src/shared/ui/input'
-import { Label } from '@/src/shared/ui/label'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Label } from '@/src/shared/ui/primitives/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/shared/ui/select'
-import { SignaturePad } from '@/src/shared/ui/signature-pad'
-import { BranchMultiSelect } from '@/src/shared/ui/branch-multi-select'
+} from '@/src/shared/ui/forms/select'
+import { SignaturePad } from '@/src/shared/ui/forms/signature-pad'
+import { BranchMultiSelect } from '@/src/shared/ui/data-display/branch-multi-select'
 import { BRANCHES } from '@/src/shared/lib/api/types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import { BRANCH_SELECT_ITEMS, formatPhp } from './user-create-drawer.types'

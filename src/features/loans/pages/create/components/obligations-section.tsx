@@ -6,8 +6,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/shared/ui/table'
-import { Badge } from '@/src/shared/ui/badge'
+} from '@/src/shared/ui/data-display/table'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 
 import { useLoanTransfersContext } from '../loan-transfers-provider'
 import { TransferActionMenu } from './transfer-action-menu'

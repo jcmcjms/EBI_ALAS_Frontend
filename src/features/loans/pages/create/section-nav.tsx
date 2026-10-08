@@ -1,4 +1,4 @@
-import { Badge } from '@/src/shared/ui/badge'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import { cn } from '@/src/shared/lib/utils'
 
 import type { SectionId, SectionDef } from '@/src/features/loans/constants/sections'

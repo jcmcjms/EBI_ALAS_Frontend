@@ -1,9 +1,10 @@
-import { useNavigate } from 'react-router-dom'
-import { Button } from '@/src/shared/ui/button'
+import { useNavigate, useRouter } from '@tanstack/react-router'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { ShieldSlash, ArrowLeft, House } from '@phosphor-icons/react'
 
 export default function Forbidden() {
   const navigate = useNavigate()
+  const router = useRouter()
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 p-6 text-center">
@@ -26,7 +27,7 @@ export default function Forbidden() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => router.history.back()}
             className="gap-2"
           >
             <ArrowLeft size={16} weight="bold" />
@@ -34,7 +35,7 @@ export default function Forbidden() {
           </Button>
           <Button
             size="sm"
-            onClick={() => navigate('/dashboard', { replace: true })}
+            onClick={() => navigate({ to: '/dashboard', replace: true })}
             className="gap-2"
           >
             <House size={16} weight="bold" />
@@ -49,4 +50,3 @@ export default function Forbidden() {
     </div>
   )
 }
-

@@ -1,4 +1,4 @@
-import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
+import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 
 export type EvaluationVerdict = 'Recommended' | 'NotRecommended'
 

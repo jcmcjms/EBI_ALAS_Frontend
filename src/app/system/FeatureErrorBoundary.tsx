@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
-import { Button } from '@/src/shared/ui/button'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { WarningCircle, ArrowClockwise } from '@phosphor-icons/react'
 
 interface Props {

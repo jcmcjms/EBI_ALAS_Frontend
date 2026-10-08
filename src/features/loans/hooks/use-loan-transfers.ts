@@ -5,14 +5,14 @@ import {
   type Control,
   type FieldPath,
 } from 'react-hook-form'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 
 import {
   LOAN_SECTION_LABELS,
   mapToEbi,
   mapToOutstanding,
   type TransferSourceRow,
-} from '../utils/loan-transfer-utils'
+} from '../model/loan-transfer-utils'
 import type {
   LoanApplicationFormData,
   OutstandingLoan,

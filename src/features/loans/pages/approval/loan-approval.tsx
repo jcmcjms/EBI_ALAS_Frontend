@@ -5,15 +5,15 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/src/shared/ui/card'
-import { Button } from '@/src/shared/ui/button'
+} from '@/src/shared/ui/data-display/card'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@/src/shared/ui/tabs'
-import { Spinner } from '@/src/shared/ui/spinner'
+} from '@/src/shared/ui/navigation/tabs'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 
 import { DeviationRemarksPanel } from './components/deviation-remarks-panel'
 import { IncompleteDocumentsWarning } from '../review/components/incomplete-documents-warning'
@@ -79,7 +79,7 @@ export function LoanApprovalPage() {
         <div className="text-center space-y-4">
           <WarningCircle size={48} className="mx-auto text-destructive" />
           <h2 className="text-xl font-semibold">Invalid Application ID</h2>
-          <Button onClick={() => navigate('/loans/monitoring')}>
+          <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
             Return to Monitoring
           </Button>
         </div>
@@ -115,7 +115,7 @@ export function LoanApprovalPage() {
               ? "You don't have permission to view this loan application. This may be because your account doesn't have the required role, or the application belongs to a different branch. Contact your administrator if you believe this is a mistake."
               : "We couldn't load this loan application. Try again or return to the monitoring page."}
           </p>
-          <Button onClick={() => navigate('/loans/monitoring')}>
+          <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
             Return to Monitoring
           </Button>
         </div>
@@ -133,7 +133,7 @@ export function LoanApprovalPage() {
         canFlagAtDesk={canFlagAtDesk}
         onFlag={() => setFlagOpen(true)}
         groupLoans={groupLoans}
-        onNavigate={navigate}
+        onNavigate={(path: string) => navigate({ href: path })}
       />
 
       <div className="container mx-auto px-6 py-8">
@@ -248,7 +248,12 @@ export function LoanApprovalPage() {
                 currentLoanId={id}
                 allowedTargets={actions.map((a) => a.to)}
                 statusOf={(s) => s}
-                onSelectLoan={(loanId) => navigate(`/loans/approval/${loanId}`)}
+                onSelectLoan={(loanId) =>
+                  navigate({
+                    to: '/loans/approval/$loanId',
+                    params: { loanId: String(loanId) },
+                  })
+                }
               />
             )}
           </aside>

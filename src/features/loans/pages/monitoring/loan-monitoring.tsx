@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearch, useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { MonitoringToolbar } from './components/monitoring-toolbar'
 import { MonitoringTable } from './components/monitoring-table'
 import { LoanDetailsDrawer } from './components/loan-details-drawer'
-import { Card } from '@/src/shared/ui/card'
-import { Textarea } from '@/src/shared/ui/textarea'
-import { Label } from '@/src/shared/ui/label'
+import { Card } from '@/src/shared/ui/data-display/card'
+import { Textarea } from '@/src/shared/ui/primitives/textarea'
+import { Label } from '@/src/shared/ui/primitives/label'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -17,7 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from '@/src/shared/ui/alert-dialog'
+} from '@/src/shared/ui/feedback/alert-dialog'
 import type { MonitoringFilters } from '@/src/features/loans/types/monitoring'
 import type { LoanMonitoringRecord } from '@/src/features/loans/types/monitoring'
 import {
@@ -25,27 +25,34 @@ import {
   useQueueDefault,
 } from '@/src/features/loans/api/loan-review'
 import { cancelLoanApplication } from '@/src/features/loans/api/loan-review'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import {
   queueDefaultForRole,
   sameStatusSet,
 } from '@/src/features/loans/constants/role-queues'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
-import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
-import { LOAN_STATUS_META } from '@/src/features/loans/utils/loan-status'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
+import type { LoanStatus } from '@/src/features/loans/model/loan-status'
+import { LOAN_STATUS_META } from '@/src/features/loans/model/loan-status'
 
 export function LoanMonitoringPage() {
   const role = useAuthStore((s) => s.user?.role)
   const user = useAuthStore((s) => s.user)
   const qc = useQueryClient()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false }) as {
+    status?: string
+    id?: string
+    flagged?: string
+  }
   const slaPolicy = useSlaPolicy()
   const queueDefault = useQueueDefault()
 
   const urlStatus = useMemo(() => {
-    const raw = searchParams.get('status')
+    const raw = search.status
     if (!raw) return null
     return raw.split(',').filter((s): s is LoanStatus => s in LOAN_STATUS_META)
+    // Intentionally read once from the initial URL, matching prior behavior.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const [filters, setFilters] = useState<MonitoringFilters>(() => ({
@@ -71,13 +78,18 @@ export function LoanMonitoringPage() {
   }, [queueDefault.data, urlStatus])
 
   useEffect(() => {
-    const next = new URLSearchParams(searchParams)
-    if (filters.status.length > 0) next.set('status', filters.status.join(','))
-    else next.delete('status')
-    setSearchParams(next, { replace: true })
+    navigate({
+      search: ((prev: Record<string, unknown>) => {
+        const next = { ...prev }
+        if (filters.status.length > 0) next.status = filters.status.join(',')
+        else delete next.status
+        return next
+      }) as never,
+      replace: true,
+    })
   }, [filters.status])
 
-  const initialId = Number(searchParams.get('id'))
+  const initialId = Number(search.id)
   const [selectedLoanId, setSelectedLoanId] = useState<number | null>(
     Number.isFinite(initialId) && initialId > 0 ? initialId : null,
   )
@@ -200,7 +212,7 @@ export function LoanMonitoringPage() {
                     reason: '',
                     pending: false,
                   })
-                  qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+                  qc.invalidateQueries({ queryKey: loanKeys.all })
                 } catch (e) {
                   toastError(
                     e instanceof Error ? e.message : 'Could not cancel.',

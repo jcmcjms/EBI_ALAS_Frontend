@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { ArrowArcLeft } from '@phosphor-icons/react'
 import {
   Card,
@@ -7,9 +7,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Button } from '@/src/shared/ui/button'
-import { Badge } from '@/src/shared/ui/badge'
+} from '@/src/shared/ui/data-display/card'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import { formatRelativeTime } from '@/src/shared/lib/format'
 import { richTextToPlainText } from '@/src/shared/lib/rich-text'
 import type { PushBackItem } from '../types'
@@ -52,11 +52,11 @@ export function PushBack({ data }: PushBackProps) {
             {displayData.map((item) => (
               <li
                 key={item.lamId}
-                onClick={() => navigate('/loans/monitoring')}
+                onClick={() => navigate({ to: '/loans/monitoring' })}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    navigate('/loans/monitoring')
+                    navigate({ to: '/loans/monitoring' })
                   }
                 }}
                 tabIndex={0}
@@ -97,7 +97,7 @@ export function PushBack({ data }: PushBackProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/loans/monitoring')}
+            onClick={() => navigate({ to: '/loans/monitoring' })}
             className="w-full text-sm"
           >
             View all push backs

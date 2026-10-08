@@ -1,8 +1,8 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { Download, FileArrowUp, WarningCircle } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Sheet,
   SheetContent,
@@ -10,8 +10,8 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/src/shared/ui/sheet'
-import { Spinner } from '@/src/shared/ui/spinner'
+} from '@/src/shared/ui/navigation/sheet'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import {
   downloadImportTemplate,
   importUsers,

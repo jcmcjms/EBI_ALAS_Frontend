@@ -11,9 +11,9 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/src/shared/ui/accordion'
-import { Button } from '@/src/shared/ui/button'
-import { RichText } from '@/src/shared/ui/rich-text'
+} from '@/src/shared/ui/navigation/accordion'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { RichText } from '@/src/shared/ui/data-display/rich-text'
 import type { RevisionRequest } from '../types/revision-request'
 import type { SectionId } from '@/src/features/loans/constants/sections'
 

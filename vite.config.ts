@@ -6,7 +6,13 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [
       tailwindcss(),
-    react()],
+    react({
+      // React Compiler is configured via babel plugins for Vite.
+      // Cast keeps vitest/config plugin typings happy.
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    } as Parameters<typeof react>[0])],
   resolve: {
     alias: {
       '@': import.meta.dirname,

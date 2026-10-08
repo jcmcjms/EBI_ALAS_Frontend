@@ -5,13 +5,13 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from '@/src/shared/ui/sheet'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
-import { Separator } from '@/src/shared/ui/separator'
-import { ScrollArea } from '@/src/shared/ui/scroll-area'
+} from '@/src/shared/ui/navigation/sheet'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Separator } from '@/src/shared/ui/data-display/separator'
+import { ScrollArea } from '@/src/shared/ui/data-display/scroll-area'
 import { Clock, Code, Devices, Globe, UserCircle } from '@phosphor-icons/react'
-import type { AuditLogRecord } from '@/src/shared/lib/api/types'
+import type { AuditLogRecord } from '../api/audit-log-types'
 
 interface Props {
   log: AuditLogRecord | null

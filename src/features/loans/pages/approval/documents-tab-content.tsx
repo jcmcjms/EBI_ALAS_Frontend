@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/src/shared/ui/card'
-import { Button } from '@/src/shared/ui/button'
+} from '@/src/shared/ui/data-display/card'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { AttachmentsPanel } from './components/attachments-panel'
 
 interface DocumentsTabContentProps {

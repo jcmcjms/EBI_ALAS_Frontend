@@ -11,7 +11,7 @@ import {
   type LoanParamsCarrier,
   type NthpCarrier,
   type OutstandingLoanCarrier,
-} from '@/src/features/loans/utils/loan-computations'
+} from '@/src/features/loans/model/loan-computations'
 import type { LoanParameters } from '@/src/features/loans/schemas/schema'
 
 export function useLoanComputations(

@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, useState } from 'react'
+import { useMemo, useState, type Ref } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
 import {
   FilePdf,
@@ -9,8 +9,8 @@ import {
   MagnifyingGlassPlus,
 } from '@phosphor-icons/react'
 
-import { Button } from '@/src/shared/ui/button'
-import { FormTabStrip } from '@/src/shared/ui/form-tab-strip'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { FormTabStrip } from '@/src/shared/ui/forms/form-tab-strip'
 import { cn } from '@/src/shared/lib/utils'
 import { SectionCard } from './section-card'
 import { getSection } from '@/src/features/loans/constants/sections'
@@ -18,7 +18,7 @@ import type {
   ClientFormData,
   LoanApplicationFormData,
 } from '@/src/features/loans/schemas/schema'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import {
   useSignatureChain,
   withDraftEncoder,
@@ -28,13 +28,15 @@ import { ApprovalFormViewport } from '@/src/features/loans/components/approval-f
 import { num } from './approval-form-preview-utils'
 import { SingleLoanApprovalForm } from './single-loan-approval-form'
 
-export const ApprovalFormPreview = forwardRef<
-  HTMLDivElement,
-  {
-    onGeneratePdf?: () => void
-    lamIdByLoanNo?: Record<string, string>
-  }
->(({ onGeneratePdf, lamIdByLoanNo }, ref) => {
+export function ApprovalFormPreview({
+  onGeneratePdf,
+  lamIdByLoanNo,
+  ref,
+}: {
+  onGeneratePdf?: () => void
+  lamIdByLoanNo?: Record<string, string>
+  ref?: Ref<HTMLDivElement>
+}) {
   const { control } = useFormContext<LoanApplicationFormData>()
 
   const watchedLoans = useWatch({ control, name: 'loans' }) ?? []
@@ -258,6 +260,4 @@ export const ApprovalFormPreview = forwardRef<
       </div>
     </SectionCard>
   )
-})
-
-ApprovalFormPreview.displayName = 'ApprovalFormPreview'
+}

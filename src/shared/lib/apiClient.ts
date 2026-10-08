@@ -1,10 +1,11 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { toastError } from '@/src/shared/ui/toast'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { toastError } from '@/src/shared/ui/feedback/toast'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { decodeJwtPayload } from '@/src/shared/lib/jwt.ts'
+import { env } from '@/src/shared/config/env'
 
-const baseURL = import.meta.env.DEV ? '' : import.meta.env.VITE_API_BASE_URL
+const baseURL = env.apiBaseUrl
 
 const CSRF_HEADER = 'X-XSRF-TOKEN'
 
@@ -104,7 +105,7 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     if (xsrfToken) {
       config.headers[CSRF_HEADER] = xsrfToken
     } else if (accessToken) {
-      if (import.meta.env.DEV) {
+      if (env.isDev) {
         console.warn(
           '[CSRF] Authenticated request without XsrfToken claim — backend will reject.',
           { method, url: config.url },
@@ -133,7 +134,7 @@ apiClient.interceptors.response.use(
     ) {
       const url = originalRequest.url ?? '(unknown)'
       const method = (originalRequest.method ?? '?').toUpperCase()
-      if (import.meta.env.DEV) {
+      if (env.isDev) {
         console.warn(
           `[CSRF] Backend rejected ${method} ${url} as CSRF_VALIDATION_FAILED. ` +
             'Attempting silent refresh to mint a fresh XsrfToken claim.',
@@ -155,7 +156,7 @@ apiClient.interceptors.response.use(
         headers.Authorization = `Bearer ${newToken}`
         const newXsrf = extractXsrfToken(newToken)
         if (!newXsrf) {
-          if (import.meta.env.DEV) {
+          if (env.isDev) {
             console.error(
               '[CSRF] Refreshed access token still has no XsrfToken claim. ' +
                 'Backend must include the claim in issued access JWTs.',

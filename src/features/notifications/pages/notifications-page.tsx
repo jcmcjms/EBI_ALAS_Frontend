@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import {
   Check,
   GearSix,
@@ -8,9 +8,9 @@ import {
   Rows,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
-import { Card } from '@/src/shared/ui/card'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Card } from '@/src/shared/ui/data-display/card'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -19,8 +19,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/src/shared/ui/dropdown-menu'
-import { Input } from '@/src/shared/ui/input'
+} from '@/src/shared/ui/navigation/dropdown-menu'
+import { Input } from '@/src/shared/ui/primitives/input'
 import { type NotificationType } from '../types'
 import {
   useNotificationInbox,
@@ -84,7 +84,7 @@ export function NotificationsPage() {
     if (autoRead) {
       markReadMutation.mutate(id)
     }
-    if (link) navigate(link)
+    if (link) navigate({ href: link })
   }
 
   const setQueryAndReset = (next: string) => {

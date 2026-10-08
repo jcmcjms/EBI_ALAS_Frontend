@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { loanReviewKeys } from '@/src/features/loans/api/loan-review'
-import { approvalMatrixKeys } from '@/src/features/admin/users/api/approval-matrix'
+import { approvalMatrixKeys } from '@/src/shared/lib/api/approval-matrix-shared'
 
 interface VerifyDocumentsResult {
   complete: boolean
@@ -22,7 +22,7 @@ export function useVerifyDocuments(loanId: number | null) {
       return unwrapApiData(res.data)
     },
     onSuccess: (r) => {
-      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
 
       if (loanId !== null) {
         qc.invalidateQueries({ queryKey: approvalMatrixKeys.routing(loanId) })

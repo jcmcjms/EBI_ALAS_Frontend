@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { SignOut } from '@phosphor-icons/react'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
-import { Button } from '@/src/shared/ui/button'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { changePasswordSchema, type ChangePasswordFormData } from '../schemas'
 import { PasswordChangeForm } from './password-change-form'
 
 export default function ChangePassword() {
   const navigate = useNavigate()
+  const router = useRouter()
   const mustChange = useAuthStore((s) => s.user?.mustChangePassword ?? false)
   const clearSession = useAuthStore((s) => s.clearSession)
 
@@ -41,7 +42,7 @@ export default function ChangePassword() {
 
   const signOut = () => {
     clearSession()
-    navigate('/login', { replace: true })
+    navigate({ to: '/login', replace: true })
   }
 
   const onSubmit = async (data: ChangePasswordFormData) => {
@@ -53,7 +54,7 @@ export default function ChangePassword() {
 
       toastSuccess('Password changed. Sign in with your new password.')
       clearSession()
-      navigate('/login', { replace: true })
+      navigate({ to: '/login', replace: true })
     } catch (error) {
       const status = (error as { response?: { status?: number } })?.response
         ?.status
@@ -108,7 +109,7 @@ export default function ChangePassword() {
             capsOn={capsOn}
             newPassword={newPassword}
             confirmPassword={confirmPassword}
-            onBack={() => navigate(-1)}
+            onBack={() => router.history.back()}
           />
         </div>
       </main>

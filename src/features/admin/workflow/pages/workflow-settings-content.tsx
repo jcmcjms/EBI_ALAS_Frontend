@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { GitBranch, Warning } from '@phosphor-icons/react'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 
 import {
   Card,
@@ -9,10 +9,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Switch } from '@/src/shared/ui/switch'
-import { Badge } from '@/src/shared/ui/badge'
-import { Skeleton } from '@/src/shared/ui/skeleton'
+} from '@/src/shared/ui/data-display/card'
+import { Switch } from '@/src/shared/ui/primitives/switch'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +22,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/src/shared/ui/alert-dialog'
+} from '@/src/shared/ui/feedback/alert-dialog'
 
 import {
   getLoanCountByStatus,

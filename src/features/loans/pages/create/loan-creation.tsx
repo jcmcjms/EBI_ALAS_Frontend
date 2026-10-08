@@ -3,15 +3,15 @@ import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import type { FieldErrors, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
+import { useSearch } from '@tanstack/react-router'
 import { ArrowUp } from '@phosphor-icons/react'
-import { toastError } from '@/src/shared/ui/toast'
+import { toastError } from '@/src/shared/ui/feedback/toast'
 
-import { Button } from '@/src/shared/ui/button'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
-import { WEBLOAN_BRANCHES } from '@/src/shared/lib/api/types'
-import type { PreLoanItem } from '@/src/shared/lib/api/types'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { useAuthStore } from '@/src/shared/store/auth-store'
+import { WEBLOAN_BRANCHES } from '../../api/loan-types'
+import type { PreLoanItem } from '../../api/loan-types'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { getRevisionRequests, getLoanDetail } from '@/src/features/loans/api/loan-review'
 import { RevisionFeedbackBanner } from '@/src/features/loans/components/revision-feedback-banner'
 import { LoanCreationHeader } from './loan-creation-header'
@@ -25,8 +25,8 @@ import {
 import { ActiveLoanProvider } from './active-loan-context'
 import { LoanTransfersProvider } from './loan-transfers-provider'
 import { useCreateLoan } from '@/src/features/loans/hooks/use-create-loan'
-import { mapFormToSubmissionPayload } from '@/src/features/loans/utils/map-form-to-request'
-import { mapLoanDetailToFormData } from '@/src/features/loans/utils/map-detail-to-form'
+import { mapFormToSubmissionPayload } from '@/src/features/loans/model/map-form-to-request'
+import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
 
 import {
   SECTIONS,
@@ -40,19 +40,19 @@ import { LoanFormSections } from './loan-form-sections'
 const SCROLL_OFFSET_PX = 96
 
 export function LoanCreationPage() {
-  const [searchParams] = useSearchParams()
-  const editLoanIdRaw = Number(searchParams.get('loanId'))
+  const search = useSearch({ strict: false }) as { loanId?: string }
+  const editLoanIdRaw = Number(search.loanId)
   const editLoanId =
     Number.isFinite(editLoanIdRaw) && editLoanIdRaw > 0 ? editLoanIdRaw : null
 
   const revisionRequests = useQuery({
-    queryKey: queryKeys.loans.revisionRequests(editLoanId ?? 0),
+    queryKey: loanKeys.revisionRequests(editLoanId ?? 0),
     queryFn: () => getRevisionRequests(editLoanId ?? 0),
     enabled: editLoanId != null,
   })
 
   const existingLoan = useQuery({
-    queryKey: queryKeys.loans.review.detail(editLoanId ?? 0),
+    queryKey: loanKeys.review.detail(editLoanId ?? 0),
     queryFn: () => getLoanDetail(editLoanId!),
     enabled: editLoanId != null,
     staleTime: 30_000,

@@ -6,9 +6,9 @@ import {
   Check,
   WarningCircle,
 } from '@phosphor-icons/react'
-import { Button } from '@/src/shared/ui/button'
-import { Field, FieldGroup, FieldLabel } from '@/src/shared/ui/field'
-import { Input } from '@/src/shared/ui/input'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Field, FieldGroup, FieldLabel } from '@/src/shared/ui/forms/field'
+import { Input } from '@/src/shared/ui/primitives/input'
 import type { ChangePasswordFormData } from '../schemas'
 import { PasswordStrengthIndicator } from './password-strength-indicator'
 

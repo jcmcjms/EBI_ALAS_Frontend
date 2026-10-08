@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { Desktop, DeviceMobile, Key, ShieldCheck } from '@phosphor-icons/react'
 import {
   AlertDialog,
@@ -10,15 +10,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/src/shared/ui/alert-dialog'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+} from '@/src/shared/ui/feedback/alert-dialog'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
+} from '@/src/shared/ui/data-display/card'
 import { formatRelativeTime } from '@/src/shared/lib/format'
 import {
   useAccountProfile,
@@ -103,7 +103,7 @@ export function SecurityTab() {
           </div>
           <Button
             className="gap-2"
-            onClick={() => navigate('/change-password')}
+            onClick={() => navigate({ to: '/change-password' })}
           >
             <ShieldCheck size={16} weight="bold" /> Change password
           </Button>

@@ -9,11 +9,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/src/shared/ui/dialog'
-import { Button } from '@/src/shared/ui/button'
-import { Checkbox } from '@/src/shared/ui/checkbox'
-import { Label } from '@/src/shared/ui/label'
-import { Textarea } from '@/src/shared/ui/textarea'
+} from '@/src/shared/ui/feedback/dialog'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { Textarea } from '@/src/shared/ui/primitives/textarea'
 import {
   SECTIONS,
   type SectionDef,

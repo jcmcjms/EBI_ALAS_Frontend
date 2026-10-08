@@ -1,11 +1,11 @@
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
+} from '@/src/shared/ui/data-display/card'
 import { LOAN_STATUS_META } from '@/src/shared/lib/api/types'
 import { cn } from '@/src/shared/lib/utils'
 import { EmptyState, ErrorState, LoadingState } from './account-states'

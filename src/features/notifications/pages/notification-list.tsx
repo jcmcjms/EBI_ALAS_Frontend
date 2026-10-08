@@ -8,16 +8,16 @@ import {
   type Icon,
 } from '@phosphor-icons/react'
 
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from '@/src/shared/ui/dropdown-menu'
+} from '@/src/shared/ui/navigation/dropdown-menu'
 import { cn } from '@/src/shared/lib/utils'
 import {
   formatRelativeTime,

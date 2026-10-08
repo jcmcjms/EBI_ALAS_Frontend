@@ -6,9 +6,9 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from '@/src/shared/ui/sheet'
-import { Button } from '@/src/shared/ui/button'
-import { toastError } from '@/src/shared/ui/toast'
+} from '@/src/shared/ui/navigation/sheet'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { toastError } from '@/src/shared/ui/feedback/toast'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import { useRoles } from '../hooks/use-roles'
 import { useApprovalAuthorities } from '../hooks/use-approval-authorities'

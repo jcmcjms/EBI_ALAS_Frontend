@@ -1,19 +1,19 @@
 import { memo, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { WarningCircle } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
+} from '@/src/shared/ui/data-display/card'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
 import { cn } from '@/src/shared/lib/utils'
 import { initialsOf } from '@/src/shared/lib/name-utils'
-import { formatWaiting, waitingMinutes } from './pending-queue'
+import { formatWaiting, waitingMinutes } from '@/src/shared/lib/format'
 import type { IncompleteDocsQueueItem } from '../types'
 
 interface Props {
@@ -60,7 +60,7 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                 <li key={item.lamId}>
                   <button
                     type="button"
-                    onClick={() => navigate(`/loans/approval/${item.id}`)}
+                    onClick={() => navigate({ to: '/loans/approval/$loanId', params: { loanId: String(item.id) } })}
                     className={cn(
                       'flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/50',
                       'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
@@ -122,7 +122,7 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
             variant="ghost"
             size="sm"
             className="w-full text-sm"
-            onClick={() => navigate('/loans/monitoring?flagged=true')}
+            onClick={() => navigate({ to: '/loans/monitoring', search: { flagged: 'true' } })}
           >
             View all {data.length} flagged files
           </Button>

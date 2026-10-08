@@ -2,13 +2,15 @@ import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
   type ApiResponse,
-  type LoanProductImportResult,
   type LoanProductResponse,
-  type LoanProductSyncResult,
-  type UpdateLoanProductPayload,
 } from '@/src/shared/lib/api/types'
+import type {
+  LoanProductImportResult,
+  LoanProductSyncResult,
+  UpdateLoanProductPayload,
+} from './loan-product-types'
 
-export type { LoanProductImportResult } from '@/src/shared/lib/api/types'
+export type { LoanProductImportResult } from './loan-product-types'
 
 export async function getLoanProducts(): Promise<LoanProductResponse[]> {
   const res =

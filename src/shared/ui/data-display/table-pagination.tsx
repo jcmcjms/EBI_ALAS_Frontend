@@ -1,4 +1,4 @@
-import { Button } from '@/src/shared/ui/button'
+import { Button } from '@/src/shared/ui/primitives/button'
 
 interface TablePaginationProps {
   firstRow: number

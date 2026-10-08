@@ -1,20 +1,20 @@
 import { useCallback, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { useNavigate } from '@tanstack/react-router'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 
 import { loanApi } from '@/src/features/loans/api/loans'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { generateUUID } from '@/src/shared/lib/utils'
 import {
   workflowKeys,
   type WorkflowConfigurationDto,
-} from '@/src/features/admin/workflow/api/workflow'
+} from '@/src/shared/lib/api/workflow-shared'
 import type {
   CreateLoanPayload,
   LoanSubmissionResponse,
-} from '@/src/shared/lib/api/types'
+} from '../api/loan-types'
 
 export function useCreateLoan() {
   const queryClient = useQueryClient()
@@ -32,7 +32,7 @@ export function useCreateLoan() {
     retry: 1,
 
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.loans.all })
+      queryClient.invalidateQueries({ queryKey: loanKeys.all })
 
       const workflow = queryClient.getQueryData<WorkflowConfigurationDto>(
         workflowKeys.configuration,
@@ -44,7 +44,7 @@ export function useCreateLoan() {
         `Loan application ${response.applicationGroupNo} submitted for ${destination}.`,
       )
 
-      navigate('/loans/monitoring')
+      navigate({ to: '/loans/monitoring' })
     },
 
     onError: (error) => {

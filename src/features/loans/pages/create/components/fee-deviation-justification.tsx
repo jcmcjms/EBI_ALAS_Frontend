@@ -1,5 +1,5 @@
 import { Receipt } from '@phosphor-icons/react'
-import { Label } from '@/src/shared/ui/label'
+import { Label } from '@/src/shared/ui/primitives/label'
 import type { UseFormRegister, FieldPath } from 'react-hook-form'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 

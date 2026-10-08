@@ -8,27 +8,27 @@ import {
   WarningCircle,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
+} from '@/src/shared/ui/data-display/card'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/shared/ui/select'
-import { Skeleton } from '@/src/shared/ui/skeleton'
+} from '@/src/shared/ui/forms/select'
+import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
 
 import type {
   LoanApplicationFormData,
 } from '@/src/features/loans/schemas/schema'
-import type { PreLoanItem, WebLoanAccount } from '@/src/shared/lib/api/types'
+import type { PreLoanItem, WebLoanAccount } from '../../../api/loan-types'
 import { useLoanLoader } from './use-loan-loader'
 import { LoanSelectionList } from './loan-selection-list'
 

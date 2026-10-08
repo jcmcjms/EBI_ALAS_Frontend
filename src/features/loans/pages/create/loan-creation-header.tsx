@@ -1,6 +1,6 @@
 import { IdentificationBadge, LockSimple } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
-import type { PreLoanItem } from '@/src/shared/lib/api/types'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import type { PreLoanItem } from '../../api/loan-types'
 
 interface LoanCreationHeaderProps {
   userBranchId: string

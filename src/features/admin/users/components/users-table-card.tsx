@@ -1,16 +1,16 @@
 import { FlexRender } from '@tanstack/react-table'
 import { Users } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Spinner } from '@/src/shared/ui/spinner'
-import { EmptyState, ErrorState } from '@/src/shared/ui/empty-state'
+} from '@/src/shared/ui/data-display/card'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
+import { EmptyState, ErrorState } from '@/src/shared/ui/feedback/empty-state'
 import {
   Table,
   TableBody,
@@ -18,8 +18,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/shared/ui/table'
-import { TablePagination } from '@/src/shared/ui/table-pagination'
+} from '@/src/shared/ui/data-display/table'
+import { TablePagination } from '@/src/shared/ui/data-display/table-pagination'
 import { UsersToolbar, type UsersToolbarProps } from './users-toolbar'
 
 interface UsersTableCardProps {

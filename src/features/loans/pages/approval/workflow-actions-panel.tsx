@@ -13,11 +13,11 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/src/shared/ui/card'
-import { Button } from '@/src/shared/ui/button'
-import { RichTextEditor } from '@/src/shared/ui/rich-text-editor'
-import { RichText } from '@/src/shared/ui/rich-text'
-import { Label } from '@/src/shared/ui/label'
+} from '@/src/shared/ui/data-display/card'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { RichTextEditor } from '@/src/shared/ui/data-display/rich-text-editor'
+import { RichText } from '@/src/shared/ui/data-display/rich-text'
+import { Label } from '@/src/shared/ui/primitives/label'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/src/shared/ui/alert-dialog'
+} from '@/src/shared/ui/feedback/alert-dialog'
 import { ApplicationTimeline } from '@/src/features/loans/components/application-timeline'
 import { cn } from '@/src/shared/lib/utils'
 

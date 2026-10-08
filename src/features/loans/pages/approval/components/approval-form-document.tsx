@@ -1,10 +1,10 @@
-import { forwardRef, memo } from 'react'
-import { RichText } from '@/src/shared/ui/rich-text'
+import { memo, type Ref } from 'react'
+import { RichText } from '@/src/shared/ui/data-display/rich-text'
 import { cn } from '@/src/shared/lib/utils'
 import {
   parseProductCode,
   resolveLoanProductDisplayName,
-} from '@/src/features/loans/utils/loan-product-display'
+} from '@/src/features/loans/model/loan-product-display'
 import {
   computeLoanMetrics,
   buildProductLine,
@@ -14,9 +14,9 @@ import {
   isBlankIncomingLoan,
   printableObligationRows,
   type ProductFeeConfig,
-} from '@/src/features/loans/utils/loan-approval-utils'
+} from '@/src/features/loans/model/loan-approval-utils'
 import { ApprovalFormSheet } from '@/src/features/loans/components/approval-form-sheet'
-import { useLoanProduct } from '@/src/features/admin/loan-products/hooks/use-loan-products'
+import { useLoanProduct } from '@/src/shared/lib/api/loan-product-api'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import type { SignatureSlotDto } from '@/src/features/loans/api/signatures'
 import type {
@@ -48,22 +48,16 @@ interface ApprovalFormDocumentProps {
   documentRemarks?: DocumentRemarkDto[]
 }
 
-const ApprovalFormDocumentBase = forwardRef<
-  HTMLDivElement,
-  ApprovalFormDocumentProps
->(
-  (
-    {
-      data,
-      loanIndex = 0,
-      catLoanClass,
-      signatureSlots,
-      actions,
-      deviations: deviationThreads,
-      documentRemarks,
-    },
-    ref,
-  ) => {
+function ApprovalFormDocumentBase({
+  data,
+  loanIndex = 0,
+  catLoanClass,
+  signatureSlots,
+  actions,
+  deviations: deviationThreads,
+  documentRemarks,
+  ref,
+}: ApprovalFormDocumentProps & { ref?: Ref<HTMLDivElement> }) {
     const client = data?.client ?? ({} as LoanApplicationFormData['client'])
     const branchType =
       data?.branchType ?? ({} as LoanApplicationFormData['branchType'])
@@ -274,8 +268,6 @@ const ApprovalFormDocumentBase = forwardRef<
         </ApprovalFormSheet>
       </div>
     )
-  },
-)
-ApprovalFormDocumentBase.displayName = 'ApprovalFormDocument'
+}
 
 export const ApprovalFormDocument = memo(ApprovalFormDocumentBase)

@@ -10,9 +10,9 @@ import {
   ArrowCounterClockwise,
 } from '@phosphor-icons/react'
 
-import { Button } from '@/src/shared/ui/button'
-import { Badge } from '@/src/shared/ui/badge'
-import { Spinner } from '@/src/shared/ui/spinner'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,9 +23,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/src/shared/ui/alert-dialog'
-import { Label } from '@/src/shared/ui/label'
-import { Textarea } from '@/src/shared/ui/textarea'
+} from '@/src/shared/ui/feedback/alert-dialog'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { Textarea } from '@/src/shared/ui/primitives/textarea'
 
 import {
   getChecklistDocuments,

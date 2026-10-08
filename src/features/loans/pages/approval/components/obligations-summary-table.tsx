@@ -1,5 +1,5 @@
 import { cn } from '@/src/shared/lib/utils'
-import { computeLoanMetrics } from '@/src/features/loans/utils/loan-approval-utils'
+import { computeLoanMetrics } from '@/src/features/loans/model/loan-approval-utils'
 
 type LoanMetrics = ReturnType<typeof computeLoanMetrics>
 import {

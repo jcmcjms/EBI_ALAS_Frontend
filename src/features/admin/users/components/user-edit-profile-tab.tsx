@@ -4,11 +4,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/shared/ui/select'
-import { Input } from '@/src/shared/ui/input'
-import { Label } from '@/src/shared/ui/label'
-import { BranchMultiSelect } from '@/src/shared/ui/branch-multi-select'
-import { BRANCHES, type UserResponse } from '@/src/shared/lib/api/types'
+} from '@/src/shared/ui/forms/select'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { BranchMultiSelect } from '@/src/shared/ui/data-display/branch-multi-select'
+import { BRANCHES } from '@/src/shared/lib/api/types'
+import type { UserResponse } from '../api/users-types'
 import type { EditableProfile } from './user-edit-drawer.types'
 import type { ApprovalAuthorityDto } from '../api/approval-matrix'
 

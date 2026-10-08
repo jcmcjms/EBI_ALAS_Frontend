@@ -1,16 +1,18 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
-  type ActiveLoansResponse,
   type ApiResponse,
-  type CatLoanClassResponse,
-  type CocreeStatusResponse,
-  type OutstandingLoansResponse,
-  type PendingLoanResponse,
-  type PreLoansQuery,
-  type PreLoansResponse,
-  type WebLoanCisSearchResponse,
 } from '@/src/shared/lib/api/types'
+import type {
+  ActiveLoansResponse,
+  CatLoanClassResponse,
+  CocreeStatusResponse,
+  OutstandingLoansResponse,
+  PendingLoanResponse,
+  PreLoansQuery,
+  PreLoansResponse,
+  WebLoanCisSearchResponse,
+} from './loan-types'
 
 export async function getWebLoanByCis(
   cisNo: string,

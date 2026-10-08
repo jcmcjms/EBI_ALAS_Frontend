@@ -3,9 +3,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Badge } from '@/src/shared/ui/badge'
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
+} from '@/src/shared/ui/data-display/card'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
 import { initialsOf } from '@/src/shared/lib/format'
 import type { NowServingItem } from '../types'
 

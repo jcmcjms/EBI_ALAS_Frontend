@@ -5,8 +5,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/shared/ui/table'
-import { Input } from '@/src/shared/ui/input'
+} from '@/src/shared/ui/data-display/table'
+import { Input } from '@/src/shared/ui/primitives/input'
 import { Bank } from '@phosphor-icons/react'
 import { TransferActionMenu } from './transfer-action-menu'
 import { SubSectionHeading } from './section-card'

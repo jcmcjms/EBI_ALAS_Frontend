@@ -4,11 +4,11 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Input } from '@/src/shared/ui/input'
-import { Label } from '@/src/shared/ui/label'
+} from '@/src/shared/ui/data-display/card'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Label } from '@/src/shared/ui/primitives/label'
 import { LockSimple, Bank, UserCircle } from '@phosphor-icons/react'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 
 export function ApplicationDetailsSection() {
   const { register } = useFormContext()

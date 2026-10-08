@@ -5,22 +5,22 @@ import { cva, type VariantProps } from 'class-variance-authority'
 
 import { useIsMobile } from '@/src/shared/hooks/use-mobile'
 import { cn } from '@/src/shared/lib/utils'
-import { Button } from '@/src/shared/ui/button'
-import { Input } from '@/src/shared/ui/input'
-import { Separator } from '@/src/shared/ui/separator'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Separator } from '@/src/shared/ui/data-display/separator'
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/src/shared/ui/sheet'
-import { Skeleton } from '@/src/shared/ui/skeleton'
+} from '@/src/shared/ui/navigation/sheet'
+import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/src/shared/ui/tooltip'
+} from '@/src/shared/ui/data-display/tooltip'
 import { SidebarIcon } from '@phosphor-icons/react'
 
 import {

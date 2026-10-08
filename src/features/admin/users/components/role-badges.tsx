@@ -1,4 +1,4 @@
-import { Badge } from '@/src/shared/ui/badge'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 
 export function stripRoleDisplayName(displayName: string): string {
   return displayName.replace(/\s*\(.*\)\s*$/, '').trim()

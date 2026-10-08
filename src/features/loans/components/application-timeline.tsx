@@ -13,15 +13,15 @@ import {
   CaretDown,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
-import { Skeleton } from '@/src/shared/ui/skeleton'
-import { Alert, AlertDescription, AlertTitle } from '@/src/shared/ui/alert'
-import { RichText } from '@/src/shared/ui/rich-text'
-import { EmptyState } from '@/src/shared/ui/empty-state'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
+import { Alert, AlertDescription, AlertTitle } from '@/src/shared/ui/feedback/alert'
+import { RichText } from '@/src/shared/ui/data-display/rich-text'
+import { EmptyState } from '@/src/shared/ui/feedback/empty-state'
 import { getLoanTimeline, type TimelineEvent } from '../api/loan-review'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
-import { describeEvent, relativeTime } from '../utils/loan-timeline'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
+import { describeEvent, relativeTime } from '../model/loan-timeline'
 import { cn } from '@/src/shared/lib/utils'
 
 const PAGE_SIZE = 15
@@ -77,7 +77,7 @@ export function ApplicationTimeline({
   const [newestFirst, setNewestFirst] = useState(true)
 
   const query = useInfiniteQuery({
-    queryKey: queryKeys.loans.review.timeline(loanId),
+    queryKey: loanKeys.review.timeline(loanId),
     queryFn: ({ pageParam }) => getLoanTimeline(loanId, pageParam, PAGE_SIZE),
     initialPageParam: 1,
     getNextPageParam: (last) => {

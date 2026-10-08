@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { GearSix } from '@phosphor-icons/react'
-import { Button } from '@/src/shared/ui/button'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@/src/shared/ui/tabs'
+} from '@/src/shared/ui/navigation/tabs'
 import { OverviewTab } from '../components/overview-tab'
 import { SecurityTab } from '../components/security-tab'
 import { ActivityTab } from '../components/activity-tab'

@@ -21,3 +21,17 @@ export function initialsOf(name: string): string {
     .map((part) => part[0]!.toUpperCase())
     .join('')
 }
+
+export function formatWaiting(mins: number): string {
+  if (mins < 60) return `${mins}m`
+  const hours = Math.floor(mins / 60)
+  const remainingMins = mins % 60
+  if (hours < 24) return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`
+  const days = Math.floor(hours / 24)
+  const remainingHours = hours % 24
+  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`
+}
+
+export function waitingMinutes(date: string): number {
+  return Math.floor((Date.now() - new Date(date).getTime()) / 60_000)
+}

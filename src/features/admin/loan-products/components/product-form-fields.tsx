@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { WarningCircle } from '@phosphor-icons/react'
 
-import { Input } from '@/src/shared/ui/input'
-import { Label } from '@/src/shared/ui/label'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Label } from '@/src/shared/ui/primitives/label'
 import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 
 export const productFormSchema = z

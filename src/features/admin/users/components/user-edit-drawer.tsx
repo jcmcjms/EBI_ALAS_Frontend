@@ -6,16 +6,16 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from '@/src/shared/ui/sheet'
-import { Button } from '@/src/shared/ui/button'
+} from '@/src/shared/ui/navigation/sheet'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@/src/shared/ui/tabs'
-import { toastError } from '@/src/shared/ui/toast'
-import type { UserResponse } from '@/src/shared/lib/api/types'
+} from '@/src/shared/ui/navigation/tabs'
+import { toastError } from '@/src/shared/ui/feedback/toast'
+import type { UserResponse } from '../api/users-types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import { useRoles } from '../hooks/use-roles'
 import { useApprovalAuthorities } from '../hooks/use-approval-authorities'

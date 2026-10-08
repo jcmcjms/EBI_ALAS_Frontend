@@ -3,9 +3,9 @@ import {
   MagnifyingGlass,
   WarningCircle,
 } from '@phosphor-icons/react'
-import { Button } from '@/src/shared/ui/button'
-import { Input } from '@/src/shared/ui/input'
-import { Skeleton } from '@/src/shared/ui/skeleton'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
 import { SubSectionHeading } from './section-card'
 
 interface CisSearchBarProps {

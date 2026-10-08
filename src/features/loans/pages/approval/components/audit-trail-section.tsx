@@ -1,4 +1,4 @@
-import { RichText } from '@/src/shared/ui/rich-text'
+import { RichText } from '@/src/shared/ui/data-display/rich-text'
 import { cn } from '@/src/shared/lib/utils'
 import type {
   ClientFormData,

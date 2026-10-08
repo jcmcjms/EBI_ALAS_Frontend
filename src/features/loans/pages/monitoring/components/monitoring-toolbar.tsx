@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Button } from '@/src/shared/ui/button'
-import { Input } from '@/src/shared/ui/input'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Input } from '@/src/shared/ui/primitives/input'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/src/shared/ui/popover.tsx'
-import { Calendar } from '@/src/shared/ui/calendar.tsx'
-import { Badge } from '@/src/shared/ui/badge'
-import { Checkbox } from '@/src/shared/ui/checkbox'
+} from '@/src/shared/ui/data-display/popover.tsx'
+import { Calendar } from '@/src/shared/ui/forms/calendar.tsx'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
 import {
   MagnifyingGlass,
   CalendarBlank,
@@ -19,11 +19,11 @@ import {
 } from '@phosphor-icons/react'
 import { format } from 'date-fns'
 import type { MonitoringFilters } from '@/src/features/loans/types/monitoring'
-import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
+import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 import {
   LOAN_STATUS_META,
   STATUS_FILTER_ORDER,
-} from '@/src/features/loans/utils/loan-status'
+} from '@/src/features/loans/model/loan-status'
 import { sameStatusSet } from '@/src/features/loans/constants/role-queues'
 import { cn } from '@/src/shared/lib/utils'
 

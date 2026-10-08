@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { Button } from '@/src/shared/ui/button'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { cn } from '@/src/shared/lib/utils'
 import {
   AGING_BADGE_CLASS,
   assessAging,
-} from '@/src/features/loans/utils/loan-aging'
-import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
+} from '@/src/shared/lib/loan-aging'
+import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 
 export const SharedTimerContext = createContext<number>(Date.now())
 

@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
-import {
-  PERMISSIONS,
-  type CreateUserPayload,
-  type UpdateUserPayload,
-  type UserResponse,
-} from '@/src/shared/lib/api/types'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { PERMISSIONS } from '@/src/shared/lib/api/types'
+import type {
+  CreateUserPayload,
+  UpdateUserPayload,
+  UserResponse,
+} from '../api/users-types'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import {
   useCreateUser,
   useForcePasswordReset,

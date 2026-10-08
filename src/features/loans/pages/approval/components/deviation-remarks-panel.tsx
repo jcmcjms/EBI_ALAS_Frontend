@@ -6,13 +6,13 @@ import {
   Warning,
   Receipt,
 } from '@phosphor-icons/react'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 
-import { Button } from '@/src/shared/ui/button'
-import { Badge } from '@/src/shared/ui/badge'
-import { Textarea } from '@/src/shared/ui/textarea'
-import { Spinner } from '@/src/shared/ui/spinner'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Textarea } from '@/src/shared/ui/primitives/textarea'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 
 import {
   getLoanDeviations,
@@ -20,7 +20,7 @@ import {
   type DeviationRemarkDto,
   type LoanDeviationDto,
 } from '@/src/features/loans/api/loan-review'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
 
 const ROLE_BADGE: Record<string, string> = {
   Encoder: 'border-slate-300 bg-slate-100 text-slate-700',
@@ -96,7 +96,7 @@ function ThreadComposer({
       setParentId(null)
       onReply?.(0)
       qc.invalidateQueries({
-        queryKey: queryKeys.loans.review.deviations(loanId),
+        queryKey: loanKeys.review.deviations(loanId),
       })
     },
     onError: (e: unknown) => toastError(getErrorMessage(e)),
@@ -241,7 +241,7 @@ export function DeviationRemarksPanel({
   frozen: boolean
 }) {
   const deviations = useQuery({
-    queryKey: queryKeys.loans.review.deviations(loanId),
+    queryKey: loanKeys.review.deviations(loanId),
     queryFn: () => getLoanDeviations(loanId),
   })
 

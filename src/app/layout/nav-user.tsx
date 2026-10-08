@@ -5,7 +5,7 @@ import {
   UserCircle,
 } from '@phosphor-icons/react'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/src/shared/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/src/shared/ui/data-display/avatar'
 import { initialsOf } from '@/src/shared/lib/format'
 import {
   DropdownMenu,
@@ -15,15 +15,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/src/shared/ui/dropdown-menu'
+} from '@/src/shared/ui/navigation/dropdown-menu'
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from '@/src/shared/components/layout/sidebar'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { apiClient } from '@/src/shared/lib/apiClient'
 
 export function NavUser({
@@ -48,7 +48,7 @@ export function NavUser({
       }
     } finally {
       clearSession()
-      navigate('/login', { replace: true })
+      navigate({ to: '/login', replace: true })
     }
   }
 

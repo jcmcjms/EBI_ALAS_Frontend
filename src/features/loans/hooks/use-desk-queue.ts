@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
-import { toastError, toastSuccess, toastInfo } from '@/src/shared/ui/toast'
+import { toastError, toastSuccess, toastInfo } from '@/src/shared/ui/feedback/toast'
 
 export interface QueuedLoanDto {
   loanId: number
@@ -42,7 +43,7 @@ export interface ClaimResponse {
 
 export function useDeskQueue() {
   return useQuery({
-    queryKey: queryKeys.loans.desk,
+    queryKey: loanKeys.desk,
     queryFn: async (): Promise<DeskQueueResponse> => {
       const { data: envelope } = await apiClient.get<
         ApiResponse<DeskQueueResponse>
@@ -71,9 +72,9 @@ export function useClaimNext() {
       } else {
         toastInfo('Queue is clear — nothing to serve.')
       }
-      qc.invalidateQueries({ queryKey: queryKeys.loans.desk })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
-      qc.invalidateQueries({ queryKey: queryKeys.dashboard.full })
+      qc.invalidateQueries({ queryKey: loanKeys.desk })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardRoot })
     },
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })
@@ -91,9 +92,9 @@ export function useReleaseClaim() {
     },
     onSuccess: () => {
       toastSuccess('Claim released — file returned to the queue.')
-      qc.invalidateQueries({ queryKey: queryKeys.loans.desk })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
-      qc.invalidateQueries({ queryKey: queryKeys.dashboard.full })
+      qc.invalidateQueries({ queryKey: loanKeys.desk })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardRoot })
     },
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })
@@ -119,9 +120,9 @@ export function useClaimById() {
     },
     onSuccess: (result) => {
       toastSuccess(`Serving ${result.lamId} — ${result.clientName}.`)
-      qc.invalidateQueries({ queryKey: queryKeys.loans.desk })
-      qc.invalidateQueries({ queryKey: queryKeys.loans.all })
-      qc.invalidateQueries({ queryKey: queryKeys.dashboard.full })
+      qc.invalidateQueries({ queryKey: loanKeys.desk })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardRoot })
     },
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })

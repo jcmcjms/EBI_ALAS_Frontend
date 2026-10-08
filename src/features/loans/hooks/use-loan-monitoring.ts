@@ -1,18 +1,20 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/src/shared/lib/apiClient'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import type {
   ApiResponse,
-  CreatedLoanSummary,
-  LoanSubmissionResponse,
   PagedResult,
 } from '@/src/shared/lib/api/types'
+import type {
+  CreatedLoanSummary,
+  LoanSubmissionResponse,
+} from '../api/loan-types'
 import type {
   LoanMonitoringRecord,
   MonitoringFilters,
   QueueStage,
 } from '@/src/features/loans/types/monitoring'
-import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
+import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 
 interface PaginationState {
   pageIndex: number
@@ -88,7 +90,7 @@ export function useLoanMonitoring(
   sorting: SortingState[],
 ) {
   const query = useQuery({
-    queryKey: queryKeys.loans.monitoring(filters, pagination, sorting),
+    queryKey: loanKeys.monitoring(filters, pagination, sorting),
     queryFn: async (): Promise<{
       records: LoanMonitoringRecord[]
       rowCount: number

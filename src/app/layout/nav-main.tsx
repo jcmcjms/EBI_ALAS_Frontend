@@ -1,6 +1,6 @@
 import { CaretDown } from '@phosphor-icons/react'
 import { Collapsible } from '@base-ui/react/collapsible'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation } from '@tanstack/react-router'
 
 import {
   SidebarGroup,
@@ -13,7 +13,7 @@ import {
   SidebarMenuSubButton,
 } from '@/src/shared/components/layout/sidebar'
 import type { NavItem } from '@/src/shared/lib/navigation'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 
 export function NavMain({ items }: { items: NavItem[] }) {
   const location = useLocation()

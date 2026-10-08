@@ -7,8 +7,8 @@ import {
   rowSortingFeature,
   rowPaginationFeature,
 } from '@tanstack/react-table'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { UserCircle, FileDashed, XCircle } from '@phosphor-icons/react'
 import type {
   LoanMonitoringRecord,
@@ -18,7 +18,7 @@ import { cn } from '@/src/shared/lib/utils'
 import {
   LOAN_STATUS_META,
   type LoanStatus,
-} from '@/src/features/loans/utils/loan-status'
+} from '@/src/features/loans/model/loan-status'
 import { CANCELLABLE_STATUSES } from '@/src/features/loans/api/loan-review'
 import { TimeLapsedIndicator } from './monitoring-table-utils'
 

@@ -1,5 +1,5 @@
 import { type RefObject } from 'react'
-import type { PreLoanItem } from '@/src/shared/lib/api/types'
+import type { PreLoanItem } from '../../api/loan-types'
 import type { LoanApplicationFormData, CreationTypeCode } from '@/src/features/loans/schemas/schema'
 import { HidesOutstandingLoans } from '@/src/features/loans/schemas/schema'
 import { CISLookup } from './components/cis-lookup'

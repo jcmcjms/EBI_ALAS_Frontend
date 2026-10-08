@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react'
 import { CaretRight, Eye, Stack } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Checkbox } from '@/src/shared/ui/checkbox'
+} from '@/src/shared/ui/data-display/card'
+import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -17,9 +17,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/src/shared/ui/dialog'
-import { Textarea } from '@/src/shared/ui/textarea'
-import { toastSuccess, toastWarning } from '@/src/shared/ui/toast'
+} from '@/src/shared/ui/feedback/dialog'
+import { Textarea } from '@/src/shared/ui/primitives/textarea'
+import { toastSuccess, toastWarning } from '@/src/shared/ui/feedback/toast'
 import { cn } from '@/src/shared/lib/utils'
 import {
   useLoanGroup,

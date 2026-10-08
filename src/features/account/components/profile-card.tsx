@@ -1,13 +1,13 @@
 import { Envelope, PencilSimple } from '@phosphor-icons/react'
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
+} from '@/src/shared/ui/data-display/card'
 import { cn } from '@/src/shared/lib/utils'
 import { LoadingState } from './account-states'
 

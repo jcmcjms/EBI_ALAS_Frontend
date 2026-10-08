@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from '@tanstack/react-router'
 import {
   ArrowCounterClockwise,
   Clock,
@@ -7,9 +7,9 @@ import {
   ArrowLeft,
 } from '@phosphor-icons/react'
 
-import { Button } from '@/src/shared/ui/button'
-import { Badge } from '@/src/shared/ui/badge'
-import { Spinner } from '@/src/shared/ui/spinner'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 
 import { FlagIncompleteDocumentsDialog } from '../approval/components/flag-incomplete-documents-dialog'
 import { IncompleteDocumentsWarning } from '../review/components/incomplete-documents-warning'
@@ -19,7 +19,7 @@ import { ApprovalFormCard } from './approval-form-card'
 import { useEvaluationPage } from './use-evaluation-page'
 
 export function LoanEvaluationPage() {
-  const { loanId } = useParams<{ loanId: string }>()
+  const { loanId } = useParams({ strict: false }) as { loanId: string }
   const id = Number(loanId)
   const navigate = useNavigate()
 
@@ -56,7 +56,7 @@ export function LoanEvaluationPage() {
         <div className="text-center space-y-4">
           <WarningCircle size={48} className="mx-auto text-destructive" />
           <h2 className="text-xl font-semibold">Invalid Application ID</h2>
-          <Button onClick={() => navigate('/loans/monitoring')}>
+          <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
             Return to Monitoring
           </Button>
         </div>
@@ -92,7 +92,7 @@ export function LoanEvaluationPage() {
               ? "You don't have permission to view this loan application. This may be because your account doesn't have the required role, or the application belongs to a different branch. Please contact your administrator if you believe this is a mistake."
               : "We couldn't load this loan application. Please try again or return to the monitoring page."}
           </p>
-          <Button onClick={() => navigate('/loans/monitoring')}>
+          <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
             Return to Monitoring
           </Button>
         </div>
@@ -113,7 +113,7 @@ export function LoanEvaluationPage() {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => navigate('/loans/monitoring')}
+              onClick={() => navigate({ to: '/loans/monitoring' })}
               aria-label="Back to monitoring"
             >
               <ArrowLeft size={18} weight="bold" />

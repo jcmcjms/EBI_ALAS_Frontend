@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEscalationStore } from '@/src/features/loans/store/escalationStore'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { loanKeys } from '@/src/features/loans/api/loan-queries'
 
 export function useApprovalRealtime(
   getConnection: () => import('@microsoft/signalr').HubConnection | null,
@@ -24,7 +24,7 @@ export function useApprovalRealtime(
     }
 
     const onDashboardUpdated = () => {
-      qc.invalidateQueries({ queryKey: queryKeys.loans.desk })
+      qc.invalidateQueries({ queryKey: loanKeys.desk })
     }
 
     conn.on('LoanAssigned', onAssigned)

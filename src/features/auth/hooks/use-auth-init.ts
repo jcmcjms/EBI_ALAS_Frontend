@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import { extractUserFromToken } from '@/src/shared/lib/jwt'
-import { toastError } from '@/src/shared/ui/toast'
+import { toastError } from '@/src/shared/ui/feedback/toast'
 
 export function useAuthInit(): void {
   const setSession = useAuthStore((state) => state.setSession)

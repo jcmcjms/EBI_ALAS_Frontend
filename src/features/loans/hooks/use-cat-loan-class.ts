@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { AxiosError } from 'axios'
 
 import { getCatLoanClass } from '@/src/features/loans/api/webloans'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { webLoanKeys } from '@/src/features/loans/api/loan-queries'
 
 export function useCatLoanClass(
   bch: string,
@@ -16,7 +16,7 @@ export function useCatLoanClass(
 
   return useQuery({
     queryKey: enabled
-      ? queryKeys.webLoans.loanClass(branchCode, loanNoTrimmed, productCode)
+      ? webLoanKeys.loanClass(branchCode, loanNoTrimmed, productCode)
       : ['webloans', 'loan-class', 'disabled'],
     queryFn: () => getCatLoanClass(branchCode, loanNoTrimmed, productCode),
     enabled,

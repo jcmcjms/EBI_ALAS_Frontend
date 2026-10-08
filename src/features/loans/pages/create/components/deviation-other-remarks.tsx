@@ -1,6 +1,6 @@
 import { Controller, type Control, type FieldPath } from 'react-hook-form'
-import { Label } from '@/src/shared/ui/label'
-import { RichTextEditor } from '@/src/shared/ui/rich-text-editor'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { RichTextEditor } from '@/src/shared/ui/data-display/rich-text-editor'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 
 interface DeviationOtherRemarksProps {

@@ -3,11 +3,11 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/src/shared/ui/popover'
-import { Button } from '@/src/shared/ui/button'
-import { Checkbox } from '@/src/shared/ui/checkbox'
-import { ScrollArea } from '@/src/shared/ui/scroll-area'
-import { Badge } from '@/src/shared/ui/badge'
+} from '@/src/shared/ui/data-display/popover'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
+import { ScrollArea } from '@/src/shared/ui/data-display/scroll-area'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import { cn } from '@/src/shared/lib/utils'
 import { CaretDown, X } from '@phosphor-icons/react'
 

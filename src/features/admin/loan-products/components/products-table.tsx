@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
-import { toastSuccess, toastError } from '@/src/shared/ui/toast'
+import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { useTable } from '@tanstack/react-table'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import {
   Card,
   CardContent,
-} from '@/src/shared/ui/card'
-import { PERMISSIONS, type UpdateLoanProductPayload } from '@/src/shared/lib/api/types'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+} from '@/src/shared/ui/data-display/card'
+import { PERMISSIONS } from '@/src/shared/lib/api/types'
+import type { UpdateLoanProductPayload } from '../api/loan-product-types'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import {
   useLoanProducts,
   useSyncLoanProducts,

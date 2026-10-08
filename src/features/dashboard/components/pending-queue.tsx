@@ -1,22 +1,21 @@
 import { memo, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { useNavigate } from '@tanstack/react-router'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
+} from '@/src/shared/ui/data-display/card'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
 import { cn } from '@/src/shared/lib/utils'
 import { initialsOf } from '@/src/shared/lib/name-utils'
+import { formatWaiting, waitingMinutes } from '@/src/shared/lib/format'
 import type { PendingQueueItem, LoanStatus } from '../types'
-import type { LoanStatus as LoanStatusKey } from '@/src/features/loans/utils/loan-status'
-import { assessAging } from '@/src/features/loans/utils/loan-aging'
-import { useSlaPolicy } from '@/src/features/loans/api/loan-review'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { assessAging } from '@/src/shared/lib/loan-aging'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 
 const statusStyles: Record<LoanStatus, string> = {
   'On Going':
@@ -43,24 +42,14 @@ const statusStyles: Record<LoanStatus, string> = {
     'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
 }
 
-export function waitingMinutes(date: string): number {
-  return Math.max(
-    0,
-    Math.floor((Date.now() - new Date(date).getTime()) / 60_000),
-  )
-}
-
-export function formatWaiting(mins: number): string {
-  const h = Math.floor(mins / 60)
-  return h > 0 ? `${h}h ${mins % 60}m` : `${mins}m`
-}
-
 interface PendingQueueProps {
   data: PendingQueueItem[]
+  slaPolicy?: Record<string, number> | null
 }
 
 export const PendingQueue = memo(function PendingQueue({
   data,
+  slaPolicy = null,
 }: PendingQueueProps) {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
@@ -70,8 +59,6 @@ export const PendingQueue = memo(function PendingQueue({
     () => [...new Set(data.map((d) => d.statusKey))].join(','),
     [data],
   )
-
-  const slaPolicy = useSlaPolicy()
 
   return (
     <Card id="pending-queue" className="scroll-mt-24 flex flex-col">
@@ -95,7 +82,7 @@ export const PendingQueue = memo(function PendingQueue({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/loans/create')}
+                onClick={() => navigate({ to: '/loans/create' })}
               >
                 Create New Loan
               </Button>
@@ -107,21 +94,21 @@ export const PendingQueue = memo(function PendingQueue({
               const mins = waitingMinutes(item.date)
 
               const assessment = assessAging(
-                item.statusKey as LoanStatusKey,
+                item.statusKey as unknown as Parameters<typeof assessAging>[0],
                 item.date,
                 Date.now(),
-                slaPolicy.data ?? null,
+                slaPolicy,
               )
               return (
                 <li
                   key={item.lamId}
                   onClick={() =>
-                    navigate(`/loans/monitoring?status=${pendingStatuses}`)
+                    navigate({ to: '/loans/monitoring', search: { status: pendingStatuses } })
                   }
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
-                      navigate(`/loans/monitoring?status=${pendingStatuses}`)
+                      navigate({ to: '/loans/monitoring', search: { status: pendingStatuses } })
                     }
                   }}
                   tabIndex={0}
@@ -192,7 +179,7 @@ export const PendingQueue = memo(function PendingQueue({
             variant="ghost"
             size="sm"
             onClick={() =>
-              navigate(`/loans/monitoring?status=${pendingStatuses}`)
+              navigate({ to: '/loans/monitoring', search: { status: pendingStatuses } })
             }
             className="w-full text-sm"
           >

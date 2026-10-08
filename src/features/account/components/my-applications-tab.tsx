@@ -1,14 +1,14 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import { ClipboardText, ArrowRight } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
+} from '@/src/shared/ui/data-display/card'
 import {
   Table,
   TableBody,
@@ -16,10 +16,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/shared/ui/table'
+} from '@/src/shared/ui/data-display/table'
 import { useAccountLoans } from '../hooks/use-account'
 import { EmptyState, ErrorState, LoadingState } from './account-states'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { LOAN_STATUS_META, type LoanStatus } from '@/src/shared/lib/api/types'
 import { cn } from '@/src/shared/lib/utils'
 
@@ -38,7 +38,7 @@ export function MyApplicationsTab() {
             size="sm"
             variant="outline"
             className="h-8 gap-1.5 text-xs"
-            onClick={() => navigate('/loans/create')}
+            onClick={() => navigate({ to: '/loans/create' })}
           >
             New Application
           </Button>
@@ -61,7 +61,7 @@ export function MyApplicationsTab() {
               canCreate ? (
                 <Button
                   size="sm"
-                  onClick={() => navigate('/loans/create')}
+                  onClick={() => navigate({ to: '/loans/create' })}
                   className="gap-2"
                 >
                   Create Application
@@ -70,7 +70,7 @@ export function MyApplicationsTab() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => navigate('/loans/monitoring')}
+                  onClick={() => navigate({ to: '/loans/monitoring' })}
                 >
                   View Loan Monitoring
                 </Button>
@@ -136,7 +136,7 @@ export function MyApplicationsTab() {
                         size="sm"
                         variant="ghost"
                         className="h-8 gap-1 text-xs hover:text-primary"
-                        onClick={() => navigate(`/loans/monitoring?id=${app.id}`)}
+                        onClick={() => navigate({ to: '/loans/monitoring', search: { id: String(app.id) } })}
                       >
                         Details
                         <ArrowRight size={13} weight="bold" />

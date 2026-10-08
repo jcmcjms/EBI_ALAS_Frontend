@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import * as signalR from '@microsoft/signalr'
-import { toastInfo } from '@/src/shared/ui/toast'
+import { toastInfo } from '@/src/shared/ui/feedback/toast'
 
-import { useAuthStore } from '@/src/features/auth/store/authStore'
-import { useNotificationStore } from '@/src/features/notifications/store/notification-store'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import {
+  useNotificationStore,
   classifyNotification,
   type AppNotification,
-} from '@/src/features/notifications/types'
+} from '@/src/shared/store/notification-store'
 import {
   getSharedConnection,
   getStartingPromise,

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight } from '@phosphor-icons/react'
 import {
@@ -7,21 +7,21 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from '@/src/shared/ui/sheet'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+} from '@/src/shared/ui/navigation/sheet'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { ApplicationTimeline } from '@/src/features/loans/components/application-timeline'
 import { DocumentFlagBadge } from '@/src/features/loans/components/document-flag-badge'
-import { queueDeskSentence } from '@/src/features/loans/utils/loan-timeline'
+import { queueDeskSentence } from '@/src/features/loans/model/loan-timeline'
 import { cn } from '@/src/shared/lib/utils'
 import { getLoanById } from '@/src/features/loans/api/loans'
 import {
   LOAN_STATUS_META,
   type LoanStatus,
-} from '@/src/features/loans/utils/loan-status'
+} from '@/src/features/loans/model/loan-status'
 import type { LoanMonitoringRecord } from '@/src/features/loans/types/monitoring'
 import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 
 interface LoanDetailsDrawerProps {
   applicationId: number | null
@@ -140,7 +140,7 @@ export function LoanDetailsDrawer({
           <div className="border-t bg-background p-4">
             <Button
               className="w-full gap-2"
-              onClick={() => navigate(reviewPath)}
+              onClick={() => navigate({ href: reviewPath })}
             >
               <ArrowRight size={16} weight="bold" />
               {reviewLabel}

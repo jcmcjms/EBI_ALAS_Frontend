@@ -1,9 +1,9 @@
-import { useAuthStore } from '@/src/features/auth/store/authStore'
-import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/src/shared/store/auth-store'
+import { useNavigate } from '@tanstack/react-router'
 import { BRANCHES } from '@/src/shared/lib/api/types'
 import { Plus } from '@phosphor-icons/react'
-import { Button } from '@/src/shared/ui/button'
-import { Skeleton } from '@/src/shared/ui/skeleton'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
 
 import { ApprovedLoans } from '../components/approved-loans'
 import { DashboardSummary } from '../components/dashboard-summary'
@@ -56,7 +56,7 @@ export function Dashboard() {
               minute: '2-digit',
             })}
           </span>
-          <Button size="sm" onClick={() => navigate('/loans/create')}>
+          <Button size="sm" onClick={() => navigate({ to: '/loans/create' })}>
             <Plus size={16} weight="bold" className="mr-1" />
             New Loan
           </Button>

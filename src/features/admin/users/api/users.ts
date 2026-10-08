@@ -2,14 +2,16 @@ import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
   type ApiResponse,
-  type CreateUserPayload,
   type PagedResult,
-  type ResetPasswordResponse,
-  type UpdateUserPayload,
-  type UserAuditLogResponse,
-  type UserQueryParams,
-  type UserResponse,
 } from '@/src/shared/lib/api/types'
+import type {
+  CreateUserPayload,
+  ResetPasswordResponse,
+  UpdateUserPayload,
+  UserAuditLogResponse,
+  UserQueryParams,
+  UserResponse,
+} from './users-types'
 
 export type {
   CreateUserPayload,
@@ -18,7 +20,9 @@ export type {
   UserResponse,
   UserAuditLogResponse,
   ResetPasswordResponse,
-} from '@/src/shared/lib/api/types'
+  UserImportValidationError,
+  UserImportResult,
+} from './users-types'
 
 export async function listUsers(
   params: UserQueryParams,
@@ -156,19 +160,7 @@ export async function downloadImportTemplate(): Promise<void> {
   URL.revokeObjectURL(url)
 }
 
-export interface UserImportValidationError {
-  rowNumber: number
-  field: string
-  error: string
-}
-
-export interface UserImportResult {
-  totalRows: number
-  successfulImports: number
-  failedImports: number
-  errors: UserImportValidationError[]
-  createdUsernames: string[]
-}
+import type { UserImportResult } from './users-types'
 
 export async function importUsers(file: File): Promise<UserImportResult> {
   const formData = new FormData()

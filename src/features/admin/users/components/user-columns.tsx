@@ -19,16 +19,17 @@ import {
   UserCirclePlus,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/src/shared/ui/dropdown-menu'
-import { BRANCHES, type UserResponse } from '@/src/shared/lib/api/types'
+} from '@/src/shared/ui/navigation/dropdown-menu'
+import { BRANCHES } from '@/src/shared/lib/api/types'
+import type { UserResponse } from '../api/users-types'
 import { cn } from '@/src/shared/lib/utils'
 
 export function formatFullName(

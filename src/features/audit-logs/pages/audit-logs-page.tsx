@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent } from '@/src/shared/ui/card'
-import { Input } from '@/src/shared/ui/input'
-import { Button } from '@/src/shared/ui/button'
-import { Badge } from '@/src/shared/ui/badge'
+import { Card, CardContent } from '@/src/shared/ui/data-display/card'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import {
   Table,
   TableBody,
@@ -10,15 +10,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/shared/ui/table'
+} from '@/src/shared/ui/data-display/table'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/src/shared/ui/select'
-import { Spinner } from '@/src/shared/ui/spinner'
+} from '@/src/shared/ui/forms/select'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import {
   ArrowRight,
   MagnifyingGlass,
@@ -26,9 +26,9 @@ import {
   UserCircle,
   WarningCircle,
 } from '@phosphor-icons/react'
-import { EmptyState } from '@/src/shared/ui/empty-state'
+import { EmptyState } from '@/src/shared/ui/feedback/empty-state'
 import { cn } from '@/src/shared/lib/utils'
-import type { AuditLogRecord } from '@/src/shared/lib/api/types'
+import type { AuditLogRecord } from '../api/audit-log-types'
 import { useAuditLogs } from '../hooks/use-audit-logs'
 import {
   ACTION_CONFIG,

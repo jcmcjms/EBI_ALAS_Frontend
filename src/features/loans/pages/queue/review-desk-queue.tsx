@@ -1,25 +1,25 @@
 import { memo, type ReactNode } from 'react'
 import { Clock, WarningCircle } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import {
   Card,
   CardContent,
-} from '@/src/shared/ui/card'
-import { Skeleton } from '@/src/shared/ui/skeleton'
+} from '@/src/shared/ui/data-display/card'
+import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
 import {
   formatWaiting,
   waitingMinutes,
-} from '@/src/features/dashboard/components/pending-queue'
+} from '@/src/shared/lib/format'
 import type { QueuedLoanDto } from '@/src/features/loans/hooks/use-desk-queue'
 import {
   AGING_BADGE_CLASS,
   assessAging,
-} from '@/src/features/loans/utils/loan-aging'
-import { formatPhp } from '@/src/features/loans/utils/desk-queue'
+} from '@/src/shared/lib/loan-aging'
+import { formatPhp } from '@/src/features/loans/model/desk-queue'
 import {
   LOAN_STATUS_META,
   type LoanStatus,
-} from '@/src/features/loans/utils/loan-status'
+} from '@/src/features/loans/model/loan-status'
 import { cn } from '@/src/shared/lib/utils'
 
 interface DeskQueueRowProps {

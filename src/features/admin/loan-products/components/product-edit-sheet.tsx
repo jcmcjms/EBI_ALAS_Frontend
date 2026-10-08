@@ -7,9 +7,9 @@ import {
   WarningCircle,
 } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
-import { Separator } from '@/src/shared/ui/separator'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Separator } from '@/src/shared/ui/data-display/separator'
 import {
   Sheet,
   SheetContent,
@@ -17,8 +17,8 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/src/shared/ui/sheet'
-import { Spinner } from '@/src/shared/ui/spinner'
+} from '@/src/shared/ui/navigation/sheet'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 import {
   productFormSchema,

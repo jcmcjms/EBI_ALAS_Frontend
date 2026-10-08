@@ -1,5 +1,5 @@
-import { Checkbox } from '@/src/shared/ui/checkbox'
-import { Label } from '@/src/shared/ui/label'
+import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
+import { Label } from '@/src/shared/ui/primitives/label'
 import type { DeviationReason } from '@/src/features/loans/schemas/schema'
 import type { UseFormRegister, FieldPath } from 'react-hook-form'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'

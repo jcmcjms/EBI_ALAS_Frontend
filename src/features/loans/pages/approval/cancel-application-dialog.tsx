@@ -1,5 +1,5 @@
-import { Label } from '@/src/shared/ui/label'
-import { Textarea } from '@/src/shared/ui/textarea'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { Textarea } from '@/src/shared/ui/primitives/textarea'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +9,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/src/shared/ui/alert-dialog'
+} from '@/src/shared/ui/feedback/alert-dialog'
 
 interface CancelApplicationDialogProps {
   open: boolean

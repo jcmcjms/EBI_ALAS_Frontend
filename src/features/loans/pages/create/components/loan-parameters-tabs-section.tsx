@@ -1,6 +1,6 @@
 import { useFormContext, useWatch } from 'react-hook-form'
 import { CurrencyDollar } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import { getSection } from '@/src/features/loans/constants/sections'
 import { SectionCard } from './section-card'

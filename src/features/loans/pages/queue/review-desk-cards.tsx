@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react'
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
-} from '@/src/shared/ui/card'
-import { Spinner } from '@/src/shared/ui/spinner'
+} from '@/src/shared/ui/data-display/card'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import {
   PlayCircle,
   UserCircle,
@@ -15,15 +15,15 @@ import {
 import {
   formatWaiting,
   waitingMinutes,
-} from '@/src/features/dashboard/components/pending-queue'
+} from '@/src/shared/lib/format'
 import type { QueuedLoanDto } from '@/src/features/loans/hooks/use-desk-queue'
 import {
   assessAging,
-} from '@/src/features/loans/utils/loan-aging'
+} from '@/src/shared/lib/loan-aging'
 import {
   formatPhp,
-} from '@/src/features/loans/utils/desk-queue'
-import type { LoanStatus } from '@/src/features/loans/utils/loan-status'
+} from '@/src/features/loans/model/desk-queue'
+import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 import { initialsOf } from '@/src/shared/lib/name-utils'
 import { cn } from '@/src/shared/lib/utils'
 import { StatusBadge } from './review-desk-queue'

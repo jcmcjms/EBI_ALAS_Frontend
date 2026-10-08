@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { userKeys } from '@/src/features/admin/users/api/user-queries'
 import type {
   CreateUserPayload,
   UpdateUserPayload,
   UserImportResult,
   UserQueryParams,
   UserResponse,
-} from '@/src/shared/lib/api/types'
+} from '../api/users-types'
 import {
   createUser,
   forcePasswordReset,
@@ -22,7 +22,7 @@ import {
 
 export function useUsers(params: UserQueryParams) {
   return useQuery({
-    queryKey: queryKeys.users.list(params),
+    queryKey: userKeys.list(params),
     queryFn: () => listUsers(params),
     placeholderData: (prev) => prev,
   })
@@ -32,7 +32,7 @@ export function useUser(id: number | null) {
   return useQuery({
     queryKey:
       id !== null
-        ? queryKeys.users.detail(id)
+        ? userKeys.detail(id)
         : ['users', 'detail', 'disabled'],
     queryFn: () => getUser(id!),
     enabled: id !== null,
@@ -41,11 +41,11 @@ export function useUser(id: number | null) {
 
 export function useUserStats() {
   const total = useQuery({
-    queryKey: [...queryKeys.users.stats(), 'total'],
+    queryKey: userKeys.stats('total'),
     queryFn: () => listUsers({ pageNumber: 1, pageSize: 1 }),
   })
   const active = useQuery({
-    queryKey: [...queryKeys.users.stats(), 'active'],
+    queryKey: userKeys.stats('active'),
     queryFn: () => listUsers({ pageNumber: 1, pageSize: 1, isActive: true }),
   })
 
@@ -64,7 +64,7 @@ export function useUserAuditLog(id: number | null) {
   return useQuery({
     queryKey:
       id !== null
-        ? queryKeys.users.auditLog(id)
+        ? userKeys.auditLog(id)
         : ['users', 'audit-log', 'disabled'],
     queryFn: () => getUserAuditLog(id!),
     enabled: id !== null,
@@ -73,7 +73,7 @@ export function useUserAuditLog(id: number | null) {
 
 function useInvalidateUsers() {
   const queryClient = useQueryClient()
-  return () => queryClient.invalidateQueries({ queryKey: queryKeys.users.all })
+  return () => queryClient.invalidateQueries({ queryKey: userKeys.all })
 }
 
 export function useCreateUser(options?: {
@@ -136,7 +136,7 @@ export function useImportUsers() {
   return useMutation<UserImportResult, Error, File>({
     mutationFn: importUsers,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all })
+      queryClient.invalidateQueries({ queryKey: userKeys.all })
     },
   })
 }

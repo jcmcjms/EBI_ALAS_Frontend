@@ -9,12 +9,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/src/shared/ui/alert-dialog'
-import { Button } from '@/src/shared/ui/button'
-import { Badge } from '@/src/shared/ui/badge'
-import { Label } from '@/src/shared/ui/label'
-import { Textarea } from '@/src/shared/ui/textarea'
-import { Checkbox } from '@/src/shared/ui/checkbox'
+} from '@/src/shared/ui/feedback/alert-dialog'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { Textarea } from '@/src/shared/ui/primitives/textarea'
+import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
 import type { LoanChecklistDocumentDto } from '@/src/features/loans/api/loan-review'
 
 interface FlagIncompleteDocumentsDialogProps {

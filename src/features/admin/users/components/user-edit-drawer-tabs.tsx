@@ -1,7 +1,7 @@
-import { Label } from '@/src/shared/ui/label'
-import { Button } from '@/src/shared/ui/button'
-import { SignaturePad } from '@/src/shared/ui/signature-pad'
-import type { UserResponse } from '@/src/shared/lib/api/types'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { SignaturePad } from '@/src/shared/ui/forms/signature-pad'
+import type { UserResponse } from '../api/users-types'
 
 export { BRANCH_SELECT_ITEMS, ProfileTab } from './user-edit-profile-tab'
 export type { ProfileTabProps } from './user-edit-profile-tab'

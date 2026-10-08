@@ -1,11 +1,11 @@
-import { RichText } from '@/src/shared/ui/rich-text'
+import { RichText } from '@/src/shared/ui/data-display/rich-text'
 import { cn } from '@/src/shared/lib/utils'
 import { ApprovalFormSheet } from '@/src/features/loans/components/approval-form-sheet'
 import { useCatLoanClass } from '@/src/features/loans/hooks/use-cat-loan-class'
 import {
   parseProductCode,
   resolveLoanProductDisplayName,
-} from '@/src/features/loans/utils/loan-product-display'
+} from '@/src/features/loans/model/loan-product-display'
 import {
   buildProductLine,
   buildPrintableDeviationEntries,
@@ -15,8 +15,8 @@ import {
   isBlankIncomingLoan,
   printableObligationRows,
   type ProductFeeConfig,
-} from '@/src/features/loans/utils/loan-approval-utils'
-import { useLoanProduct } from '@/src/features/admin/loan-products/hooks/use-loan-products'
+} from '@/src/features/loans/model/loan-approval-utils'
+import { useLoanProduct } from '@/src/shared/lib/api/loan-product-api'
 import type {
   ClientFormData,
   LoanApplicationFormData,

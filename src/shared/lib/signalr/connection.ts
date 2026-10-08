@@ -1,6 +1,7 @@
 import * as signalR from '@microsoft/signalr'
+import { env } from '@/src/shared/config/env'
 
-const HUB_URL = `${import.meta.env.VITE_API_BASE_URL}/hubs/notifications`
+const HUB_URL = `${env.apiOrigin}/hubs/notifications`
 
 let connection: signalR.HubConnection | null = null
 let boundToken: string | null = null

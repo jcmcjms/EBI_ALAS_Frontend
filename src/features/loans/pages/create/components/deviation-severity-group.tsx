@@ -1,6 +1,6 @@
 import { Circle } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
-import type { DeviationCatalogItemDto } from '@/src/features/admin/users/hooks/use-deviation-catalog'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import type { DeviationCatalogItemDto } from '@/src/shared/lib/api/approval-matrix-shared'
 
 interface DeviationSeverityGroupProps {
   title: string

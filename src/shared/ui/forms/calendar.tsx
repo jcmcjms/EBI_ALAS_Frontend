@@ -7,7 +7,7 @@ import {
 } from 'react-day-picker'
 
 import { cn } from '@/src/shared/lib/utils'
-import { Button, buttonVariants } from '@/src/shared/ui/button.tsx'
+import { Button, buttonVariants } from '@/src/shared/ui/primitives/button.tsx'
 import {
   CaretLeftIcon,
   CaretRightIcon,

@@ -6,8 +6,8 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { RoutingChip } from './components/routing-chip'
 import { ApprovalGroupTabs } from './components/approval-group-tabs'

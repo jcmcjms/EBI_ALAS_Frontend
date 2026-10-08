@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/src/shared/lib/apiClient'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { loanStatusKeys } from '@/src/features/loans/api/loan-queries'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 
 const LOAN_STATUSES_STALE_TIME = 60 * 60 * 1000
@@ -19,7 +19,7 @@ export function useLoanStatuses(): {
   error: unknown
 } {
   const query = useQuery({
-    queryKey: queryKeys.loanStatuses.list(),
+    queryKey: loanStatusKeys.list(),
     queryFn: async () => {
       const res =
         await apiClient.get<ApiResponse<LoanStatusEntry[]>>(

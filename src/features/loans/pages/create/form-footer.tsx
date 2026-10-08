@@ -1,5 +1,5 @@
 import { PaperPlaneTilt, WarningCircle } from '@phosphor-icons/react'
-import { Button } from '@/src/shared/ui/button'
+import { Button } from '@/src/shared/ui/primitives/button'
 import type { SectionId } from '@/src/features/loans/constants/sections'
 
 interface FormFooterProps {

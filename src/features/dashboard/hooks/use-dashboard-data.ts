@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { dashboardKeys } from '@/src/features/dashboard/api/dashboard-queries'
 import { BRANCHES } from '@/src/shared/lib/api/types'
 import {
   getDashboardOverview,
@@ -84,7 +84,7 @@ function mapOverview(o: DashboardOverviewDto): DashboardData {
 
 export function useDashboardData() {
   return useQuery({
-    queryKey: queryKeys.dashboard.full,
+    queryKey: dashboardKeys.full,
     queryFn: async () => mapOverview(await getDashboardOverview()),
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,

@@ -2,8 +2,8 @@ import {
   ArrowCounterClockwise,
   WarningCircle,
 } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
-import { Button } from '@/src/shared/ui/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { cn } from '@/src/shared/lib/utils'
 
 interface CisClientCardProps {

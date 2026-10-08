@@ -1,13 +1,13 @@
 import { CheckCircle } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/src/shared/ui/tooltip'
+} from '@/src/shared/ui/data-display/tooltip'
 import { cn } from '@/src/shared/lib/utils'
-import type { PendingLoan } from '@/src/shared/lib/api/types'
+import type { PendingLoan } from '../../../api/loan-types'
 import { extractProductCode } from './use-loan-loader'
 
 interface LoanSelectionListProps {

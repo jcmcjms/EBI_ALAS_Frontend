@@ -9,8 +9,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Button } from '@/src/shared/ui/button'
+} from '@/src/shared/ui/data-display/card'
+import { Button } from '@/src/shared/ui/primitives/button'
 import { ApprovalFormDocument } from './components/approval-form-document'
 import { ApprovalFormViewport } from '@/src/features/loans/components/approval-form-sheet'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'

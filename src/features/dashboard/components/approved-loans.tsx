@@ -1,15 +1,15 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
-import { Button } from '@/src/shared/ui/button'
-import { Badge } from '@/src/shared/ui/badge'
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
+} from '@/src/shared/ui/data-display/card'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
 import {
   formatRelativeTime,
   initialsOf,
@@ -46,11 +46,11 @@ export function ApprovedLoans({ data }: ApprovedLoansProps) {
             {displayData.map((item) => (
               <li
                 key={item.lamId}
-                onClick={() => navigate('/loans/monitoring')}
+                onClick={() => navigate({ to: '/loans/monitoring' })}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    navigate('/loans/monitoring')
+                    navigate({ to: '/loans/monitoring' })
                   }
                 }}
                 tabIndex={0}
@@ -89,7 +89,7 @@ export function ApprovedLoans({ data }: ApprovedLoansProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/loans/monitoring')}
+            onClick={() => navigate({ to: '/loans/monitoring' })}
             className="w-full text-sm"
           >
             View all approved loans

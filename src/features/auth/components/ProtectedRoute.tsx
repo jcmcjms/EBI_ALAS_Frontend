@@ -1,6 +1,8 @@
-import { Navigate, useLocation } from 'react-router-dom'
-import { Spinner } from '@/src/shared/ui/spinner'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useEffect } from 'react'
+import { useLocation, useNavigate } from '@tanstack/react-router'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
+import { useAuthStore } from '@/src/shared/store/auth-store'
+import { env } from '@/src/shared/config/env'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -16,13 +18,46 @@ export function ProtectedRoute({
   requiredAnyPermission,
 }: ProtectedRouteProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const isInitializing = useAuthStore((state) => state.isInitializing)
   const accessToken = useAuthStore((state) => state.accessToken)
   const user = useAuthStore((state) => state.user)
   const hasPermission = useAuthStore((state) => state.hasPermission)
   const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission)
 
-  if (isInitializing) {
+  let redirectTo: '/login' | '/change-password' | '/forbidden' | null = null
+
+  if (!accessToken || !user) {
+    redirectTo = '/login'
+  } else if (user.mustChangePassword && location.pathname !== '/change-password') {
+    redirectTo = '/change-password'
+  } else if (requiredPermission && !hasPermission(requiredPermission)) {
+    if (env.isDev && location.pathname !== '/forbidden') {
+      console.warn('[Security] Unauthorized access attempt:', {
+        requiredPermission,
+        path: location.pathname,
+      })
+    }
+    redirectTo = '/forbidden'
+  } else if (
+    requiredAnyPermission?.length &&
+    !hasAnyPermission(requiredAnyPermission)
+  ) {
+    if (env.isDev && location.pathname !== '/forbidden') {
+      console.warn('[Security] Unauthorized access attempt:', {
+        requiredAnyPermission,
+        path: location.pathname,
+      })
+    }
+    redirectTo = '/forbidden'
+  }
+
+  useEffect(() => {
+    if (!redirectTo) return
+    navigate({ to: redirectTo, replace: true })
+  }, [redirectTo, navigate])
+
+  if (isInitializing || redirectTo) {
     return (
       <div
         className="flex h-screen items-center justify-center"
@@ -32,34 +67,6 @@ export function ProtectedRoute({
         <Spinner className="size-8" />
       </div>
     )
-  }
-
-  if (!accessToken || !user) {
-    return <Navigate to="/login" replace state={{ from: location }} />
-  }
-
-  if (user.mustChangePassword && location.pathname !== '/change-password') {
-    return <Navigate to="/change-password" replace />
-  }
-
-  if (requiredPermission && !hasPermission(requiredPermission)) {
-    if (import.meta.env.DEV) {
-      console.warn('[Security] Unauthorized access attempt:', {
-        requiredPermission,
-        path: window.location.pathname,
-      })
-    }
-    return <Navigate to="/forbidden" replace />
-  }
-
-  if (requiredAnyPermission?.length && !hasAnyPermission(requiredAnyPermission)) {
-    if (import.meta.env.DEV) {
-      console.warn('[Security] Unauthorized access attempt:', {
-        requiredAnyPermission,
-        path: window.location.pathname,
-      })
-    }
-    return <Navigate to="/forbidden" replace />
   }
 
   return <>{children}</>

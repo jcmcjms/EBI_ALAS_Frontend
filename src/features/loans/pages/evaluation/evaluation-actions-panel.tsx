@@ -1,10 +1,10 @@
 import { CheckCircle, ArrowRight, ArrowCounterClockwise, Clock, ThumbsDown, ThumbsUp, WarningCircle } from '@phosphor-icons/react'
-import { RichText } from '@/src/shared/ui/rich-text'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/shared/ui/card'
-import { Button } from '@/src/shared/ui/button'
-import { Textarea } from '@/src/shared/ui/textarea'
-import { Label } from '@/src/shared/ui/label'
-import { Spinner } from '@/src/shared/ui/spinner'
+import { RichText } from '@/src/shared/ui/data-display/rich-text'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/shared/ui/data-display/card'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { Textarea } from '@/src/shared/ui/primitives/textarea'
+import { Label } from '@/src/shared/ui/primitives/label'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 
 type EvaluationAction = 'recommended' | 'notRecommended' | 'pushback'
 

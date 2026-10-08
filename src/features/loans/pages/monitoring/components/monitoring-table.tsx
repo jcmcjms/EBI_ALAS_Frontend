@@ -12,8 +12,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/src/shared/ui/table'
-import { Button } from '@/src/shared/ui/button'
+} from '@/src/shared/ui/data-display/table'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   CaretUp,
   CaretDown,
@@ -27,7 +27,7 @@ import type {
 } from '@/src/features/loans/types/monitoring'
 import { useLoanMonitoring } from '@/src/features/loans/hooks/use-loan-monitoring'
 import { cn } from '@/src/shared/lib/utils'
-import { EmptyState } from '@/src/shared/ui/empty-state'
+import { EmptyState } from '@/src/shared/ui/feedback/empty-state'
 import { features, buildColumns } from './monitoring-columns'
 import {
   SharedTimerProvider,

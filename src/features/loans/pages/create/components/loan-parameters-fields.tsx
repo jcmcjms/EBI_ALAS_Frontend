@@ -1,8 +1,8 @@
 import { useFormContext } from 'react-hook-form'
 import { CalendarBlank } from '@phosphor-icons/react'
 
-import { Input } from '@/src/shared/ui/input'
-import { Label } from '@/src/shared/ui/label'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Label } from '@/src/shared/ui/primitives/label'
 
 interface LoanParametersFieldsProps {
   fieldPrefix: string

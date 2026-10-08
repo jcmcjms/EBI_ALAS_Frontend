@@ -1,6 +1,6 @@
 import { CaretLeft, CaretRight } from '@phosphor-icons/react'
-import { Button } from '@/src/shared/ui/button'
-import { FormTabStrip } from '@/src/shared/ui/form-tab-strip'
+import { Button } from '@/src/shared/ui/primitives/button'
+import { FormTabStrip } from '@/src/shared/ui/forms/form-tab-strip'
 
 export interface GroupLoanSummary {
   id: number

@@ -1,8 +1,15 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  RouterProvider,
+} from '@tanstack/react-router'
 import { ProtectedRoute } from '../ProtectedRoute'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { PERMISSIONS } from '@/src/shared/lib/api/types'
 
 function setSession(permissions: string[], role = 'Encoder') {
@@ -23,23 +30,46 @@ function setSession(permissions: string[], role = 'Encoder') {
   })
 }
 
+function createTestRouter(initialEntry: string) {
+  const rootRoute = createRootRoute({ component: () => <Outlet /> })
+
+  const reviewRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/loans/approval/$loanId',
+    component: () => (
+      <ProtectedRoute requiredPermission={PERMISSIONS.loansView}>
+        <div>Review Application</div>
+      </ProtectedRoute>
+    ),
+  })
+
+  const forbiddenRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/forbidden',
+    component: () => <div>Access Restricted</div>,
+  })
+
+  const loginRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/login',
+    component: () => <div>Login</div>,
+  })
+
+  const routeTree = rootRoute.addChildren([
+    reviewRoute,
+    forbiddenRoute,
+    loginRoute,
+  ])
+
+  return createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: [initialEntry] }),
+  })
+}
+
 function renderReviewRoute() {
-  return render(
-    <MemoryRouter initialEntries={['/loans/approval/42']}>
-      <Routes>
-        <Route
-          path="/loans/approval/:loanId"
-          element={
-            <ProtectedRoute requiredPermission={PERMISSIONS.loansView}>
-              <div>Review Application</div>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/forbidden" element={<div>Access Restricted</div>} />
-        <Route path="/login" element={<div>Login</div>} />
-      </Routes>
-    </MemoryRouter>,
-  )
+  const router = createTestRouter('/loans/approval/42')
+  return render(<RouterProvider router={router} />)
 }
 
 describe('ProtectedRoute — loan review access', () => {
@@ -51,17 +81,17 @@ describe('ProtectedRoute — loan review access', () => {
     })
   })
 
-  it('lets an Encoder open a review application with loans.view', () => {
+  it('lets an Encoder open a review application with loans.view', async () => {
     setSession([PERMISSIONS.loansCreate, PERMISSIONS.loansView])
     renderReviewRoute()
-    expect(screen.getByText('Review Application')).toBeTruthy()
+    expect(await screen.findByText('Review Application')).toBeTruthy()
     expect(screen.queryByText('Access Restricted')).toBeNull()
   })
 
-  it('still blocks users without loans.view', () => {
+  it('still blocks users without loans.view', async () => {
     setSession([PERMISSIONS.loansCreate])
     renderReviewRoute()
-    expect(screen.getByText('Access Restricted')).toBeTruthy()
+    expect(await screen.findByText('Access Restricted')).toBeTruthy()
     expect(screen.queryByText('Review Application')).toBeNull()
   })
 })

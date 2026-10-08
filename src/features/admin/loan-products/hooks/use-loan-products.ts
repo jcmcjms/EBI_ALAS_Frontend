@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { loanProductKeys } from '@/src/features/admin/loan-products/api/loan-product-queries'
 import type {
   LoanProductImportResult,
-  LoanProductResponse,
   UpdateLoanProductPayload,
-} from '@/src/shared/lib/api/types'
+} from '../api/loan-product-types'
+import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 import {
   getLoanProductByCode,
   getLoanProducts,
@@ -17,7 +17,7 @@ const LOAN_PRODUCTS_STALE_TIME = 5 * 60_000
 
 export function useLoanProducts() {
   return useQuery({
-    queryKey: queryKeys.loanProducts.list(),
+    queryKey: loanProductKeys.list(),
     queryFn: getLoanProducts,
     staleTime: LOAN_PRODUCTS_STALE_TIME,
   })
@@ -27,7 +27,7 @@ export function useLoanProduct(code: string | null) {
   return useQuery({
     queryKey:
       code !== null
-        ? queryKeys.loanProducts.detail(code)
+        ? loanProductKeys.detail(code)
         : ['loan-products', 'detail', 'disabled'],
     queryFn: () => getLoanProductByCode(code!),
     enabled: code !== null,
@@ -39,7 +39,7 @@ function useInvalidateLoanProducts() {
   const queryClient = useQueryClient()
   return () =>
     queryClient.invalidateQueries({
-      queryKey: queryKeys.loanProducts.all,
+      queryKey: loanProductKeys.all,
     })
 }
 
@@ -57,7 +57,7 @@ export function useUpdateLoanProduct() {
     onSuccess: (updated: LoanProductResponse) => {
       invalidate()
       queryClient.setQueryData(
-        queryKeys.loanProducts.detail(updated.code),
+        loanProductKeys.detail(updated.code),
         updated,
       )
     },

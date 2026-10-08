@@ -1,4 +1,4 @@
-import type { UserResponse } from '@/src/shared/lib/api/types'
+import type { UserResponse } from '../api/users-types'
 
 export interface UserProfileChanges {
   firstName: string

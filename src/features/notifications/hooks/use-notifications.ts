@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toastError } from '@/src/shared/ui/toast'
+import { toastError } from '@/src/shared/ui/feedback/toast'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
+import { notificationKeys } from '@/src/features/notifications/api/notification-queries'
 import {
   getNotifications,
   getNotificationInbox,
@@ -17,7 +17,7 @@ export function useNotifications(enabled = true, isSignalRConnected = false) {
   const setNotifications = useNotificationStore((s) => s.setNotifications)
 
   const query = useQuery({
-    queryKey: queryKeys.notifications,
+    queryKey: notificationKeys.all,
     queryFn: getNotifications,
     refetchInterval: isSignalRConnected ? false : 30_000,
     refetchIntervalInBackground: false,
@@ -37,7 +37,7 @@ export function useNotifications(enabled = true, isSignalRConnected = false) {
 
 export function useNotificationInbox(params: InboxQuery, enabled = true) {
   return useQuery({
-    queryKey: [...queryKeys.notifications, 'inbox', params],
+    queryKey: notificationKeys.inbox(params),
     queryFn: () => getNotificationInbox(params),
     placeholderData: (prev) => prev,
     enabled,
@@ -52,13 +52,13 @@ export function useMarkNotificationRead() {
     mutationFn: (id: string) => markNotificationRead(Number(id)),
     onMutate: async (id) => {
       await queryClient.cancelQueries({
-        queryKey: queryKeys.notifications,
+        queryKey: notificationKeys.all,
       })
       markRead(id)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.notifications,
+        queryKey: notificationKeys.all,
       })
     },
     onError: (error) => {
@@ -75,13 +75,13 @@ export function useMarkAllNotificationsRead() {
     mutationFn: markAllNotificationsRead,
     onMutate: async () => {
       await queryClient.cancelQueries({
-        queryKey: queryKeys.notifications,
+        queryKey: notificationKeys.all,
       })
       markAllRead()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.notifications,
+        queryKey: notificationKeys.all,
       })
     },
     onError: (error) => {

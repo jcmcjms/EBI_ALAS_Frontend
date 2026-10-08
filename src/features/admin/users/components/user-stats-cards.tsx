@@ -1,4 +1,4 @@
-import { Card } from '@/src/shared/ui/card'
+import { Card } from '@/src/shared/ui/data-display/card'
 
 interface UserStatsCardsProps {
   totalCount: number

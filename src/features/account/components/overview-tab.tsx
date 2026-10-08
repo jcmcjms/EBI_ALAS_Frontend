@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import {
   CalendarBlank,
   CaretRight,
@@ -10,17 +10,17 @@ import {
   Phone,
   Sparkle,
 } from '@phosphor-icons/react'
-import { Avatar, AvatarFallback } from '@/src/shared/ui/avatar'
-import { Button } from '@/src/shared/ui/button'
+import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
+import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/src/shared/ui/card'
+} from '@/src/shared/ui/data-display/card'
 import { initialsOf } from '@/src/shared/lib/format'
 import { BRANCHES } from '@/src/shared/lib/api/types'
-import { useAuthStore } from '@/src/features/auth/store/authStore'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import {
   useAccountProfile,
   useAccountActivity,
@@ -223,7 +223,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
           <div className="grid gap-6 xl:grid-cols-2">
             <RecentApplicationsList
               loansQuery={loansQuery}
-              onNewApplication={() => navigate('/loans/create')}
+              onNewApplication={() => navigate({ to: '/loans/create' })}
               onViewAll={() => onOpenTab('my-applications')}
             />
 
@@ -236,7 +236,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
                   size="icon"
                   className="h-7 w-7"
                   aria-label="Open loan monitoring"
-                  onClick={() => navigate('/loans/monitoring')}
+                  onClick={() => navigate({ to: '/loans/monitoring' })}
                 >
                   <CaretRight size={14} weight="bold" />
                 </Button>

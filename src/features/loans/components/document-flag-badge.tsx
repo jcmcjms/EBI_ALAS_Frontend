@@ -1,10 +1,10 @@
 import { FileDashed, Hourglass } from '@phosphor-icons/react'
-import { Badge } from '@/src/shared/ui/badge'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/src/shared/ui/popover'
+} from '@/src/shared/ui/data-display/popover'
 
 interface DocumentFlagDto {
   flaggedAt: string
