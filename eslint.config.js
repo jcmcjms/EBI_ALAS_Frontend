@@ -38,55 +38,41 @@ export default defineConfig([
               message: 'Shared code cannot import from features',
             },
             {
-              target: './src/features/auth/**',
-              from: './src/features/loans/**',
-              message: 'Loans feature cannot import from Auth feature',
+              target: './src/shared/**',
+              from: './src/app/**',
+              message: 'Shared code cannot import from app',
             },
             {
-              target: './src/features/loans/**',
-              from: './src/features/auth/**',
-              message: 'Auth feature cannot import from Loans feature',
+              target: './src/features/**',
+              from: './src/app/**',
+              message: 'Features cannot import from app',
             },
-            {
-              target: './src/features/admin/**',
-              from: './src/features/loans/**',
-              message: 'Loans feature cannot import from Admin feature',
-            },
-            {
-              target: './src/features/loans/**',
-              from: './src/features/admin/**',
-              message: 'Admin feature cannot import from Loans feature',
-            },
-            {
-              target: './src/features/account/**',
-              from: './src/features/loans/**',
-              message: 'Loans feature cannot import from Account feature',
-            },
-            {
-              target: './src/features/loans/**',
-              from: './src/features/account/**',
-              message: 'Account feature cannot import from Loans feature',
-            },
-            {
-              target: './src/features/notifications/**',
-              from: './src/features/loans/**',
-              message: 'Loans feature cannot import from Notifications feature',
-            },
-            {
-              target: './src/features/loans/**',
-              from: './src/features/notifications/**',
-              message: 'Notifications feature cannot import from Loans feature',
-            },
-            {
-              target: './src/features/dashboard/**',
-              from: './src/features/loans/**',
-              message: 'Loans feature cannot import from Dashboard feature',
-            },
-            {
-              target: './src/features/loans/**',
-              from: './src/features/dashboard/**',
-              message: 'Dashboard feature cannot import from Loans feature',
-            },
+            // Blanket feature-to-feature restriction
+            ...[
+              'account',
+              'admin',
+              'audit-logs',
+              'auth',
+              'dashboard',
+              'loans',
+              'notifications',
+            ].flatMap((feature) =>
+              [
+                'account',
+                'admin',
+                'audit-logs',
+                'auth',
+                'dashboard',
+                'loans',
+                'notifications',
+              ]
+                .filter((other) => other !== feature)
+                .map((other) => ({
+                  target: `./src/features/${feature}/**`,
+                  from: `./src/features/${other}/**`,
+                  message: `Feature '${feature}' cannot import from feature '${other}'`,
+                })),
+            ),
           ],
         },
       ],
