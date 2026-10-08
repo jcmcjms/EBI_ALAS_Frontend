@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import '@testing-library/jest-dom/vitest'
 import { ApprovalFormDocument } from '../approval-form-document'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
@@ -49,9 +51,18 @@ const stubForm = {
   outstandingLoans: [],
 } as unknown as LoanApplicationFormData
 
+function renderWithQueryClient(ui: ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return render(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+  )
+}
+
 describe('ApprovalFormDocument — other remarks paragraphs', () => {
   it('renders otherRemarks as paragraph elements', () => {
-    render(<ApprovalFormDocument data={stubForm} />)
+    renderWithQueryClient(<ApprovalFormDocument data={stubForm} />)
     const first = screen.getByText('First paragraph')
     const second = screen.getByText('Second paragraph')
     expect(first.tagName).toBe('P')

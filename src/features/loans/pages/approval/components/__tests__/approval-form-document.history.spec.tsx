@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import '@testing-library/jest-dom/vitest'
 import { ApprovalFormDocument } from '../approval-form-document'
 import type { ApprovalFormActionEntry } from '../approval-form-document'
@@ -50,14 +52,23 @@ const stubForm = {
   outstandingLoans: [],
 } as unknown as LoanApplicationFormData
 
+function renderWithQueryClient(ui: ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return render(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+  )
+}
+
 describe('ApprovalFormDocument — application history (page 3)', () => {
   it('does not render the history section when actions is undefined', () => {
-    render(<ApprovalFormDocument data={stubForm} />)
+    renderWithQueryClient(<ApprovalFormDocument data={stubForm} />)
     expect(screen.queryByText('APPLICATION HISTORY')).not.toBeInTheDocument()
   })
 
   it('does not render the history section when actions is empty', () => {
-    render(<ApprovalFormDocument data={stubForm} actions={[]} />)
+    renderWithQueryClient(<ApprovalFormDocument data={stubForm} actions={[]} />)
     expect(screen.queryByText('APPLICATION HISTORY')).not.toBeInTheDocument()
   })
 
@@ -83,9 +94,11 @@ describe('ApprovalFormDocument — application history (page 3)', () => {
       },
     ]
 
-    render(<ApprovalFormDocument data={stubForm} actions={actions} />)
+    renderWithQueryClient(<ApprovalFormDocument data={stubForm} actions={actions} />)
 
-    expect(screen.getByText('APPLICATION HISTORY')).toBeInTheDocument()
+    expect(
+      screen.getByText('APPLICATION HISTORY & REMARKS'),
+    ).toBeInTheDocument()
     expect(screen.getByText('Maria Encoder')).toBeInTheDocument()
     expect(screen.getByText('Pedro Recommender')).toBeInTheDocument()
     expect(screen.getByText('Created')).toBeInTheDocument()
@@ -100,7 +113,7 @@ describe('ApprovalFormDocument — application history (page 3)', () => {
     expect(screen.getByText(/— → Draft/)).toBeInTheDocument()
   })
 
-  it('groups entries by date', () => {
+  it('shows each entry date on its own row', () => {
     const actions: ApprovalFormActionEntry[] = [
       {
         id: 1,
@@ -122,10 +135,10 @@ describe('ApprovalFormDocument — application history (page 3)', () => {
       },
     ]
 
-    render(<ApprovalFormDocument data={stubForm} actions={actions} />)
+    renderWithQueryClient(<ApprovalFormDocument data={stubForm} actions={actions} />)
 
-    const dayHeaders = screen.getAllByText(/September 2[78], 2026/)
-    expect(dayHeaders.length).toBe(2)
+    expect(screen.getByText('2026-09-27')).toBeInTheDocument()
+    expect(screen.getByText('2026-09-28')).toBeInTheDocument()
   })
 
   it('renders history comments as paragraph elements', () => {
@@ -141,7 +154,7 @@ describe('ApprovalFormDocument — application history (page 3)', () => {
       },
     ]
 
-    render(<ApprovalFormDocument data={stubForm} actions={actions} />)
+    renderWithQueryClient(<ApprovalFormDocument data={stubForm} actions={actions} />)
     const first = screen.getByText('First history note')
     const second = screen.getByText('Second history note')
     expect(first.tagName).toBe('P')
