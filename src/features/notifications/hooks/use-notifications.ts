@@ -49,7 +49,7 @@ export function useMarkNotificationRead() {
   const markRead = useNotificationStore((s) => s.markRead)
 
   return useMutation({
-    mutationFn: (id: string) => markNotificationRead(Number(id)),
+    mutationFn: (id: string) => markNotificationRead(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries({
         queryKey: notificationKeys.all,

@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/src/shared/ui/navigation/dropdown-menu'
 import { Input } from '@/src/shared/ui/primitives/input'
-import { type NotificationType } from '../types'
+import { mapApiNotification } from '../types'
 import {
   useNotificationInbox,
   useMarkNotificationRead,
@@ -60,18 +60,10 @@ export function NotificationsPage() {
   })
 
   const items = useMemo(() => {
-    if (!data?.items) return []
-    return data.items.map((n) => ({
-      id: String(n.id),
-      type: (n.type as NotificationType) ?? 'system',
-      title: n.title,
-      description: n.description,
-      createdAt: n.createdAt,
-      read: n.isRead,
-      actor: undefined,
-      link: n.link ?? undefined,
-    }))
-  }, [data?.items])
+    const rows = data?.items
+    if (!rows) return []
+    return rows.map(mapApiNotification)
+  }, [data])
 
   const totalCount = data?.totalCount ?? 0
   const unreadCount = data?.unreadCount ?? 0

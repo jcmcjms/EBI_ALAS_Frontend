@@ -14,13 +14,12 @@ export {
 
 export function mapApiNotification(n: NotificationResponse): AppNotification {
   return {
-    id: String(n.id),
-    type: (n.type as NotificationType) ?? classifyNotification(n.title),
+    id: n.id,
+    type: (n.type.toLowerCase() as NotificationType) ?? classifyNotification(n.title),
     title: n.title,
-    description: n.description,
+    description: n.body,
     createdAt: n.createdAt,
-    read: n.isRead,
-    link: n.link ?? undefined,
+    read: Boolean(n.readAt),
   }
 }
 
