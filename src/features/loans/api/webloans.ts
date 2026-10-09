@@ -17,10 +17,10 @@ import type {
 export async function getWebLoanByCis(
   cisNo: string,
 ): Promise<WebLoanCisSearchResponse> {
-  const res = await apiClient.get<ApiResponse<WebLoanCisSearchResponse>>(
+  const res = await apiClient.get<WebLoanCisSearchResponse>(
     `/api/webloans/cis/${encodeURIComponent(cisNo)}/search`,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function getActiveLoansByAccount(
@@ -37,10 +37,10 @@ export async function getOutstandingLoans(
   cisNo: string,
   accountId: string,
 ): Promise<OutstandingLoansResponse> {
-  const res = await apiClient.get<ApiResponse<OutstandingLoansResponse>>(
+  const res = await apiClient.get<OutstandingLoansResponse>(
     `/api/webloans/cis/${encodeURIComponent(cisNo)}/accounts/${encodeURIComponent(accountId)}/outstanding-loans`,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function getPreLoans(
@@ -57,10 +57,10 @@ export async function getPendingLoan(
   cisNo: string,
   accountId: string,
 ): Promise<PendingLoanResponse> {
-  const res = await apiClient.get<ApiResponse<PendingLoanResponse>>(
+  const res = await apiClient.get<PendingLoanResponse>(
     `/api/webloans/cis/${encodeURIComponent(cisNo)}/accounts/${encodeURIComponent(accountId)}/pending-loan`,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function getCatLoanClass(

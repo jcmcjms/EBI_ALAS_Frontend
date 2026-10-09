@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/src/shared/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 
 export interface SignatureSlotDto {
   order: number
@@ -26,19 +25,19 @@ export const signatureKeys = {
 }
 
 export async function getSignatureChain(): Promise<SignatureSlotDto[]> {
-  const res = await apiClient.get<ApiResponse<SignatureSlotDto[]>>(
+  const res = await apiClient.get<SignatureSlotDto[]>(
     '/api/workflow/signature-chain',
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function getLoanSignatureChain(
-  loanId: number,
+  loanId: number | string,
 ): Promise<SignatureSlotDto[]> {
-  const res = await apiClient.get<ApiResponse<SignatureSlotDto[]>>(
+  const res = await apiClient.get<SignatureSlotDto[]>(
     `/api/loans/${loanId}/signature-chain`,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export function useSignatureChain() {
