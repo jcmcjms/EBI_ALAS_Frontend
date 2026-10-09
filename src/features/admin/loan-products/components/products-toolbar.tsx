@@ -76,8 +76,8 @@ export function ProductsToolbar({
             size="sm"
             className="h-9 gap-1.5"
             onClick={() => {
-              exportLoanProducts(true)
-                .then(() => toastSuccess('Exported all loan products to Excel'))
+              exportLoanProducts(showRetired)
+                .then(() => toastSuccess('Exported loan products to Excel'))
                 .catch((e: unknown) => toastError(getErrorMessage(e)))
             }}
           >

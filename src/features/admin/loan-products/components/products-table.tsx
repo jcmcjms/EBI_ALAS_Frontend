@@ -18,6 +18,7 @@ import { features, columns } from './product-columns'
 import { ProductsTableCard } from './products-table-card'
 import { ProductEditSheet } from './product-edit-sheet'
 import { ImportProductsSheet } from './import-products-sheet'
+import { filterVisibleProducts } from './product-visibility'
 import { ConfirmActionSheet } from '../../users/components/confirm-action-sheet'
 
 interface ConfirmActionState {
@@ -36,8 +37,7 @@ export function ProductsTable() {
   const [showRetired, setShowRetired] = useState(false)
   const { data, isLoading, isError, error, isFetching, refetch } = useLoanProducts()
   const products = useMemo(
-    () =>
-      showRetired ? (data ?? []) : (data ?? []).filter((p) => !p.isRetired),
+    () => filterVisibleProducts(data, { showRetired }),
     [data, showRetired],
   )
 
