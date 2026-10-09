@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { Download, FileArrowUp, WarningCircle } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
@@ -30,6 +31,7 @@ interface ImportUsersSheetProps {
 }
 
 export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
+  const queryClient = useQueryClient()
   const [file, setFile] = useState<File | null>(null)
   const [result, setResult] = useState<UserImportResult | null>(null)
   const [isImporting, setIsImporting] = useState(false)
@@ -74,6 +76,7 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
     try {
       const importResult = await importUsers(file)
       setResult(importResult)
+      await queryClient.invalidateQueries({ queryKey: ['users'] })
       if (importResult.successfulImports > 0)
         toastSuccess(
           `Imported ${importResult.successfulImports} user${importResult.successfulImports === 1 ? '' : 's'}.`,

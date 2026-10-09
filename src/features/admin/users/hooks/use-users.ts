@@ -61,7 +61,9 @@ export function useUserStats() {
 
 function useInvalidateUsers() {
   const queryClient = useQueryClient()
-  return () => queryClient.invalidateQueries({ queryKey: userKeys.all })
+  return async () => {
+    await queryClient.invalidateQueries({ queryKey: userKeys.all })
+  }
 }
 
 export function useCreateUser(options?: {
@@ -70,8 +72,8 @@ export function useCreateUser(options?: {
   const invalidate = useInvalidateUsers()
   return useMutation({
     mutationFn: (payload: CreateUserPayload) => createUser(payload),
-    onSuccess: (user) => {
-      invalidate()
+    onSuccess: async (user) => {
+      await invalidate()
       options?.onSuccess?.(user)
     },
   })
@@ -82,7 +84,9 @@ export function useUpdateUser() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateUserPayload }) =>
       updateUser(id, payload),
-    onSuccess: () => invalidate(),
+    onSuccess: async () => {
+      await invalidate()
+    },
   })
 }
 
@@ -91,6 +95,8 @@ export function useUpdateUserStatus() {
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       updateUserStatus(id, isActive),
-    onSuccess: () => invalidate(),
+    onSuccess: async () => {
+      await invalidate()
+    },
   })
 }

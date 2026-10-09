@@ -60,6 +60,7 @@ function toUpdateBody(payload: UpdateUserPayload) {
     fullName,
     email: payload.email ?? null,
     branchId: payload.branchId,
+    role: payload.role,
   }
 }
 
