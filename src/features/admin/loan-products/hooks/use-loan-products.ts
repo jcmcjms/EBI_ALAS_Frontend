@@ -13,13 +13,14 @@ import {
   updateLoanProduct,
 } from '../api/loan-products'
 
-const LOAN_PRODUCTS_STALE_TIME = 5 * 60_000
+const LOAN_PRODUCTS_STALE_TIME = 30_000
 
 export function useLoanProducts() {
   return useQuery({
     queryKey: loanProductKeys.list(),
     queryFn: getLoanProducts,
     staleTime: LOAN_PRODUCTS_STALE_TIME,
+    refetchOnMount: 'always',
   })
 }
 
@@ -32,15 +33,17 @@ export function useLoanProduct(code: string | null) {
     queryFn: () => getLoanProductByCode(code!),
     enabled: code !== null,
     staleTime: LOAN_PRODUCTS_STALE_TIME,
+    refetchOnMount: 'always',
   })
 }
 
 function useInvalidateLoanProducts() {
   const queryClient = useQueryClient()
-  return () =>
-    queryClient.invalidateQueries({
+  return async () => {
+    await queryClient.invalidateQueries({
       queryKey: loanProductKeys.all,
     })
+  }
 }
 
 export function useUpdateLoanProduct() {
@@ -54,12 +57,9 @@ export function useUpdateLoanProduct() {
       code: string
       payload: UpdateLoanProductPayload
     }) => updateLoanProduct(code, payload),
-    onSuccess: (updated: LoanProductResponse) => {
-      invalidate()
-      queryClient.setQueryData(
-        loanProductKeys.detail(updated.code),
-        updated,
-      )
+    onSuccess: async (updated: LoanProductResponse) => {
+      queryClient.setQueryData(loanProductKeys.detail(updated.code), updated)
+      await invalidate()
     },
   })
 }
@@ -68,7 +68,9 @@ export function useSyncLoanProducts() {
   const invalidate = useInvalidateLoanProducts()
   return useMutation({
     mutationFn: () => syncLoanProducts(),
-    onSuccess: () => invalidate(),
+    onSuccess: async () => {
+      await invalidate()
+    },
   })
 }
 
@@ -76,6 +78,8 @@ export function useImportLoanProducts() {
   const invalidate = useInvalidateLoanProducts()
   return useMutation<LoanProductImportResult, Error, File>({
     mutationFn: importLoanProducts,
-    onSuccess: () => invalidate(),
+    onSuccess: async () => {
+      await invalidate()
+    },
   })
 }

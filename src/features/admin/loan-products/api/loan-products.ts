@@ -1,9 +1,5 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
-import {
-  unwrapApiData,
-  type ApiResponse,
-  type LoanProductResponse,
-} from '@/src/shared/lib/api/types'
+import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 import type {
   LoanProductImportResult,
   LoanProductSyncResult,
@@ -13,38 +9,35 @@ import type {
 export type { LoanProductImportResult } from './loan-product-types'
 
 export async function getLoanProducts(): Promise<LoanProductResponse[]> {
-  const res =
-    await apiClient.get<ApiResponse<LoanProductResponse[]>>(
-      '/api/loan-products',
-    )
-  return unwrapApiData(res.data)
+  const res = await apiClient.get<LoanProductResponse[]>('/api/loan-products')
+  return Array.isArray(res.data) ? res.data : []
 }
 
 export async function getLoanProductByCode(
   code: string,
 ): Promise<LoanProductResponse | null> {
-  const res = await apiClient.get<ApiResponse<LoanProductResponse>>(
+  const res = await apiClient.get<LoanProductResponse>(
     `/api/loan-products/${encodeURIComponent(code)}`,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function updateLoanProduct(
   code: string,
   payload: UpdateLoanProductPayload,
 ): Promise<LoanProductResponse> {
-  const res = await apiClient.put<ApiResponse<LoanProductResponse>>(
+  const res = await apiClient.put<LoanProductResponse>(
     `/api/loan-products/${encodeURIComponent(code)}`,
     payload,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function syncLoanProducts(): Promise<LoanProductSyncResult> {
-  const res = await apiClient.post<ApiResponse<LoanProductSyncResult>>(
+  const res = await apiClient.post<LoanProductSyncResult>(
     '/api/loan-products/sync',
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function exportLoanProducts(includeRetired = true): Promise<void> {
@@ -90,13 +83,13 @@ export async function importLoanProducts(
   const formData = new FormData()
   formData.append('file', file)
 
-  const res = await apiClient.post<ApiResponse<LoanProductImportResult>>(
+  const res = await apiClient.post<LoanProductImportResult>(
     '/api/loan-products/import',
     formData,
     { headers: { 'Content-Type': 'multipart/form-data' } },
   )
 
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export function findProductByCode(

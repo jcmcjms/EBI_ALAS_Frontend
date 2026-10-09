@@ -13,9 +13,9 @@ import {
 import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import {
   downloadLoanProductTemplate,
-  importLoanProducts,
   type LoanProductImportResult,
 } from '../api/loan-products'
+import { useImportLoanProducts } from '../hooks/use-loan-products'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { cn } from '@/src/shared/lib/utils'
 
@@ -34,8 +34,8 @@ export function ImportProductsSheet({
 }: ImportProductsSheetProps) {
   const [file, setFile] = useState<File | null>(null)
   const [result, setResult] = useState<LoanProductImportResult | null>(null)
-  const [isImporting, setIsImporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const importMutation = useImportLoanProducts()
 
   const reset = () => {
     setFile(null)
@@ -70,27 +70,26 @@ export function ImportProductsSheet({
     }
   }
 
-  const handleImport = async () => {
+  const handleImport = () => {
     if (!file) return
-    setIsImporting(true)
-    try {
-      const importResult = await importLoanProducts(file)
-      setResult(importResult)
-      if (importResult.created + importResult.updated > 0)
-        toastSuccess(
-          `Imported ${importResult.created + importResult.updated} product${
-            importResult.created + importResult.updated === 1 ? '' : 's'
-          } (${importResult.created} created, ${importResult.updated} updated).`,
-        )
-      if (importResult.failed > 0)
-        toastError(
-          `${importResult.failed} row${importResult.failed === 1 ? '' : 's'} skipped — see the report in the sheet.`,
-        )
-    } catch (error) {
-      toastError(getErrorMessage(error))
-    } finally {
-      setIsImporting(false)
-    }
+    importMutation.mutate(file, {
+      onSuccess: (importResult) => {
+        setResult(importResult)
+        if (importResult.created + importResult.updated > 0)
+          toastSuccess(
+            `Imported ${importResult.created + importResult.updated} product${
+              importResult.created + importResult.updated === 1 ? '' : 's'
+            } (${importResult.created} created, ${importResult.updated} updated).`,
+          )
+        if (importResult.failed > 0)
+          toastError(
+            `${importResult.failed} row${importResult.failed === 1 ? '' : 's'} skipped — see the report in the sheet.`,
+          )
+      },
+      onError: (error) => {
+        toastError(getErrorMessage(error))
+      },
+    })
   }
 
   const handleDownloadErrorReport = () => {
@@ -282,9 +281,14 @@ export function ImportProductsSheet({
               <Button variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button onClick={handleImport} disabled={!file || isImporting}>
-                {isImporting && <Spinner className="mr-1.5 h-4 w-4" />}
-                {isImporting ? 'Importing…' : 'Import products'}
+              <Button
+                onClick={handleImport}
+                disabled={!file || importMutation.isPending}
+              >
+                {importMutation.isPending && (
+                  <Spinner className="mr-1.5 h-4 w-4" />
+                )}
+                {importMutation.isPending ? 'Importing…' : 'Import products'}
               </Button>
             </>
           )}
