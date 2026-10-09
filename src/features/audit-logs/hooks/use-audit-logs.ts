@@ -11,7 +11,7 @@ export function useAuditLogs(params: AuditLogQueryParams) {
   })
 }
 
-export function useAuditLog(id: number | null) {
+export function useAuditLog(id: string | null) {
   return useQuery({
     queryKey:
       id !== null
