@@ -1,8 +1,11 @@
 import { useEffect } from 'react'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { apiClient } from '@/src/shared/lib/apiClient'
-import { extractUserFromToken } from '@/src/shared/lib/jwt'
 import { toastError } from '@/src/shared/ui/feedback/toast'
+import {
+  readLoginSession,
+  type AuthTokenResponse,
+} from '@/src/features/auth/login-session'
 
 export function useAuthInit(): void {
   const setSession = useAuthStore((state) => state.setSession)
@@ -15,19 +18,13 @@ export function useAuthInit(): void {
 
     const initAuth = async () => {
       try {
-        const { data: apiResponse } = await apiClient.post('/api/auth/refresh')
+        const { data } = await apiClient.post<AuthTokenResponse>(
+          '/api/auth/refresh',
+        )
+        const session = readLoginSession(data)
 
-        if (
-          !cancelled &&
-          apiResponse?.success &&
-          apiResponse.data?.accessToken
-        ) {
-          const token = apiResponse.data.accessToken
-          const user = extractUserFromToken(token)
-
-          if (user) {
-            setSession(token, user)
-          }
+        if (!cancelled && session) {
+          setSession(session.token, session.user)
         }
       } catch (error) {
         const axiosError = error as { response?: { status?: number } }
@@ -37,6 +34,7 @@ export function useAuthInit(): void {
             'Server is temporarily unavailable. Please try again later.',
           )
         } else if (status === 401 || status === 403) {
+          // No session is the expected cold-start path; stay signed out silently.
         } else if (!axiosError?.response) {
           toastError(
             'Unable to connect to the server. Please check your network connection.',

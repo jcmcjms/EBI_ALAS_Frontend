@@ -56,14 +56,20 @@ export default function ChangePassword() {
       clearSession()
       navigate({ to: '/login', replace: true })
     } catch (error) {
-      const status = (error as { response?: { status?: number } })?.response
-        ?.status
-      const message = (
+      const response = (
         error as {
-          response?: { data?: { message?: string } }
+          response?: {
+            status?: number
+            data?: { detail?: string; message?: string }
+          }
         }
-      )?.response?.data?.message
-      if (status === 400 && message && /current password/i.test(message)) {
+      )?.response
+      const message = response?.data?.detail ?? response?.data?.message
+      if (
+        response?.status === 400 &&
+        message &&
+        /current password/i.test(message)
+      ) {
         setError('currentPassword', {
           type: 'server',
           message,

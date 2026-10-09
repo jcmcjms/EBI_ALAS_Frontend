@@ -9,9 +9,12 @@ import { Input } from '@/src/shared/ui/primitives/input'
 import { Button } from '@/src/shared/ui/primitives/button'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
-import { extractUserFromToken } from '@/src/shared/lib/jwt'
 import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { loginSchema, type LoginFormData } from '../schemas'
+import {
+  readLoginSession,
+  type AuthTokenResponse,
+} from '../login-session'
 
 interface LoginFormProps extends React.ComponentProps<'form'> {
   className?: string
@@ -33,22 +36,21 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await apiClient.post('/api/auth/login', data)
-      const apiResponse = response.data
+      const response = await apiClient.post<AuthTokenResponse>(
+        '/api/auth/login',
+        data,
+      )
+      const session = readLoginSession(response.data)
 
-      if (apiResponse.success && apiResponse.data?.accessToken) {
-        const token = apiResponse.data.accessToken
-        const user = extractUserFromToken(token)
-
-        if (user) {
-          setSession(token, user)
-          toastSuccess('Login successful')
-          navigate({ to: '/dashboard', replace: true })
-        } else {
-          toastError('Something went wrong. Please try again.')
-        }
+      if (session) {
+        setSession(session.token, session.user)
+        toastSuccess('Login successful')
+        navigate({
+          to: session.user.mustChangePassword ? '/change-password' : '/dashboard',
+          replace: true,
+        })
       } else {
-        toastError(apiResponse.message || 'Login failed')
+        toastError('Login failed')
       }
     } catch (error) {
       toastError(getErrorMessage(error))
@@ -63,9 +65,9 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
     >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Login to your account</h1>
+          <h2 className="text-2xl font-bold">Sign in</h2>
           <p className="text-sm text-balance text-muted-foreground">
-            Enter your username and password to sign in.
+            Use your Enterprise Bank officer account.
           </p>
         </div>
 
@@ -75,10 +77,11 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
             id="username"
             placeholder="Username"
             autoComplete="username"
+            aria-invalid={!!errors.username}
             {...register('username')}
           />
           {errors.username && (
-            <p className="text-xs text-red-500 mt-1">
+            <p className="text-xs text-destructive mt-1" role="alert">
               {errors.username.message}
             </p>
           )}
@@ -102,20 +105,23 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
               type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               autoComplete="current-password"
+              aria-invalid={!!errors.password}
               {...register('password')}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              tabIndex={-1}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
             >
               {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
             </button>
           </div>
           {errors.password && (
-            <p className="text-xs text-red-500 mt-1">Invalid credentials</p>
+            <p className="text-xs text-destructive mt-1" role="alert">
+              {errors.password.message ?? 'Enter your password to sign in.'}
+            </p>
           )}
         </Field>
 

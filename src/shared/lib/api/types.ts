@@ -6,6 +6,17 @@ export interface ApiResponse<T> {
   timestamp: string
 }
 
+/**
+ * Flat auth body returned by POST /api/auth/login and /api/auth/refresh.
+ * The API does not wrap payloads in an ApiResponse envelope.
+ */
+export interface AuthTokenResponse {
+  accessToken: string
+  refreshToken: string
+  accessTokenExpiresAt: string
+  mustChangePassword: boolean
+}
+
 export interface PagedResult<T> {
   items: T[]
   currentPage: number
@@ -23,6 +34,10 @@ export function unwrapApiData<T>(body: ApiResponse<T>): T {
   return body.data
 }
 
+/**
+ * Permission strings must match RoleCatalog in Ebi.Alas.Api.
+ * Admin is granted `users.manage` (not granular user.* keys).
+ */
 export const PERMISSIONS = {
   loansCreate: 'loans.create',
   loansView: 'loans.view',
@@ -31,13 +46,13 @@ export const PERMISSIONS = {
   loansApprove: 'loans.approve',
   loansReject: 'loans.reject',
   loanProductManage: 'loan_product.manage',
-  loanProductView: 'loan_product.view',
-  userCreate: 'user.create',
-  userView: 'user.view',
-  userEdit: 'user.edit',
-  userSuspend: 'user.suspend',
-  roleManage: 'role.manage',
-  roleView: 'role.view',
+  loanProductView: 'loan_product.manage',
+  userCreate: 'users.manage',
+  userView: 'users.manage',
+  userEdit: 'users.manage',
+  userSuspend: 'users.manage',
+  roleManage: 'roles.view',
+  roleView: 'roles.view',
   auditLogsView: 'auditLogs.view',
   workflowManage: 'workflow.manage',
 } as const

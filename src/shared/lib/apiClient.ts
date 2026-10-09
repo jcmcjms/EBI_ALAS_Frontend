@@ -3,6 +3,7 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { toastError } from '@/src/shared/ui/feedback/toast'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { decodeJwtPayload } from '@/src/shared/lib/jwt.ts'
+import type { AuthTokenResponse } from '@/src/shared/lib/api/types'
 import { env } from '@/src/shared/config/env'
 
 const baseURL = env.apiBaseUrl
@@ -71,12 +72,16 @@ async function refreshAccessToken(): Promise<string> {
   }
   isRefreshing = true
   try {
-    const { data: apiResponse } = await axios.post('/api/auth/refresh', null, {
-      withCredentials: true,
-      headers: { 'Content-Type': 'application/json' },
-    })
-    if (apiResponse?.success && apiResponse.data?.accessToken) {
-      const newToken: string = apiResponse.data.accessToken
+    const { data: body } = await axios.post<AuthTokenResponse>(
+      '/api/auth/refresh',
+      null,
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+    if (body?.accessToken) {
+      const newToken: string = body.accessToken
       useAuthStore.getState().setAccessToken(newToken)
       processQueue(null, newToken)
       return newToken
