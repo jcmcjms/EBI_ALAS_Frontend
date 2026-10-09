@@ -114,9 +114,10 @@ export function LoanParametersFields({
           <Label className="text-xs text-muted-foreground">NTHP Date</Label>
           <Input
             {...register(nthpDatePath)}
-            type="date"
+            type="text"
+            placeholder="yyyy-mm-dd"
             readOnly
-            className="h-9 bg-muted/50"
+            className="h-9 bg-muted/50 tabular-nums"
           />
         </div>
       </div>

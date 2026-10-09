@@ -25,6 +25,18 @@ export function extractProductCode(desc: string | undefined): string | null {
   return dash === -1 ? desc.trim() : desc.slice(0, dash).trim()
 }
 
+/** Force yyyy-MM-dd for &lt;input type="date"&gt; / form models. */
+export function normalizeIsoDate(value: string): string {
+  const trimmed = value.trim()
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10)
+  const d = new Date(trimmed)
+  if (Number.isNaN(d.getTime())) return ''
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export function useLoanLoader(
   cisNo: string,
   accounts: WebLoanAccount[],
@@ -121,8 +133,18 @@ export function useLoanLoader(
         setValue('client.netTakeHomePay', nthpValue, { shouldDirty: false })
       }
       if (pending.nthpDate) {
-        const d = pending.nthpDate.slice(0, 10)
+        const d = normalizeIsoDate(pending.nthpDate)
         setPendingNthpDate(d)
+        // Keep already-selected loan parameters in sync with the loaded NTHP date.
+        const current = getValues('loans') ?? []
+        if (current.length > 0) {
+          fieldArray.replace(
+            current.map((entry) => ({
+              ...entry,
+              parameters: { ...entry.parameters, nthpDate: d },
+            })),
+          )
+        }
       }
     }
 
@@ -201,7 +223,7 @@ export function useLoanLoader(
         interestRate: loan.grantedRate ?? 0,
         term: Math.round(loan.totalTermDays ?? 0),
         policyTermMonths: loan.policyTermMonths ?? undefined,
-        nthpDate: pendingNthpDate,
+        nthpDate: pendingNthpDate ? normalizeIsoDate(pendingNthpDate) : undefined,
         notarialFee: 0,
         docStamps: 0,
         insurance: 0,
