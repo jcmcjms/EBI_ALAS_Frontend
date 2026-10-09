@@ -84,7 +84,8 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                           variant="outline"
                           className="h-4 px-1.5 text-[10px] font-normal text-amber-600 dark:text-amber-400"
                         >
-                          {item.missingCount} doc(s) missing
+                          {item.missingCount}{' '}
+                          {item.missingCount === 1 ? 'doc' : 'docs'} missing
                         </Badge>
                       </div>
                       <p

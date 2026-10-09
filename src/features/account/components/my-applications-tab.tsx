@@ -117,13 +117,13 @@ export function MyApplicationsTab() {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant="secondary"
+                        variant="outline"
                         className={cn(
                           'text-xs font-normal',
                           meta?.className ?? 'bg-muted text-muted-foreground',
                         )}
                       >
-                        {app.status}
+                        {meta?.label ?? app.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground tabular-nums">

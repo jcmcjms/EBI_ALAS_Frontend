@@ -33,7 +33,7 @@ export function NavUser({
     name: string
     role: string
     jobTitle: string | null
-    avatar: string
+    avatar?: string | null
   }
 }) {
   const { isMobile } = useSidebar()
@@ -64,8 +64,8 @@ export function NavUser({
               />
             }
           >
-            <Avatar className="h-8 w-8 rounded-lg grayscale">
-              <AvatarImage src={user.avatar} alt={user.name} />
+            <Avatar className="h-8 w-8 rounded-lg">
+              <AvatarImage src={user.avatar ?? undefined} alt={user.name} />
               <AvatarFallback className="rounded-lg">
                 {initialsOf(user.name)}
               </AvatarFallback>
@@ -88,7 +88,7 @@ export function NavUser({
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage src={user.avatar ?? undefined} alt={user.name} />
                     <AvatarFallback className="rounded-lg">
                       {initialsOf(user.name)}
                     </AvatarFallback>

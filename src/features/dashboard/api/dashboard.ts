@@ -1,62 +1,41 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
+import type { DashboardData } from '../types'
 
-export interface DashboardOverviewDto {
-  kpis: {
-    totalPending: number
-    pendingDeltaFromYesterday: number
-    nowServing: number
-    pushBacksToday: number
-    approvedToday: number
-    approvedVsAvgPercent: number
-  }
-  pendingQueue: {
-    position: number
-    lamId: string
-    branchCode: string
-    status: string
-    waitingSinceUtc: string
-    clientName: string
-    encoderName: string
-  }[]
-  nowServing: {
-    number: number
-    checker: string
-    lamId: string
-    isActive: boolean
-  }[]
-  pushBacks: {
-    number: number
-    lamId: string
-    branchCode: string
-    reason: string
-    pushedBackAtUtc: string
-  }[]
-  approvedLoans: {
-    fullName: string
-    lamId: string
-    branchCode: string
-    approvedAtUtc: string
-  }[]
-  weeklyTrend: { day: string; approved: number; pushBacks: number }[]
-  documentQueue: {
-    id: number
-    position: number
-    lamId: string
-    branchCode: string
-    waitingSinceUtc: string
-    missingCount: number
-    clientName: string
-    encoderName: string
-    flaggedByName?: string
-    flaggedAt?: string
-  }[]
-  generatedAtUtc: string
+/** Raw DTO returned by GET /api/dashboard/overview (no ApiResponse envelope). */
+export interface DashboardOverviewResponse {
+  pendingRecommendation: number
+  pendingEvaluation: number
+  pendingApproval: number
+  approvedToday: number
+  pushbacks: number
 }
 
-export async function getDashboardOverview(): Promise<DashboardOverviewDto> {
-  const res = await apiClient.get<ApiResponse<DashboardOverviewDto>>(
+export function mapDashboardOverview(
+  o: DashboardOverviewResponse,
+): DashboardData {
+  return {
+    summary: {
+      totalPending:
+        o.pendingRecommendation + o.pendingEvaluation + o.pendingApproval,
+      pendingDeltaFromYesterday: 0,
+      nowServing: 0,
+      pushBacksToday: o.pushbacks,
+      approvedToday: o.approvedToday,
+      approvedVsAvgPercent: 0,
+    },
+    pendingQueue: [],
+    nowServing: [],
+    pushBacks: [],
+    approvedLoans: [],
+    weeklyTrend: [],
+    incompleteDocsQueue: [],
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
+export async function getDashboardOverview(): Promise<DashboardData> {
+  const res = await apiClient.get<DashboardOverviewResponse>(
     '/api/dashboard/overview',
   )
-  return unwrapApiData(res.data)
+  return mapDashboardOverview(res.data)
 }

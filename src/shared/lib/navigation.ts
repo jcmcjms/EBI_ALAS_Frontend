@@ -1,6 +1,6 @@
 import {
   Bell,
-  ChartBar,
+  FilePlus,
   House,
   ListChecks,
   Tray,
@@ -34,7 +34,7 @@ export const navMain: NavItem[] = [
   {
     title: 'Loan Creation',
     url: '/loans/create',
-    icon: ChartBar,
+    icon: FilePlus,
     requiredPermission: 'loans.create',
   },
   {
@@ -62,12 +62,12 @@ export const navMain: NavItem[] = [
       {
         title: 'Users',
         url: '/admin/users',
-        requiredPermission: 'user.view',
+        requiredPermission: 'users.manage',
       },
       {
         title: 'Loan Products',
         url: '/admin/loan-products',
-        requiredPermission: 'loan_product.view',
+        requiredPermission: 'loan_product.manage',
       },
       {
         title: 'Audit Logs',

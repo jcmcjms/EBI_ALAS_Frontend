@@ -100,24 +100,20 @@ export const PendingQueue = memo(function PendingQueue({
                 slaPolicy,
               )
               return (
-                <li
-                  key={item.lamId}
-                  onClick={() =>
-                    navigate({ to: '/loans/monitoring', search: { status: pendingStatuses } })
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      navigate({ to: '/loans/monitoring', search: { status: pendingStatuses } })
+                <li key={item.lamId}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate({
+                        to: '/loans/monitoring',
+                        search: { id: item.lamId },
+                      })
                     }
-                  }}
-                  tabIndex={0}
-                  role="link"
-                  className={cn(
-                    'flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
-                    item.position === 1 && 'bg-primary/[0.04]',
-                  )}
-                >
+                    className={cn(
+                      'flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                      item.position === 1 && 'bg-primary/[0.04]',
+                    )}
+                  >
                   <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">
                     #{item.position}
                   </span>
@@ -167,6 +163,7 @@ export const PendingQueue = memo(function PendingQueue({
                       {formatWaiting(mins)}
                     </span>
                   </div>
+                  </button>
                 </li>
               )
             })}

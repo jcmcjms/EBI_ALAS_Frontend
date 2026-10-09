@@ -4,6 +4,7 @@ import { BRANCHES } from '@/src/shared/lib/api/types'
 import { Plus } from '@phosphor-icons/react'
 import { Button } from '@/src/shared/ui/primitives/button'
 import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
+import { ErrorState } from '@/src/shared/ui/feedback/empty-state'
 
 import { ApprovedLoans } from '../components/approved-loans'
 import { DashboardSummary } from '../components/dashboard-summary'
@@ -64,14 +65,11 @@ export function Dashboard() {
       </div>
 
       {isError ? (
-        <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-          <p className="text-sm text-muted-foreground">
-            Failed to load dashboard data.
-          </p>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            Retry
-          </Button>
-        </div>
+        <ErrorState
+          message="Dashboard queues and totals could not be loaded. Your last saved work is unaffected."
+          onRetry={() => void refetch()}
+          className="h-64"
+        />
       ) : isLoading ? (
         <DashboardSkeleton />
       ) : data ? (
