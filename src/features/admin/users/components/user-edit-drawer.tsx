@@ -38,7 +38,7 @@ interface UserEditDrawerProps {
   user: UserResponse | null
   canEdit: boolean
   onClose: () => void
-  onSave: (userId: number, changes: UserProfileChanges) => Promise<boolean>
+  onSave: (userId: string, changes: UserProfileChanges) => Promise<boolean>
   onToggleStatus: (user: UserResponse) => void
   onResetPassword: (user: UserResponse) => void
   onForcePasswordReset: (user: UserResponse) => void

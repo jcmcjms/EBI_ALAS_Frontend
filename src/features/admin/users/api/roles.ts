@@ -1,13 +1,12 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
-import {
-  unwrapApiData,
-  type ApiResponse,
-} from '@/src/shared/lib/api/types'
-import type { RoleInfo } from './users-types'
+import type { BackendRoleCatalogItem, RoleInfo } from './users-types'
 
 export type { RoleInfo }
 
 export async function listRoles(): Promise<RoleInfo[]> {
-  const res = await apiClient.get<ApiResponse<RoleInfo[]>>('/api/roles')
-  return unwrapApiData(res.data)
+  const res = await apiClient.get<BackendRoleCatalogItem[]>('/api/roles')
+  return res.data.map((item) => ({
+    name: item.role,
+    displayName: item.role,
+  }))
 }

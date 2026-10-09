@@ -1,17 +1,15 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
-import {
-  unwrapApiData,
-  type ApiResponse,
-  type PagedResult,
-} from '@/src/shared/lib/api/types'
+import type { PagedResult } from '@/src/shared/lib/api/types'
 import type {
+  BackendPageResult,
+  BackendUserDto,
   CreateUserPayload,
-  ResetPasswordResponse,
   UpdateUserPayload,
-  UserAuditLogResponse,
+  UserImportResult,
   UserQueryParams,
   UserResponse,
 } from './users-types'
+import { splitFullName, toUserResponse } from './users-types'
 
 export type {
   CreateUserPayload,
@@ -24,153 +22,135 @@ export type {
   UserImportResult,
 } from './users-types'
 
+function toPagedResult(
+  page: BackendPageResult<BackendUserDto>,
+): PagedResult<UserResponse> {
+  return {
+    items: page.items.map(toUserResponse),
+    currentPage: page.page,
+    pageSize: page.pageSize,
+    totalCount: page.totalCount,
+    totalPages: page.totalPages,
+    hasPreviousPage: page.page > 1,
+    hasNextPage: page.page < page.totalPages,
+  }
+}
+
+function toCreateBody(payload: CreateUserPayload) {
+  const fullName = [payload.firstName, payload.middleName, payload.lastName]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+  return {
+    userName: payload.username,
+    password: payload.password,
+    fullName,
+    email: payload.email ?? null,
+    branchId: payload.branchId,
+    role: payload.role,
+  }
+}
+
+function toUpdateBody(payload: UpdateUserPayload) {
+  const fullName = [payload.firstName, payload.middleName, payload.lastName]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+  return {
+    fullName,
+    email: payload.email ?? null,
+    branchId: payload.branchId,
+  }
+}
+
 export async function listUsers(
   params: UserQueryParams,
 ): Promise<PagedResult<UserResponse>> {
-  const res = await apiClient.get<ApiResponse<PagedResult<UserResponse>>>(
+  const res = await apiClient.get<BackendPageResult<BackendUserDto>>(
     '/api/users',
     {
       params: {
-        search: params.search || undefined,
-        role: params.role || undefined,
-        branchId: params.branchId || undefined,
-        isActive: params.isActive ?? undefined,
-        pageNumber: params.pageNumber ?? 1,
+        page: params.pageNumber ?? 1,
         pageSize: params.pageSize ?? 20,
       },
     },
   )
-  return unwrapApiData(res.data)
+  return toPagedResult(res.data)
 }
 
-export async function getUser(id: number): Promise<UserResponse> {
-  const res = await apiClient.get<ApiResponse<UserResponse>>(`/api/users/${id}`)
-  return unwrapApiData(res.data)
+export async function getUser(id: string): Promise<UserResponse> {
+  const res = await apiClient.get<BackendUserDto>(`/api/users/${id}`)
+  return toUserResponse(res.data)
 }
 
 export async function createUser(
   payload: CreateUserPayload,
 ): Promise<UserResponse> {
-  const res = await apiClient.post<ApiResponse<UserResponse>>(
+  const res = await apiClient.post<{ user: BackendUserDto } | BackendUserDto>(
     '/api/users',
-    payload,
+    toCreateBody(payload),
   )
-  return unwrapApiData(res.data)
+  const dto =
+    res.data && typeof res.data === 'object' && 'user' in res.data
+      ? res.data.user
+      : (res.data as BackendUserDto)
+  return toUserResponse(dto)
 }
 
 export async function updateUser(
-  id: number,
+  id: string,
   payload: UpdateUserPayload,
 ): Promise<UserResponse> {
-  const res = await apiClient.put<ApiResponse<UserResponse>>(
+  const res = await apiClient.put<BackendUserDto>(
     `/api/users/${id}`,
-    payload,
+    toUpdateBody(payload),
   )
-  return unwrapApiData(res.data)
+  return toUserResponse(res.data)
 }
 
 export async function updateUserStatus(
-  id: number,
+  id: string,
   isActive: boolean,
 ): Promise<void> {
-  const res = await apiClient.patch<ApiResponse<null>>(
-    `/api/users/${id}/status`,
-    { isActive },
-  )
-  if (!res.data.success)
-    throw new Error(res.data.message || 'Failed to update status')
+  await apiClient.post(`/api/users/${id}/${isActive ? 'activate' : 'suspend'}`)
 }
 
-export async function resetUserPassword(
-  id: number,
-): Promise<ResetPasswordResponse> {
-  const res = await apiClient.post<ApiResponse<ResetPasswordResponse>>(
-    `/api/users/${id}/reset-password`,
-    {},
-  )
-  return unwrapApiData(res.data)
-}
-
-export async function forcePasswordReset(id: number): Promise<void> {
-  const res = await apiClient.post<ApiResponse<null>>(
-    `/api/users/${id}/force-password-reset`,
-  )
-  if (!res.data.success)
-    throw new Error(res.data.message || 'Failed to force password reset')
-}
-
-export async function revokeUserSessions(id: number): Promise<number> {
-  const res = await apiClient.post<ApiResponse<number>>(
-    `/api/users/${id}/revoke-sessions`,
-  )
-  return unwrapApiData(res.data)
-}
-
-export async function getUserAuditLog(
-  id: number,
-  pageNumber = 1,
-  pageSize = 20,
-): Promise<UserAuditLogResponse[]> {
-  const res = await apiClient.get<ApiResponse<UserAuditLogResponse[]>>(
-    `/api/users/${id}/audit-log`,
-    { params: { pageNumber, pageSize } },
-  )
-  return unwrapApiData(res.data)
-}
-
-export async function exportUsers(params: UserQueryParams = {}): Promise<void> {
-  const res = await apiClient.get('/api/users/export', {
-    params: {
-      search: params.search || undefined,
-      role: params.role || undefined,
-      branchCode: params.branchId || undefined,
-      isActive: params.isActive ?? undefined,
-    },
-    responseType: 'blob',
+export async function importUsers(file: File): Promise<UserImportResult> {
+  const form = new FormData()
+  form.append('file', file)
+  const res = await apiClient.post<UserImportResult>('/api/users/import', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   })
-
-  const blob = new Blob([res.data], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `users-export-${new Date().toISOString().split('T')[0]}.xlsx`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  return res.data
 }
 
 export async function downloadImportTemplate(): Promise<void> {
-  const res = await apiClient.get('/api/users/import/template', {
+  const res = await apiClient.get<Blob>('/api/users/import-template', {
     responseType: 'blob',
   })
-
-  const blob = new Blob([res.data], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  })
-  const url = URL.createObjectURL(blob)
+  const url = URL.createObjectURL(res.data)
   const link = document.createElement('a')
   link.href = url
   link.download = 'user-import-template.xlsx'
   document.body.appendChild(link)
   link.click()
-  document.body.removeChild(link)
+  link.remove()
   URL.revokeObjectURL(url)
 }
 
-import type { UserImportResult } from './users-types'
-
-export async function importUsers(file: File): Promise<UserImportResult> {
-  const formData = new FormData()
-  formData.append('file', file)
-
-  const res = await apiClient.post<ApiResponse<UserImportResult>>(
-    '/api/users/import',
-    formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } },
-  )
-
-  return unwrapApiData(res.data)
+export async function exportUsers(params: UserQueryParams = {}): Promise<void> {
+  void params
+  throw new Error('User export is not available on this API yet.')
 }
+
+export function formatUserFullName(user: {
+  firstName: string
+  middleName?: string | null
+  lastName: string
+}): string {
+  return [user.firstName, user.middleName, user.lastName]
+    .filter(Boolean)
+    .join(' ')
+}
+
+export { splitFullName, toUserResponse }

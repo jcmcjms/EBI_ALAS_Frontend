@@ -8,14 +8,7 @@ import type {
   UserResponse,
 } from '../api/users-types'
 import { useAuthStore } from '@/src/shared/store/auth-store'
-import {
-  useCreateUser,
-  useForcePasswordReset,
-  useResetUserPassword,
-  useRevokeUserSessions,
-  useUpdateUser,
-  useUpdateUserStatus,
-} from './use-users'
+import { useCreateUser, useUpdateUser, useUpdateUserStatus } from './use-users'
 import type { UserProfileChanges } from '../components/user-edit-drawer'
 import type { UserCreatePayload } from '../components/user-create-drawer'
 import type { TemporaryCredential } from '../components/temporary-password-dialog'
@@ -29,6 +22,10 @@ export interface ConfirmActionState {
   onConfirm: () => void
 }
 
+function toastNotAvailable(feature: string) {
+  toastError(`${feature} is not available on this API yet.`)
+}
+
 export function useUserActions() {
   const hasPermission = useAuthStore((s) => s.hasPermission)
   const canSuspendUsers = hasPermission(PERMISSIONS.userSuspend)
@@ -36,9 +33,6 @@ export function useUserActions() {
   const createUserMutation = useCreateUser()
   const updateUserMutation = useUpdateUser()
   const updateUserStatusMutation = useUpdateUserStatus()
-  const resetUserPasswordMutation = useResetUserPassword()
-  const forcePasswordResetMutation = useForcePasswordReset()
-  const revokeSessionsMutation = useRevokeUserSessions()
 
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(
     null,
@@ -97,86 +91,27 @@ export function useUserActions() {
   }
 
   function handleResetPasswordRequest(user: UserResponse) {
-    if (!hasPermission(PERMISSIONS.userEdit)) {
-      toastError("You don't have permission to reset passwords")
-      return
-    }
-    setConfirmAction({
-      title: 'Reset Password',
-      description: `Generate a new temporary password for @${user.username}? The user will be required to change it on next login.`,
-      actionLabel: 'Reset Password',
-      onConfirm: () => {
-        resetUserPasswordMutation.mutate(user.id, {
-          onSuccess: (res) => {
-            closeConfirm()
-            setTempCred({
-              username: res.username,
-              temporaryPassword: res.temporaryPassword,
-            })
-          },
-          onError: (e) => {
-            closeConfirm()
-            toastError(getErrorMessage(e))
-          },
-        })
-      },
-    })
+    void user
+    toastNotAvailable('Password reset')
   }
 
   function handleForcePasswordResetRequest(user: UserResponse) {
-    if (!hasPermission(PERMISSIONS.userEdit)) {
-      toastError("You don't have permission to force password resets")
-      return
-    }
-    setConfirmAction({
-      title: 'Force Password Reset',
-      description: `Require @${user.username} to change their password on next login?`,
-      actionLabel: 'Force Reset',
-      onConfirm: () => {
-        forcePasswordResetMutation.mutate(user.id, {
-          onSuccess: () =>
-            toastSuccess(
-              `${formatFullName(user)} will be required to change password on next login`,
-            ),
-          onError: (e) => toastError(getErrorMessage(e)),
-        })
-        closeConfirm()
-      },
-    })
+    void user
+    toastNotAvailable('Forced password reset')
   }
 
   function handleRevokeSessionsRequest(user: UserResponse) {
-    if (!hasPermission(PERMISSIONS.userSuspend)) {
-      toastError("You don't have permission to revoke sessions")
-      return
-    }
-    setConfirmAction({
-      title: 'Revoke All Sessions',
-      description: `Sign out @${user.username} from all active devices? This will invalidate all refresh tokens.`,
-      actionLabel: 'Revoke Sessions',
-      destructive: true,
-      onConfirm: () => {
-        revokeSessionsMutation.mutate(user.id, {
-          onSuccess: (count) =>
-            toastSuccess(
-              `Revoked ${count} active session(s) for ${formatFullName(user)}`,
-            ),
-          onError: (e) => toastError(getErrorMessage(e)),
-        })
-        closeConfirm()
-      },
-    })
+    void user
+    toastNotAvailable('Session revocation')
   }
 
   function handleViewAuditLog(
     user: UserResponse,
     setSelectedUserForAuditLog: (user: UserResponse | null) => void,
   ) {
-    if (!hasPermission(PERMISSIONS.userView)) {
-      toastError("You don't have permission to view audit logs")
-      return
-    }
-    setSelectedUserForAuditLog(user)
+    void user
+    void setSelectedUserForAuditLog
+    toastNotAvailable('User audit log')
   }
 
   async function handleCreateUser(
@@ -207,7 +142,7 @@ export function useUserActions() {
   }
 
   async function handleUpdateUser(
-    userId: number,
+    userId: string,
     changes: UserProfileChanges,
     setSelectedUser: (user: UserResponse | null) => void,
   ): Promise<boolean> {
@@ -248,6 +183,6 @@ export function useUserActions() {
     handleViewAuditLog,
     handleCreateUser,
     handleUpdateUser,
-    isResetPasswordPending: resetUserPasswordMutation.isPending,
+    isResetPasswordPending: false,
   }
 }

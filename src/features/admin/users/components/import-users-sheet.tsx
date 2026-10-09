@@ -144,29 +144,36 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                 />
               </div>
 
-              {result.createdUsernames.length > 0 && (
+              {result.createdCredentials.length > 0 && (
                 <section className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium">Created users</h3>
+                    <h3 className="text-sm font-medium">
+                      Temporary passwords
+                    </h3>
                     <Badge
                       variant="outline"
                       className="text-xs font-normal tabular-nums"
                     >
-                      {result.createdUsernames.length}
+                      {result.createdCredentials.length}
                     </Badge>
                   </div>
-                  {}
-                  <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto rounded-md border bg-muted/30 p-2">
-                    {result.createdUsernames.map((username) => (
-                      <Badge
-                        key={username}
-                        variant="secondary"
-                        className="text-xs font-normal"
+                  <p className="text-xs text-muted-foreground">
+                    Share these with each officer. They must change the password
+                    on first login.
+                  </p>
+                  <ul className="max-h-36 divide-y overflow-y-auto rounded-md border">
+                    {result.createdCredentials.map((c) => (
+                      <li
+                        key={c.username}
+                        className="flex items-center justify-between gap-2 px-3 py-1.5 text-xs"
                       >
-                        @{username}
-                      </Badge>
+                        <span className="font-medium">@{c.username}</span>
+                        <code className="rounded bg-muted px-1.5 py-0.5 font-mono">
+                          {c.temporaryPassword}
+                        </code>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </section>
               )}
 

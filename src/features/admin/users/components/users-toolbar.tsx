@@ -1,7 +1,6 @@
 import {
   MagnifyingGlass,
   Plus,
-  Export,
   FileArrowUp,
   Funnel,
 } from '@phosphor-icons/react'
@@ -42,7 +41,6 @@ export function UsersToolbar({
   roles,
   canCreateUsers,
   onImport,
-  onExport,
   onCreateUser,
 }: UsersToolbarProps) {
   return (
@@ -108,15 +106,7 @@ export function UsersToolbar({
             Import
           </Button>
         )}
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 text-xs"
-          onClick={onExport}
-        >
-          <Export size={14} weight="bold" data-icon="inline-start" />
-          Export Excel
-        </Button>
+        {/* Export omitted until the users export API is implemented. */}
         {canCreateUsers && (
           <Button size="sm" className="gap-1.5 text-xs" onClick={onCreateUser}>
             <Plus size={14} weight="bold" data-icon="inline-start" />

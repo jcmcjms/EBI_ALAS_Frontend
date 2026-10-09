@@ -3,19 +3,14 @@ import { userKeys } from '@/src/features/admin/users/api/user-queries'
 import type {
   CreateUserPayload,
   UpdateUserPayload,
-  UserImportResult,
+  UserAuditLogResponse,
   UserQueryParams,
   UserResponse,
 } from '../api/users-types'
 import {
   createUser,
-  forcePasswordReset,
   getUser,
-  getUserAuditLog,
-  importUsers,
   listUsers,
-  resetUserPassword,
-  revokeUserSessions,
   updateUser,
   updateUserStatus,
 } from '../api/users'
@@ -28,47 +23,40 @@ export function useUsers(params: UserQueryParams) {
   })
 }
 
-export function useUser(id: number | null) {
+export function useUser(id: string | null) {
   return useQuery({
-    queryKey:
-      id !== null
-        ? userKeys.detail(id)
-        : ['users', 'detail', 'disabled'],
+    queryKey: id !== null ? userKeys.detail(id) : ['users', 'detail', 'disabled'],
     queryFn: () => getUser(id!),
     enabled: id !== null,
   })
 }
 
-export function useUserStats() {
-  const total = useQuery({
-    queryKey: userKeys.stats('total'),
-    queryFn: () => listUsers({ pageNumber: 1, pageSize: 1 }),
+/** Backend has no per-user audit endpoint yet. */
+export function useUserAuditLog(id: string | null) {
+  return useQuery({
+    queryKey:
+      id !== null ? userKeys.auditLog(id) : ['users', 'audit-log', 'disabled'],
+    queryFn: (): Promise<UserAuditLogResponse[]> => Promise.resolve([]),
+    enabled: id !== null,
   })
-  const active = useQuery({
-    queryKey: userKeys.stats('active'),
-    queryFn: () => listUsers({ pageNumber: 1, pageSize: 1, isActive: true }),
+}
+
+export function useUserStats() {
+  const stats = useQuery({
+    queryKey: userKeys.stats('total'),
+    // Backend list has no isActive filter; sample a wide page for counts.
+    queryFn: () => listUsers({ pageNumber: 1, pageSize: 500 }),
   })
 
-  const totalCount = total.data?.totalCount ?? 0
-  const activeCount = active.data?.totalCount ?? 0
+  const totalCount = stats.data?.totalCount ?? 0
+  const activeCount = (stats.data?.items ?? []).filter((u) => u.isActive).length
 
   return {
     totalCount,
     activeCount,
     suspendedCount: Math.max(totalCount - activeCount, 0),
-    isLoading: total.isLoading || active.isLoading,
+    isLoading: stats.isLoading,
   }
-}
-
-export function useUserAuditLog(id: number | null) {
-  return useQuery({
-    queryKey:
-      id !== null
-        ? userKeys.auditLog(id)
-        : ['users', 'audit-log', 'disabled'],
-    queryFn: () => getUserAuditLog(id!),
-    enabled: id !== null,
-  })
 }
 
 function useInvalidateUsers() {
@@ -92,7 +80,7 @@ export function useCreateUser(options?: {
 export function useUpdateUser() {
   const invalidate = useInvalidateUsers()
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: UpdateUserPayload }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateUserPayload }) =>
       updateUser(id, payload),
     onSuccess: () => invalidate(),
   })
@@ -101,42 +89,8 @@ export function useUpdateUser() {
 export function useUpdateUserStatus() {
   const invalidate = useInvalidateUsers()
   return useMutation({
-    mutationFn: ({ id, isActive }: { id: number; isActive: boolean }) =>
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       updateUserStatus(id, isActive),
     onSuccess: () => invalidate(),
-  })
-}
-
-export function useResetUserPassword() {
-  const invalidate = useInvalidateUsers()
-  return useMutation({
-    mutationFn: (id: number) => resetUserPassword(id),
-    onSuccess: () => invalidate(),
-  })
-}
-
-export function useForcePasswordReset() {
-  const invalidate = useInvalidateUsers()
-  return useMutation({
-    mutationFn: (id: number) => forcePasswordReset(id),
-    onSuccess: () => invalidate(),
-  })
-}
-
-export function useRevokeUserSessions() {
-  const invalidate = useInvalidateUsers()
-  return useMutation({
-    mutationFn: (id: number) => revokeUserSessions(id),
-    onSuccess: () => invalidate(),
-  })
-}
-
-export function useImportUsers() {
-  const queryClient = useQueryClient()
-  return useMutation<UserImportResult, Error, File>({
-    mutationFn: importUsers,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.all })
-    },
   })
 }
