@@ -12,6 +12,7 @@ import { useNotifications } from '@/src/features/notifications/hooks/use-notific
 import { usePresenceSync } from '@/src/shared/lib/signalr/use-presence'
 import { useSignalR } from '@/src/shared/lib/signalr/use-signalr'
 import { useAuthStore } from '@/src/shared/store/auth-store'
+import { shouldSyncShellData } from './shell-data-gate'
 
 const APP_SHELL_STYLE = {
   '--sidebar-width': 'calc(var(--spacing) * 72)',
@@ -21,10 +22,12 @@ const APP_SHELL_STYLE = {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { connection, isConnected } = useSignalR()
 
-  usePresenceSync()
-
   const user = useAuthStore((s) => s.user)
-  useNotifications(Boolean(user), isConnected)
+  const shellDataEnabled = shouldSyncShellData(user)
+
+  usePresenceSync(shellDataEnabled)
+
+  useNotifications(shellDataEnabled, isConnected)
 
   useApprovalRealtime(() => connection)
 

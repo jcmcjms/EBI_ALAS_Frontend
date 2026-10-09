@@ -10,7 +10,7 @@ export function PresenceDot({
   userId,
   className,
 }: {
-  userId?: number | null
+  userId?: string | null
   className?: string
 }) {
   const p = useUserPresence(userId)

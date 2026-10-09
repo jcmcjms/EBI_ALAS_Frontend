@@ -1,24 +1,16 @@
 import { create } from 'zustand/react'
-
-export interface PresenceUser {
-  userId: number
-  name: string
-  role: string
-  branchCode: string
-  jobTitle?: string | null
-  connections: number
-}
+import type { PresenceUser } from '@/src/shared/lib/signalr/presence-payload'
 
 interface PresenceState {
-  online: Record<number, PresenceUser>
+  online: Record<string, PresenceUser>
 
   hydrated: boolean
 
   hydrate: (list: PresenceUser[]) => void
 
   applyChange: (
-    userId: number,
-    user: Partial<PresenceUser> & { userId: number },
+    userId: string,
+    user: Partial<PresenceUser> & { userId: string },
     online: boolean,
     connections: number,
   ) => void

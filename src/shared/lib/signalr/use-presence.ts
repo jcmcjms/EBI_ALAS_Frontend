@@ -1,20 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiClient } from '@/src/shared/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 import { getSharedConnection } from '@/src/shared/lib/signalr/connection'
+import {
+  mapPresencePayload,
+  type PresenceApiRow,
+  type PresenceUser,
+} from '@/src/shared/lib/signalr/presence-payload'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { usePresenceStore } from '@/src/shared/store/presence-store'
 
 export interface EntityViewer {
-  userId: number
+  userId: string
   name: string
 }
 
-export function usePresenceSync() {
+const HEARTBEAT_MS = 60_000
+
+export function usePresenceSync(enabled = true) {
   const token = useAuthStore((s) => s.accessToken)
 
   useEffect(() => {
-    if (!token) {
+    if (!token || !enabled) {
       usePresenceStore.getState().reset()
       return
     }
@@ -23,33 +29,49 @@ export function usePresenceSync() {
 
     const hydrateFromApi = () => {
       apiClient
-        .get<ApiResponse<PresenceEntry[]>>('/api/presence/online')
+        .get<PresenceApiRow[]>('/api/presence/online')
         .then((r) => {
-          const entries = unwrapApiData(r.data)
-          usePresenceStore.getState().hydrate(
-            entries.map((e) => ({
-              ...e.user,
-              connections: e.connections,
-            })),
-          )
+          const entries = Array.isArray(r.data) ? r.data : []
+          usePresenceStore
+            .getState()
+            .hydrate(entries.map(mapPresencePayload))
         })
         .catch(() => {})
     }
 
-    hydrateFromApi()
-
-    const onSnapshot = (list: PresenceEntry[]) => {
-      usePresenceStore
-        .getState()
-        .hydrate(list.map((e) => ({ ...e.user, connections: e.connections })))
+    let heartbeatInFlight = false
+    const heartbeat = () => {
+      if (heartbeatInFlight) return
+      heartbeatInFlight = true
+      apiClient
+        .post('/api/presence/heartbeat')
+        .catch(() => {})
+        .finally(() => {
+          heartbeatInFlight = false
+        })
     }
 
-    const onChange = (change: PresenceChangePayload) => {
+    heartbeat()
+    hydrateFromApi()
+    const heartbeatTimer = window.setInterval(heartbeat, HEARTBEAT_MS)
+    const hydrateTimer = window.setInterval(hydrateFromApi, HEARTBEAT_MS)
+
+    const onSnapshot = (list: PresenceApiRow[]) => {
+      usePresenceStore
+        .getState()
+        .hydrate(list.map(mapPresencePayload))
+    }
+
+    const onChange = (change: {
+      user: PresenceApiRow
+      online: boolean
+      connections: number
+    }) => {
       usePresenceStore
         .getState()
         .applyChange(
           change.user.userId,
-          change.user,
+          mapPresencePayload(change.user),
           change.online,
           change.connections,
         )
@@ -58,18 +80,23 @@ export function usePresenceSync() {
     conn.on('PresenceSnapshot', onSnapshot)
     conn.on('PresenceChanged', onChange)
 
-    conn.onreconnected(() => hydrateFromApi())
+    conn.onreconnected(() => {
+      heartbeat()
+      hydrateFromApi()
+    })
 
     return () => {
+      window.clearInterval(heartbeatTimer)
+      window.clearInterval(hydrateTimer)
       conn.off('PresenceSnapshot', onSnapshot)
       conn.off('PresenceChanged', onChange)
     }
-  }, [token])
+  }, [token, enabled])
 }
 
-export function useUserPresence(userId?: number | null) {
+export function useUserPresence(userId?: string | null) {
   return usePresenceStore((s) =>
-    userId != null ? s.online[userId] : undefined,
+    userId != null && userId !== '' ? s.online[userId] : undefined,
   )
 }
 
@@ -82,7 +109,7 @@ export function useOnlineUsers() {
 }
 
 export function useEntityViewers(entityType: string, entityId: number | null) {
-  const me = useAuthStore((s) => Number(s.user?.userId))
+  const me = useAuthStore((s) => s.user?.userId)
   const [viewers, setViewers] = useState<EntityViewer[]>([])
 
   useEffect(() => {
@@ -113,21 +140,4 @@ export function useEntityViewers(entityType: string, entityId: number | null) {
   return viewers.filter((v) => v.userId !== me)
 }
 
-interface PresenceEntry {
-  user: PresenceUserInfo
-  connections: number
-}
-
-interface PresenceUserInfo {
-  userId: number
-  name: string
-  role: string
-  branchCode: string
-  jobTitle?: string | null
-}
-
-interface PresenceChangePayload {
-  user: PresenceUserInfo
-  online: boolean
-  connections: number
-}
+export type { PresenceUser }

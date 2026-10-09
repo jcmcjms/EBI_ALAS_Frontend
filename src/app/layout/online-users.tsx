@@ -24,7 +24,7 @@ function initialsOf(name: string): string {
 
 export function OnlineUsers() {
   const online = useOnlineUsers()
-  const me = useAuthStore((s) => Number(s.user?.userId))
+  const me = useAuthStore((s) => s.user?.userId)
 
   return (
     <Popover>
