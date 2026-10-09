@@ -43,7 +43,7 @@ export function LoanDetailsDrawer({
   const detail = useQuery({
     queryKey: ['loan-detail', applicationId],
     queryFn: () => getLoanById(applicationId!),
-    enabled: applicationId !== null && applicationId > 0,
+    enabled: applicationId !== null,
     staleTime: 30_000,
   })
 

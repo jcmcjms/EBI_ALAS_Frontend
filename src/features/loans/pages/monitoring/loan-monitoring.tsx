@@ -90,7 +90,7 @@ export function LoanMonitoringPage() {
   }, [filters.status])
 
   const initialId = Number(search.id)
-  const [selectedLoanId, setSelectedLoanId] = useState<number | string | null>(
+  const [selectedLoanId, setSelectedLoanId] = useState<number | null>(
     Number.isFinite(initialId) && initialId > 0 ? initialId : null,
   )
   const [selectedRecord, setSelectedRecord] =
@@ -114,8 +114,9 @@ export function LoanMonitoringPage() {
         <MonitoringTable
           filters={filters}
           onRowClick={(r) => {
-            if (r.id !== undefined) {
-              setSelectedLoanId(r.id)
+            const id = typeof r.id === 'string' ? Number(r.id) : r.id
+            if (typeof id === 'number' && Number.isFinite(id) && id > 0) {
+              setSelectedLoanId(id)
               setSelectedRecord(r)
             }
           }}
@@ -198,11 +199,16 @@ export function LoanMonitoringPage() {
                 cancelDialog.pending || cancelDialog.reason.trim().length < 10
               }
               onClick={async () => {
-                if (!cancelDialog.record?.id) return
+                const cancelId =
+                  typeof cancelDialog.record?.id === 'string'
+                    ? Number(cancelDialog.record.id)
+                    : cancelDialog.record?.id
+                if (typeof cancelId !== 'number' || !Number.isFinite(cancelId))
+                  return
                 setCancelDialog((d) => ({ ...d, pending: true }))
                 try {
                   await cancelLoanApplication(
-                    cancelDialog.record.id,
+                    cancelId,
                     cancelDialog.reason.trim(),
                   )
                   toastSuccess('Application cancelled.')
