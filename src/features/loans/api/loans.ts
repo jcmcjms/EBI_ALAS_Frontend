@@ -98,13 +98,6 @@ export async function listLoans(
   return unwrapApiData(res.data)
 }
 
-export async function getQueueDefault(): Promise<{ status: string }> {
-  const res = await apiClient.get<ApiResponse<{ status: string }>>(
-    '/api/loans/queue-default',
-  )
-  return unwrapApiData(res.data)
-}
-
 export async function getLoanHistory(
   applicationId: number,
 ): Promise<LoanHistoryEntry[]> {

@@ -1,18 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
-import type {
-  ApiResponse,
-  PagedResult,
-} from '@/src/shared/lib/api/types'
-import type {
-  CreatedLoanSummary,
-  LoanSubmissionResponse,
-} from '../api/loan-types'
+import type { PagedResult } from '@/src/shared/lib/api/types'
 import type {
   LoanMonitoringRecord,
   MonitoringFilters,
-  QueueStage,
 } from '@/src/features/loans/types/monitoring'
 import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 
@@ -25,61 +17,55 @@ interface SortingState {
   desc: boolean
 }
 
-const SORT_COLUMN_MAP: Record<string, string> = {
-  applicationDate: 'applicationdate',
-  loanAmount: 'proposedamount',
-  status: 'status',
-  customerName: 'customername',
+/** Raw row from GET /api/loans (no ApiResponse envelope). */
+interface BackendLoanListItem {
+  id: string
+  lamId: string
+  applicationGroupNo: string
+  clientName: string
+  branchId: string
+  loanType: string
+  status: string
+  principal: number
+  termDays: number
+  interestRate: number
+  totalInterest: number
+  totalDeductions: number
+  netProceeds: number
+  createdAt: string
 }
 
-function parseDate(value?: string | null): Date | null {
-  if (!value) return null
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? null : parsed
-}
-
-function toMonitoringRecord(loan: CreatedLoanSummary): LoanMonitoringRecord {
-  const nameParts = [
-    loan.firstName,
-    loan.middleName,
-    loan.lastName,
-    loan.suffix,
-  ].filter((part): part is string => Boolean(part))
-
-  const appliedAt = parseDate(loan.applicationDate)
-  const lastActionAt = parseDate(loan.lastActionDate) ?? appliedAt ?? new Date()
+function toMonitoringRecord(loan: BackendLoanListItem): LoanMonitoringRecord {
+  const appliedAt = new Date(loan.createdAt)
 
   return {
     id: loan.id,
     formNumber: loan.lamId,
-    branchCode: loan.branchCode ?? '—',
-    customerName: nameParts.join(' ') || 'Unknown client',
-    loanType: loan.creationTypeLabel ?? 'New Loan',
-    product: loan.product ?? loan.productCode,
-    loanAmount: loan.proposedAmount,
-    applicationDate: (appliedAt ?? new Date()).toISOString(),
+    branchCode: loan.branchId,
+    customerName: loan.clientName || 'Unknown client',
+    loanType: loan.loanType === 'Reloan' ? 'Reloan' : 'New Loan',
+    product: '—',
+    loanAmount: loan.principal,
+    applicationDate: appliedAt.toISOString(),
     status: (loan.status as LoanStatus) ?? 'Draft',
-    lastActionDate: lastActionAt.toISOString(),
+    lastActionDate: appliedAt.toISOString(),
     timeLapsedHours: Math.max(
       0,
-      Math.round((Date.now() - lastActionAt.getTime()) / 3_600_000),
+      Math.round((Date.now() - appliedAt.getTime()) / 3_600_000),
     ),
-
-    lastActionBy: loan.lastActionByName ?? loan.createdByName ?? '—',
-    lastActionVerb: loan.lastAction ?? null,
-    createdById: loan.createdById ?? null,
-
-    documentsComplete: loan.documentsComplete ?? null,
-    documentsCompleteAt: loan.documentsCompleteAt ?? null,
-    assignedApproverName: loan.assignedApproverName ?? null,
-    requiredApprovalTier: loan.requiredApprovalTier ?? null,
-
-    queueStage: (loan.queueStage as QueueStage) ?? null,
-    queuePosition: loan.queuePosition ?? null,
-    queueLength: loan.queueLength ?? null,
-    queueOwnerName: loan.queueOwnerName ?? null,
-    isQueueHead: loan.isQueueHead ?? false,
-    documentFlag: loan.documentFlag ?? null,
+    lastActionBy: '—',
+    lastActionVerb: null,
+    createdById: null,
+    documentsComplete: null,
+    documentsCompleteAt: null,
+    assignedApproverName: null,
+    requiredApprovalTier: null,
+    queueStage: null,
+    queuePosition: null,
+    queueLength: null,
+    queueOwnerName: null,
+    isQueueHead: false,
+    documentFlag: null,
     noAuthorityReason: null,
   }
 }
@@ -118,28 +104,18 @@ export function useLoanMonitoring(
       if (filters.myTurn) params.myTurn = 'true'
 
       if (sorting.length > 0) {
-        const backendSortId = SORT_COLUMN_MAP[sorting[0].id]
-        if (backendSortId) {
-          params.sortBy = backendSortId
-          params.sortDesc = String(sorting[0].desc)
-        }
+        params.sortBy = sorting[0].id
+        params.sortDesc = String(sorting[0].desc)
       }
 
-      const { data: envelope } = await apiClient.get<
-        ApiResponse<PagedResult<LoanSubmissionResponse>>
+      const { data: page } = await apiClient.get<
+        PagedResult<BackendLoanListItem>
       >('/api/loans', { params })
 
-      if (!envelope.success || !envelope.data) {
-        throw new Error(envelope.message || 'Loan monitoring request failed')
+      return {
+        records: page.items.map(toMonitoringRecord),
+        rowCount: page.totalCount,
       }
-
-      const page = envelope.data
-
-      const records = page.items.flatMap((group) =>
-        (group.loans ?? []).map(toMonitoringRecord),
-      )
-
-      return { records, rowCount: page.totalCount }
     },
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 2,

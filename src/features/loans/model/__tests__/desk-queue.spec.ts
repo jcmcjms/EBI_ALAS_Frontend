@@ -7,7 +7,7 @@ const NOW = Date.parse('2026-09-29T15:00:00Z')
 
 function queued(overrides: Partial<QueuedLoanDto>): QueuedLoanDto {
   return {
-    loanId: 1,
+    loanId: '11111111-1111-1111-1111-111111111111',
     lamId: 'LAM-20260929-000001',
     clientName: 'REJEN MANLIGUIS',
     position: 1,
@@ -48,7 +48,7 @@ describe('summarizeDeskQueue', () => {
       [
         queued({ enqueuedAt: new Date(NOW - 9 * 3_600_000).toISOString() }),
         queued({
-          loanId: 2,
+          loanId: '22222222-2222-2222-2222-222222222222',
           position: 2,
           isHead: false,
           proposedAmount: 386_000,

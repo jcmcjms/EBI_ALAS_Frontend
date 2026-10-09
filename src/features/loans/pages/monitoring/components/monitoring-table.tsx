@@ -187,7 +187,16 @@ export function MonitoringTable({
                   <TableRow
                     key={row.id}
                     className="group hover:bg-muted/30 transition-colors cursor-pointer"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Open application ${row.original.formNumber}`}
                     onClick={() => onRowClick(row.original)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        onRowClick(row.original)
+                      }
+                    }}
                   >
                     {row.getAllCells().map((cell) => (
                       <TableCell

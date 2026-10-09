@@ -5,7 +5,7 @@ export type { LoanStatus }
 export type QueueStage = 'Recommendation' | 'Evaluation' | 'Approval'
 
 export interface LoanMonitoringRecord {
-  id?: number
+  id?: number | string
   formNumber: string
   branchCode: string
   customerName: string

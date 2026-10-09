@@ -204,7 +204,7 @@ export function LoanApprovalPage() {
                     <CardDescription className="pt-1 text-xs">
                       Each deviation carries the encoder&apos;s justification;
                       the recommender and evaluator reply per deviation, and the
-                      the encoder can reply to each remark.
+                      encoder can reply to each remark.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-4">

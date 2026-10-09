@@ -6,7 +6,7 @@ import {
 } from '@/src/shared/lib/api/types'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import type { LoanStatus } from '@/src/features/loans/model/loan-status'
-import { LOAN_STATUS_META } from '@/src/features/loans/model/loan-status'
+import { parseQueueDefault } from './queue-default'
 
 // Re-export all types and document operations
 export * from './loan-review-types'
@@ -120,12 +120,8 @@ export async function getSlaPolicy(): Promise<Record<string, number>> {
 }
 
 export async function getQueueDefault(): Promise<LoanStatus[]> {
-  const res = await apiClient.get<ApiResponse<string[]>>(
-    '/api/loans/queue-default',
-  )
-  return unwrapApiData(res.data).filter(
-    (s): s is LoanStatus => s in LOAN_STATUS_META,
-  )
+  const res = await apiClient.get<unknown>('/api/loans/queue-default')
+  return parseQueueDefault(res.data)
 }
 
 export async function syncDisbursementStatus(

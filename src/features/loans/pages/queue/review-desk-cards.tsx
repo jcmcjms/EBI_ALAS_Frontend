@@ -33,7 +33,7 @@ interface NextUpCardProps {
   canServe: boolean
   claiming: boolean
   onServe: () => void
-  currentUserId?: number
+  currentUserId?: string
   slaPolicy: Record<string, number> | null
   now: number
 }
@@ -79,7 +79,7 @@ export function NextUpCard({
                     variant="outline"
                     className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
                   >
-                    <WarningCircle size={12} weight="bold" /> warnings
+                    <WarningCircle size={12} weight="bold" /> deviations
                   </Badge>
                 )}
               </div>

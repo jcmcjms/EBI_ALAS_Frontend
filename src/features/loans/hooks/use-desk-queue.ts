@@ -2,16 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
-import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 import { toastError, toastSuccess, toastInfo } from '@/src/shared/ui/feedback/toast'
 
 export interface QueuedLoanDto {
-  loanId: number
+  loanId: string
   lamId: string
   clientName: string
   position: number
   isHead: boolean
-  ownerUserId: number | null
+  ownerUserId: string | null
   ownerName: string | null
   enqueuedAt: string
   status: string
@@ -34,7 +33,7 @@ export interface DeskQueueResponse {
 }
 
 export interface ClaimResponse {
-  loanId: number
+  loanId: string
   lamId: string
   clientName: string
   status: string
@@ -45,13 +44,12 @@ export function useDeskQueue() {
   return useQuery({
     queryKey: loanKeys.desk,
     queryFn: async (): Promise<DeskQueueResponse> => {
-      const { data: envelope } = await apiClient.get<
-        ApiResponse<DeskQueueResponse>
-      >('/api/loans/queue/my')
-      return unwrapApiData(envelope)
+      const { data } = await apiClient.get<DeskQueueResponse>(
+        '/api/loans/queue/my',
+      )
+      return data
     },
     staleTime: 30_000,
-
     refetchInterval: 30_000,
   })
 }
@@ -61,10 +59,10 @@ export function useClaimNext() {
 
   return useMutation({
     mutationFn: async (): Promise<ClaimResponse | null> => {
-      const { data: envelope } = await apiClient.post<
-        ApiResponse<ClaimResponse | null>
-      >('/api/loans/queue/claim')
-      return unwrapApiData(envelope)
+      const { data } = await apiClient.post<ClaimResponse | null>(
+        '/api/loans/queue/claim',
+      )
+      return data
     },
     onSuccess: (result) => {
       if (result) {
@@ -85,10 +83,7 @@ export function useReleaseClaim() {
 
   return useMutation({
     mutationFn: async (): Promise<void> => {
-      const { data: envelope } = await apiClient.post<ApiResponse<unknown>>(
-        '/api/loans/queue/release',
-      )
-      unwrapApiData(envelope)
+      await apiClient.post('/api/loans/queue/release')
     },
     onSuccess: () => {
       toastSuccess('Claim released — file returned to the queue.')
@@ -101,7 +96,7 @@ export function useReleaseClaim() {
 }
 
 export interface ClaimByIdResponse {
-  loanId: number
+  loanId: string
   lamId: string
   clientName: string
   status: string
@@ -112,11 +107,11 @@ export function useClaimById() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async (loanId: number): Promise<ClaimByIdResponse> => {
-      const { data: envelope } = await apiClient.post<
-        ApiResponse<ClaimByIdResponse>
-      >(`/api/loans/queue/${loanId}/claim`)
-      return unwrapApiData(envelope)
+    mutationFn: async (loanId: string | number): Promise<ClaimByIdResponse> => {
+      const { data } = await apiClient.post<ClaimByIdResponse>(
+        `/api/loans/queue/${loanId}/claim`,
+      )
+      return data
     },
     onSuccess: (result) => {
       toastSuccess(`Serving ${result.lamId} — ${result.clientName}.`)

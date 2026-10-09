@@ -36,9 +36,7 @@ export function ReviewDeskPage() {
   } = useDeskQueue()
   const claim = useClaimNext()
   const slaPolicy = useSlaPolicy()
-  const currentUserId = useAuthStore((s) =>
-    s.user?.userId ? Number(s.user.userId) : undefined,
-  )
+  const currentUserId = useAuthStore((s) => s.user?.userId)
 
   useEffect(() => {
     if (desk?.currentClaim) {

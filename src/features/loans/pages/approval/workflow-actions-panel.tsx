@@ -38,6 +38,10 @@ import {
   type WorkflowButtonDef,
   type WorkflowAction,
 } from './workflow-constants'
+import {
+  LOAN_STATUS_META,
+  type LoanStatus,
+} from '@/src/features/loans/model/loan-status'
 
 interface WorkflowActionsPanelProps {
   loanId: number
@@ -64,7 +68,7 @@ interface WorkflowActionsPanelProps {
   }
   claimById: {
     isPending: boolean
-    mutate: (id: number) => void
+    mutate: (id: string | number) => void
   }
   detailStatus: string
 }
@@ -102,7 +106,6 @@ export function WorkflowActionsPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-4">
-        {}
         <div className="space-y-3">
           <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <Clock size={12} /> Remarks
@@ -147,7 +150,7 @@ export function WorkflowActionsPanel({
               <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 p-3 text-sm">
                 <span>You're next in the queue.</span>
                 <Button
-                  onClick={() => claimById.mutate(loanId)}
+                  onClick={() => claimById.mutate(String(loanId))}
                   disabled={claimById.isPending}
                   className="gap-2"
                 >
@@ -176,8 +179,12 @@ export function WorkflowActionsPanel({
           )}
           {frozen && (
             <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
-              This application is <strong>{detailStatus}</strong> —
-              no further actions.
+              This application is{' '}
+              <strong>
+                {LOAN_STATUS_META[detailStatus as LoanStatus]?.label ??
+                  detailStatus}
+              </strong>{' '}
+              — no further actions.
             </p>
           )}
           {actions.map((a) => {

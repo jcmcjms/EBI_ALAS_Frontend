@@ -21,6 +21,10 @@ import {
 } from '@/src/features/loans/model/loan-status'
 import { CANCELLABLE_STATUSES } from '@/src/features/loans/api/loan-review'
 import { TimeLapsedIndicator } from './monitoring-table-utils'
+import {
+  formatLoanDate,
+  formatPhp,
+} from '@/src/shared/lib/format'
 
 type MonitoringColumnMeta = {
   className?: string
@@ -94,8 +98,8 @@ export function buildColumns(
     columnHelper.accessor('loanAmount', {
       header: () => <div className="text-right">Amount</div>,
       cell: (info) => (
-        <div className="text-right font-semibold">
-          ₱{info.getValue().toLocaleString()}
+        <div className="text-right font-semibold tabular-nums">
+          {formatPhp(info.getValue(), { decimals: 0 })}
         </div>
       ),
     }),
@@ -103,7 +107,7 @@ export function buildColumns(
       header: 'App. Date',
       cell: (info) => (
         <span className="text-xs text-muted-foreground">
-          {new Date(info.getValue()).toLocaleDateString()}
+          {formatLoanDate(info.getValue())}
         </span>
       ),
     }),
@@ -232,7 +236,7 @@ export function buildColumns(
     }),
     columnHelper.display({
       id: 'actions',
-      header: '',
+      header: () => <span className="sr-only">Actions</span>,
       cell: (info) => {
         const row = info.row.original
         const isEncoder = currentUser?.role === 'Encoder'
@@ -244,7 +248,7 @@ export function buildColumns(
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-7 w-7 opacity-60 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
             aria-label={`Cancel application ${row.formNumber}`}
             onClick={(e) => {
               e.stopPropagation()

@@ -90,7 +90,7 @@ export function LoanMonitoringPage() {
   }, [filters.status])
 
   const initialId = Number(search.id)
-  const [selectedLoanId, setSelectedLoanId] = useState<number | null>(
+  const [selectedLoanId, setSelectedLoanId] = useState<number | string | null>(
     Number.isFinite(initialId) && initialId > 0 ? initialId : null,
   )
   const [selectedRecord, setSelectedRecord] =

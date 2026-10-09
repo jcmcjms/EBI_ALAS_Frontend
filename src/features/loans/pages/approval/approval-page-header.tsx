@@ -14,6 +14,11 @@ import { ApprovalGroupTabs } from './components/approval-group-tabs'
 import { useEscalationStore } from '@/src/features/loans/store/escalationStore'
 import type { LoanDetailResponse } from '@/src/features/loans/api/loan-review'
 import type { GroupLoanSummary } from './components/approval-group-tabs'
+import {
+  LOAN_STATUS_META,
+  type LoanStatus,
+} from '@/src/features/loans/model/loan-status'
+import { cn } from '@/src/shared/lib/utils'
 
 interface ApprovalPageHeaderProps {
   detail: LoanDetailResponse
@@ -56,11 +61,14 @@ export function ApprovalPageHeader({
             {detail.lamId}
           </Badge>
           <Badge
-            variant="secondary"
-            className="gap-1.5 border-blue-200 bg-blue-50 text-blue-700"
+            variant="outline"
+            className={cn(
+              'gap-1.5',
+              LOAN_STATUS_META[detail.status as LoanStatus]?.className,
+            )}
           >
             <Clock size={12} weight="fill" />
-            {detail.status}
+            {LOAN_STATUS_META[detail.status as LoanStatus]?.label ?? detail.status}
           </Badge>
           <RoutingChip loanId={id} />
           {detail.hasDeviations && (

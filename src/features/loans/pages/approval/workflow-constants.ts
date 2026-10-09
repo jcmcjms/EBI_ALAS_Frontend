@@ -101,6 +101,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     label: 'Approve Loan',
     kind: 'advance',
     remarksRequired: false,
+    confirm: true,
   },
   {
     role: 'Approver',

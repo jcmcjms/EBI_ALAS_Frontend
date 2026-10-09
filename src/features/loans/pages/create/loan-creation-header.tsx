@@ -1,6 +1,21 @@
 import { IdentificationBadge, LockSimple } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import type { PreLoanItem } from '../../api/loan-types'
+import {
+  LOAN_STATUS_META,
+  type LoanStatus,
+} from '@/src/features/loans/model/loan-status'
+import { cn } from '@/src/shared/lib/utils'
+
+function statusLabel(status?: string): string {
+  if (!status) return 'Draft'
+  return LOAN_STATUS_META[status as LoanStatus]?.label ?? status
+}
+
+function statusClass(status?: string): string {
+  if (!status) return LOAN_STATUS_META.Draft.className
+  return LOAN_STATUS_META[status as LoanStatus]?.className ?? LOAN_STATUS_META.Draft.className
+}
 
 interface LoanCreationHeaderProps {
   userBranchId: string
@@ -30,13 +45,13 @@ export function LoanCreationHeader({
           </h1>
           <Badge
             variant="outline"
-            className="gap-1.5 border-amber-200 bg-amber-50 py-1 text-amber-800"
+            className={cn('gap-1.5 py-1', statusClass(editStatus))}
           >
             <span
               className="h-2 w-2 rounded-full bg-amber-500"
               aria-hidden
             />
-            {isEditMode ? (editStatus ?? 'ForRevision') : 'Draft'}
+            {isEditMode ? statusLabel(editStatus) : 'Draft'}
           </Badge>
           {userBranchId && (
             <Badge

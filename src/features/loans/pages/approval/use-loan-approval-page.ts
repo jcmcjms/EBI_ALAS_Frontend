@@ -139,7 +139,7 @@ export function useLoanApprovalPage() {
 
   const claimById = useClaimById()
   const { data: desk } = useDeskQueue()
-  const queueItem = desk?.items.find((i) => i.loanId === id)
+  const queueItem = desk?.items.find((i) => i.loanId === String(id))
   const queueState = queueItem
     ? {
         isHead: queueItem.isHead,
@@ -147,8 +147,7 @@ export function useLoanApprovalPage() {
         ownerName: queueItem.ownerName ?? undefined,
         isMine:
           queueItem.ownerUserId != null &&
-          queueItem.ownerUserId ===
-            (user?.userId ? Number(user.userId) : undefined),
+          queueItem.ownerUserId === user?.userId,
         position: queueItem.position,
       }
     : undefined

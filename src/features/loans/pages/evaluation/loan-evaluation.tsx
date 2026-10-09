@@ -17,6 +17,11 @@ import { PushbackDialog } from '../../components/pushback-dialog'
 import { EvaluationActionsPanel } from './evaluation-actions-panel'
 import { ApprovalFormCard } from './approval-form-card'
 import { useEvaluationPage } from './use-evaluation-page'
+import {
+  LOAN_STATUS_META,
+  type LoanStatus,
+} from '@/src/features/loans/model/loan-status'
+import { cn } from '@/src/shared/lib/utils'
 
 export function LoanEvaluationPage() {
   const { loanId } = useParams({ strict: false }) as { loanId: string }
@@ -125,11 +130,15 @@ export function LoanEvaluationPage() {
               {detail.lamId}
             </Badge>
             <Badge
-              variant="secondary"
-              className="gap-1.5 border-blue-200 bg-blue-50 text-blue-700"
+              variant="outline"
+              className={cn(
+                'gap-1.5',
+                LOAN_STATUS_META[detail.status as LoanStatus]?.className,
+              )}
             >
               <Clock size={12} weight="fill" />
-              {detail.status}
+              {LOAN_STATUS_META[detail.status as LoanStatus]?.label ??
+                detail.status}
             </Badge>
             {detail.hasDeviations && (
               <Badge

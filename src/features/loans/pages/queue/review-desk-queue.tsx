@@ -61,7 +61,7 @@ export const DeskQueueRow = memo(function DeskQueueRow({
               size={12}
               weight="bold"
               className="text-amber-600 dark:text-amber-400"
-              aria-label="Has warnings"
+              aria-label="Has deviations"
             />
           )}
         </div>
