@@ -28,6 +28,31 @@ export interface PagedResult<T> {
   hasNextPage: boolean
 }
 
+/**
+ * Backend PageResult shape: `page` is 1-based; the wire does not carry
+ * hasPreviousPage/hasNextPage — derive those in mapPageResult for the UI.
+ */
+export interface BackendPageResult<T> {
+  items: T[]
+  totalCount: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export function mapPageResult<T>(page: BackendPageResult<T>): PagedResult<T> {
+  const { items, totalCount, page: current, pageSize, totalPages } = page
+  return {
+    items,
+    currentPage: current,
+    pageSize,
+    totalCount,
+    totalPages,
+    hasPreviousPage: current > 1,
+    hasNextPage: current < totalPages,
+  }
+}
+
 export function unwrapApiData<T>(body: ApiResponse<T>): T {
   if (!body.success || body.data === null) {
     throw new Error(body.message || 'Request failed')

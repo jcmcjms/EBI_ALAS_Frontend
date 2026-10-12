@@ -24,21 +24,23 @@ function extractXsrfToken(jwt: string | null): string | null {
   }
 }
 
-function isCsrfFailure(error: AxiosError): boolean {
-  if (error.response?.status !== 403) return false
-  const data = error.response.data
-  if (!data || typeof data !== 'object') return false
-
-  const code = (data as { code?: unknown }).code
-  if (
-    typeof code === 'string' &&
-    code.toUpperCase() === 'CSRF_VALIDATION_FAILED'
-  ) {
-    return true
-  }
-
-  const message = (data as { message?: unknown }).message
-  return typeof message === 'string' && /csrf/i.test(message)
+/**
+ * Detects CSRF rejection from RFC 7807 ProblemDetails (or plain text).
+ * The backend does not send a `code` field — match title/detail/message
+ * against /csrf/i on HTTP 403 only.
+ */
+export function isCsrfError(error: unknown): boolean {
+  if (!axios.isAxiosError(error) || !error.response) return false
+  if (error.response.status !== 403) return false
+  const data = error.response.data as
+    | { title?: string; detail?: string; message?: string }
+    | string
+    | undefined
+  const text =
+    typeof data === 'string'
+      ? data
+      : `${data?.title ?? ''} ${data?.detail ?? ''} ${data?.message ?? ''}`
+  return /csrf/i.test(text)
 }
 
 export const apiClient = axios.create({
@@ -133,7 +135,7 @@ apiClient.interceptors.response.use(
       | undefined
 
     if (
-      isCsrfFailure(error) &&
+      isCsrfError(error) &&
       originalRequest &&
       !originalRequest._csrfRetry
     ) {
@@ -242,6 +244,7 @@ export function getErrorMessage(error: unknown): string {
       )
         return data
 
+      if (data?.detail) return data.detail
       if (data?.message) {
         const details =
           Array.isArray(data.errors) && data.errors.length > 0
@@ -250,7 +253,6 @@ export function getErrorMessage(error: unknown): string {
         return details ? `${data.message}: ${details}` : data.message
       }
       if (data?.error) return data.error
-      if (data?.detail) return data.detail
 
       return getStatusFallbackMessage(status)
     }
