@@ -10,8 +10,11 @@ export const loanProductKeys = {
 }
 
 export async function getLoanProducts(): Promise<LoanProductResponse[]> {
-  const res = await apiClient.get<LoanProductResponse[]>('/api/loan-products')
-  return Array.isArray(res.data) ? res.data : []
+  const res = await apiClient.get<{ items: LoanProductResponse[] } | LoanProductResponse[]>(
+    '/api/loan-products',
+  )
+  if (Array.isArray(res.data)) return res.data
+  return res.data?.items ?? []
 }
 
 export async function getLoanProductByCode(
