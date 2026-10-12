@@ -9,7 +9,7 @@ import type {
   UserQueryParams,
   UserResponse,
 } from './users-types'
-import { splitFullName, toUserResponse } from './users-types'
+import { toUserResponse } from './users-types'
 
 export type {
   CreateUserPayload,
@@ -36,14 +36,12 @@ function toPagedResult(
 }
 
 function toCreateBody(payload: CreateUserPayload) {
-  const fullName = [payload.firstName, payload.middleName, payload.lastName]
-    .filter(Boolean)
-    .join(' ')
-    .trim()
   return {
     userName: payload.username,
     password: payload.password,
-    fullName,
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    middleName: payload.middleName ?? null,
     email: payload.email ?? null,
     branchId: payload.branchId,
     role: payload.role,
@@ -51,12 +49,10 @@ function toCreateBody(payload: CreateUserPayload) {
 }
 
 function toUpdateBody(payload: UpdateUserPayload) {
-  const fullName = [payload.firstName, payload.middleName, payload.lastName]
-    .filter(Boolean)
-    .join(' ')
-    .trim()
   return {
-    fullName,
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    middleName: payload.middleName ?? null,
     email: payload.email ?? null,
     branchId: payload.branchId,
     role: payload.role,
@@ -153,4 +149,4 @@ export function formatUserFullName(user: {
     .join(' ')
 }
 
-export { splitFullName, toUserResponse }
+export { toUserResponse }

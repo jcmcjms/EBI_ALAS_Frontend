@@ -29,24 +29,6 @@ export function decodeJwtPayload(
   }
 }
 
-function splitFullName(fullName: string): {
-  firstName: string
-  middleName: string
-  lastName: string
-} {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return { firstName: '', middleName: '', lastName: '' }
-  if (parts.length === 1) return { firstName: parts[0], middleName: '', lastName: '' }
-  if (parts.length === 2) {
-    return { firstName: parts[0], middleName: '', lastName: parts[1] }
-  }
-  return {
-    firstName: parts[0],
-    middleName: parts.slice(1, -1).join(' '),
-    lastName: parts[parts.length - 1],
-  }
-}
-
 function claimString(payload: Record<string, unknown>, ...keys: string[]): string {
   for (const key of keys) {
     const value = payload[key]
@@ -83,20 +65,11 @@ export function extractUserFromToken(
     payload.mustChangePassword === true ||
     String(payload.mustChangePassword) === 'true'
 
-  const fullName = claimString(payload, 'fullName', 'FullName')
-  const name = fullName
-    ? splitFullName(fullName)
-    : {
-        firstName: claimString(payload, 'firstName', 'FirstName'),
-        middleName: claimString(payload, 'middleName', 'MiddleName'),
-        lastName: claimString(payload, 'lastName', 'LastName'),
-      }
-
   return {
     userId: claimString(payload, 'userId', 'sub', 'nameid'),
-    firstName: name.firstName,
-    middleName: name.middleName,
-    lastName: name.lastName,
+    firstName: claimString(payload, 'firstName', 'FirstName'),
+    middleName: claimString(payload, 'middleName', 'MiddleName'),
+    lastName: claimString(payload, 'lastName', 'LastName'),
     branchId: claimString(payload, 'branchId', 'branch'),
     role: claimString(payload, 'role'),
     jobTitle:

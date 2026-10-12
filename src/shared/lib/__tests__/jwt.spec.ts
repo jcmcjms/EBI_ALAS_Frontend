@@ -57,12 +57,13 @@ describe('extractUserFromToken — backend JWT claims', () => {
     expect(user?.mustChangePassword).toBe(true)
   })
 
-  it('splits a fullName claim into display name fields', () => {
+  it('reads firstName and lastName claims issued by the API', () => {
     const token = makeJwt({
       sub: '1',
       role: 'Admin',
       branch: '011',
-      fullName: 'System Administrator',
+      firstName: 'System',
+      lastName: 'Administrator',
     })
 
     const user = extractUserFromToken(token)

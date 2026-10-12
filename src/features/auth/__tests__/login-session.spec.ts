@@ -17,12 +17,12 @@ describe('readLoginSession', () => {
       role: 'Admin',
       branch: '011',
       permission: ['loans.view'],
-      fullName: 'System Administrator',
+      firstName: 'System',
+      lastName: 'Administrator',
     })
 
     const session = readLoginSession({
       accessToken,
-      refreshToken: 'refresh-token',
       accessTokenExpiresAt: '2030-01-01T00:00:00Z',
       mustChangePassword: false,
     })
@@ -39,7 +39,6 @@ describe('readLoginSession', () => {
   it('returns null when accessToken is missing', () => {
     const session = readLoginSession({
       accessToken: '',
-      refreshToken: 'refresh-token',
       accessTokenExpiresAt: '2030-01-01T00:00:00Z',
       mustChangePassword: true,
     })
@@ -57,7 +56,6 @@ describe('readLoginSession', () => {
 
     const session = readLoginSession({
       accessToken,
-      refreshToken: 'r',
       accessTokenExpiresAt: '2030-01-01T00:00:00Z',
       mustChangePassword: true,
     })
@@ -75,7 +73,6 @@ describe('readLoginSession', () => {
 
     const session = readLoginSession({
       accessToken,
-      refreshToken: 'r',
       accessTokenExpiresAt: '2030-01-01T00:00:00Z',
       mustChangePassword: undefined as unknown as boolean,
     })
@@ -86,7 +83,6 @@ describe('readLoginSession', () => {
   it('returns null for a malformed access token', () => {
     const session = readLoginSession({
       accessToken: 'not-a-jwt',
-      refreshToken: 'r',
       accessTokenExpiresAt: '2030-01-01T00:00:00Z',
       mustChangePassword: false,
     })

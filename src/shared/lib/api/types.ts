@@ -9,10 +9,11 @@ export interface ApiResponse<T> {
 /**
  * Flat auth body returned by POST /api/auth/login and /api/auth/refresh.
  * The API does not wrap payloads in an ApiResponse envelope.
+ * The refresh token is cookie-only (HttpOnly `alas_refresh`) and is never
+ * present in this body.
  */
 export interface AuthTokenResponse {
   accessToken: string
-  refreshToken: string
   accessTokenExpiresAt: string
   mustChangePassword: boolean
 }

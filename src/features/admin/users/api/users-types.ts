@@ -112,7 +112,9 @@ export interface RoleMatrixEntry {
 export interface BackendUserDto {
   id: string
   userName: string
-  fullName: string
+  firstName: string
+  lastName: string
+  middleName: string | null
   email: string | null
   branchId: string
   role: string
@@ -134,36 +136,13 @@ export interface BackendRoleCatalogItem {
   permissions: string[]
 }
 
-export function splitFullName(fullName: string): {
-  firstName: string
-  middleName: string | null
-  lastName: string
-} {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) {
-    return { firstName: '', middleName: null, lastName: '' }
-  }
-  if (parts.length === 1) {
-    return { firstName: parts[0], middleName: null, lastName: '' }
-  }
-  if (parts.length === 2) {
-    return { firstName: parts[0], middleName: null, lastName: parts[1] }
-  }
-  return {
-    firstName: parts[0],
-    middleName: parts.slice(1, -1).join(' '),
-    lastName: parts[parts.length - 1],
-  }
-}
-
 export function toUserResponse(dto: BackendUserDto): UserResponse {
-  const name = splitFullName(dto.fullName)
   return {
     id: dto.id,
     username: dto.userName,
-    firstName: name.firstName,
-    middleName: name.middleName,
-    lastName: name.lastName,
+    firstName: dto.firstName,
+    middleName: dto.middleName,
+    lastName: dto.lastName,
     branchId: dto.branchId,
     role: dto.role,
     isActive: dto.status.toLowerCase() === 'active',
