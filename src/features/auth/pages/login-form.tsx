@@ -11,6 +11,7 @@ import { useAuthStore } from '@/src/shared/store/auth-store'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { loginSchema, type LoginFormData } from '../schemas'
+import { toLoginRequest } from '../login-request'
 import {
   readLoginSession,
   type AuthTokenResponse,
@@ -38,7 +39,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
     try {
       const response = await apiClient.post<AuthTokenResponse>(
         '/api/auth/login',
-        data,
+        toLoginRequest(data),
       )
       const session = readLoginSession(response.data)
 

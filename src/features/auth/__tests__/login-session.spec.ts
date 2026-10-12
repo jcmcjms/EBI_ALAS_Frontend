@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readLoginSession } from '../login-session'
+import { toLoginRequest } from '../login-request'
 
 function makeJwt(payload: Record<string, unknown>): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
@@ -88,5 +89,14 @@ describe('readLoginSession', () => {
     })
 
     expect(session).toBeNull()
+  })
+})
+
+describe('toLoginRequest', () => {
+  it('maps form username to backend userName', () => {
+    expect(toLoginRequest({ username: 'jdoe', password: 'secret12' })).toEqual({
+      userName: 'jdoe',
+      password: 'secret12',
+    })
   })
 })
