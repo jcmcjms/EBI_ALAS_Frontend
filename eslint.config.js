@@ -51,7 +51,6 @@ export default defineConfig([
             ...[
               'account',
               'admin',
-              'audit-logs',
               'auth',
               'dashboard',
               'loans',
@@ -60,7 +59,6 @@ export default defineConfig([
               [
                 'account',
                 'admin',
-                'audit-logs',
                 'auth',
                 'dashboard',
                 'loans',

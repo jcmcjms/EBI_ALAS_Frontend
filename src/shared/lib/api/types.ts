@@ -53,7 +53,6 @@ export const PERMISSIONS = {
   userSuspend: 'users.manage',
   roleManage: 'roles.view',
   roleView: 'roles.view',
-  auditLogsView: 'auditLogs.view',
   workflowManage: 'workflow.manage',
 } as const
 

@@ -13,7 +13,7 @@ ALAS handles the full lifecycle of a consumer loan application at the branch lev
 - **Review desk**: queue-based workflow where recommenders, evaluators, and approvers work through pending loans
 - **Approval and evaluation**: dedicated pages for each step in the approval chain, with permission gating
 - **Monitoring**: searchable loan table with detail drawers, summary cards, weekly trends, and queue widgets
-- **Admin**: user management (create, edit, suspend, roles), loan product catalog, workflow settings, and audit logs
+- **Admin**: user management (create, edit, suspend, roles), loan product catalog, and workflow settings
 - **Notifications**: branch-scoped inbox with real-time updates via SignalR
 
 ## Tech stack
@@ -54,7 +54,6 @@ src/
 │   │   ├── loan-products/      # CRUD loan product catalog
 │   │   ├── users/              # User table, create/edit drawers, role management
 │   │   └── workflow/           # Approval workflow configuration
-│   ├── audit-logs/             # System audit trail viewer
 │   ├── auth/                   # Login, change password, ProtectedRoute, auth store
 │   ├── dashboard/              # Summary cards, trends, queues, now-serving
 │   ├── loans/
@@ -112,7 +111,6 @@ Routes are declared in `src/App.tsx` and code-split with `React.lazy()`. Each pr
 /account                        → User profile
 /admin/users                    → User management
 /admin/loan-products            → Loan product catalog
-/admin/audit-logs               → Audit trail
 /admin/workflow                 → Workflow settings
 /forbidden                      → Access denied page
 ```

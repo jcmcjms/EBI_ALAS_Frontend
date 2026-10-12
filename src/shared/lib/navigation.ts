@@ -70,11 +70,6 @@ export const navMain: NavItem[] = [
         requiredPermission: 'loan_product.manage',
       },
       {
-        title: 'Audit Logs',
-        url: '/admin/audit-logs',
-        requiredPermission: 'auditLogs.view',
-      },
-      {
         title: 'Workflow',
         url: '/admin/workflow',
         requiredPermission: 'workflow.manage',

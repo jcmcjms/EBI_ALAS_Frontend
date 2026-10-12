@@ -44,11 +44,6 @@ const LoanEvaluation = lazy(
   () => import('@/src/features/loans/pages/evaluation/index'),
 )
 const ReviewDesk = lazy(() => import('@/src/features/loans/pages/queue/index'))
-const AuditLogs = lazy(() =>
-  import('@/src/features/audit-logs/pages/index').then((m) => ({
-    default: m.default,
-  })),
-)
 const WorkflowSettings = lazy(() =>
   import('@/src/features/admin/workflow/pages/index').then((m) => ({
     default: m.WorkflowSettingsPage,
@@ -303,19 +298,6 @@ const adminLoanProductsRoute = createRoute({
   ),
 })
 
-const adminAuditLogsRoute = createRoute({
-  getParentRoute: () => authedShellRoute,
-  path: '/admin/audit-logs',
-  component: () => (
-    <GuardedRoute
-      requiredPermission={PERMISSIONS.auditLogsView}
-      featureName="Audit Logs"
-    >
-      <AuditLogs />
-    </GuardedRoute>
-  ),
-})
-
 const adminWorkflowRoute = createRoute({
   getParentRoute: () => authedShellRoute,
   path: '/admin/workflow',
@@ -346,7 +328,6 @@ const authedRouteTree = authedShellRoute.addChildren([
   accountRoute,
   adminUsersRoute,
   adminLoanProductsRoute,
-  adminAuditLogsRoute,
   adminWorkflowRoute,
 ])
 

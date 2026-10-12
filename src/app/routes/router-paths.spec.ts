@@ -31,7 +31,6 @@ describe('app router config', () => {
       '/account',
       '/admin/users',
       '/admin/loan-products',
-      '/admin/audit-logs',
       '/admin/workflow',
     ]) {
       expect(paths).toContain(expected)

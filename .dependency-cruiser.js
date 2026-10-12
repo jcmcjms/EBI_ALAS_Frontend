@@ -2,7 +2,6 @@
 const features = [
   'account',
   'admin',
-  'audit-logs',
   'auth',
   'dashboard',
   'loans',
