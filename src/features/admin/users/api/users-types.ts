@@ -16,12 +16,6 @@ export interface CreateUserPayload {
   email?: string | null
   branchId: string
   role: string
-
-  jobTitle?: string | null
-
-  eSignature?: string | null
-
-  coveredBranches?: string[] | null
 }
 
 export interface UpdateUserPayload {
@@ -31,10 +25,6 @@ export interface UpdateUserPayload {
   email?: string | null
   branchId: string
   role: string
-  jobTitle?: string | null
-  eSignature?: string | null
-
-  coveredBranches?: string[] | null
 }
 
 export interface UserStatusPayload {
@@ -47,14 +37,6 @@ export interface ResetPasswordResponse {
   mustChangePassword: boolean
 }
 
-export interface ApprovalAuthorityInfo {
-  key: string
-  displayName: string
-  tier: number
-  priority: number
-  maxTotalExposure: number
-}
-
 export interface UserResponse {
   /** Backend user id (GUID string). */
   id: string
@@ -62,19 +44,11 @@ export interface UserResponse {
   firstName: string
   middleName: string | null
   lastName: string
+  email: string | null
   branchId: string
   role: string
   isActive: boolean
   createdAt: string
-  email?: string | null
-
-  jobTitle?: string | null
-
-  eSignature?: string | null
-
-  approvalAuthority?: ApprovalAuthorityInfo | null
-
-  coveredBranches?: string[] | null
 }
 
 export interface UserImportValidationError {
@@ -123,14 +97,6 @@ export interface BackendUserDto {
   createdAt: string
 }
 
-export interface BackendPageResult<T> {
-  items: T[]
-  totalCount: number
-  page: number
-  pageSize: number
-  totalPages: number
-}
-
 export interface BackendRoleCatalogItem {
   role: string
   permissions: string[]
@@ -143,14 +109,10 @@ export function toUserResponse(dto: BackendUserDto): UserResponse {
     firstName: dto.firstName,
     middleName: dto.middleName,
     lastName: dto.lastName,
+    email: dto.email,
     branchId: dto.branchId,
     role: dto.role,
     isActive: dto.status.toLowerCase() === 'active',
     createdAt: dto.createdAt,
-    email: dto.email,
-    jobTitle: null,
-    eSignature: null,
-    approvalAuthority: null,
-    coveredBranches: null,
   }
 }

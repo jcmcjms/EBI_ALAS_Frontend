@@ -1,5 +1,3 @@
-import { BRANCHES } from '@/src/shared/lib/api/types'
-
 export interface UserCreatePayload {
   username: string
   password: string
@@ -8,9 +6,6 @@ export interface UserCreatePayload {
   lastName: string
   branchId: string
   role: string
-  jobTitle: string
-  eSignature: string | null
-  coveredBranches: string[] | null
 }
 
 export const emptyForm = {
@@ -18,28 +13,11 @@ export const emptyForm = {
   firstName: '',
   middleName: '',
   lastName: '',
-  jobTitle: '',
   branchId: '',
   role: '',
-  eSignature: null as string | null,
-  coveredBranches: [] as string[],
 }
 
 export const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/
-
-export const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
-  value: branch.code,
-  label: branch.name,
-}))
-
-export function formatPhp(amount: number): string {
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
 
 export function generateTempPassword(length = 12): string {
   const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ'

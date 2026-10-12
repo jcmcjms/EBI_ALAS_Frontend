@@ -1,7 +1,10 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
-import type { PagedResult } from '@/src/shared/lib/api/types'
+import {
+  mapPageResult,
+  type BackendPageResult,
+  type PagedResult,
+} from '@/src/shared/lib/api/types'
 import type {
-  BackendPageResult,
   BackendUserDto,
   CreateUserPayload,
   UpdateUserPayload,
@@ -20,20 +23,6 @@ export type {
   UserImportValidationError,
   UserImportResult,
 } from './users-types'
-
-function toPagedResult(
-  page: BackendPageResult<BackendUserDto>,
-): PagedResult<UserResponse> {
-  return {
-    items: page.items.map(toUserResponse),
-    currentPage: page.page,
-    pageSize: page.pageSize,
-    totalCount: page.totalCount,
-    totalPages: page.totalPages,
-    hasPreviousPage: page.page > 1,
-    hasNextPage: page.page < page.totalPages,
-  }
-}
 
 function toCreateBody(payload: CreateUserPayload) {
   return {
@@ -71,7 +60,10 @@ export async function listUsers(
       },
     },
   )
-  return toPagedResult(res.data)
+  return mapPageResult({
+    ...res.data,
+    items: res.data.items.map(toUserResponse),
+  })
 }
 
 export async function getUser(id: string): Promise<UserResponse> {
@@ -86,11 +78,9 @@ export async function createUser(
     '/api/users',
     toCreateBody(payload),
   )
-  const dto =
-    res.data && typeof res.data === 'object' && 'user' in res.data
-      ? res.data.user
-      : (res.data as BackendUserDto)
-  return toUserResponse(dto)
+  const raw = res.data as { user: BackendUserDto } | BackendUserDto
+  const user = 'user' in raw ? raw.user : raw
+  return toUserResponse(user)
 }
 
 export async function updateUser(
@@ -107,8 +97,11 @@ export async function updateUser(
 export async function updateUserStatus(
   id: string,
   isActive: boolean,
-): Promise<void> {
-  await apiClient.post(`/api/users/${id}/${isActive ? 'activate' : 'suspend'}`)
+): Promise<UserResponse> {
+  const res = await apiClient.post<BackendUserDto>(
+    `/api/users/${id}/${isActive ? 'activate' : 'suspend'}`,
+  )
+  return toUserResponse(res.data)
 }
 
 export async function importUsers(file: File): Promise<UserImportResult> {

@@ -6,9 +6,6 @@ export interface UserProfileChanges {
   lastName: string
   branchId: string
   role: string
-  jobTitle?: string | null
-  eSignature?: string | null
-  coveredBranches?: string[] | null
 }
 
 export type EditableProfile = {
@@ -17,8 +14,6 @@ export type EditableProfile = {
   lastName: string
   branchId: string
   role: string
-  jobTitle: string
-  coveredBranches: string[]
 }
 
 export function profileFrom(user: UserResponse): EditableProfile {
@@ -28,8 +23,6 @@ export function profileFrom(user: UserResponse): EditableProfile {
     lastName: user.lastName,
     branchId: user.branchId,
     role: user.role,
-    jobTitle: user.approvalAuthority?.key ?? user.jobTitle ?? '',
-    coveredBranches: user.coveredBranches ?? [],
   }
 }
 
@@ -39,6 +32,4 @@ export const emptyProfile: EditableProfile = {
   lastName: '',
   branchId: '',
   role: '',
-  jobTitle: '',
-  coveredBranches: [],
 }

@@ -7,34 +7,14 @@ import {
 } from '@/src/shared/ui/forms/select'
 import { Input } from '@/src/shared/ui/primitives/input'
 import { Label } from '@/src/shared/ui/primitives/label'
-import { BranchMultiSelect } from '@/src/shared/ui/data-display/branch-multi-select'
-import { BRANCHES } from '@/src/shared/lib/api/types'
+import { useBranches } from '@/src/shared/lib/api/branches'
 import type { UserResponse } from '../api/users-types'
 import type { EditableProfile } from './user-edit-drawer.types'
-import type { ApprovalAuthorityDto } from '../api/approval-matrix'
-
-export const BRANCH_SELECT_ITEMS = BRANCHES.map((branch) => ({
-  value: branch.code,
-  label: branch.name,
-}))
-
-function formatPhp(amount: number): string {
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
 
 export interface ProfileTabProps {
   profile: EditableProfile
   user: UserResponse | null
   canEdit: boolean
-  isApprover: boolean
-  isBranchScope: boolean
-  authorities: ApprovalAuthorityDto[] | undefined
-  authoritiesLoading: boolean
   onFieldChange: <K extends keyof EditableProfile>(
     field: K,
     value: EditableProfile[K],
@@ -45,12 +25,14 @@ export function ProfileTab({
   profile,
   user,
   canEdit,
-  isApprover,
-  isBranchScope,
-  authorities,
-  authoritiesLoading,
   onFieldChange,
 }: ProfileTabProps) {
+  const { data: branches } = useBranches()
+  const branchItems = (branches ?? []).map((b) => ({
+    value: b.code,
+    label: b.name,
+  }))
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
@@ -61,6 +43,7 @@ export function ProfileTab({
             value={profile.firstName}
             onChange={(e) => onFieldChange('firstName', e.target.value)}
             className="h-9"
+            disabled={!canEdit}
           />
         </div>
         <div className="space-y-2">
@@ -70,6 +53,7 @@ export function ProfileTab({
             value={profile.middleName}
             onChange={(e) => onFieldChange('middleName', e.target.value)}
             className="h-9"
+            disabled={!canEdit}
           />
         </div>
       </div>
@@ -80,68 +64,9 @@ export function ProfileTab({
           value={profile.lastName}
           onChange={(e) => onFieldChange('lastName', e.target.value)}
           className="h-9"
+          disabled={!canEdit}
         />
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="edit-jobTitle">
-          {isApprover ? 'Approval Authority' : 'Job Title'}
-        </Label>
-        {isApprover ? (
-          <Select
-            value={profile.jobTitle}
-            onValueChange={(value) => onFieldChange('jobTitle', value ?? '')}
-          >
-            <SelectTrigger className="h-9 w-full">
-              <SelectValue
-                placeholder={
-                  authoritiesLoading
-                    ? 'Loading authorities...'
-                    : 'Select approval authority'
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {(authorities ?? []).map((auth) => (
-                <SelectItem key={auth.key} value={auth.key}>
-                  {auth.displayName} — Tier {auth.tier}, up to{' '}
-                  {formatPhp(auth.maxTotalExposure)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input
-            id="edit-jobTitle"
-            value={profile.jobTitle}
-            onChange={(e) => onFieldChange('jobTitle', e.target.value)}
-            placeholder="e.g. Senior Credit Evaluator"
-            maxLength={100}
-            className="h-9"
-          />
-        )}
-        <p className="text-xs text-muted-foreground">
-          {isApprover
-            ? 'Determines which loans this approver can authorize (delegation of authority).'
-            : 'Complements the workflow role and appears in loan history.'}
-        </p>
-      </div>
-
-      {isBranchScope && (
-        <div className="space-y-2">
-          <Label>Covered Branches *</Label>
-          <BranchMultiSelect
-            branches={BRANCHES}
-            selected={profile.coveredBranches}
-            onChange={(codes) => onFieldChange('coveredBranches', codes)}
-            placeholder="Select branches this approver covers"
-            disabled={!canEdit}
-          />
-          <p className="text-xs text-muted-foreground">
-            This approver can authorize loans from the selected branches.
-          </p>
-        </div>
-      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -175,13 +100,14 @@ export function ProfileTab({
         <Select
           value={profile.branchId}
           onValueChange={(value) => onFieldChange('branchId', value ?? '')}
-          items={BRANCH_SELECT_ITEMS}
+          items={branchItems}
+          disabled={!canEdit}
         >
           <SelectTrigger className="h-9 w-full">
             <SelectValue placeholder="Select branch" />
           </SelectTrigger>
           <SelectContent>
-            {BRANCHES.map((b) => (
+            {(branches ?? []).map((b) => (
               <SelectItem key={b.code} value={b.code}>
                 {b.name}
               </SelectItem>

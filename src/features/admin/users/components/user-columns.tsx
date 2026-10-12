@@ -27,7 +27,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/src/shared/ui/navigation/dropdown-menu'
-import { BRANCHES } from '@/src/shared/lib/api/types'
 import type { UserResponse } from '../api/users-types'
 import { cn } from '@/src/shared/lib/utils'
 
@@ -40,7 +39,7 @@ export function formatFullName(
 }
 
 function getBranchName(code: string): string {
-  return BRANCHES.find((b) => b.code === code)?.name ?? code
+  return code
 }
 
 export type UsersTableMeta = {
@@ -106,39 +105,6 @@ export const columns = columnHelper.columns([
         {info.getValue()}
       </Badge>
     ),
-  }),
-  columnHelper.display({
-    id: 'coveredBranches',
-    header: 'Covered Branches',
-    cell: (info) => {
-      const user = info.row.original
-      if (!user.coveredBranches || user.coveredBranches.length === 0) {
-        return <span className="text-xs text-muted-foreground">—</span>
-      }
-      const names = user.coveredBranches
-        .map((code) => BRANCHES.find((b) => b.code === code)?.name ?? code)
-        .filter(Boolean)
-      if (names.length <= 2) {
-        return (
-          <div className="flex flex-wrap gap-1">
-            {names.map((name) => (
-              <Badge
-                key={name}
-                variant="outline"
-                className="font-normal text-xs"
-              >
-                {name}
-              </Badge>
-            ))}
-          </div>
-        )
-      }
-      return (
-        <Badge variant="outline" className="font-normal text-xs">
-          {names.length} branches
-        </Badge>
-      )
-    },
   }),
   columnHelper.accessor('isActive', {
     header: 'Status',
