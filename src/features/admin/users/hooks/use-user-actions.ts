@@ -105,15 +105,6 @@ export function useUserActions() {
     toastNotAvailable('Session revocation')
   }
 
-  function handleViewAuditLog(
-    user: UserResponse,
-    setSelectedUserForAuditLog: (user: UserResponse | null) => void,
-  ) {
-    void user
-    void setSelectedUserForAuditLog
-    toastNotAvailable('User audit log')
-  }
-
   async function handleCreateUser(
     payload: UserCreatePayload,
   ): Promise<boolean> {
@@ -180,7 +171,6 @@ export function useUserActions() {
     handleResetPasswordRequest,
     handleForcePasswordResetRequest,
     handleRevokeSessionsRequest,
-    handleViewAuditLog,
     handleCreateUser,
     handleUpdateUser,
     isResetPasswordPending: false,

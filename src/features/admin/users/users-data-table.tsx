@@ -12,7 +12,6 @@ import { UserStatsCards } from './components/user-stats-cards'
 import { UserEditDrawer } from './components/user-edit-drawer'
 import { UserCreateDrawer } from './components/user-create-drawer'
 import { ConfirmActionSheet } from './components/confirm-action-sheet'
-import { AuditLogModal } from './components/audit-log-modal'
 import { TemporaryPasswordDialog } from './components/temporary-password-dialog'
 import { ImportUsersSheet } from './components/import-users-sheet'
 import { useUserActions } from './hooks/use-user-actions'
@@ -63,8 +62,6 @@ export function UsersDataTable() {
   const actions = useUserActions()
 
   const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null)
-  const [selectedUserForAuditLog, setSelectedUserForAuditLog] =
-    useState<UserResponse | null>(null)
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false)
   const [isImportSheetOpen, setIsImportSheetOpen] = useState(false)
 
@@ -79,8 +76,6 @@ export function UsersDataTable() {
       onResetPassword: actions.handleResetPasswordRequest,
       onForcePasswordReset: actions.handleForcePasswordResetRequest,
       onRevokeSessions: actions.handleRevokeSessionsRequest,
-      onViewAuditLog: (user) =>
-        actions.handleViewAuditLog(user, setSelectedUserForAuditLog),
       onToggleStatus: actions.handleToggleStatusRequest,
     },
   })
@@ -188,10 +183,6 @@ export function UsersDataTable() {
         destructive={actions.confirmAction?.destructive}
         isPending={actions.isResetPasswordPending}
         onConfirm={actions.confirmAction?.onConfirm ?? (() => {})}
-      />
-      <AuditLogModal
-        user={selectedUserForAuditLog}
-        onClose={() => setSelectedUserForAuditLog(null)}
       />
       <TemporaryPasswordDialog
         credential={actions.tempCred}

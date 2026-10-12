@@ -16,7 +16,6 @@ export type {
   UpdateUserPayload,
   UserQueryParams,
   UserResponse,
-  UserAuditLogResponse,
   ResetPasswordResponse,
   UserImportValidationError,
   UserImportResult,

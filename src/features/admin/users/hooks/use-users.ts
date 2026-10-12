@@ -3,7 +3,6 @@ import { userKeys } from '@/src/features/admin/users/api/user-queries'
 import type {
   CreateUserPayload,
   UpdateUserPayload,
-  UserAuditLogResponse,
   UserQueryParams,
   UserResponse,
 } from '../api/users-types'
@@ -27,16 +26,6 @@ export function useUser(id: string | null) {
   return useQuery({
     queryKey: id !== null ? userKeys.detail(id) : ['users', 'detail', 'disabled'],
     queryFn: () => getUser(id!),
-    enabled: id !== null,
-  })
-}
-
-/** Backend has no per-user audit endpoint yet. */
-export function useUserAuditLog(id: string | null) {
-  return useQuery({
-    queryKey:
-      id !== null ? userKeys.auditLog(id) : ['users', 'audit-log', 'disabled'],
-    queryFn: (): Promise<UserAuditLogResponse[]> => Promise.resolve([]),
     enabled: id !== null,
   })
 }

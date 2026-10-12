@@ -10,7 +10,6 @@ import {
 } from '@tanstack/react-table'
 import {
   CaretDown,
-  ClockCounterClockwise,
   Key,
   Pencil,
   ShieldCheck,
@@ -49,7 +48,6 @@ export type UsersTableMeta = {
   onResetPassword?: (user: UserResponse) => void
   onForcePasswordReset?: (user: UserResponse) => void
   onRevokeSessions?: (user: UserResponse) => void
-  onViewAuditLog?: (user: UserResponse) => void
   onToggleStatus?: (user: UserResponse) => void
 }
 
@@ -203,9 +201,6 @@ export const columns = columnHelper.columns([
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => meta?.onRevokeSessions?.(user)}>
               <SignOut size={14} /> Revoke Sessions
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => meta?.onViewAuditLog?.(user)}>
-              <ClockCounterClockwise size={14} /> View Audit Log
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {user.isActive ? (

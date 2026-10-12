@@ -77,16 +77,6 @@ export interface UserResponse {
   coveredBranches?: string[] | null
 }
 
-export interface UserAuditLogResponse {
-  id: number
-  action: string
-  entityType: string
-  entityLabel: string
-  summary: string
-  timestamp: string
-  ipAddress: string | null
-}
-
 export interface UserImportValidationError {
   rowNumber: number
   field: string
