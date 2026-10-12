@@ -65,9 +65,9 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
     >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h2 className="text-2xl font-bold">Sign in</h2>
+          <h2 className="text-2xl font-bold">Login to your account</h2>
           <p className="text-sm text-balance text-muted-foreground">
-            Use your Enterprise Bank officer account.
+            Enter your username and password to sign in.
           </p>
         </div>
 
