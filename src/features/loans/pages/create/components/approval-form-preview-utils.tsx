@@ -1,7 +1,10 @@
 import React from 'react'
 import { cn } from '@/src/shared/lib/utils'
 import type { ClientFormData } from '@/src/features/loans/schemas/schema'
-import type { SignatureSlotDto } from '@/src/features/loans/api/signatures'
+import type {
+  LoanSignatureSlot,
+  SignatureSlotDto,
+} from '@/src/features/loans/api/signatures'
 
 export function num(value?: number | null): string {
   if (typeof value !== 'number' || Number.isNaN(value)) return '-'
@@ -121,16 +124,26 @@ export function AmtRow({
   )
 }
 
-export function SignatureBlock({ slot }: { slot: SignatureSlotDto }) {
-  const name = slot.signedByName?.trim()
-  const title = slot.signedByJobTitle?.trim() || slot.jobTitle || '\u2014'
+export type SignatureBlockSlot = SignatureSlotDto | LoanSignatureSlot
+
+function isLoanSlot(slot: SignatureBlockSlot): slot is LoanSignatureSlot {
+  return 'roleName' in slot
+}
+
+export function SignatureBlock({ slot }: { slot: SignatureBlockSlot }) {
+  const role = isLoanSlot(slot) ? slot.roleName : slot.role
+  const action = isLoanSlot(slot) ? slot.status : slot.action
+  const name = isLoanSlot(slot) ? null : slot.signedByName?.trim()
+  const title = isLoanSlot(slot)
+    ? '\u2014'
+    : slot.signedByJobTitle?.trim() || slot.jobTitle || '\u2014'
   return (
     <div>
-      <div className="font-bold">{slot.action}:</div>
+      <div className="font-bold">{action}:</div>
       <div className="mt-8 border-b border-black" />
       <div className="mt-0.5 font-bold">{name ?? '\u00A0'}</div>
       <div>
-        {title} <span className="font-bold">({slot.role})</span>
+        {title} <span className="font-bold">({role})</span>
       </div>
       <div className="mt-1">
         Date signed:{' '}

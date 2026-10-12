@@ -244,6 +244,31 @@ export interface CocreeStatusResponse {
   items: CocreeItemStatus[]
 }
 
+/** Wire enum for `SubmitLoanRequest.loanType` / `LoanResponse.loanType`. */
+export type LoanType = 'New' | 'Reloan'
+
+/**
+ * Bare DTO returned by `GET /api/loans`, `GET /api/loans/{id}`,
+ * `GET /api/loans/lam/{lamId}`, workflow actions, and `POST /api/loans` (201).
+ * Not wrapped in `ApiResponse`.
+ */
+export interface LoanResponse {
+  id: string
+  lamId: string
+  applicationGroupNo: string
+  clientName: string
+  branchId: string
+  loanType: LoanType
+  status: string
+  principal: number
+  termDays: number
+  interestRate: number
+  totalInterest: number
+  totalDeductions: number
+  netProceeds: number
+  createdAt: string
+}
+
 export interface LoanSubmissionPayload {
   branchType: {
     creationTypeCode: number | null

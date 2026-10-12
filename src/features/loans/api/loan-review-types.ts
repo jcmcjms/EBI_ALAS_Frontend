@@ -192,10 +192,14 @@ export interface DocumentChecklistItem {
   updatedAtUtc: string
 }
 
-export interface SlaPolicy {
-  ForRecommendation: number
-  ForChecking: number
-  ForApproval: number
+/**
+ * Bare body of `GET /api/loans/sla-policy`.
+ * Hours allowed per stage — not keyed by status name.
+ */
+export type SlaPolicy = {
+  recommendationHours: number
+  evaluationHours: number
+  approvalHours: number
 }
 
 export interface RoutingEvaluatedInputs {
@@ -257,14 +261,11 @@ export type WorkflowAction =
   | 'Reject'
   | 'ReturnForRevision'
 
-export type UpdateStatusPayload =
-  | { action: WorkflowAction; comments: string }
-  | { status: LoanStatus; comments: string }
-
 export const CANCELLABLE_STATUSES: LoanStatus[] = [
   'Draft',
   'ForRecommendation',
   'ForChecking',
   'ForApproval',
   'ForRevision',
+  'ForIncompleteDocuments',
 ]

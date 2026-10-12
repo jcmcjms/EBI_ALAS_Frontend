@@ -11,10 +11,10 @@ import { parseProductCode } from '@/src/features/loans/model/loan-product-displa
 import {
   getLoanDetail,
   getLoanHistory,
-  updateLoanStatus,
+  evaluateLoan,
+  pushbackWithRevision,
   flagDocuments,
   getChecklistDocuments,
-  pushbackWithRevision,
 } from '@/src/features/loans/api/loan-review'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
@@ -23,7 +23,6 @@ import {
   signatureKeys,
 } from '@/src/features/loans/api/signatures'
 import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
-import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 import type { RevisionSectionId } from '@/src/features/loans/types/revision-request'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
@@ -77,13 +76,12 @@ export function useEvaluationPage(id: number) {
   )
 
   const updateStatus = useMutation({
-    mutationFn: ({ status, comments }: { status: string; comments: string }) =>
-      updateLoanStatus(id, { status: status as LoanStatus, comments }),
-    onSuccess: (_data, { status }) => {
-      const actionLabel =
-        status === 'ForApproval'
-          ? 'forwarded to Approver'
-          : 'Pushed back to Encoder'
+    mutationFn: ({ recommend }: { recommend: boolean }) =>
+      evaluateLoan(id, recommend),
+    onSuccess: (_data, { recommend }) => {
+      const actionLabel = recommend
+        ? 'forwarded to Approver'
+        : 'recorded as Not Recommended'
       toastSuccess(`Application ${actionLabel}.`)
       setComments('')
       setPendingAction(null)
@@ -201,11 +199,7 @@ export function useEvaluationPage(id: number) {
 
     setPendingAction(action)
 
-    const finalComments =
-      action === 'notRecommended'
-        ? trimmed
-        : trimmed || 'Recommended for approval.'
-    updateStatus.mutate({ status: 'ForApproval', comments: finalComments })
+    updateStatus.mutate({ recommend: action === 'recommended' })
   }
 
   const handlePushbackSubmit = (payload: {

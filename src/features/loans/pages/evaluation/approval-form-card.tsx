@@ -5,12 +5,12 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { ApprovalFormDocument } from '../approval/components/approval-form-document'
 import { ApprovalFormViewport } from '@/src/features/loans/components/approval-form-sheet'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
-import type { SignatureSlotDto } from '@/src/features/loans/api/signatures'
+import type { SignatureDisplaySlot } from '@/src/features/loans/api/signatures'
 
 interface ApprovalFormCardProps {
   formData: LoanApplicationFormData
   catLoanClass: string | null
-  signatureSlots?: SignatureSlotDto[]
+  signatureSlots?: SignatureDisplaySlot[]
 }
 
 export function ApprovalFormCard({

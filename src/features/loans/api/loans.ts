@@ -1,33 +1,37 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
 import {
+  mapPageResult,
   unwrapApiData,
   type ApiResponse,
+  type BackendPageResult,
   type PagedResult,
 } from '@/src/shared/lib/api/types'
 import type {
   CreatedLoanSummary,
+  LoanResponse,
   LoanSubmissionPayload,
   LoanSubmissionResponse,
 } from './loan-types'
-import type { LoanDetailResponse } from './loan-review'
+import type { SubmitLoanRequest } from './loan-submit'
 
 export type {
   LoanSubmissionPayload,
   CreatedLoanSummary,
   LoanSubmissionResponse,
+  LoanResponse,
 }
 
-export interface MonitoringFilters {
-  search?: string
+/**
+ * Query params actually supported by `GET /api/loans`.
+ * Wire uses `page` (1-based) — not `pageNumber`. No search/date/sort filters.
+ */
+export interface ListLoansParams {
+  page: number
+  pageSize: number
+  /** Comma-separated PascalCase `LoanStatus` names. */
   status?: string
+  branchId?: string
   branchCode?: string
-  dateFrom?: string
-  dateTo?: string
-}
-
-export interface MonitoringSort {
-  field: string
-  direction: 'asc' | 'desc'
 }
 
 export interface LoanHistoryEntry {
@@ -39,6 +43,14 @@ export interface LoanHistoryEntry {
   comments?: string
   actionDate: string
   actionByRole: string
+}
+
+/** `POST /api/loans` — bare `LoanResponse` (201), no `ApiResponse` envelope. */
+export async function submitLoan(
+  request: SubmitLoanRequest,
+): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>('/api/loans', request)
+  return res.data
 }
 
 export async function submitLoanApplication(
@@ -73,29 +85,26 @@ export async function createLoan(
   return unwrapApiData(res.data)
 }
 
+/**
+ * `GET /api/loans?page&pageSize&status&branchId|branchCode`
+ * → bare `BackendPageResult<LoanResponse>` on the wire; mapped for the UI.
+ */
 export async function listLoans(
-  filters: MonitoringFilters,
-  page: number,
-  pageSize: number,
-  sort?: MonitoringSort,
-): Promise<PagedResult<CreatedLoanSummary>> {
-  const res = await apiClient.get<ApiResponse<PagedResult<CreatedLoanSummary>>>(
+  params: ListLoansParams,
+): Promise<PagedResult<LoanResponse>> {
+  const res = await apiClient.get<BackendPageResult<LoanResponse>>(
     '/api/loans',
     {
       params: {
-        search: filters.search || undefined,
-        status: filters.status || undefined,
-        branchCode: filters.branchCode || undefined,
-        dateFrom: filters.dateFrom || undefined,
-        dateTo: filters.dateTo || undefined,
-        pageNumber: page,
-        pageSize,
-        sortField: sort?.field,
-        sortDirection: sort?.direction,
+        page: params.page,
+        pageSize: params.pageSize,
+        status: params.status || undefined,
+        branchId: params.branchId || undefined,
+        branchCode: params.branchCode || undefined,
       },
     },
   )
-  return unwrapApiData(res.data)
+  return mapPageResult(res.data)
 }
 
 export async function getLoanHistory(
@@ -107,9 +116,61 @@ export async function getLoanHistory(
   return unwrapApiData(res.data)
 }
 
-export async function getLoanById(id: number): Promise<LoanDetailResponse> {
-  const res = await apiClient.get<ApiResponse<LoanDetailResponse>>(
-    `/api/loans/${id}`,
+/** `GET /api/loans/{id}` → bare `LoanResponse` (not the review-screen detail). */
+export async function getLoanById(id: number | string): Promise<LoanResponse> {
+  const res = await apiClient.get<LoanResponse>(`/api/loans/${id}`)
+  return res.data
+}
+
+/** `GET /api/loans/lam/{lamId}` → bare `LoanResponse`. */
+export async function getLoanByLamId(lamId: string): Promise<LoanResponse> {
+  const res = await apiClient.get<LoanResponse>(
+    `/api/loans/lam/${encodeURIComponent(lamId)}`,
   )
-  return unwrapApiData(res.data)
+  return res.data
+}
+
+// ── Workflow actions (auth + CSRF) ─────────────────────────────────
+// Each returns the updated bare `LoanResponse`.
+
+export async function recommendLoan(id: number | string): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/recommend`)
+  return res.data
+}
+
+export async function evaluateLoan(
+  id: number | string,
+  recommend: boolean,
+): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/evaluate`, {
+    recommend,
+  })
+  return res.data
+}
+
+export async function approveLoan(id: number | string): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/approve`)
+  return res.data
+}
+
+export async function rejectLoan(id: number | string): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/reject`)
+  return res.data
+}
+
+export async function pushbackLoan(
+  id: number | string,
+  section: string,
+  comment: string,
+): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/pushback`, {
+    section,
+    comment,
+  })
+  return res.data
+}
+
+export async function cancelLoan(id: number | string): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/cancel`)
+  return res.data
 }

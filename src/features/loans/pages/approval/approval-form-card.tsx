@@ -14,13 +14,13 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { ApprovalFormDocument } from './components/approval-form-document'
 import { ApprovalFormViewport } from '@/src/features/loans/components/approval-form-sheet'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
-import type { SignatureSlotDto } from '@/src/features/loans/api/signatures'
+import type { SignatureDisplaySlot } from '@/src/features/loans/api/signatures'
 import type { LoanDeviationDto, DocumentRemarkDto } from '@/src/features/loans/api/loan-review'
 import type { ApprovalFormActionEntry } from './components/approval-form-document'
 
 interface ApprovalFormCardProps {
   formData: LoanApplicationFormData
-  signatureSlots?: SignatureSlotDto[]
+  signatureSlots?: SignatureDisplaySlot[]
   actions?: ApprovalFormActionEntry[]
   deviationsData?: LoanDeviationDto[]
   documentRemarksData?: DocumentRemarkDto[]

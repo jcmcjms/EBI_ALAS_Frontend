@@ -5,6 +5,7 @@ import {
   type ApiResponse,
 } from '@/src/shared/lib/api/types'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
+import { cancelLoan, pushbackLoan, type LoanResponse } from '@/src/features/loans/api/loans'
 import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 import { parseQueueDefault } from './queue-default'
 
@@ -15,13 +16,24 @@ export * from './loan-review-documents'
 import type {
   LoanDetailResponse,
   LoanRoutingResponse,
-  UpdateStatusPayload,
+  SlaPolicy,
   SyncDisbursementResult,
 } from './loan-review-types'
 import type {
   CreateRevisionRequestPayload,
   RevisionRequest,
 } from '../types/revision-request'
+
+// Real workflow actions live in ./loans — re-exported so review screens
+// can import from one place.
+export {
+  approveLoan,
+  cancelLoan,
+  evaluateLoan,
+  pushbackLoan,
+  recommendLoan,
+  rejectLoan,
+} from '@/src/features/loans/api/loans'
 
 export const loanReviewKeys = {
   detail: (id: number) => ['loans', 'review', id, 'detail'] as const,
@@ -68,28 +80,11 @@ export async function getLoanHistory(id: number) {
   return unwrapApiData(res.data)
 }
 
-export async function updateLoanStatus(
-  id: number,
-  payload: UpdateStatusPayload,
-): Promise<void> {
-  const res = await apiClient.put<ApiResponse<null>>(
-    `/api/loans/${id}/status`,
-    payload,
-  )
-  if (!res.data.success)
-    throw new Error(res.data.message || 'Failed to update status')
-}
-
+/** `POST /api/loans/{id}/cancel` — empty body. Reason is not on the wire. */
 export async function cancelLoanApplication(
-  id: number,
-  reason: string,
-): Promise<void> {
-  const res = await apiClient.post<ApiResponse<null>>(
-    `/api/loans/${id}/cancel`,
-    { reason },
-  )
-  if (!res.data.success)
-    throw new Error(res.data.message || 'Failed to cancel application')
+  id: number | string,
+): Promise<LoanResponse> {
+  return cancelLoan(id)
 }
 
 export async function flagDocuments(
@@ -112,11 +107,10 @@ export async function clearDocumentFlag(loanId: number): Promise<void> {
     throw new Error(res.data.message || 'Failed to clear document flag')
 }
 
-export async function getSlaPolicy(): Promise<Record<string, number>> {
-  const res = await apiClient.get<ApiResponse<Record<string, number>>>(
-    '/api/loans/sla-policy',
-  )
-  return unwrapApiData(res.data)
+/** `GET /api/loans/sla-policy` → bare `{ recommendationHours, evaluationHours, approvalHours }`. */
+export async function getSlaPolicy(): Promise<SlaPolicy> {
+  const res = await apiClient.get<SlaPolicy>('/api/loans/sla-policy')
+  return res.data
 }
 
 export async function getQueueDefault(): Promise<LoanStatus[]> {
@@ -137,17 +131,22 @@ export async function syncDisbursementStatus(
   return res.data.data!
 }
 
+/**
+ * `POST /api/loans/{id}/pushback` with `{ section, comment }` → bare `LoanResponse`.
+ * The dialog collects several sections; they are folded into one wire call.
+ */
 export async function pushbackWithRevision(
-  loanId: number,
+  loanId: number | string,
   payload: CreateRevisionRequestPayload,
-): Promise<RevisionRequest> {
-  const res = await apiClient.post<ApiResponse<RevisionRequest>>(
-    `/api/loans/${loanId}/pushback`,
-    payload,
-  )
-  if (!res.data.success)
-    throw new Error(res.data.message || 'Failed to push back application')
-  return unwrapApiData(res.data)
+): Promise<LoanResponse> {
+  const section = payload.sections.map((s) => s.sectionId).join(',')
+  const comment = [
+    ...payload.sections.map((s) => s.comments.trim()).filter(Boolean),
+    payload.overallComments.trim(),
+  ]
+    .filter(Boolean)
+    .join('\n')
+  return pushbackLoan(loanId, section, comment)
 }
 
 export async function getRevisionRequests(

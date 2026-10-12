@@ -18,7 +18,7 @@ import {
 import { ApprovalFormSheet } from '@/src/features/loans/components/approval-form-sheet'
 import { useLoanProduct } from '@/src/shared/lib/api/loan-product-api'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
-import type { SignatureSlotDto } from '@/src/features/loans/api/signatures'
+import type { SignatureDisplaySlot } from '@/src/features/loans/api/signatures'
 import type {
   LoanDeviationDto,
   DocumentRemarkDto,
@@ -42,7 +42,7 @@ interface ApprovalFormDocumentProps {
   data: LoanApplicationFormData
   loanIndex?: number
   catLoanClass?: string | null
-  signatureSlots?: SignatureSlotDto[]
+  signatureSlots?: SignatureDisplaySlot[]
   actions?: ApprovalFormActionEntry[]
   deviations?: LoanDeviationDto[]
   documentRemarks?: DocumentRemarkDto[]
@@ -248,7 +248,7 @@ function ApprovalFormDocumentBase({
                 <div className="border-t-2 border-black p-3 break-inside-avoid">
                   <div className="grid grid-cols-2 gap-x-8 gap-y-6">
                     {signatureSlots.map((slot) => (
-                      <SignatureBlock key={slot.role} slot={slot} />
+                      <SignatureBlock key={slot.order} slot={slot} />
                     ))}
                   </div>
                 </div>

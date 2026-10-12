@@ -1,7 +1,8 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
-import type { PagedResult } from '@/src/shared/lib/api/types'
+import type { BackendPageResult } from '@/src/shared/lib/api/types'
+import type { LoanResponse } from '@/src/features/loans/api/loan-types'
 import type {
   LoanMonitoringRecord,
   MonitoringFilters,
@@ -17,25 +18,7 @@ interface SortingState {
   desc: boolean
 }
 
-/** Raw row from GET /api/loans (no ApiResponse envelope). */
-interface BackendLoanListItem {
-  id: string
-  lamId: string
-  applicationGroupNo: string
-  clientName: string
-  branchId: string
-  loanType: string
-  status: string
-  principal: number
-  termDays: number
-  interestRate: number
-  totalInterest: number
-  totalDeductions: number
-  netProceeds: number
-  createdAt: string
-}
-
-function toMonitoringRecord(loan: BackendLoanListItem): LoanMonitoringRecord {
+function toMonitoringRecord(loan: LoanResponse): LoanMonitoringRecord {
   const appliedAt = new Date(loan.createdAt)
 
   return {
@@ -73,20 +56,19 @@ function toMonitoringRecord(loan: BackendLoanListItem): LoanMonitoringRecord {
 export function useLoanMonitoring(
   filters: MonitoringFilters,
   pagination: PaginationState,
-  sorting: SortingState[],
+  _sorting: SortingState[],
 ) {
   const query = useQuery({
-    queryKey: loanKeys.monitoring(filters, pagination, sorting),
+    queryKey: loanKeys.monitoring(filters, pagination, _sorting),
     queryFn: async (): Promise<{
       records: LoanMonitoringRecord[]
       rowCount: number
     }> => {
+      // GET /api/loans supports page, pageSize, status, branchId|branchCode only.
       const params: Record<string, string> = {
         page: String(pagination.pageIndex + 1),
         pageSize: String(pagination.pageSize),
       }
-
-      if (filters.search) params.search = filters.search
 
       if (filters.status.length > 0) {
         params.status = filters.status.join(',')
@@ -96,20 +78,8 @@ export function useLoanMonitoring(
         params.branchCode = filters.branchCode
       }
 
-      if (filters.dateRange.from)
-        params.fromDate = filters.dateRange.from.toISOString()
-      if (filters.dateRange.to)
-        params.toDate = filters.dateRange.to.toISOString()
-
-      if (filters.myTurn) params.myTurn = 'true'
-
-      if (sorting.length > 0) {
-        params.sortBy = sorting[0].id
-        params.sortDesc = String(sorting[0].desc)
-      }
-
       const { data: page } = await apiClient.get<
-        PagedResult<BackendLoanListItem>
+        BackendPageResult<LoanResponse>
       >('/api/loans', { params })
 
       return {

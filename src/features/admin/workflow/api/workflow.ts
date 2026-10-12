@@ -2,7 +2,7 @@ import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
   type ApiResponse,
-  type PagedResult,
+  type BackendPageResult,
 } from '@/src/shared/lib/api/types'
 
 export interface WorkflowConfigurationDto {
@@ -35,10 +35,11 @@ export async function updateWorkflowConfiguration(
   return unwrapApiData(res.data)
 }
 
+/** Count via the bare `BackendPageResult` from `GET /api/loans`. */
 export async function getLoanCountByStatus(status: string): Promise<number> {
-  const res = await apiClient.get<ApiResponse<PagedResult<{ id: number }>>>(
+  const res = await apiClient.get<BackendPageResult<{ id: string }>>(
     '/api/loans',
     { params: { status, pageSize: 1 } },
   )
-  return unwrapApiData(res.data).totalCount
+  return res.data.totalCount
 }

@@ -18,8 +18,11 @@ import {
   getChecklistDocuments,
   getDocumentRemarks,
   getLoanDeviations,
-  updateLoanStatus,
+  approveLoan,
   cancelLoanApplication,
+  evaluateLoan,
+  recommendLoan,
+  rejectLoan,
   flagDocuments,
   pushbackWithRevision,
   CANCELLABLE_STATUSES,
@@ -174,17 +177,20 @@ export function useLoanApprovalPage() {
     mutationFn: (payload: {
       action: WorkflowAction
       kind: WorkflowButtonDef['kind']
-    }) =>
-      updateLoanStatus(id, {
-        action: payload.action,
-        comments:
-          payload.kind === 'return' ||
-          payload.action === 'NotRecommend' ||
-          payload.action === 'Reject' ||
-          payload.action === 'ReturnForRevision'
-            ? remarks.trim()
-            : remarks.trim() || '',
-      }),
+    }) => {
+      switch (payload.action) {
+        case 'Recommend':
+          return recommendLoan(id)
+        case 'NotRecommend':
+          return evaluateLoan(id, false)
+        case 'Approve':
+          return approveLoan(id)
+        case 'Reject':
+          return rejectLoan(id)
+        default:
+          throw new Error(`Unsupported workflow action: ${payload.action}`)
+      }
+    },
     onSuccess: (_d, payload) => {
       toastSuccess(
         payload.action === 'NotRecommend'
@@ -283,7 +289,7 @@ export function useLoanApprovalPage() {
   const handleCancel = async () => {
     setCancelPending(true)
     try {
-      await cancelLoanApplication(id, cancelReason.trim())
+      await cancelLoanApplication(id)
       toastSuccess('Application cancelled.')
       setCancelOpen(false)
       setCancelReason('')

@@ -207,10 +207,7 @@ export function LoanMonitoringPage() {
                   return
                 setCancelDialog((d) => ({ ...d, pending: true }))
                 try {
-                  await cancelLoanApplication(
-                    cancelId,
-                    cancelDialog.reason.trim(),
-                  )
+                  await cancelLoanApplication(cancelId)
                   toastSuccess('Application cancelled.')
                   setCancelDialog({
                     open: false,

@@ -73,11 +73,7 @@ export function LoanDetailsDrawer({
             {detail.data ? (
               <>
                 <span className="truncate font-medium text-foreground">
-                  {detail.data.firstName}{' '}
-                  {detail.data.middleName
-                    ? `${detail.data.middleName[0]}. `
-                    : ''}
-                  {detail.data.lastName}
+                  {detail.data.clientName}
                 </span>
                 <Badge
                   variant="outline"
@@ -94,11 +90,8 @@ export function LoanDetailsDrawer({
             ) : (
               'Select an application to view its details.'
             )}
-            {}
-            {(detail.data?.documentFlag ?? record?.documentFlag) && (
-              <DocumentFlagBadge
-                flag={detail.data?.documentFlag ?? record?.documentFlag ?? null}
-              />
+            {record?.documentFlag && (
+              <DocumentFlagBadge flag={record.documentFlag} />
             )}
           </SheetDescription>
         </SheetHeader>
