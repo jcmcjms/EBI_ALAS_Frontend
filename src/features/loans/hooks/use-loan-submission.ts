@@ -1,23 +1,23 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useRef } from 'react'
 
-import { submitLoanApplication } from '@/src/features/loans/api/loans'
+import { submitLoan } from '@/src/features/loans/api/loans'
 import { generateUUID } from '@/src/shared/lib/utils'
 import type {
-  LoanSubmissionPayload,
-  LoanSubmissionResponse,
-} from '../api/loan-types'
+  LoanSubmissionResult,
+  SubmitLoanApplicationsRequest,
+} from '../api/loan-submit'
 
 export function useLoanSubmission() {
   const queryClient = useQueryClient()
   const keyRef = useRef<string>(generateUUID())
 
   const mutation = useMutation<
-    LoanSubmissionResponse,
+    LoanSubmissionResult,
     Error,
-    LoanSubmissionPayload
+    SubmitLoanApplicationsRequest
   >({
-    mutationFn: (payload) => submitLoanApplication(payload, keyRef.current),
+    mutationFn: (request) => submitLoan(request),
 
     retry: 1,
     onSuccess: () => {

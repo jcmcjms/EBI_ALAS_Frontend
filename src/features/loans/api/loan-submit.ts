@@ -1,58 +1,53 @@
 /**
- * Wire contract for `POST /api/loans` (backend `SubmitLoanRequest`).
- * The API takes this flat body and returns a bare `LoanResponse` (201).
- * Nested form sections (client, loans, deviations, …) are never sent.
+ * Wire contract for `POST /api/loans` (backend `SubmitLoanApplicationsRequest`).
+ * One client application group with one or more loans.
  */
-export interface SubmitLoanRequest {
+export interface SubmitLoanLine {
+  productCode: string
+  product: string
+  principal: number
+  termDays: number
+  interestRatePerMonth: number
+  serviceFee: number
+  insuranceFee: number
+  otherDeductions: number
+}
+
+export interface SubmitLoanApplicationsRequest {
   applicationGroupNo: string
   clientName: string
   branchId: string
-  productCode: string
-  product: string
   loanType: 'New' | 'Reloan'
-  principal: number
-  termDays: number
-  interestRatePerMonth: number
-  serviceFee: number
-  insuranceFee: number
-  otherDeductions: number
+  loans: SubmitLoanLine[]
 }
 
-/**
- * Input accepted by {@link toSubmitLoanRequest}. Carries the same values as
- * the wire body; any extra/nested properties on the object are ignored.
- * UI models spell the reloan case `Renewal`; the wire enum value is `Reloan`.
- */
-export interface SubmitLoanDraft {
+export interface CreatedLoanSummary {
+  id: string
+  lamId: string
+  productCode: string
+  product: string
+  principal: number
+  status: string
+}
+
+export interface LoanSubmissionResult {
+  applicationGroupNo: string
+  loans: CreatedLoanSummary[]
+}
+
+/** UI models spell the reloan case `Renewal`; the wire enum value is `Reloan`. */
+export function toSubmitLoanApplicationsRequest(input: {
   applicationGroupNo: string
   clientName: string
   branchId: string
-  productCode: string
-  product: string
   loanType: 'New' | 'Reloan' | 'Renewal'
-  principal: number
-  termDays: number
-  interestRatePerMonth: number
-  serviceFee: number
-  insuranceFee: number
-  otherDeductions: number
-}
-
-export function toSubmitLoanRequest(
-  input: SubmitLoanDraft & Record<string, unknown>,
-): SubmitLoanRequest {
+  loans: SubmitLoanLine[]
+}): SubmitLoanApplicationsRequest {
   return {
     applicationGroupNo: input.applicationGroupNo,
     clientName: input.clientName,
     branchId: input.branchId,
-    productCode: input.productCode,
-    product: input.product,
     loanType: input.loanType === 'New' ? 'New' : 'Reloan',
-    principal: input.principal,
-    termDays: input.termDays,
-    interestRatePerMonth: input.interestRatePerMonth,
-    serviceFee: input.serviceFee,
-    insuranceFee: input.insuranceFee,
-    otherDeductions: input.otherDeductions,
+    loans: input.loans,
   }
 }

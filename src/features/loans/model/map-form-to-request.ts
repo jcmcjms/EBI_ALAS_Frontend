@@ -1,6 +1,10 @@
 import type { LoanSubmissionPayload } from '../api/loan-types'
 import type { LoanApplicationFormData } from '../schemas/schema'
-import { toSubmitLoanRequest, type SubmitLoanRequest } from '../api/loan-submit'
+import {
+  toSubmitLoanApplicationsRequest,
+  type SubmitLoanApplicationsRequest,
+  type SubmitLoanLine,
+} from '../api/loan-submit'
 
 export function mapFormToSubmissionPayload(
   form: LoanApplicationFormData,
@@ -44,14 +48,12 @@ export function mapFormToSubmissionPayload(
 }
 
 /**
- * Flat body for `POST /api/loans` (`SubmitLoanRequest`).
- * `applicationGroupNo` is omitted so the API allocates APP-{date}-{seq}.
+ * Multi-loan body for `POST /api/loans`. One application group, one entry per
+ * selected loan. Group number left empty so the API allocates APP-{date}-{seq}.
  */
 export function mapFormToSubmitLoanRequest(
   form: LoanApplicationFormData,
-): SubmitLoanRequest {
-  const primary = form.loans[0]
-  const params = primary?.parameters
+): SubmitLoanApplicationsRequest {
   const clientName = [
     form.client.firstName,
     form.client.middleName,
@@ -61,18 +63,26 @@ export function mapFormToSubmitLoanRequest(
     .join(' ')
     .trim()
 
-  return toSubmitLoanRequest({
+  const fallbackBranch = form.branchType.branch || ''
+  const loans: SubmitLoanLine[] = form.loans.map((loan) => {
+    const params = loan.parameters
+    return {
+      productCode: loan.productCode ?? '',
+      product: params.product || loan.productDescription || '',
+      principal: params.proposedAmount ?? 0,
+      termDays: params.term ?? 0,
+      interestRatePerMonth: params.interestRate ?? 0,
+      serviceFee: (params.notarialFee ?? 0) + (params.docStamps ?? 0),
+      insuranceFee: params.insurance ?? 0,
+      otherDeductions: 0,
+    }
+  })
+
+  return toSubmitLoanApplicationsRequest({
     applicationGroupNo: '',
     clientName,
-    branchId: primary?.branchCode || form.branchType.branch || '',
-    productCode: primary?.productCode ?? '',
-    product: primary?.parameters.product ?? primary?.productDescription ?? '',
+    branchId: form.loans[0]?.branchCode || fallbackBranch,
     loanType: form.loanType === 'Renewal' ? 'Reloan' : 'New',
-    principal: params?.proposedAmount ?? 0,
-    termDays: params?.term ?? 0,
-    interestRatePerMonth: params?.interestRate ?? 0,
-    serviceFee: (params?.notarialFee ?? 0) + (params?.docStamps ?? 0),
-    insuranceFee: params?.insurance ?? 0,
-    otherDeductions: 0,
+    loans,
   })
 }

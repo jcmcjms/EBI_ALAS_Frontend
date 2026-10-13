@@ -8,16 +8,17 @@ import {
 } from '@/src/shared/lib/api/types'
 import type {
   CreatedLoanSummary,
-  LoanResponse,
   LoanSubmissionPayload,
-  LoanSubmissionResponse,
+  LoanResponse,
 } from './loan-types'
-import type { SubmitLoanRequest } from './loan-submit'
+import type {
+  LoanSubmissionResult,
+  SubmitLoanApplicationsRequest,
+} from './loan-submit'
 
 export type {
   LoanSubmissionPayload,
   CreatedLoanSummary,
-  LoanSubmissionResponse,
   LoanResponse,
 }
 
@@ -45,19 +46,19 @@ export interface LoanHistoryEntry {
   actionByRole: string
 }
 
-/** `POST /api/loans` — bare `LoanResponse` (201), no `ApiResponse` envelope. */
+/** `POST /api/loans` — bare `LoanSubmissionResult` (201), no `ApiResponse` envelope. */
 export async function submitLoan(
-  request: SubmitLoanRequest,
-): Promise<LoanResponse> {
-  const res = await apiClient.post<LoanResponse>('/api/loans', request)
+  request: SubmitLoanApplicationsRequest,
+): Promise<LoanSubmissionResult> {
+  const res = await apiClient.post<LoanSubmissionResult>('/api/loans', request)
   return res.data
 }
 
 export async function submitLoanApplication(
   payload: LoanSubmissionPayload,
   idempotencyKey: string,
-): Promise<LoanSubmissionResponse> {
-  const res = await apiClient.post<ApiResponse<LoanSubmissionResponse>>(
+): Promise<LoanSubmissionResult> {
+  const res = await apiClient.post<ApiResponse<LoanSubmissionResult>>(
     '/api/loans',
     payload,
     { headers: { 'Idempotency-Key': idempotencyKey } },
@@ -69,15 +70,15 @@ export const loanApi = {
   createLoan: (
     payload: LoanSubmissionPayload,
     idempotencyKey: string,
-  ): Promise<LoanSubmissionResponse> =>
+  ): Promise<LoanSubmissionResult> =>
     submitLoanApplication(payload, idempotencyKey),
 }
 
 export async function createLoan(
   payload: LoanSubmissionPayload,
   idempotencyKey: string,
-): Promise<LoanSubmissionResponse> {
-  const res = await apiClient.post<ApiResponse<LoanSubmissionResponse>>(
+): Promise<LoanSubmissionResult> {
+  const res = await apiClient.post<ApiResponse<LoanSubmissionResult>>(
     '/api/loans',
     payload,
     { headers: { 'Idempotency-Key': idempotencyKey } },
