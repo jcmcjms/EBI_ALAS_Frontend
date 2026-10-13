@@ -174,6 +174,14 @@ export const DEVIATION_REASONS = [
   'With past due account - performing',
 ] as const
 
+/** Matches DeviationCatalog major rows (severity 2) in the API. */
+export const DEVIATION_MAJOR_REASONS = [
+  'Age not within the prescribed parameters',
+  'Discounted Application Fee',
+  'Interest rate reduction',
+  'With past due account - non performing loan',
+] as const
+
 export type DeviationReason = (typeof DEVIATION_REASONS)[number]
 
 const MIN_JUSTIFICATION_LENGTH = 5

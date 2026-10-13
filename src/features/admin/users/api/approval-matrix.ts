@@ -60,10 +60,10 @@ export async function getApprovalAuthorities(): Promise<
 export async function getDeviationCatalog(): Promise<
   DeviationCatalogItemDto[]
 > {
-  const res = await apiClient.get<ApiResponse<DeviationCatalogItemDto[]>>(
+  const res = await apiClient.get<DeviationCatalogItemDto[]>(
     '/api/deviation-catalog',
   )
-  return unwrapApiData(res.data)
+  return Array.isArray(res.data) ? res.data : []
 }
 
 export async function getApproverPresence(): Promise<ApproverPresenceDto[]> {

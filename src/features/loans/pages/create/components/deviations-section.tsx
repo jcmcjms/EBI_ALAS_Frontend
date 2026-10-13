@@ -7,6 +7,7 @@ import { Warning, Check } from '@phosphor-icons/react'
 
 import {
   DEVIATION_REASONS,
+  DEVIATION_MAJOR_REASONS,
   type DeviationReason,
 } from '@/src/features/loans/schemas/schema'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
@@ -18,7 +19,11 @@ import { FeeDeviationJustification } from './fee-deviation-justification'
 import { DeviationOtherRemarks } from './deviation-other-remarks'
 import { getSection } from '@/src/features/loans/constants/sections'
 import { useActiveLoan } from '../active-loan-context'
-import { useDeviationCatalog } from '@/src/shared/lib/api/approval-matrix-shared'
+import {
+  useDeviationCatalog,
+  isMajorSeverity,
+  isMinorSeverity,
+} from '@/src/shared/lib/api/approval-matrix-shared'
 
 type DeviationsErrors = {
   otherRemarks?: { message?: string }
@@ -94,14 +99,31 @@ function DeviationsFields({
     useDeviationCatalog(hasDeviations)
 
   const { majorItems, minorItems } = useMemo(() => {
-    if (!catalog) return { majorItems: [], minorItems: [] }
+    if (!catalog || catalog.length === 0) {
+      // Offline / API unavailable: still split the known list so Major is never hidden.
+      return {
+        majorItems: DEVIATION_MAJOR_REASONS.map((description, i) => ({
+          id: i + 1,
+          description,
+          severity: 2 as const,
+        })),
+        minorItems: DEVIATION_REASONS.filter(
+          (r) =>
+            !DEVIATION_MAJOR_REASONS.includes(
+              r as (typeof DEVIATION_MAJOR_REASONS)[number],
+            ),
+        ).map((description, i) => ({
+          id: 100 + i,
+          description,
+          severity: 1 as const,
+        })),
+      }
+    }
     return {
-      majorItems: catalog.filter((item) => item.severity === 2),
-      minorItems: catalog.filter((item) => item.severity === 1),
+      majorItems: catalog.filter((item) => isMajorSeverity(item.severity)),
+      minorItems: catalog.filter((item) => isMinorSeverity(item.severity)),
     }
   }, [catalog])
-
-  const fallbackReasons = DEVIATION_REASONS
 
   const notarialFee =
     (useWatch({ control, name: `${paramsPath}.notarialFee` }) as
@@ -217,9 +239,8 @@ function DeviationsFields({
               <div className="rounded-md border border-input bg-background p-4 text-center text-sm text-muted-foreground">
                 Loading deviation catalog...
               </div>
-            ) : catalog && catalog.length > 0 ? (
+            ) : (
               <div className="space-y-4">
-                {}
                 {majorItems.length > 0 && (
                   <DeviationSeverityGroup
                     title="Major Deviations"
@@ -230,7 +251,6 @@ function DeviationsFields({
                   />
                 )}
 
-                {}
                 {minorItems.length > 0 && (
                   <DeviationSeverityGroup
                     title="Minor Deviations"
@@ -240,14 +260,6 @@ function DeviationsFields({
                     renderItem={renderItem}
                   />
                 )}
-              </div>
-            ) : (
-              <div
-                role="group"
-                aria-label="Deviation reasons"
-                className="space-y-3 rounded-md border border-input bg-background p-4"
-              >
-                {fallbackReasons.map((reason) => renderItem(reason))}
               </div>
             )}
 
