@@ -50,7 +50,9 @@ describe('getLoanProducts', () => {
       maxAmount: 250000,
       isRetired: false,
     } satisfies Partial<LoanProductResponse>)
-    expect(apiClient.get).toHaveBeenCalledWith('/api/loan-products')
+    expect(apiClient.get).toHaveBeenCalledWith('/api/loan-products', {
+      params: { page: 1, pageSize: 100 },
+    })
   })
 
   it('does not throw when the payload is an empty array', async () => {

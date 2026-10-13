@@ -1,5 +1,6 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
 import type { LoanProductResponse } from '@/src/shared/lib/api/types'
+import { getLoanProducts as fetchAllLoanProducts } from '@/src/shared/lib/api/loan-product-api'
 import type {
   LoanProductImportResult,
   LoanProductSyncResult,
@@ -9,11 +10,7 @@ import type {
 export type { LoanProductImportResult } from './loan-product-types'
 
 export async function getLoanProducts(): Promise<LoanProductResponse[]> {
-  const res = await apiClient.get<{ items: LoanProductResponse[] } | LoanProductResponse[]>(
-    '/api/loan-products',
-  )
-  if (Array.isArray(res.data)) return res.data
-  return res.data?.items ?? []
+  return fetchAllLoanProducts()
 }
 
 export async function getLoanProductByCode(

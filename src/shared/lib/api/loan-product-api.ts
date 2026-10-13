@@ -10,11 +10,32 @@ export const loanProductKeys = {
 }
 
 export async function getLoanProducts(): Promise<LoanProductResponse[]> {
-  const res = await apiClient.get<{ items: LoanProductResponse[] } | LoanProductResponse[]>(
-    '/api/loan-products',
-  )
-  if (Array.isArray(res.data)) return res.data
-  return res.data?.items ?? []
+  // GET /api/loan-products is paged (ApiOptions DefaultPageSize=20, MaxPageSize=100).
+  // Load every page so the admin catalog shows the full 80+ product set.
+  const items: LoanProductResponse[] = []
+  const pageSize = 100
+  let page = 1
+
+  for (;;) {
+    const res = await apiClient.get<
+      | { items: LoanProductResponse[]; totalCount: number }
+      | LoanProductResponse[]
+    >('/api/loan-products', { params: { page, pageSize } })
+
+    if (Array.isArray(res.data)) {
+      return res.data
+    }
+
+    const batch = res.data.items ?? []
+    items.push(...batch)
+
+    const total = res.data.totalCount ?? items.length
+    if (batch.length === 0 || items.length >= total) {
+      return items
+    }
+
+    page += 1
+  }
 }
 
 export async function getLoanProductByCode(
