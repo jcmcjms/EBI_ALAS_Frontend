@@ -32,12 +32,12 @@ import type {
 
 interface Props {
   groupNo: string
-  currentLoanId: number
+  currentLoanId: number | string
 
   allowedTargets: string[]
   statusOf: (status: string) => string
 
-  onSelectLoan?: (loanId: number) => void
+  onSelectLoan?: (loanId: number | string) => void
 }
 
 export function GroupReviewSection({

@@ -1,13 +1,13 @@
 import { create } from 'zustand/react'
 
 interface EscalationState {
-  escalatedLoanIds: Set<number>
+  escalatedLoanIds: Set<string>
 
-  markEscalated: (loanId: number) => void
+  markEscalated: (loanId: number | string) => void
 
-  isEscalated: (loanId: number) => boolean
+  isEscalated: (loanId: number | string) => boolean
 
-  clearEscalated: (loanId: number) => void
+  clearEscalated: (loanId: number | string) => void
 }
 
 export const useEscalationStore = create<EscalationState>((set, get) => ({
@@ -16,16 +16,16 @@ export const useEscalationStore = create<EscalationState>((set, get) => ({
   markEscalated: (loanId) =>
     set((state) => {
       const next = new Set(state.escalatedLoanIds)
-      next.add(loanId)
+      next.add(String(loanId))
       return { escalatedLoanIds: next }
     }),
 
-  isEscalated: (loanId) => get().escalatedLoanIds.has(loanId),
+  isEscalated: (loanId) => get().escalatedLoanIds.has(String(loanId)),
 
   clearEscalated: (loanId) =>
     set((state) => {
       const next = new Set(state.escalatedLoanIds)
-      next.delete(loanId)
+      next.delete(String(loanId))
       return { escalatedLoanIds: next }
     }),
 }))

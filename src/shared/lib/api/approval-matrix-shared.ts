@@ -12,7 +12,7 @@ export const approvalMatrixKeys = {
   authorities: () => ['approval-matrix', 'authorities'] as const,
   deviationCatalog: () => ['approval-matrix', 'deviation-catalog'] as const,
   presence: () => ['presence', 'approvers'] as const,
-  routing: (id: number) => ['loans', id, 'routing'] as const,
+  routing: (id: number | string) => ['loans', id, 'routing'] as const,
 }
 
 /** Bare array — the API does not wrap this payload in an ApiResponse envelope. */

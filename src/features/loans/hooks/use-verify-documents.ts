@@ -12,7 +12,7 @@ interface VerifyDocumentsResult {
   documentsCompleteAt: string | null
 }
 
-export function useVerifyDocuments(loanId: number | null) {
+export function useVerifyDocuments(loanId: number | string | null) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {

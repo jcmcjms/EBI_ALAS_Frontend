@@ -36,34 +36,116 @@ export {
 } from '@/src/features/loans/api/loans'
 
 export const loanReviewKeys = {
-  detail: (id: number) => ['loans', 'review', id, 'detail'] as const,
-  history: (id: number) => ['loans', 'review', id, 'history'] as const,
-  routing: (id: number) => ['loans', 'review', id, 'routing'] as const,
-  timeline: (id: number) => ['loans', 'review', id, 'timeline'] as const,
-  checklistDocuments: (id: number) =>
+  detail: (id: number | string) => ['loans', 'review', id, 'detail'] as const,
+  history: (id: number | string) => ['loans', 'review', id, 'history'] as const,
+  routing: (id: number | string) => ['loans', 'review', id, 'routing'] as const,
+  timeline: (id: number | string) => ['loans', 'review', id, 'timeline'] as const,
+  checklistDocuments: (id: number | string) =>
     ['loans', 'review', id, 'checklist-documents'] as const,
-  documentRemarks: (loanId: number) =>
+  documentRemarks: (loanId: number | string) =>
     ['loans', 'review', loanId, 'document-remarks'] as const,
-  documentChecklist: (loanId: number) =>
+  documentChecklist: (loanId: number | string) =>
     ['loans', 'review', loanId, 'document-checklist'] as const,
   slaPolicy: ['loans', 'sla-policy'] as const,
 }
 
-export async function getLoanRouting(id: number): Promise<LoanRoutingResponse> {
+export async function getLoanRouting(id: number | string): Promise<LoanRoutingResponse> {
   const res = await apiClient.get<ApiResponse<LoanRoutingResponse>>(
     `/api/loans/${id}/routing`,
   )
   return unwrapApiData(res.data)
 }
 
-export async function getLoanDetail(id: number): Promise<LoanDetailResponse> {
-  const res = await apiClient.get<ApiResponse<LoanDetailResponse>>(
-    `/api/loans/${id}`,
-  )
-  return unwrapApiData(res.data)
+/**
+ * `GET /api/loans/{id}` returns a bare `LoanResponse` (GUID id).
+ * Adapt it to the review-screen detail shape the approval form expects.
+ */
+export async function getLoanDetail(id: number | string): Promise<LoanDetailResponse> {
+  const res = await apiClient.get<LoanResponse>(`/api/loans/${id}`)
+  return loanResponseToDetail(res.data)
 }
 
-export async function getLoanHistory(id: number) {
+function loanResponseToDetail(loan: LoanResponse): LoanDetailResponse {
+  const nameParts = (loan.clientName ?? '').trim().split(/\s+/).filter(Boolean)
+  const firstName = nameParts[0] ?? ''
+  const lastName = nameParts.slice(1).join(' ') || firstName
+  return {
+    id: loan.id,
+    lamId: loan.lamId,
+    applicationGroupNo: loan.applicationGroupNo,
+    branchCode: loan.branchId,
+    loanNo: loan.productCode ?? '',
+    productCode: loan.productCode ?? '',
+    product: loan.product || loan.productCode || '',
+    creationTypeCode: null,
+    creationTypeLabel: loan.loanType === 'Reloan' ? 'Reloan' : 'New Loan',
+    requestingOfficer: null,
+    lai: null,
+    cisId: null,
+    firstName: firstName || loan.clientName || '',
+    middleName: null,
+    lastName,
+    suffix: null,
+    birthdate: null,
+    address: null,
+    agency: null,
+    position: null,
+    employeeId: null,
+    netTakeHomePay: null,
+    lengthOfService: null,
+    region: null,
+    divisionCode: null,
+    stationCode: null,
+    misAgency: null,
+    school: null,
+    referrer: null,
+    purpose: null,
+    proposedAmount: loan.principal,
+    termDays: loan.termDays,
+    interestRate: loan.interestRate,
+    policyTermMonths: null,
+    approvalTermDays: null,
+    annualRatePercent: null,
+    cDocStamp: null,
+    nthpDate: null,
+    notarialFee: 0,
+    docStamps: 0,
+    insurance: 0,
+    standardNotarialFee: 0,
+    standardDocStamps: 0,
+    standardInsurance: 0,
+    verificationFindings: null,
+    hasDeviations: false,
+    deviationDetails: [],
+    deviationJustifications: {},
+    remarks: null,
+    aoRecommendation: null,
+    otherRemarks: null,
+    feeDeviationJustification: null,
+    status: loan.status,
+    applicationDate: loan.createdAt,
+    lastActionDate: loan.lastActionDate ?? loan.updatedAt,
+    createdById: loan.createdBy,
+    createdByName: loan.lastActionByName ?? '',
+    actions: [],
+    evaluationVerdict: null,
+    documentFlag: null,
+    outstandingLoans: [],
+    buyOuts: [],
+    ebiReloans: [],
+    incomingLoans: [],
+    preLoanId: null,
+    preLoanFormNumber: null,
+    webLoanPnNumbers: [],
+    documentsComplete: null,
+    documentsCompleteAt: null,
+    assignedApproverName: null,
+    requiredApprovalTier: null,
+    assignedApproverId: null,
+  }
+}
+
+export async function getLoanHistory(id: number | string) {
   const res = await apiClient.get<
     ApiResponse<
       {
@@ -88,7 +170,7 @@ export async function cancelLoanApplication(
 }
 
 export async function flagDocuments(
-  loanId: number,
+  loanId: number | string,
   payload: { missingRequirementCodes: string[]; reason: string },
 ): Promise<void> {
   const res = await apiClient.post<ApiResponse<null>>(
@@ -150,7 +232,7 @@ export async function pushbackWithRevision(
 }
 
 export async function getRevisionRequests(
-  loanId: number,
+  loanId: number | string,
 ): Promise<RevisionRequest[]> {
   const res = await apiClient.get<ApiResponse<RevisionRequest[]>>(
     `/api/loans/${loanId}/revision-requests`,
@@ -159,7 +241,7 @@ export async function getRevisionRequests(
 }
 
 export async function resolveRevisionRequest(
-  loanId: number,
+  loanId: number | string,
   revisionId: number,
 ): Promise<void> {
   const res = await apiClient.put<ApiResponse<null>>(

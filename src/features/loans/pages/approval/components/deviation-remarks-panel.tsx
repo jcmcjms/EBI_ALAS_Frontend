@@ -74,7 +74,7 @@ function ThreadComposer({
   frozen,
   onReply,
 }: {
-  loanId: number
+  loanId: number | string
   deviation: LoanDeviationDto
   canWrite: boolean
   frozen: boolean
@@ -159,7 +159,7 @@ function DeviationThread({
   canWrite,
   frozen,
 }: {
-  loanId: number
+  loanId: number | string
   deviation: LoanDeviationDto
   canWrite: boolean
   frozen: boolean
@@ -236,7 +236,7 @@ export function DeviationRemarksPanel({
   canWrite,
   frozen,
 }: {
-  loanId: number
+  loanId: number | string
   canWrite: boolean
   frozen: boolean
 }) {

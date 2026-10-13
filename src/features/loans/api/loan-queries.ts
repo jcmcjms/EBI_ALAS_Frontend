@@ -11,28 +11,28 @@ export const loanKeys = {
   queueDefault: ['loans', 'queue-default'] as const,
 
   review: {
-    detail: (id: number) => ['loans', 'review', id, 'detail'] as const,
-    history: (id: number) => ['loans', 'review', id, 'history'] as const,
-    timeline: (id: number) => ['loans', 'review', id, 'timeline'] as const,
-    attachments: (id: number) =>
+    detail: (id: number | string) => ['loans', 'review', id, 'detail'] as const,
+    history: (id: number | string) => ['loans', 'review', id, 'history'] as const,
+    timeline: (id: number | string) => ['loans', 'review', id, 'timeline'] as const,
+    attachments: (id: number | string) =>
       ['loans', 'review', id, 'attachments'] as const,
-    checklistDocuments: (id: number) =>
+    checklistDocuments: (id: number | string) =>
       ['loans', 'review', id, 'checklist-documents'] as const,
-    deviations: (id: number) =>
+    deviations: (id: number | string) =>
       ['loans', 'review', id, 'deviations'] as const,
   },
 
-  history: (id: number) => ['loans', id, 'history'] as const,
+  history: (id: number | string) => ['loans', id, 'history'] as const,
 
-  documentRemarks: (loanId: number) =>
+  documentRemarks: (loanId: number | string) =>
     ['loans', 'review', loanId, 'document-remarks'] as const,
 
-  documentChecklist: (loanId: number) =>
+  documentChecklist: (loanId: number | string) =>
     ['loans', 'review', loanId, 'document-checklist'] as const,
 
   group: (groupNo: string) => ['loans', 'group', groupNo] as const,
 
-  revisionRequests: (id: number) =>
+  revisionRequests: (id: number | string) =>
     ['loans', id, 'revision-requests'] as const,
 
   desk: ['loans', 'desk'] as const,

@@ -64,7 +64,7 @@ const matchesFilter = (e: TimelineEvent, f: Filter) =>
   (f === 'workflow' ? e.type === 'workflow' : e.type !== 'workflow' && !!e.type)
 
 interface ApplicationTimelineProps {
-  loanId: number | string
+  loanId: number | string | string
 
   variant?: 'panel' | 'inline'
 }

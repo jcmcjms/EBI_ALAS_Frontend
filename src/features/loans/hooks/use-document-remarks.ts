@@ -8,7 +8,7 @@ import {
   type DocumentChecklistItem,
 } from '@/src/features/loans/api/loan-review'
 
-export function useDocumentRemarks(loanId: number) {
+export function useDocumentRemarks(loanId: number | string) {
   const qc = useQueryClient()
   const query = useQuery<DocumentRemarkDto[]>({
     queryKey: loanKeys.documentRemarks(loanId),
@@ -33,7 +33,7 @@ export function useDocumentRemarks(loanId: number) {
   return { ...query, postRemark: mutate }
 }
 
-export function useDocumentChecklist(loanId: number) {
+export function useDocumentChecklist(loanId: number | string) {
   return useQuery<DocumentChecklistItem[]>({
     queryKey: loanKeys.documentChecklist(loanId),
     queryFn: () => getDocumentChecklist(loanId),

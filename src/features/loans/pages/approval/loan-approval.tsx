@@ -73,7 +73,7 @@ export function LoanApprovalPage() {
     handlePushbackSubmit,
   } = useLoanApprovalPage()
 
-  if (!Number.isFinite(id) || id <= 0) {
+  if (!id || id === 'NaN' || id === 'undefined') {
     return (
       <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
         <div className="text-center space-y-4">

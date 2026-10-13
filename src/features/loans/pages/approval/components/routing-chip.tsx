@@ -12,14 +12,14 @@ import {
 } from '@/src/features/loans/api/loan-review'
 
 interface RoutingChipProps {
-  loanId: number
+  loanId: number | string
 }
 
 export function RoutingChip({ loanId }: RoutingChipProps) {
   const { data: routing } = useQuery({
     queryKey: loanReviewKeys.routing(loanId),
     queryFn: () => getLoanRouting(loanId),
-    enabled: loanId > 0,
+    enabled: Boolean(loanId) && loanId !== 'NaN' && loanId !== 'undefined',
     staleTime: 60_000,
   })
 

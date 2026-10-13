@@ -40,7 +40,7 @@ import { DocumentPreviewDialog } from './document-preview-dialog'
 const MIN_REMARKS = 10
 
 interface AttachmentsPanelProps {
-  loanId: number
+  loanId: number | string
   frozen: boolean
 
   canRemark: boolean

@@ -108,7 +108,7 @@ export function useOnlineUsers() {
   )
 }
 
-export function useEntityViewers(entityType: string, entityId: number | null) {
+export function useEntityViewers(entityType: string, entityId: number | string | null) {
   const me = useAuthStore((s) => s.user?.userId)
   const [viewers, setViewers] = useState<EntityViewer[]>([])
 

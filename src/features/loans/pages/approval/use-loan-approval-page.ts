@@ -45,9 +45,10 @@ import {
 
 export function useLoanApprovalPage() {
   const { loanId } = useParams({ strict: false }) as { loanId: string }
-  const id = Number(loanId)
+  const id = loanId
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const hasLoanId = Boolean(id) && id !== 'NaN' && id !== 'undefined'
 
   const [remarks, setRemarks] = useState('')
   const [zoom, setZoom] = useState(1)
@@ -61,12 +62,12 @@ export function useLoanApprovalPage() {
   const [pushbackOpen, setPushbackOpen] = useState(false)
 
   const user = useAuthStore((s) => s.user)
-  useEntityViewers('LoanApplication', Number.isFinite(id) && id > 0 ? id : null)
+  useEntityViewers('LoanApplication', hasLoanId ? id : null)
 
   const loan = useQuery({
     queryKey: loanKeys.review.detail(id),
     queryFn: () => getLoanDetail(id),
-    enabled: Number.isFinite(id) && id > 0,
+    enabled: hasLoanId,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
     placeholderData: keepPreviousData,
@@ -86,7 +87,7 @@ export function useLoanApprovalPage() {
   const checklist = useQuery({
     queryKey: loanKeys.review.checklistDocuments(id),
     queryFn: () => getChecklistDocuments(id),
-    enabled: Number.isFinite(id) && id > 0,
+    enabled: hasLoanId,
     staleTime: 30_000,
   })
 
@@ -95,14 +96,14 @@ export function useLoanApprovalPage() {
   const { data: deviationsData } = useQuery({
     queryKey: loanKeys.review.deviations(id),
     queryFn: () => getLoanDeviations(id),
-    enabled: Number.isFinite(id) && id > 0,
+    enabled: hasLoanId,
     staleTime: 30_000,
   })
 
   const { data: documentRemarksData } = useQuery({
     queryKey: loanKeys.documentRemarks(id),
     queryFn: () => getDocumentRemarks(id),
-    enabled: Number.isFinite(id) && id > 0,
+    enabled: hasLoanId,
     staleTime: 30_000,
   })
 
@@ -120,7 +121,7 @@ export function useLoanApprovalPage() {
 
   useEffect(() => {
     for (const sibling of groupLoans) {
-      if (sibling.id === id) continue
+      if (String(sibling.id) === String(id)) continue
       void qc.prefetchQuery({
         queryKey: loanKeys.review.detail(sibling.id),
         queryFn: () => getLoanDetail(sibling.id),
@@ -282,7 +283,7 @@ export function useLoanApprovalPage() {
 
   const canCancel =
     user?.role === 'Encoder' &&
-    Number(user.userId) === detail?.createdById &&
+    String(user.userId) === String(detail?.createdById) &&
     CANCELLABLE_STATUSES.includes(detail?.status as LoanStatus) &&
     !frozen
 

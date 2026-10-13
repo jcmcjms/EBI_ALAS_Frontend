@@ -3,7 +3,7 @@ import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 export type EvaluationVerdict = 'Recommended' | 'NotRecommended'
 
 export interface LoanDetailResponse {
-  id: number
+  id: string
   lamId: string
   applicationGroupNo: string
   branchCode: string
@@ -58,7 +58,7 @@ export interface LoanDetailResponse {
   status: string
   applicationDate: string
   lastActionDate: string
-  createdById: number
+  createdById: string | number
   createdByName: string
   actions: {
     id: number

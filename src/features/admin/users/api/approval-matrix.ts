@@ -45,7 +45,7 @@ export const approvalMatrixKeys = {
   authorities: () => ['approval-matrix', 'authorities'] as const,
   deviationCatalog: () => ['approval-matrix', 'deviation-catalog'] as const,
   presence: () => ['presence', 'approvers'] as const,
-  routing: (id: number) => ['loans', id, 'routing'] as const,
+  routing: (id: number | string) => ['loans', id, 'routing'] as const,
 }
 
 export async function getApprovalAuthorities(): Promise<

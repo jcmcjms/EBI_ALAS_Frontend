@@ -4,7 +4,7 @@ import { mapLoanDetailToFormData } from '../map-detail-to-form'
 
 function baseDetail(): LoanDetailResponse {
   return {
-    id: 42,
+    id: '42',
     lamId: 'LAM-2024-0042',
     applicationGroupNo: 'GRP-001',
     branchCode: '001',
@@ -66,7 +66,7 @@ function baseDetail(): LoanDetailResponse {
     status: 'ForChecking',
     applicationDate: '2024-01-10',
     lastActionDate: '2024-01-12',
-    createdById: 7,
+    createdById: '7',
     createdByName: 'Encoder One',
     actions: [],
     evaluationVerdict: null,

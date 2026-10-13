@@ -70,10 +70,12 @@ export function useSignatureChain() {
 }
 
 export function useLoanSignatureChain(loanId?: number | string) {
+  const enabled =
+    loanId != null && loanId !== '' && loanId !== 'NaN' && loanId !== 'undefined'
   return useQuery({
-    queryKey: signatureKeys.loan(loanId ?? 0),
+    queryKey: signatureKeys.loan(loanId ?? 'none'),
     queryFn: () => getLoanSignatureChain(loanId!),
-    enabled: loanId != null && loanId !== '' && Number(loanId) !== 0,
+    enabled,
     staleTime: 60_000,
   })
 }

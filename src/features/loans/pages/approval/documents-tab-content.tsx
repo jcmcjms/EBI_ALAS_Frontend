@@ -13,7 +13,7 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { AttachmentsPanel } from './components/attachments-panel'
 
 interface DocumentsTabContentProps {
-  loanId: number
+  loanId: number | string
   frozen: boolean
   canWriteRemarks: boolean
   canPushBack: boolean

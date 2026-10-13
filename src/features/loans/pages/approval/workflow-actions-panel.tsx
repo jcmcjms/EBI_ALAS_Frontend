@@ -44,7 +44,7 @@ import {
 } from '@/src/features/loans/model/loan-status'
 
 interface WorkflowActionsPanelProps {
-  loanId: number
+  loanId: number | string
   frozen: boolean
   remarks: string
   onRemarksChange: (v: string) => void

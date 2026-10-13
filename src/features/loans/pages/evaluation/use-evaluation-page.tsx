@@ -31,33 +31,34 @@ export type EvaluationAction = 'recommended' | 'notRecommended' | 'pushback'
 
 const TERMINAL = ['Approved', 'Rejected', 'Disbursed', 'OnGoing']
 
-export function useEvaluationPage(id: number) {
+export function useEvaluationPage(id: string) {
   const qc = useQueryClient()
   const user = useAuthStore((s) => s.user)
+  const hasLoanId = Boolean(id) && id !== 'NaN' && id !== 'undefined'
 
   const [comments, setComments] = useState('')
   const [pendingAction, setPendingAction] = useState<EvaluationAction | null>(null)
   const [flagOpen, setFlagOpen] = useState(false)
   const [pushbackOpen, setPushbackOpen] = useState(false)
 
-  useEntityViewers('LoanApplication', Number.isFinite(id) && id > 0 ? id : null)
+  useEntityViewers('LoanApplication', hasLoanId ? id : null)
 
   const loan = useQuery({
     queryKey: loanKeys.review.detail(id),
     queryFn: () => getLoanDetail(id),
-    enabled: Number.isFinite(id) && id > 0,
+    enabled: hasLoanId,
   })
 
   const checklist = useQuery({
     queryKey: loanKeys.review.checklistDocuments(id),
     queryFn: () => getChecklistDocuments(id),
-    enabled: Number.isFinite(id) && id > 0,
+    enabled: hasLoanId,
   })
 
   const history = useQuery({
     queryKey: loanKeys.review.history(id),
     queryFn: () => getLoanHistory(id),
-    enabled: Number.isFinite(id) && id > 0,
+    enabled: hasLoanId,
   })
 
   const { data: signatureSlots } = useLoanSignatureChain(id)

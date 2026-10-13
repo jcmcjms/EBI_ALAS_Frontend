@@ -5,7 +5,7 @@ import { computeLoanMetrics } from '../model/loan-approval-utils'
 
 function goldenDetail(): LoanDetailResponse {
   return {
-    id: 1,
+    id: '1',
     lamId: 'LAM-20260929-000001',
     applicationGroupNo: 'GRP-001',
     branchCode: '001',
@@ -60,7 +60,7 @@ function goldenDetail(): LoanDetailResponse {
     status: 'ForChecking',
     applicationDate: '2026-09-29',
     lastActionDate: '2026-09-29',
-    createdById: 7,
+    createdById: '7',
     createdByName: 'Encoder One',
     actions: [],
     evaluationVerdict: null,

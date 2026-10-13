@@ -22,7 +22,7 @@ import { cn } from '@/src/shared/lib/utils'
 
 interface ApprovalPageHeaderProps {
   detail: LoanDetailResponse
-  id: number
+  id: number | string
   deviationCount: number
   frozen: boolean
   canFlagAtDesk: boolean

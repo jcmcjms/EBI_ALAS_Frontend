@@ -12,8 +12,8 @@ export interface GroupLoanSummary {
 
 interface ApprovalGroupTabsProps {
   loans: GroupLoanSummary[]
-  currentLoanId: number
-  onSelect: (loanId: number) => void
+  currentLoanId: number | string
+  onSelect: (loanId: number | string) => void
   statusOf: (status: string) => string
 }
 

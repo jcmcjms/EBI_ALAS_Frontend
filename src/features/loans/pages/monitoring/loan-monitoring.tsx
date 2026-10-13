@@ -89,9 +89,9 @@ export function LoanMonitoringPage() {
     })
   }, [filters.status])
 
-  const initialId = Number(search.id)
-  const [selectedLoanId, setSelectedLoanId] = useState<number | null>(
-    Number.isFinite(initialId) && initialId > 0 ? initialId : null,
+  const initialId = search.id ?? null
+  const [selectedLoanId, setSelectedLoanId] = useState<string | null>(
+    initialId && initialId !== 'NaN' ? initialId : null,
   )
   const [selectedRecord, setSelectedRecord] =
     useState<LoanMonitoringRecord | null>(null)
@@ -114,8 +114,8 @@ export function LoanMonitoringPage() {
         <MonitoringTable
           filters={filters}
           onRowClick={(r) => {
-            const id = typeof r.id === 'string' ? Number(r.id) : r.id
-            if (typeof id === 'number' && Number.isFinite(id) && id > 0) {
+            const id = r.id == null ? '' : String(r.id)
+            if (id && id !== 'NaN') {
               setSelectedLoanId(id)
               setSelectedRecord(r)
             }

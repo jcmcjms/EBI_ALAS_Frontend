@@ -15,7 +15,7 @@ import type {
 } from './loan-review-types'
 
 export async function getLoanAttachments(
-  id: number,
+  id: number | string,
 ): Promise<LoanAttachmentDto[]> {
   const res = await apiClient.get<ApiResponse<LoanAttachmentDto[]>>(
     `/api/loans/${id}/attachments`,
@@ -37,7 +37,7 @@ export async function viewChecklistDocument(docId: number, fileName: string) {
 }
 
 export async function uploadLoanAttachment(
-  id: number,
+  id: number | string,
   file: File,
   category: string | null,
   onProgress?: (pct: number) => void,
@@ -80,7 +80,7 @@ export async function deleteLoanAttachment(
 }
 
 export async function getChecklistDocuments(
-  id: number,
+  id: number | string,
 ): Promise<LoanChecklistDocumentDto[]> {
   const res = await apiClient.get<ApiResponse<LoanChecklistDocumentDto[]>>(
     `/api/loans/${id}/checklist-documents`,
@@ -89,7 +89,7 @@ export async function getChecklistDocuments(
 }
 
 export async function getDocumentRemarks(
-  loanId: number,
+  loanId: number | string,
 ): Promise<DocumentRemarkDto[]> {
   const res = await apiClient.get<ApiResponse<DocumentRemarkDto[]>>(
     `/api/loans/${loanId}/document-remarks`,
@@ -98,7 +98,7 @@ export async function getDocumentRemarks(
 }
 
 export async function postDocumentRemark(
-  loanId: number,
+  loanId: number | string,
   payload: {
     checklistIdCode: string
     docId?: number | null
@@ -114,7 +114,7 @@ export async function postDocumentRemark(
 }
 
 export async function getDocumentChecklist(
-  loanId: number,
+  loanId: number | string,
 ): Promise<DocumentChecklistItem[]> {
   const res = await apiClient.get<ApiResponse<DocumentChecklistItem[]>>(
     `/api/loans/${loanId}/checklist-documents`,
@@ -142,7 +142,7 @@ export async function fetchChecklistDocument(
 }
 
 export async function getLoanTimeline(
-  id: number,
+  id: number | string,
   page: number,
   pageSize: number,
 ): Promise<PagedResult<TimelineEvent>> {
@@ -154,7 +154,7 @@ export async function getLoanTimeline(
 }
 
 export async function getLoanDeviations(
-  id: number,
+  id: number | string,
 ): Promise<LoanDeviationDto[]> {
   const res = await apiClient.get<ApiResponse<LoanDeviationDto[]>>(
     `/api/loans/${id}/deviations`,
@@ -163,7 +163,7 @@ export async function getLoanDeviations(
 }
 
 export async function postDeviationRemark(
-  loanId: number,
+  loanId: number | string,
   deviationId: number,
   payload: { body: string; parentRemarkId?: number | null },
 ): Promise<DeviationRemarkDto> {

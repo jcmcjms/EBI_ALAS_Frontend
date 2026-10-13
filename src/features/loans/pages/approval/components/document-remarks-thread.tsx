@@ -73,7 +73,7 @@ function RemarkCard({
 }
 
 interface DocumentRemarksThreadProps {
-  loanId: number
+  loanId: number | string
   checklistIdCode: string
   docId: number | null
 

@@ -24,7 +24,7 @@ import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 
 interface LoanDetailsDrawerProps {
-  applicationId: number | null
+  applicationId: string | null
   onClose: () => void
 
   record?: LoanMonitoringRecord | null
