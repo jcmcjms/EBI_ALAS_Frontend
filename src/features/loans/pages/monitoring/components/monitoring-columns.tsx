@@ -13,7 +13,6 @@ import { UserCircle, FileDashed, XCircle } from '@phosphor-icons/react'
 import type {
   LoanMonitoringRecord,
 } from '@/src/features/loans/types/monitoring'
-import { BRANCHES } from '@/src/shared/lib/api/types'
 import { cn } from '@/src/shared/lib/utils'
 import {
   LOAN_STATUS_META,
@@ -42,9 +41,12 @@ export { features }
 
 const columnHelper = createColumnHelper<typeof features, LoanMonitoringRecord>()
 
-function resolveBranchName(code: string): string {
+function resolveBranchName(
+  code: string,
+  branchNameOf: (code: string) => string,
+): string {
   if (!code || code === '—') return code || '—'
-  return BRANCHES.find((b) => b.code === code)?.name ?? code
+  return branchNameOf(code)
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -57,6 +59,7 @@ const ACTION_LABELS: Record<string, string> = {
 }
 
 export function buildColumns(
+  branchNameOf: (code: string) => string,
   slaPolicy?: Record<string, number> | null,
   currentUser?: { id: number; role: string; name?: string } | null,
   onCancel?: (record: LoanMonitoringRecord) => void,
@@ -72,7 +75,9 @@ export function buildColumns(
     columnHelper.accessor('branchCode', {
       header: 'Branch',
       cell: (info) => (
-        <span className="text-xs">{resolveBranchName(info.getValue())}</span>
+        <span className="text-xs">
+          {resolveBranchName(info.getValue(), branchNameOf)}
+        </span>
       ),
     }),
     columnHelper.accessor('customerName', {

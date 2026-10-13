@@ -7,11 +7,11 @@ import { Badge } from '@/src/shared/ui/primitives/badge'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { getWebLoanByCis } from '@/src/features/loans/api/webloans'
 import {
-  WEBLOAN_BRANCHES,
   type PreLoanItem,
   type WebLoanAccount,
   type WebLoanCisSearchResponse,
 } from '../../../api/loan-types'
+import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 
 import { ActiveLoansTable } from './active-loans-table'
 import { ReadOnlyField, SectionCard, SubSectionHeading } from './section-card'
@@ -30,6 +30,7 @@ interface CISLookupProps {
 
 export function CISLookup({ onPreLoanChange }: CISLookupProps) {
   const { control, setValue } = useFormContext<LoanApplicationFormData>()
+  const { data: branches } = useBranches()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -152,8 +153,7 @@ export function CISLookup({ onPreLoanChange }: CISLookupProps) {
 
     const firstBranchCode = accounts[0]?.branchCode ?? ''
     const branchName = firstBranchCode
-      ? (WEBLOAN_BRANCHES.find((x) => x.code === firstBranchCode)?.name ??
-        firstBranchCode)
+      ? findBranchName(branches, firstBranchCode)
       : ''
     setValue('branchType.creationTypeCode', null)
     setValue('branchType.creationTypeLabel', '')

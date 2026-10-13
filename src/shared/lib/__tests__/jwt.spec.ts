@@ -71,4 +71,37 @@ describe('extractUserFromToken — backend JWT claims', () => {
     expect(user?.firstName).toBe('System')
     expect(user?.lastName).toBe('Administrator')
   })
+
+  it('splits a fullName claim when structured name claims are missing', () => {
+    const token = makeJwt({
+      sub: '1',
+      role: 'Admin',
+      branch: '011',
+      fullName: 'Ada Byron Lovelace',
+    })
+
+    const user = extractUserFromToken(token)
+
+    expect(user?.firstName).toBe('Ada')
+    expect(user?.middleName).toBe('Byron')
+    expect(user?.lastName).toBe('Lovelace')
+  })
+
+  it('prefers structured name claims over fullName', () => {
+    const token = makeJwt({
+      sub: '1',
+      role: 'Admin',
+      branch: '011',
+      firstName: 'Ada',
+      middleName: 'Byron',
+      lastName: 'Lovelace',
+      fullName: 'Should Not Win',
+    })
+
+    const user = extractUserFromToken(token)
+
+    expect(user?.firstName).toBe('Ada')
+    expect(user?.middleName).toBe('Byron')
+    expect(user?.lastName).toBe('Lovelace')
+  })
 })

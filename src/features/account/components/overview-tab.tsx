@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from '@/src/shared/ui/data-display/card'
 import { initialsOf } from '@/src/shared/lib/format'
-import { BRANCHES } from '@/src/shared/lib/api/types'
+import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import {
   useAccountProfile,
@@ -45,6 +45,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
   const activityQuery = useAccountActivity(3)
   const loansQuery = useAccountLoans(3)
   const clientsQuery = useAccountClients(5)
+  const { data: branches } = useBranches()
 
   const profile = profileQuery.data
 
@@ -59,8 +60,8 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
   const branchLabel = useMemo(() => {
     const code = profile?.branchId ?? user?.branchId
     if (!code) return null
-    return BRANCHES.find((b) => b.code === code)?.name ?? `Branch ${code}`
-  }, [profile, user])
+    return findBranchName(branches, code) || `Branch ${code}`
+  }, [profile, user, branches])
 
   const missingFields = useMemo(() => {
     if (!profile) return []

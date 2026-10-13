@@ -1,37 +1,3 @@
-export const WEBLOAN_BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
-  { code: '000', name: 'Lianga Branch' },
-  { code: '002', name: 'Barobo Branch' },
-  { code: '003', name: 'San Francisco Branch' },
-  { code: '004', name: 'Arasasan Branch' },
-  { code: '005', name: 'Hinatuan Branch' },
-  { code: '006', name: 'Tagum Branch' },
-  { code: '007', name: 'Tandag Branch' },
-  { code: '008', name: 'Butuan Branch' },
-  { code: '009', name: 'Bislig Branch' },
-  { code: '011', name: 'Head Office Branch' },
-  { code: '012', name: 'Cagayan Branch' },
-  { code: '013', name: 'Talisay Branch' },
-  { code: '014', name: 'General Santos Branch' },
-  { code: '015', name: 'Panabo Branch' },
-  { code: '016', name: 'Valencia Branch' },
-  { code: '017', name: 'Cateel Branch' },
-  { code: '018', name: 'Davao-Buhangin Branch' },
-  { code: '019', name: 'Tacloban Branch' },
-  { code: '020', name: 'Bacolod Branch' },
-  { code: '021', name: 'Iloilo Branch' },
-  { code: '022', name: 'Davao-Matina Branch' },
-  { code: '023', name: 'Trento Branch' },
-  { code: '024', name: 'Mati Branch' },
-  { code: '025', name: 'Bayugan Branch' },
-  { code: '026', name: 'Nabunturan Branch' },
-  { code: '027', name: 'Madrid Branch' },
-  { code: '028', name: 'Surigao Branch' },
-  { code: '029', name: 'Gingoog Branch' },
-  { code: '030', name: 'CTS (Mandaue) Branch' },
-  { code: '031', name: 'Ronda Branch' },
-  { code: '991', name: 'Corporate Center' },
-]
-
 export interface WebLoanAccount {
   bankCode: string
   branchCode: string

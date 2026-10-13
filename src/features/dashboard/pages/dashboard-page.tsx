@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useNavigate } from '@tanstack/react-router'
-import { BRANCHES } from '@/src/shared/lib/api/types'
+import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 import { Plus } from '@phosphor-icons/react'
 import { Button } from '@/src/shared/ui/primitives/button'
 import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
@@ -27,6 +27,7 @@ export function Dashboard() {
   const navigate = useNavigate()
   const { data, isLoading, isError, dataUpdatedAt, refetch } =
     useDashboardData()
+  const { data: branches } = useBranches()
 
   const asOf = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date()
 
@@ -45,7 +46,7 @@ export function Dashboard() {
               year: 'numeric',
             })}
             {user?.branchId
-              ? ` • ${BRANCHES.find((b) => b.code === user.branchId)?.name ?? `Branch ${user.branchId}`}`
+              ? ` • ${findBranchName(branches, user.branchId) || `Branch ${user.branchId}`}`
               : ''}
           </p>
         </div>

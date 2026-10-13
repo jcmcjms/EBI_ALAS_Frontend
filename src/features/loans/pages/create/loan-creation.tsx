@@ -9,7 +9,7 @@ import { toastError } from '@/src/shared/ui/feedback/toast'
 
 import { Button } from '@/src/shared/ui/primitives/button'
 import { useAuthStore } from '@/src/shared/store/auth-store'
-import { WEBLOAN_BRANCHES } from '../../api/loan-types'
+import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 import type { PreLoanItem } from '../../api/loan-types'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { getRevisionRequests, getLoanDetail } from '@/src/features/loans/api/loan-review'
@@ -59,8 +59,8 @@ export function LoanCreationPage() {
   })
 
   const userBranchId = useAuthStore((s) => s.user?.branchId ?? '')
-  const userBranchName =
-    WEBLOAN_BRANCHES.find((b) => b.code === userBranchId)?.name ?? userBranchId
+  const { data: branches } = useBranches()
+  const userBranchName = findBranchName(branches, userBranchId) || userBranchId
 
   const [selectedPreLoan, setSelectedPreLoan] = useState<{
     id: string

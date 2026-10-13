@@ -7,7 +7,7 @@ import {
 } from '@/src/shared/ui/forms/select'
 import { Input } from '@/src/shared/ui/primitives/input'
 import { Label } from '@/src/shared/ui/primitives/label'
-import { useBranches } from '@/src/shared/lib/api/branches'
+import { useActiveBranches } from '@/src/shared/lib/api/branches'
 import type { UserResponse } from '../api/users-types'
 import type { EditableProfile } from './user-edit-drawer.types'
 
@@ -27,7 +27,7 @@ export function ProfileTab({
   canEdit,
   onFieldChange,
 }: ProfileTabProps) {
-  const { data: branches } = useBranches()
+  const { data: branches } = useActiveBranches()
   const branchItems = (branches ?? []).map((b) => ({
     value: b.code,
     label: b.name,

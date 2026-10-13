@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { findBranchName, parseBranchStatus } from './branches-api'
+import { findBranchName } from '@/src/shared/lib/api/branches'
+import { parseBranchStatus } from './branches-api'
 
 describe('branch api helpers', () => {
   it('findBranchName resolves code to name and falls back to code', () => {

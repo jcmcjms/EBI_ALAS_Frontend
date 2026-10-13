@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/src/shared/ui/forms/select'
-import { useBranches } from '@/src/shared/lib/api/branches'
+import { useActiveBranches } from '@/src/shared/lib/api/branches'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import type { RoleInfo } from '../api/users-types'
 
@@ -43,7 +43,7 @@ export function UsersToolbar({
   onImport,
   onCreateUser,
 }: UsersToolbarProps) {
-  const { data: branches } = useBranches()
+  const { data: branches } = useActiveBranches()
   return (
     <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
       {}

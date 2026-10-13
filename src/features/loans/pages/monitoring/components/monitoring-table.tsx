@@ -26,6 +26,7 @@ import type {
   MonitoringFilters,
 } from '@/src/features/loans/types/monitoring'
 import { useLoanMonitoring } from '@/src/features/loans/hooks/use-loan-monitoring'
+import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 import { cn } from '@/src/shared/lib/utils'
 import { EmptyState } from '@/src/shared/ui/feedback/empty-state'
 import { features, buildColumns } from './monitoring-columns'
@@ -69,8 +70,14 @@ export function MonitoringTable({
     isFetching,
     refetch,
   } = useLoanMonitoring(filters, pagination, sorting)
+  const { data: branches } = useBranches()
 
-  const columns = buildColumns(slaPolicy, currentUser, onCancel)
+  const columns = buildColumns(
+    (code) => findBranchName(branches, code),
+    slaPolicy,
+    currentUser,
+    onCancel,
+  )
   const pageCount = Math.max(1, Math.ceil(rowCount / pagination.pageSize))
 
   const table = useTable({

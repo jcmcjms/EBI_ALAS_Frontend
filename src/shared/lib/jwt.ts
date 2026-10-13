@@ -37,6 +37,24 @@ function claimString(payload: Record<string, unknown>, ...keys: string[]): strin
   return ''
 }
 
+function splitFullName(fullName: string): {
+  firstName: string
+  middleName: string
+  lastName: string
+} {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return { firstName: '', middleName: '', lastName: '' }
+  if (parts.length === 1) return { firstName: parts[0], middleName: '', lastName: '' }
+  if (parts.length === 2) {
+    return { firstName: parts[0], middleName: '', lastName: parts[1] }
+  }
+  return {
+    firstName: parts[0],
+    middleName: parts.slice(1, -1).join(' '),
+    lastName: parts[parts.length - 1],
+  }
+}
+
 export interface ExtractUserOptions {
   mustChangePassword?: boolean
 }
@@ -65,11 +83,20 @@ export function extractUserFromToken(
     payload.mustChangePassword === true ||
     String(payload.mustChangePassword) === 'true'
 
+  const firstName = claimString(payload, 'firstName', 'FirstName')
+  const lastName = claimString(payload, 'lastName', 'LastName')
+  const middleName = claimString(payload, 'middleName', 'MiddleName')
+  const fullName = claimString(payload, 'fullName', 'FullName')
+  const name =
+    firstName || lastName
+      ? { firstName, middleName, lastName }
+      : splitFullName(fullName)
+
   return {
     userId: claimString(payload, 'userId', 'sub', 'nameid'),
-    firstName: claimString(payload, 'firstName', 'FirstName'),
-    middleName: claimString(payload, 'middleName', 'MiddleName'),
-    lastName: claimString(payload, 'lastName', 'LastName'),
+    firstName: name.firstName,
+    middleName: name.middleName,
+    lastName: name.lastName,
     branchId: claimString(payload, 'branchId', 'branch'),
     role: claimString(payload, 'role'),
     jobTitle:

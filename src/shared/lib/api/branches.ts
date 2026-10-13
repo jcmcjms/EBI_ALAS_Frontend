@@ -18,6 +18,15 @@ export async function getBranches(
 
 const BRANCHES_STALE_TIME = 60 * 60_000
 
+export function findBranchName(
+  branches: BranchResponse[] | undefined,
+  code: string | null | undefined,
+): string {
+  if (!code) return ''
+  const match = branches?.find((b) => b.code === code)
+  return match?.name ?? code
+}
+
 export function useBranches() {
   return useQuery({
     queryKey: branchKeys.list(),
