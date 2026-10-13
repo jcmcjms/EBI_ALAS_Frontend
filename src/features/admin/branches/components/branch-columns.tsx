@@ -9,7 +9,6 @@ import {
   rowPaginationFeature,
   tableFeatures,
 } from '@tanstack/react-table'
-import { format } from 'date-fns'
 import { PencilSimple, TreeStructure } from '@phosphor-icons/react'
 
 import { Badge } from '@/src/shared/ui/primitives/badge'
@@ -20,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/src/shared/ui/navigation/dropdown-menu'
+import { formatLoanDateTime } from '@/src/shared/lib/format'
 import type { BranchResponse } from '@/src/shared/lib/api/types'
 
 export type BranchesTableMeta = {
@@ -77,11 +77,19 @@ export const columns = columnHelper.columns([
       <Badge variant={statusVariant(info.getValue())}>{info.getValue()}</Badge>
     ),
   }),
+  columnHelper.accessor('createdAt', {
+    header: 'Created',
+    cell: (info) => (
+      <span className="text-xs text-muted-foreground whitespace-nowrap">
+        {formatLoanDateTime(info.getValue())}
+      </span>
+    ),
+  }),
   columnHelper.accessor('updatedAt', {
     header: 'Updated',
     cell: (info) => (
       <span className="text-xs text-muted-foreground whitespace-nowrap">
-        {format(new Date(info.getValue()), 'MMM d, yyyy')}
+        {formatLoanDateTime(info.getValue())}
       </span>
     ),
   }),

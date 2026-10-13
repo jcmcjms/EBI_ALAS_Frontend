@@ -20,9 +20,10 @@ export function formatLoanDate(value: string | number | Date): string {
   })
 }
 
-/** Canonical loan timestamp for timelines and audit rows. */
+/** Canonical loan timestamp for timelines and audit rows. Always Asia/Manila (PH). */
 export function formatLoanDateTime(value: string | number | Date): string {
   return new Date(value).toLocaleString('en-PH', {
+    timeZone: 'Asia/Manila',
     year: 'numeric',
     month: 'short',
     day: 'numeric',
