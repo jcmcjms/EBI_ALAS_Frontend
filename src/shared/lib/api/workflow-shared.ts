@@ -1,5 +1,4 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 
 export interface WorkflowConfigurationDto {
   requireRecommendation: boolean
@@ -14,9 +13,10 @@ export const workflowKeys = {
   configuration: ['workflow', 'configuration'] as const,
 }
 
+/** Bare DTO — the API does not wrap this payload in an ApiResponse envelope. */
 export async function getWorkflowConfiguration(): Promise<WorkflowConfigurationDto> {
-  const res = await apiClient.get<ApiResponse<WorkflowConfigurationDto>>(
+  const res = await apiClient.get<WorkflowConfigurationDto>(
     '/api/workflow/configuration',
   )
-  return unwrapApiData(res.data)
+  return res.data
 }

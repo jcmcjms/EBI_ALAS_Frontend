@@ -1,7 +1,5 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
 import {
-  unwrapApiData,
-  type ApiResponse,
   type BackendPageResult,
 } from '@/src/shared/lib/api/types'
 
@@ -18,21 +16,22 @@ export const workflowKeys = {
   configuration: ['workflow', 'configuration'] as const,
 }
 
+/** Bare DTO — the API does not wrap this payload in an ApiResponse envelope. */
 export async function getWorkflowConfiguration(): Promise<WorkflowConfigurationDto> {
-  const res = await apiClient.get<ApiResponse<WorkflowConfigurationDto>>(
+  const res = await apiClient.get<WorkflowConfigurationDto>(
     '/api/workflow/configuration',
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function updateWorkflowConfiguration(
   requireRecommendation: boolean,
 ): Promise<WorkflowConfigurationDto> {
-  const res = await apiClient.put<ApiResponse<WorkflowConfigurationDto>>(
+  const res = await apiClient.put<WorkflowConfigurationDto>(
     '/api/workflow/configuration',
     { requireRecommendation },
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 /** Count via the bare `BackendPageResult` from `GET /api/loans`. */
