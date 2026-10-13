@@ -80,6 +80,7 @@ export const PERMISSIONS = {
   roleManage: 'roles.view',
   roleView: 'roles.view',
   workflowManage: 'workflow.manage',
+  branchManage: 'branches.manage',
 } as const
 
 export const BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
@@ -116,19 +117,22 @@ export const BRANCHES: ReadonlyArray<{ code: string; name: string }> = [
   { code: '991', name: 'Corporate Center' },
 ] as const
 
+export type BranchStatus = 'Active' | 'Closed' | 'Merged'
+
+export interface BranchResponse {
+  code: string
+  name: string
+  areaCode: string
+  status: BranchStatus
+  createdAt: string
+  updatedAt: string
+}
+
 export interface BranchListResponse {
   id: number
   code: string
   name: string
   isActive: boolean
-}
-
-export interface BranchResponse {
-  id: number
-  code: string
-  name: string
-  isActive: boolean
-  createdAt: string
 }
 
 export interface BranchQueryParams {
