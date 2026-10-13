@@ -239,6 +239,7 @@ export interface LoanResponse {
   updatedAt: string
   lastActionDate: string
   lastActionById: string | null
+  lastActionByName: string | null
   lastActionVerb: string | null
 }
 

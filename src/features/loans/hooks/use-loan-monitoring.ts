@@ -37,7 +37,7 @@ function toMonitoringRecord(loan: LoanResponse): LoanMonitoringRecord {
       0,
       Math.round((Date.now() - lastActionAt.getTime()) / 3_600_000),
     ),
-    lastActionBy: loan.lastActionById || loan.createdBy || '—',
+    lastActionBy: loan.lastActionByName || '—',
     lastActionVerb: loan.lastActionVerb ?? null,
     createdById: loan.createdBy ?? null,
     documentsComplete: null,
