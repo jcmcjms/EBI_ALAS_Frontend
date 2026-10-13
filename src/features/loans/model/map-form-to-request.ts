@@ -1,5 +1,6 @@
 import type { LoanSubmissionPayload } from '../api/loan-types'
 import type { LoanApplicationFormData } from '../schemas/schema'
+import { toSubmitLoanRequest, type SubmitLoanRequest } from '../api/loan-submit'
 
 export function mapFormToSubmissionPayload(
   form: LoanApplicationFormData,
@@ -40,4 +41,36 @@ export function mapFormToSubmissionPayload(
       : undefined,
     loanType: form.loanType ?? 'New',
   }
+}
+
+/**
+ * Flat body for `POST /api/loans` (`SubmitLoanRequest`).
+ * `applicationGroupNo` is omitted so the API allocates APP-{date}-{seq}.
+ */
+export function mapFormToSubmitLoanRequest(
+  form: LoanApplicationFormData,
+): SubmitLoanRequest {
+  const primary = form.loans[0]
+  const params = primary?.parameters
+  const clientName = [
+    form.client.firstName,
+    form.client.middleName,
+    form.client.lastName,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+
+  return toSubmitLoanRequest({
+    applicationGroupNo: '',
+    clientName,
+    branchId: primary?.branchCode || form.branchType.branch || '',
+    loanType: form.loanType === 'Renewal' ? 'Reloan' : 'New',
+    principal: params?.proposedAmount ?? 0,
+    termDays: params?.term ?? 0,
+    interestRatePerMonth: params?.interestRate ?? 0,
+    serviceFee: (params?.notarialFee ?? 0) + (params?.docStamps ?? 0),
+    insuranceFee: params?.insurance ?? 0,
+    otherDeductions: 0,
+  })
 }

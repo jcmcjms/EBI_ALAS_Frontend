@@ -25,7 +25,7 @@ import {
 import { ActiveLoanProvider } from './active-loan-context'
 import { LoanTransfersProvider } from './loan-transfers-provider'
 import { useCreateLoan } from '@/src/features/loans/hooks/use-create-loan'
-import { mapFormToSubmissionPayload } from '@/src/features/loans/model/map-form-to-request'
+import { mapFormToSubmitLoanRequest } from '@/src/features/loans/model/map-form-to-request'
 import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
 
 import {
@@ -190,7 +190,7 @@ export function LoanCreationPage() {
         )
         return
       }
-      createLoan(mapFormToSubmissionPayload(data))
+      createLoan(mapFormToSubmitLoanRequest(data))
     },
     [createLoan, isSubmitting],
   )
