@@ -3,7 +3,7 @@ import { Bell } from '@phosphor-icons/react'
 import { Separator } from '@/src/shared/ui/data-display/separator'
 import { SidebarTrigger } from '@/src/shared/components/layout/sidebar'
 import { getActiveNavTitle } from '@/src/shared/lib/navigation'
-import { useNotificationStore } from '@/src/features/notifications/store/notification-store'
+import { useNotificationStore } from '@/src/shared/store/notification-store'
 import { OnlineUsers } from '@/src/app/layout/online-users'
 
 export function SiteHeader() {

@@ -8,6 +8,7 @@ import {
   classifyNotification,
   type AppNotification,
 } from '@/src/shared/store/notification-store'
+import { queryClient } from '@/src/shared/lib/queryClient'
 import {
   getSharedConnection,
   getStartingPromise,
@@ -75,13 +76,16 @@ export function useSignalR() {
     conn.on(
       'ReceiveNotification',
       (payload: {
+        id?: string
         title: string
         description: string
         link?: string
         timestamp: string
       }) => {
         const appNotification: AppNotification = {
-          id: `live-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          id:
+            payload.id ??
+            `live-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           type: classifyNotification(payload.title),
           title: payload.title,
           description: payload.description,
@@ -91,6 +95,9 @@ export function useSignalR() {
         }
 
         addNotification(appNotification)
+
+        // Keep inbox/list query data in sync with the live row (same DB id).
+        void queryClient.invalidateQueries({ queryKey: ['notifications'] })
 
         toastInfo(payload.title, {
           description: payload.description,

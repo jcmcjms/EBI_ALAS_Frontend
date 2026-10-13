@@ -10,7 +10,7 @@ import {
   markAllNotificationsRead,
   type InboxQuery,
 } from '../api/notifications'
-import { useNotificationStore } from '../store/notification-store'
+import { useNotificationStore } from '@/src/shared/store/notification-store'
 import { mapApiNotifications } from '../types'
 
 export function useNotifications(enabled = true, isSignalRConnected = false) {
