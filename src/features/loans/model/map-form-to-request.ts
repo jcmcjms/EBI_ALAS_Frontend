@@ -65,6 +65,8 @@ export function mapFormToSubmitLoanRequest(
     applicationGroupNo: '',
     clientName,
     branchId: primary?.branchCode || form.branchType.branch || '',
+    productCode: primary?.productCode ?? '',
+    product: primary?.parameters.product ?? primary?.productDescription ?? '',
     loanType: form.loanType === 'Renewal' ? 'Reloan' : 'New',
     principal: params?.proposedAmount ?? 0,
     termDays: params?.term ?? 0,

@@ -48,12 +48,13 @@ function makeForm(): LoanApplicationFormData {
           hasDeviations: false,
           deviationDetails: [],
           deviationJustifications: {},
+          otherRemarks: '',
         },
       },
     ],
     outstandingLoans: [],
     loanType: 'New',
-  } as LoanApplicationFormData
+  } as unknown as LoanApplicationFormData
 }
 
 describe('mapFormToSubmitLoanRequest', () => {
@@ -64,6 +65,8 @@ describe('mapFormToSubmitLoanRequest', () => {
       applicationGroupNo: '',
       clientName: 'Ana Cruz',
       branchId: '011',
+      productCode: 'A16',
+      product: 'A16 - Salary',
       loanType: 'New',
       principal: 10000,
       termDays: 30,

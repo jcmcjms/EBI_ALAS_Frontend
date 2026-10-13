@@ -20,6 +20,7 @@ interface SortingState {
 
 function toMonitoringRecord(loan: LoanResponse): LoanMonitoringRecord {
   const appliedAt = new Date(loan.createdAt)
+  const lastActionAt = new Date(loan.lastActionDate ?? loan.updatedAt ?? loan.createdAt)
 
   return {
     id: loan.id,
@@ -27,18 +28,18 @@ function toMonitoringRecord(loan: LoanResponse): LoanMonitoringRecord {
     branchCode: loan.branchId,
     customerName: loan.clientName || 'Unknown client',
     loanType: loan.loanType === 'Reloan' ? 'Reloan' : 'New Loan',
-    product: '—',
+    product: loan.product || loan.productCode || '—',
     loanAmount: loan.principal,
     applicationDate: appliedAt.toISOString(),
     status: (loan.status as LoanStatus) ?? 'Draft',
-    lastActionDate: appliedAt.toISOString(),
+    lastActionDate: lastActionAt.toISOString(),
     timeLapsedHours: Math.max(
       0,
-      Math.round((Date.now() - appliedAt.getTime()) / 3_600_000),
+      Math.round((Date.now() - lastActionAt.getTime()) / 3_600_000),
     ),
-    lastActionBy: '—',
-    lastActionVerb: null,
-    createdById: null,
+    lastActionBy: loan.lastActionById || loan.createdBy || '—',
+    lastActionVerb: loan.lastActionVerb ?? null,
+    createdById: loan.createdBy ?? null,
     documentsComplete: null,
     documentsCompleteAt: null,
     assignedApproverName: null,

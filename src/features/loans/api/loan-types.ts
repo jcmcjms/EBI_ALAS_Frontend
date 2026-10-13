@@ -224,6 +224,8 @@ export interface LoanResponse {
   applicationGroupNo: string
   clientName: string
   branchId: string
+  productCode: string
+  product: string
   loanType: LoanType
   status: string
   principal: number
@@ -232,7 +234,12 @@ export interface LoanResponse {
   totalInterest: number
   totalDeductions: number
   netProceeds: number
+  createdBy: string
   createdAt: string
+  updatedAt: string
+  lastActionDate: string
+  lastActionById: string | null
+  lastActionVerb: string | null
 }
 
 export interface LoanSubmissionPayload {

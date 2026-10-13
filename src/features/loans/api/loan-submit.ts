@@ -7,6 +7,8 @@ export interface SubmitLoanRequest {
   applicationGroupNo: string
   clientName: string
   branchId: string
+  productCode: string
+  product: string
   loanType: 'New' | 'Reloan'
   principal: number
   termDays: number
@@ -25,6 +27,8 @@ export interface SubmitLoanDraft {
   applicationGroupNo: string
   clientName: string
   branchId: string
+  productCode: string
+  product: string
   loanType: 'New' | 'Reloan' | 'Renewal'
   principal: number
   termDays: number
@@ -41,6 +45,8 @@ export function toSubmitLoanRequest(
     applicationGroupNo: input.applicationGroupNo,
     clientName: input.clientName,
     branchId: input.branchId,
+    productCode: input.productCode,
+    product: input.product,
     loanType: input.loanType === 'New' ? 'New' : 'Reloan',
     principal: input.principal,
     termDays: input.termDays,

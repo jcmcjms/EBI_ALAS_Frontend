@@ -21,7 +21,7 @@ export interface LoanMonitoringRecord {
 
   lastActionVerb: string | null
 
-  createdById?: number | null
+  createdById?: string | number | null
 
   documentsComplete: boolean | null
 

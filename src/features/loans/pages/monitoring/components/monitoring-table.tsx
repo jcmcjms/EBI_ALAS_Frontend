@@ -42,7 +42,7 @@ interface MonitoringTableProps {
   filters: MonitoringFilters
   onRowClick: (record: LoanMonitoringRecord) => void
   slaPolicy?: Record<string, number> | null
-  currentUser?: { id: number; role: string; name?: string } | null
+  currentUser?: { id: string | number; role: string; name?: string } | null
   onCancel?: (record: LoanMonitoringRecord) => void
 }
 

@@ -61,7 +61,7 @@ const ACTION_LABELS: Record<string, string> = {
 export function buildColumns(
   branchNameOf: (code: string) => string,
   slaPolicy?: Record<string, number> | null,
-  currentUser?: { id: number; role: string; name?: string } | null,
+  currentUser?: { id: string | number; role: string; name?: string } | null,
   onCancel?: (record: LoanMonitoringRecord) => void,
 ) {
   return columnHelper.columns([
@@ -245,9 +245,13 @@ export function buildColumns(
       cell: (info) => {
         const row = info.row.original
         const isEncoder = currentUser?.role === 'Encoder'
-        const isOwner = currentUser?.id === row.createdById
+        const isOwner =
+          currentUser != null &&
+          row.createdById != null &&
+          String(currentUser.id) === String(row.createdById)
         const cancellable =
-          isEncoder && isOwner && CANCELLABLE_STATUSES.includes(row.status)
+          (isEncoder && isOwner) &&
+          CANCELLABLE_STATUSES.includes(row.status)
         if (!cancellable || !onCancel) return null
         return (
           <Button

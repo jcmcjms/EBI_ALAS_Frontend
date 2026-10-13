@@ -124,7 +124,7 @@ export function LoanMonitoringPage() {
           currentUser={
             user
               ? {
-                  id: Number(user.userId),
+                  id: user.userId,
                   role: user.role,
                   name:
                     [user.firstName, user.middleName, user.lastName]
@@ -199,12 +199,8 @@ export function LoanMonitoringPage() {
                 cancelDialog.pending || cancelDialog.reason.trim().length < 10
               }
               onClick={async () => {
-                const cancelId =
-                  typeof cancelDialog.record?.id === 'string'
-                    ? Number(cancelDialog.record.id)
-                    : cancelDialog.record?.id
-                if (typeof cancelId !== 'number' || !Number.isFinite(cancelId))
-                  return
+                const cancelId = cancelDialog.record?.id
+                if (cancelId == null || cancelId === '') return
                 setCancelDialog((d) => ({ ...d, pending: true }))
                 try {
                   await cancelLoanApplication(cancelId)
