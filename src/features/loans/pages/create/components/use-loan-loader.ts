@@ -108,18 +108,24 @@ export function useLoanLoader(
 
     if (outstandingResult.status === 'fulfilled') {
       const obRows = outstandingResult.value.loans ?? []
+      // Selected (pending) loan numbers are not outstanding obligations.
+      const selectedNos = new Set(
+        (getValues('loans') ?? []).map((l) => l.loanNo).filter(Boolean),
+      )
       setValue(
         'outstandingLoans',
-        obRows.map((row: OutstandingLoan) => ({
-          pn: row.loanNo ?? '',
-          principalBalance: row.principal ?? 0,
-          amortization: row.amortAmount ?? 0,
-          outstandingBalance: row.principalBalance ?? 0,
-          dateGranted: row.dateGranted ? row.dateGranted.slice(0, 10) : '',
-          dateMaturity: row.dateMaturity ? row.dateMaturity.slice(0, 10) : '',
-          status: row.productStatus ?? 'Active',
-          productWithDescription: row.productWithDescription ?? '',
-        })),
+        obRows
+          .filter((row: OutstandingLoan) => !selectedNos.has(row.loanNo ?? ''))
+          .map((row: OutstandingLoan) => ({
+            pn: row.loanNo ?? '',
+            principalBalance: row.principal ?? 0,
+            amortization: row.amortAmount ?? 0,
+            outstandingBalance: row.principalBalance ?? 0,
+            dateGranted: row.dateGranted ? row.dateGranted.slice(0, 10) : '',
+            dateMaturity: row.dateMaturity ? row.dateMaturity.slice(0, 10) : '',
+            status: row.productStatus ?? 'Active',
+            productWithDescription: row.productWithDescription ?? '',
+          })),
         { shouldDirty: false },
       )
     }
