@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/src/shared/ui/data-display/table'
+import { TablePagination } from '@/src/shared/ui/data-display/table-pagination'
 import { Input } from '@/src/shared/ui/primitives/input'
 import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import { EmptyState, ErrorState } from '@/src/shared/ui/feedback/empty-state'
@@ -50,6 +51,7 @@ export function BranchesTable() {
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [globalFilter, setGlobalFilter] = useState('')
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<BranchResponse | null>(null)
   const [confirm, setConfirm] = useState<{
@@ -74,10 +76,20 @@ export function BranchesTable() {
     features,
     data: branches,
     columns,
-    state: { globalFilter },
+    state: { globalFilter, pagination },
     globalFilterFn: 'includesString',
+    onPaginationChange: setPagination,
     meta,
   })
+
+  const totalRows = branches.length
+  const firstRow =
+    totalRows === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1
+  const lastRow = Math.min(
+    (pagination.pageIndex + 1) * pagination.pageSize,
+    totalRows,
+  )
+  const totalPages = table.getPageCount() || 1
 
   const handleCreate = async (payload: CreateBranchForm) => {
     try {
@@ -122,13 +134,16 @@ export function BranchesTable() {
           <CardTitle className="flex items-center gap-2 text-lg">
             Branch Directory
             <Badge variant="outline" className="ml-1 font-normal">
-              {branches.length} {branches.length === 1 ? 'branch' : 'branches'}
+              {totalRows} {totalRows === 1 ? 'branch' : 'branches'}
             </Badge>
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <Input
               value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
+              onChange={(e) => {
+                setGlobalFilter(e.target.value)
+                setPagination((p) => ({ ...p, pageIndex: 0 }))
+              }}
               placeholder="Search code or name…"
               className="h-9 w-[200px]"
             />
@@ -138,7 +153,10 @@ export function BranchesTable() {
                   key={s}
                   variant={statusFilter === s ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setStatusFilter(s)}
+                  onClick={() => {
+                    setStatusFilter(s)
+                    setPagination((p) => ({ ...p, pageIndex: 0 }))
+                  }}
                 >
                   {s === 'all' ? 'All' : s}
                 </Button>
@@ -163,7 +181,7 @@ export function BranchesTable() {
             message={getErrorMessage(error)}
             onRetry={() => refetch()}
           />
-        ) : branches.length === 0 ? (
+        ) : totalRows === 0 ? (
           <EmptyState
             title="No branches found"
             hint="No branches match the current filters."
@@ -197,6 +215,28 @@ export function BranchesTable() {
           </Table>
         )}
       </CardContent>
+
+      {!isLoading && !isError && totalRows > 0 && (
+        <TablePagination
+          firstRow={firstRow}
+          lastRow={lastRow}
+          totalRows={totalRows}
+          currentPage={pagination.pageIndex + 1}
+          totalPages={totalPages}
+          canPreviousPage={table.getCanPreviousPage()}
+          canNextPage={table.getCanNextPage()}
+          onPreviousPage={() =>
+            setPagination((p) => ({
+              ...p,
+              pageIndex: Math.max(0, p.pageIndex - 1),
+            }))
+          }
+          onNextPage={() =>
+            setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))
+          }
+          entityLabel="branches"
+        />
+      )}
 
       <BranchCreateSheet
         open={createOpen}
