@@ -82,19 +82,19 @@ export async function deleteLoanAttachment(
 export async function getChecklistDocuments(
   id: number | string,
 ): Promise<LoanChecklistDocumentDto[]> {
-  const res = await apiClient.get<ApiResponse<LoanChecklistDocumentDto[]>>(
+  const res = await apiClient.get<LoanChecklistDocumentDto[]>(
     `/api/loans/${id}/checklist-documents`,
   )
-  return unwrapApiData(res.data)
+  return Array.isArray(res.data) ? res.data : []
 }
 
 export async function getDocumentRemarks(
   loanId: number | string,
 ): Promise<DocumentRemarkDto[]> {
-  const res = await apiClient.get<ApiResponse<DocumentRemarkDto[]>>(
+  const res = await apiClient.get<DocumentRemarkDto[]>(
     `/api/loans/${loanId}/document-remarks`,
   )
-  return unwrapApiData(res.data)
+  return Array.isArray(res.data) ? res.data : []
 }
 
 export async function postDocumentRemark(
