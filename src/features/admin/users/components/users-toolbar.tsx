@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/src/shared/ui/forms/select'
-import { useActiveBranches } from '@/src/shared/lib/api/branches'
+import { useActiveBranches, formatBranchLabel } from '@/src/shared/lib/api/branches'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import type { RoleInfo } from '../api/users-types'
 
@@ -72,7 +72,7 @@ export function UsersToolbar({
             <SelectItem value="all">All Branches</SelectItem>
             {(branches ?? []).map((b) => (
               <SelectItem key={b.code} value={b.code}>
-                {b.name}
+                {formatBranchLabel(b.code, b.name)}
               </SelectItem>
             ))}
           </SelectContent>

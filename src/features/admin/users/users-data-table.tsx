@@ -6,6 +6,7 @@ import type { UserResponse } from './api/users-types'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useRoles } from './hooks/use-roles'
 import { useUsers, useUserStats } from './hooks/use-users'
+import { useBranches, findBranchLabel } from '@/src/shared/lib/api/branches'
 import { exportUsers } from './api/users'
 import { features, columns } from './components/user-columns'
 import { UserStatsCards } from './components/user-stats-cards'
@@ -32,6 +33,7 @@ export function UsersDataTable() {
   const canCreateUsers = hasPermission(PERMISSIONS.userCreate)
 
   const { data: roles } = useRoles()
+  const { data: branches } = useBranches()
 
   const [searchInput, setSearchInput] = useState('')
   const search = useDebouncedValue(searchInput, 300)
@@ -77,6 +79,7 @@ export function UsersDataTable() {
       onForcePasswordReset: actions.handleForcePasswordResetRequest,
       onRevokeSessions: actions.handleRevokeSessionsRequest,
       onToggleStatus: actions.handleToggleStatusRequest,
+      branchLabelOf: (code: string) => findBranchLabel(branches, code),
     },
   })
 

@@ -48,6 +48,8 @@ export type UsersTableMeta = {
   onForcePasswordReset?: (user: UserResponse) => void
   onRevokeSessions?: (user: UserResponse) => void
   onToggleStatus?: (user: UserResponse) => void
+  /** Renders `branch code - Branch name` for the Branch column. */
+  branchLabelOf?: (code: string) => string
 }
 
 export const features = tableFeatures({
@@ -94,9 +96,15 @@ export const columns = columnHelper.columns([
   }),
   columnHelper.accessor('branchId', {
     header: 'Branch',
-    cell: (info) => (
-      <span className="text-sm">{getBranchName(info.getValue())}</span>
-    ),
+    cell: (info) => {
+      const meta = info.table.options.meta as UsersTableMeta | undefined
+      const code = info.getValue()
+      return (
+        <span className="text-sm">
+          {meta?.branchLabelOf?.(code) ?? getBranchName(code)}
+        </span>
+      )
+    },
   }),
   columnHelper.accessor('role', {
     header: 'Role',

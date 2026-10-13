@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/src/shared/ui/forms/select'
-import { useActiveBranches } from '@/src/shared/lib/api/branches'
+import { useActiveBranches, toBranchSelectItems } from '@/src/shared/lib/api/branches'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 
 interface FormState {
@@ -36,10 +36,7 @@ export function CreateUserFormBody({
   roles,
 }: CreateUserFormBodyProps) {
   const { data: branches } = useActiveBranches()
-  const branchItems = (branches ?? []).map((b) => ({
-    value: b.code,
-    label: b.name,
-  }))
+  const branchItems = toBranchSelectItems(branches)
 
   return (
     <div className="flex-1 space-y-4 overflow-y-auto p-6">

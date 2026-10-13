@@ -27,6 +27,34 @@ export function findBranchName(
   return match?.name ?? code
 }
 
+/** Canonical user-directory label: `branch code - Branch name`. */
+export function formatBranchLabel(
+  code: string | null | undefined,
+  name?: string | null,
+): string {
+  if (!code) return ''
+  const trimmedName = name?.trim()
+  return trimmedName ? `${code} - ${trimmedName}` : code
+}
+
+export function findBranchLabel(
+  branches: BranchResponse[] | undefined,
+  code: string | null | undefined,
+): string {
+  if (!code) return ''
+  const match = branches?.find((b) => b.code === code)
+  return formatBranchLabel(code, match?.name)
+}
+
+export function toBranchSelectItems(
+  branches: BranchResponse[] | undefined,
+): Array<{ value: string; label: string }> {
+  return (branches ?? []).map((b) => ({
+    value: b.code,
+    label: formatBranchLabel(b.code, b.name),
+  }))
+}
+
 export function useBranches() {
   return useQuery({
     queryKey: branchKeys.list(),
