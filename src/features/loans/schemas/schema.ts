@@ -166,7 +166,7 @@ export const DEVIATION_REASONS = [
   'No interview sheet',
   'No orientation form or old form submitted',
   'No valid identification cards',
-  'Total consumer loan exposure exceeding 1.2 million',
+  'Total consumer loan exposure exceeding 1.5 million',
   'With blocked ATIM in same school',
   'With history of delinquency in the latest loan availment',
   'With NFIS findings',
