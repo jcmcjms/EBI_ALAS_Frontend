@@ -6,6 +6,7 @@ export interface UserCreatePayload {
   lastName: string
   branchId: string
   role: string
+  jobTitle: string
 }
 
 export const emptyForm = {
@@ -15,6 +16,7 @@ export const emptyForm = {
   lastName: '',
   branchId: '',
   role: '',
+  jobTitle: '',
 }
 
 export const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/

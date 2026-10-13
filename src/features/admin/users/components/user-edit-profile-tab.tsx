@@ -104,13 +104,24 @@ export function ProfileTab({
             <SelectValue placeholder="Select branch" />
           </SelectTrigger>
           <SelectContent>
-            {(branches ?? []).map((b) => (
-              <SelectItem key={b.code} value={b.code}>
-                {b.name}
+            {branchItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="edit-jobTitle">Job Title</Label>
+        <Input
+          id="edit-jobTitle"
+          value={profile.jobTitle}
+          onChange={(e) => onFieldChange('jobTitle', e.target.value)}
+          maxLength={100}
+          className="h-9"
+          disabled={!canEdit}
+        />
       </div>
     </>
   )

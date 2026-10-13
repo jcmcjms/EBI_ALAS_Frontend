@@ -117,6 +117,7 @@ export function useUserActions() {
         lastName: payload.lastName,
         branchId: payload.branchId,
         role: payload.role,
+        jobTitle: payload.jobTitle?.trim() || null,
       } satisfies CreateUserPayload)
       setTempCred({
         username: payload.username,
@@ -143,6 +144,7 @@ export function useUserActions() {
           lastName: changes.lastName,
           branchId: changes.branchId,
           role: changes.role,
+          jobTitle: changes.jobTitle?.trim() || null,
         } satisfies UpdateUserPayload,
       })
       toastSuccess(

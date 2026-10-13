@@ -17,6 +17,7 @@ interface FormState {
   lastName: string
   branchId: string
   role: string
+  jobTitle: string
 }
 
 export interface CreateUserFormBodyProps {
@@ -97,13 +98,28 @@ export function CreateUserFormBody({
             <SelectValue placeholder="Select branch" />
           </SelectTrigger>
           <SelectContent>
-            {(branches ?? []).map((b) => (
-              <SelectItem key={b.code} value={b.code}>
-                {b.name}
+            {branchItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="create-jobTitle">Job Title</Label>
+        <Input
+          id="create-jobTitle"
+          value={form.jobTitle}
+          onChange={(e) => onFieldChange('jobTitle', e.target.value)}
+          placeholder="e.g. Credit Analyst"
+          maxLength={100}
+          className="h-9"
+        />
+        <p className="text-xs text-muted-foreground">
+          Shown on presence and signature blocks. Approvers use an approval
+          authority key.
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="create-role">Primary Role *</Label>

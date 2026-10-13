@@ -100,6 +100,7 @@ export function UserEditDrawer({
         lastName: profile.lastName.trim(),
         branchId: profile.branchId,
         role: profile.role,
+        jobTitle: profile.jobTitle.trim(),
       }
 
       const success = await onSave(user.id, changes)

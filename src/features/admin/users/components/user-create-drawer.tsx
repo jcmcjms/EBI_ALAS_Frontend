@@ -95,6 +95,7 @@ export function UserCreateDrawer({
         lastName: form.lastName.trim(),
         branchId: form.branchId,
         role: form.role,
+        jobTitle: form.jobTitle.trim(),
       })
       if (!success) return
 

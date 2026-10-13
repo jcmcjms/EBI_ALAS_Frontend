@@ -16,6 +16,7 @@ export interface CreateUserPayload {
   email?: string | null
   branchId: string
   role: string
+  jobTitle?: string | null
 }
 
 export interface UpdateUserPayload {
@@ -25,6 +26,7 @@ export interface UpdateUserPayload {
   email?: string | null
   branchId: string
   role: string
+  jobTitle?: string | null
 }
 
 export interface UserStatusPayload {
@@ -46,6 +48,7 @@ export interface UserResponse {
   lastName: string
   email: string | null
   branchId: string
+  jobTitle: string | null
   role: string
   isActive: boolean
   createdAt: string
@@ -91,6 +94,7 @@ export interface BackendUserDto {
   middleName: string | null
   email: string | null
   branchId: string
+  jobTitle?: string | null
   role: string
   status: string
   mustChangePassword: boolean
@@ -111,6 +115,7 @@ export function toUserResponse(dto: BackendUserDto): UserResponse {
     lastName: dto.lastName,
     email: dto.email,
     branchId: dto.branchId,
+    jobTitle: dto.jobTitle ?? null,
     role: dto.role,
     isActive: dto.status.toLowerCase() === 'active',
     createdAt: dto.createdAt,

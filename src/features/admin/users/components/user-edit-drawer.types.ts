@@ -6,6 +6,7 @@ export interface UserProfileChanges {
   lastName: string
   branchId: string
   role: string
+  jobTitle: string
 }
 
 export type EditableProfile = {
@@ -14,6 +15,7 @@ export type EditableProfile = {
   lastName: string
   branchId: string
   role: string
+  jobTitle: string
 }
 
 export function profileFrom(user: UserResponse): EditableProfile {
@@ -23,6 +25,7 @@ export function profileFrom(user: UserResponse): EditableProfile {
     lastName: user.lastName,
     branchId: user.branchId,
     role: user.role,
+    jobTitle: user.jobTitle ?? '',
   }
 }
 
@@ -32,4 +35,5 @@ export const emptyProfile: EditableProfile = {
   lastName: '',
   branchId: '',
   role: '',
+  jobTitle: '',
 }

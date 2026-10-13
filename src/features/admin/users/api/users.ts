@@ -34,6 +34,7 @@ function toCreateBody(payload: CreateUserPayload) {
     email: payload.email ?? null,
     branchId: payload.branchId,
     role: payload.role,
+    jobTitle: payload.jobTitle?.trim() || null,
   }
 }
 
@@ -45,6 +46,7 @@ function toUpdateBody(payload: UpdateUserPayload) {
     email: payload.email ?? null,
     branchId: payload.branchId,
     role: payload.role,
+    jobTitle: payload.jobTitle?.trim() || null,
   }
 }
 
