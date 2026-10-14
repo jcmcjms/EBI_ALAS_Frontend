@@ -86,4 +86,11 @@ describe('mapFormToSubmitLoanRequest', () => {
     expect(body.loans[1].productCode).toBe('C02')
     expect(body.loans[1].principal).toBe(11000)
   })
+
+  it('includes the full create-form snapshot so review can render the preview values', () => {
+    const form = makeForm(1)
+    const body = mapFormToSubmitLoanRequest(form)
+
+    expect(body.form).toBe(form)
+  })
 })

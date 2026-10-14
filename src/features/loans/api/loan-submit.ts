@@ -19,6 +19,8 @@ export interface SubmitLoanApplicationsRequest {
   branchId: string
   loanType: 'New' | 'Reloan'
   loans: SubmitLoanLine[]
+  /** Full create-flow form snapshot so review/approval shows the same values as the preview. */
+  form?: unknown
 }
 
 export interface CreatedLoanSummary {
@@ -42,6 +44,7 @@ export function toSubmitLoanApplicationsRequest(input: {
   branchId: string
   loanType: 'New' | 'Reloan' | 'Renewal'
   loans: SubmitLoanLine[]
+  form?: unknown
 }): SubmitLoanApplicationsRequest {
   return {
     applicationGroupNo: input.applicationGroupNo,
@@ -49,5 +52,6 @@ export function toSubmitLoanApplicationsRequest(input: {
     branchId: input.branchId,
     loanType: input.loanType === 'New' ? 'New' : 'Reloan',
     loans: input.loans,
+    form: input.form,
   }
 }
