@@ -68,11 +68,11 @@ export async function getCatLoanClass(
   loanNo: string,
   loanProduct: string,
 ): Promise<CatLoanClassResponse> {
-  const res = await apiClient.get<ApiResponse<CatLoanClassResponse>>(
+  const res = await apiClient.get<CatLoanClassResponse>(
     '/api/webloans/loan-class',
     { params: { bch, loanNo, loanProduct } },
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function getCocreeStatus(

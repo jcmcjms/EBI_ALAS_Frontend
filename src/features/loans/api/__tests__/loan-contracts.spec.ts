@@ -42,7 +42,14 @@ describe('toSubmitLoanApplicationsRequest', () => {
     })
 
     expect(Object.keys(body).sort()).toEqual(
-      ['applicationGroupNo', 'branchId', 'clientName', 'loanType', 'loans'].sort(),
+      [
+        'applicationGroupNo',
+        'branchId',
+        'clientName',
+        'form',
+        'loanType',
+        'loans',
+      ].sort(),
     )
   })
 })

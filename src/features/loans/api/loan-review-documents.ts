@@ -1,7 +1,9 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
 import {
   unwrapApiData,
+  mapPageResult,
   type ApiResponse,
+  type BackendPageResult,
   type PagedResult,
 } from '@/src/shared/lib/api/types'
 import type {
@@ -146,30 +148,30 @@ export async function getLoanTimeline(
   page: number,
   pageSize: number,
 ): Promise<PagedResult<TimelineEvent>> {
-  const res = await apiClient.get<ApiResponse<PagedResult<TimelineEvent>>>(
+  const res = await apiClient.get<BackendPageResult<TimelineEvent>>(
     `/api/loans/${id}/timeline`,
     { params: { page, pageSize } },
   )
-  return unwrapApiData(res.data)
+  return mapPageResult(res.data)
 }
 
 export async function getLoanDeviations(
   id: number | string,
 ): Promise<LoanDeviationDto[]> {
-  const res = await apiClient.get<ApiResponse<LoanDeviationDto[]>>(
+  const res = await apiClient.get<LoanDeviationDto[]>(
     `/api/loans/${id}/deviations`,
   )
-  return unwrapApiData(res.data)
+  return Array.isArray(res.data) ? res.data : []
 }
 
 export async function postDeviationRemark(
   loanId: number | string,
-  deviationId: number,
-  payload: { body: string; parentRemarkId?: number | null },
+  deviationId: string | number,
+  payload: { body: string; parentRemarkId?: string | null },
 ): Promise<DeviationRemarkDto> {
-  const res = await apiClient.post<ApiResponse<DeviationRemarkDto>>(
+  const res = await apiClient.post<DeviationRemarkDto>(
     `/api/loans/${loanId}/deviations/${deviationId}/remarks`,
     payload,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
