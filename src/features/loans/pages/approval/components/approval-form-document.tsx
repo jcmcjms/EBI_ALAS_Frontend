@@ -17,6 +17,7 @@ import {
 } from '@/src/features/loans/model/loan-approval-utils'
 import { ApprovalFormSheet } from '@/src/features/loans/components/approval-form-sheet'
 import { useLoanProduct } from '@/src/shared/lib/api/loan-product-api'
+import { useCatLoanClass } from '@/src/features/loans/hooks/use-cat-loan-class'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import type { SignatureDisplaySlot } from '@/src/features/loans/api/signatures'
 import type {
@@ -33,9 +34,9 @@ import {
 } from './approval-form-document-utils'
 
 export type { ApprovalFormActionEntry } from './approval-form-document-utils'
-import { ClientInfoTable } from './client-info-table'
-import { LoanComputationsPanel } from './loan-computations-panel'
-import { ObligationsSummaryTable } from './obligations-summary-table'
+import { SingleLoanClientInfo } from '../../create/components/single-loan-client-info'
+import { SingleLoanComputations } from '../../create/components/single-loan-computations'
+import { SingleLoanObligations } from '../../create/components/single-loan-obligations'
 import { AuditTrailSection } from './audit-trail-section'
 
 interface ApprovalFormDocumentProps {
@@ -46,6 +47,7 @@ interface ApprovalFormDocumentProps {
   actions?: ApprovalFormActionEntry[]
   deviations?: LoanDeviationDto[]
   documentRemarks?: DocumentRemarkDto[]
+  lamIdByLoanNo?: Record<string, string>
 }
 
 function ApprovalFormDocumentBase({
@@ -56,6 +58,7 @@ function ApprovalFormDocumentBase({
   actions,
   deviations: deviationThreads,
   documentRemarks,
+  lamIdByLoanNo,
   ref,
 }: ApprovalFormDocumentProps & { ref?: Ref<HTMLDivElement> }) {
     const client = data?.client ?? ({} as LoanApplicationFormData['client'])
@@ -83,6 +86,13 @@ function ApprovalFormDocumentBase({
       ? parseProductCode(params.product)
       : null
     const { data: loanProduct } = useLoanProduct(productCodeForLookup)
+    const preLoanBranchCode =
+      primaryLoan?.branchCode?.trim() || data?.preLoan?.bch?.trim() || ''
+    const { data: loanClass } = useCatLoanClass(
+      preLoanBranchCode,
+      primaryLoan?.loanNo ?? '',
+      productCodeForLookup ?? '',
+    )
     const productFees: ProductFeeConfig | undefined = loanProduct
       ? {
           applicationChargeRate: loanProduct.applicationChargeRate,
@@ -128,7 +138,7 @@ function ApprovalFormDocumentBase({
     const productCode = parseProductCode(params.product)
     const productDisplay = resolveLoanProductDisplayName(
       params.product,
-      catLoanClass,
+      catLoanClass ?? loanClass?.catLoanClass ?? null,
     )
 
     const approvalTermDays = c.approvalTermDays
@@ -163,29 +173,29 @@ function ApprovalFormDocumentBase({
           </h1>
 
           <div className="border-2 border-b-0 border-black print:border-b-2">
-            <ClientInfoTable
+            <SingleLoanClientInfo
               client={client}
               branchType={branchType}
-              primaryLoan={primaryLoan}
-              data={data}
-              params={params}
+              loan={primaryLoan}
               productDisplay={productDisplay}
               approvalTermDays={approvalTermDays}
               productLine={productLine}
+              purpose={params.purpose}
+              lamIdByLoanNo={lamIdByLoanNo}
             />
 
             <div className={cn(B, 'text-center font-bold')}>
               LOAN COMPUTATIONS
             </div>
 
-            <LoanComputationsPanel
+            <SingleLoanComputations
               c={c}
-              params={params}
-              primaryLoan={primaryLoan}
+              parameters={params}
+              loan={primaryLoan}
               outstandingLoans={outstandingLoans}
             />
 
-            <ObligationsSummaryTable
+            <SingleLoanObligations
               reloanRows={reloanRows}
               buyOutRows={buyOutRows}
               incomingRows={incomingRows}
@@ -196,7 +206,7 @@ function ApprovalFormDocumentBase({
           <section className="break-before-page">
             <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
               <span className="text-sm font-bold underline">
-                LOAN APPROVAL FORM
+                LOAN APPROVAL FORM (Continuation)
               </span>
               <span className="tabular-nums">
                 {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{' '}

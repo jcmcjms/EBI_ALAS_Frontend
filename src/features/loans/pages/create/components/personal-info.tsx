@@ -279,7 +279,7 @@ export function PersonalInfoSection() {
                 {...getErrorProps('referrer')}
               />
               <p className="text-[11px] text-muted-foreground">
-                Name of the person or campaign that referred the borrower.
+                Name of the person that referred the borrower.
               </p>
               {clientErrors?.referrer?.message && (
                 <p

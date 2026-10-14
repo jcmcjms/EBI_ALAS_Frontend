@@ -23,6 +23,7 @@ import {
   signatureKeys,
 } from '@/src/features/loans/api/signatures'
 import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
+import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import type { RevisionSectionId } from '@/src/features/loans/types/revision-request'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
@@ -65,10 +66,13 @@ export function useEvaluationPage(id: string) {
 
   const detail = loan.data
   const frozen = detail ? TERMINAL.includes(detail.status) : false
-  const formData = useMemo(
-    () => (detail ? mapLoanDetailToFormData(detail) : null),
-    [detail],
-  )
+  const formData = useMemo(() => {
+    if (!detail) return null
+    if (detail.form) {
+      return detail.form as LoanApplicationFormData
+    }
+    return mapLoanDetailToFormData(detail)
+  }, [detail])
 
   const loanClass = useCatLoanClass(
     detail?.branchCode ?? '',

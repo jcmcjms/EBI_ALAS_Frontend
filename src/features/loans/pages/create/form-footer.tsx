@@ -64,7 +64,7 @@ export function FormFooter({
             aria-describedby={canSubmit ? undefined : 'submit-hint'}
           >
             <PaperPlaneTilt size={16} weight="bold" />
-            {isSubmitting ? 'Submitting…' : 'Submit for Recommendation'}
+            {isSubmitting ? 'Submitting…' : 'Submit Application'}
           </Button>
         </div>
       </div>

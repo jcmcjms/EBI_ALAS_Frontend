@@ -3,7 +3,7 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { FormTabStrip } from '@/src/shared/ui/forms/form-tab-strip'
 
 export interface GroupLoanSummary {
-  id: number
+  id: string
   lamId: string
   productCode: string
   status: string
