@@ -8,6 +8,17 @@ export interface DashboardOverviewResponse {
   pendingApproval: number
   approvedToday: number
   pushbacks: number
+  flaggedDocuments?: {
+    id: string
+    lamId: string
+    branchId: string
+    waitingSinceUtc: string
+    missingCount: number
+    clientName: string
+    encoderName: string
+    flaggedByName: string | null
+    flaggedAt: string | null
+  }[]
 }
 
 export function mapDashboardOverview(
@@ -28,7 +39,18 @@ export function mapDashboardOverview(
     pushBacks: [],
     approvedLoans: [],
     weeklyTrend: [],
-    incompleteDocsQueue: [],
+    incompleteDocsQueue: (o.flaggedDocuments ?? []).map((f, index) => ({
+      id: index + 1,
+      position: index + 1,
+      lamId: f.lamId,
+      branch: f.branchId,
+      waitingSinceUtc: f.waitingSinceUtc,
+      missingCount: f.missingCount,
+      clientName: f.clientName,
+      encoderName: f.encoderName,
+      flaggedByName: f.flaggedByName ?? undefined,
+      flaggedAt: f.flaggedAt ?? undefined,
+    })),
     fetchedAt: new Date().toISOString(),
   }
 }
