@@ -84,5 +84,6 @@ export function mapFormToSubmitLoanRequest(
     branchId: form.loans[0]?.branchCode || fallbackBranch,
     loanType: form.loanType === 'Renewal' ? 'Reloan' : 'New',
     loans,
+    form,
   })
 }
