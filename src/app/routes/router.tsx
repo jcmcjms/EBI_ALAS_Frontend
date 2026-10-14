@@ -13,6 +13,9 @@ import { AppShell } from '@/src/app/layout/AppShell'
 import { PERMISSIONS } from '@/src/shared/lib/api/types'
 
 const Login = lazy(() => import('@/src/features/auth/pages/login'))
+const ForgotPassword = lazy(
+  () => import('@/src/features/auth/pages/forgot-password'),
+)
 const ChangePassword = lazy(
   () => import('@/src/features/auth/pages/change-password'),
 )
@@ -149,6 +152,12 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   component: Login,
+})
+
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/forgot-password',
+  component: ForgotPassword,
 })
 
 const forbiddenRoute = createRoute({
@@ -352,6 +361,7 @@ const authedRouteTree = authedShellRoute.addChildren([
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
+  forgotPasswordRoute,
   forbiddenRoute,
   changePasswordRoute,
   authedRouteTree,
