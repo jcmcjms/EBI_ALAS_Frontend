@@ -49,6 +49,19 @@ export function deriveWorkflowAction(def: WorkflowButtonDef): WorkflowAction {
   return base
 }
 
+export function confirmDescriptionFor(def: WorkflowButtonDef): string {
+  if (def.verdict === 'NotRecommended') {
+    return 'The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached.'
+  }
+  if (def.kind === 'reject') {
+    return 'This will reject the loan and close the application. The encoder will be notified.'
+  }
+  if (def.kind === 'return') {
+    return 'This will return the application to the encoder for revision. The encoder will be notified with your remarks.'
+  }
+  return 'This will approve the loan and move it forward. The encoder will be notified.'
+}
+
 export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
   {
     role: 'Recommender',
