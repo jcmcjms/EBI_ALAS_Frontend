@@ -16,8 +16,6 @@ import {
 } from '@/src/shared/ui/data-display/card'
 import { Button } from '@/src/shared/ui/primitives/button'
 import { RichTextEditor } from '@/src/shared/ui/data-display/rich-text-editor'
-import { RichText } from '@/src/shared/ui/data-display/rich-text'
-import { Label } from '@/src/shared/ui/primitives/label'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +32,7 @@ import { cn } from '@/src/shared/lib/utils'
 
 import {
   MIN_REMARKS,
+  collectRemarksInDialog,
   confirmDescriptionFor,
   deriveWorkflowAction,
   type WorkflowButtonDef,
@@ -74,6 +73,97 @@ interface WorkflowActionsPanelProps {
   detailStatus: string
 }
 
+function ConfirmActionDialog({
+  action,
+  remarks,
+  onRemarksChange,
+  onConfirm,
+  isPending,
+}: {
+  action: WorkflowButtonDef
+  remarks: string
+  onRemarksChange: (v: string) => void
+  onConfirm: () => void
+  isPending: boolean
+}) {
+  const needsRemarks = collectRemarksInDialog(action)
+  const remarksOk = !needsRemarks || remarks.trim().length >= MIN_REMARKS
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger
+        render={
+          <Button
+            className={cn(
+              'w-full gap-2',
+              action.verdict === 'NotRecommended' &&
+                'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900',
+            )}
+            variant={
+              action.kind === 'reject'
+                ? 'destructive'
+                : action.verdict === 'NotRecommended'
+                  ? 'outline'
+                  : 'default'
+            }
+            disabled={isPending}
+          >
+            {action.kind === 'reject' ? (
+              <XCircle size={16} />
+            ) : action.verdict === 'NotRecommended' ? (
+              <ThumbsDown size={16} weight="fill" />
+            ) : action.verdict === 'Recommended' ? (
+              <ThumbsUp size={16} weight="fill" />
+            ) : (
+              <CheckCircle size={16} weight="bold" />
+            )}
+            {action.label}
+          </Button>
+        }
+      />
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm: {action.label}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {confirmDescriptionFor(action)}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {needsRemarks && (
+          <div className="space-y-2">
+            <RichTextEditor
+              value={remarks}
+              onChange={onRemarksChange}
+              disabled={isPending}
+              ariaLabel="Workflow remarks"
+              placeholder="Add your comments, conditions, or reasons"
+            />
+            {remarks.trim().length < MIN_REMARKS && (
+              <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <WarningCircle size={12} weight="fill" /> Required (min{' '}
+                {MIN_REMARKS} chars)
+              </p>
+            )}
+          </div>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className={
+              action.kind === 'reject'
+                ? 'bg-destructive text-destructive-foreground'
+                : 'bg-amber-600 text-white hover:bg-amber-700'
+            }
+            disabled={!remarksOk || isPending}
+            onClick={onConfirm}
+          >
+            Confirm
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 export function WorkflowActionsPanel({
   loanId,
   frozen,
@@ -94,16 +184,11 @@ export function WorkflowActionsPanel({
     <Card>
       <CardHeader className="border-b pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
-          <CheckCircle
-            size={18}
-            weight="bold"
-            className="text-primary"
-          />
+          <CheckCircle size={18} weight="bold" className="text-primary" />
           Workflow Actions
         </CardTitle>
         <CardDescription className="pt-1 text-xs">
-          Review the approval form, then take action. Add your
-          remarks below.
+          Review the approval form, then take action.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-4">
@@ -116,34 +201,6 @@ export function WorkflowActionsPanel({
 
         <div className="h-px bg-border" />
 
-        {}
-        <div className="space-y-2">
-          <Label
-            htmlFor="remarks"
-            className="flex items-center gap-1.5 text-sm font-semibold"
-          >
-            Remarks / Conditions
-            <span className="text-[11px] font-normal text-muted-foreground">
-              (optional for Recommend / Approve)
-            </span>
-          </Label>
-          <RichTextEditor
-            value={remarks}
-            onChange={onRemarksChange}
-            disabled={frozen || act.isPending}
-            ariaLabel="Workflow remarks"
-            placeholder="Add your comments, conditions, or reasons"
-          />
-          {remarks.trim().length < MIN_REMARKS && !frozen && (
-            <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <WarningCircle size={12} weight="fill" /> Required
-              (min {MIN_REMARKS} chars) for pushback, rejection, and
-              a Not Recommended evaluation.
-            </p>
-          )}
-        </div>
-
-        {}
         <div className="space-y-2">
           {needsDeskGate &&
             !canAct &&
@@ -160,13 +217,13 @@ export function WorkflowActionsPanel({
               </div>
             ) : queueState?.ownerName ? (
               <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                Currently with {queueState.ownerName}. You have
-                view-only access until the current review is finished.
+                Currently with {queueState.ownerName}. You have view-only
+                access until the current review is finished.
               </div>
             ) : (
               <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                Queued #{queueState?.position} — serve files in
-                order from the Review Desk.
+                Queued #{queueState?.position} — serve files in order from the
+                Review Desk.
               </div>
             ))}
           {canCancel && (
@@ -189,11 +246,7 @@ export function WorkflowActionsPanel({
             </p>
           )}
           {actions.map((a) => {
-            const blocked =
-              act.isPending ||
-              (a.remarksRequired &&
-                remarks.trim().length < MIN_REMARKS) ||
-              !canAct
+            const disabled = act.isPending || !canAct
             const icon =
               a.kind === 'reject' ? (
                 <XCircle size={16} />
@@ -207,15 +260,13 @@ export function WorkflowActionsPanel({
                 <CheckCircle size={16} weight="bold" />
               )
 
-            // Push-back actions open the section-selection dialog instead of
-            // an inline AlertDialog.
             if (a.kind === 'return') {
               return (
                 <Button
                   key={`${a.to}-${a.verdict ?? a.kind}`}
                   className="w-full gap-2 border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
                   variant="outline"
-                  disabled={blocked}
+                  disabled={disabled}
                   onClick={onPushback}
                 >
                   {icon} {a.label}
@@ -223,81 +274,38 @@ export function WorkflowActionsPanel({
               )
             }
 
-            const button = (
-              <Button
+            if (!a.confirm) {
+              return (
+                <Button
+                  key={`${a.to}-${a.verdict ?? a.kind}`}
+                  className="w-full gap-2"
+                  disabled={disabled}
+                  onClick={() =>
+                    act.mutate({
+                      action: deriveWorkflowAction(a),
+                      kind: a.kind,
+                    })
+                  }
+                >
+                  {icon} {a.label}
+                </Button>
+              )
+            }
+
+            return (
+              <ConfirmActionDialog
                 key={`${a.to}-${a.verdict ?? a.kind}`}
-                className={cn(
-                  'w-full gap-2',
-                  a.verdict === 'NotRecommended' &&
-                    'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900',
-                )}
-                variant={
-                  a.kind === 'reject'
-                    ? 'destructive'
-                    : a.verdict === 'NotRecommended'
-                      ? 'outline'
-                      : 'default'
-                }
-                disabled={blocked}
-                onClick={() =>
-                  !a.confirm &&
+                action={a}
+                remarks={remarks}
+                onRemarksChange={onRemarksChange}
+                isPending={disabled}
+                onConfirm={() =>
                   act.mutate({
                     action: deriveWorkflowAction(a),
                     kind: a.kind,
                   })
                 }
-              >
-                {icon} {a.label}
-              </Button>
-            )
-
-            if (!a.confirm)
-              return (
-                <div key={`${a.to}-${a.verdict ?? a.kind}`}>
-                  {button}
-                </div>
-              )
-
-            return (
-              <AlertDialog key={`${a.to}-${a.verdict ?? a.kind}`}>
-                <AlertDialogTrigger render={button} />
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Confirm: {a.label}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {confirmDescriptionFor(a)}
-                      {remarks.trim() && (
-                        <span className="mt-2 block border-l-2 border-border pl-2 italic">
-                          <RichText
-                            value={remarks}
-                            emptyFallback={null}
-                          />
-                        </span>
-                      )}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      className={
-                        a.kind === 'reject'
-                          ? 'bg-destructive text-destructive-foreground'
-                          : 'bg-amber-600 text-white hover:bg-amber-700'
-                      }
-                      onClick={() =>
-                        act.mutate({
-                          action: deriveWorkflowAction(a),
-                          kind: a.kind,
-                        })
-                      }
-                    >
-                      Confirm
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              />
             )
           })}
         </div>

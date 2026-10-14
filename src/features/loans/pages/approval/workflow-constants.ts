@@ -62,6 +62,11 @@ export function confirmDescriptionFor(def: WorkflowButtonDef): string {
   return 'This will approve the loan and move it forward. The encoder will be notified.'
 }
 
+/** Remarks are typed in the confirm dialog — not a shared panel editor. */
+export function collectRemarksInDialog(def: WorkflowButtonDef): boolean {
+  return def.remarksRequired && def.kind !== 'return'
+}
+
 export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
   {
     role: 'Recommender',
