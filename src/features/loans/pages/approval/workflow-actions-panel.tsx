@@ -34,6 +34,7 @@ import { cn } from '@/src/shared/lib/utils'
 
 import {
   MIN_REMARKS,
+  confirmDescriptionFor,
   deriveWorkflowAction,
   type WorkflowButtonDef,
   type WorkflowAction,
@@ -266,9 +267,7 @@ export function WorkflowActionsPanel({
                       Confirm: {a.label}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      {a.verdict === 'NotRecommended'
-                        ? 'The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached.'
-                        : 'This will reject the loan and close the application. The encoder will be notified.'}
+                      {confirmDescriptionFor(a)}
                       {remarks.trim() && (
                         <span className="mt-2 block border-l-2 border-border pl-2 italic">
                           <RichText
