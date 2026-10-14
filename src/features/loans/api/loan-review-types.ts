@@ -117,7 +117,7 @@ export interface LoanDetailResponse {
   documentsCompleteAt: string | null
   assignedApproverName: string | null
   requiredApprovalTier: number | null
-  assignedApproverId: number | null
+  assignedApproverId: string | number | null
 }
 
 export interface LoanAttachmentDto {
