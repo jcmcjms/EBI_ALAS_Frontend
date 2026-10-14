@@ -9,7 +9,7 @@ import { Spinner } from '@/src/shared/ui/feedback/spinner'
 type EvaluationAction = 'recommended' | 'notRecommended' | 'pushback'
 
 interface HistoryEntry {
-  id: number
+  id: number | string
   actionBy: string
   action: string
   toStatus: string | null
