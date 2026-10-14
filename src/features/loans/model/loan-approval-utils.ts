@@ -144,8 +144,13 @@ export function computeLoanMetrics(
 
   const totalExposure = principal + totalPrincipal
 
+  // Product rate 0 means "not configured" (import default) — same fallback as
+  // the backup LoanComputationService.FromEntity (rate > 0 ? rate : 0.06).
+  const configuredChargeRate = productFees?.applicationChargeRate ?? 0
   const totalDeductionRate =
-    productFees?.applicationChargeRate ?? LEGACY_TOTAL_DEDUCTION_RATE
+    configuredChargeRate > 0
+      ? configuredChargeRate
+      : LEGACY_TOTAL_DEDUCTION_RATE
   const notarialFee = productFees?.notarialFee ?? LEGACY_NOTARIAL_FEE
   const insurance = isC02
     ? (principal / 1000) * 3 * (approvalTermDays / 360)
