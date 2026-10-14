@@ -229,8 +229,7 @@ export function PersonalInfoSection() {
             <h3 className="text-md font-semibold">Referrer Information</h3>
           </div>
           <p className="mb-6 text-xs text-muted-foreground">
-            Details not present in the core banking system. Please verify with
-            the borrower.
+            Borrower referrer details.
           </p>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -275,7 +274,7 @@ export function PersonalInfoSection() {
               <Input
                 id="client.referrer"
                 {...register('client.referrer')}
-                placeholder="e.g. Employee Referral, Walk-in, Agent Name"
+                placeholder="e.g. Juan Dela Cruz"
                 {...getErrorProps('referrer')}
               />
               <p className="text-[11px] text-muted-foreground">
