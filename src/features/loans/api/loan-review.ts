@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/src/shared/lib/apiClient'
 import {
-  unwrapApiData,
   type ApiResponse,
 } from '@/src/shared/lib/api/types'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
@@ -246,21 +245,19 @@ export async function pushbackWithRevision(
 export async function getRevisionRequests(
   loanId: number | string,
 ): Promise<RevisionRequest[]> {
-  const res = await apiClient.get<ApiResponse<RevisionRequest[]>>(
+  const res = await apiClient.get<RevisionRequest[]>(
     `/api/loans/${loanId}/revision-requests`,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function resolveRevisionRequest(
   loanId: number | string,
-  revisionId: number,
+  revisionId: number | string,
 ): Promise<void> {
-  const res = await apiClient.put<ApiResponse<null>>(
+  await apiClient.put(
     `/api/loans/${loanId}/revision-requests/${revisionId}/resolve`,
   )
-  if (!res.data.success)
-    throw new Error(res.data.message || 'Failed to resolve revision request')
 }
 
 export function useSlaPolicy() {

@@ -99,8 +99,8 @@ export function WeeklyTrend({ data }: WeeklyTrendProps) {
             </p>
           </div>
         ) : (
-          <div className="h-[200px] w-full">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <div className="h-[200px] w-full min-h-[200px]">
+            <ResponsiveContainer width="100%" height={200} minWidth={0} minHeight={200}>
               <BarChart
                 data={data}
                 margin={{ top: 5, right: 5, left: -20, bottom: 0 }}
