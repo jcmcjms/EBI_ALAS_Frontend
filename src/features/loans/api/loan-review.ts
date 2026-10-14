@@ -50,10 +50,10 @@ export const loanReviewKeys = {
 }
 
 export async function getLoanRouting(id: number | string): Promise<LoanRoutingResponse> {
-  const res = await apiClient.get<ApiResponse<LoanRoutingResponse>>(
+  const res = await apiClient.get<LoanRoutingResponse>(
     `/api/loans/${id}/routing`,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 /**
@@ -71,10 +71,11 @@ function loanResponseToDetail(loan: LoanResponse): LoanDetailResponse {
   const lastName = nameParts.slice(1).join(' ') || firstName
   return {
     id: loan.id,
+    form: loan.form,
     lamId: loan.lamId,
     applicationGroupNo: loan.applicationGroupNo,
     branchCode: loan.branchId,
-    loanNo: loan.productCode ?? '',
+    loanNo: '',
     productCode: loan.productCode ?? '',
     product: loan.product || loan.productCode || '',
     creationTypeCode: null,
@@ -129,7 +130,14 @@ function loanResponseToDetail(loan: LoanResponse): LoanDetailResponse {
     createdByName: loan.lastActionByName ?? '',
     actions: [],
     evaluationVerdict: null,
-    documentFlag: null,
+    documentFlag: loan.documentFlag
+      ? {
+          flaggedAt: loan.documentFlag.flaggedAt,
+          flaggedById: loan.documentFlag.flaggedById ?? null,
+          reason: loan.documentFlag.reason ?? null,
+          missingCount: loan.documentFlag.missingCount ?? 0,
+        }
+      : null,
     outstandingLoans: [],
     buyOuts: [],
     ebiReloans: [],
@@ -173,20 +181,13 @@ export async function flagDocuments(
   loanId: number | string,
   payload: { missingRequirementCodes: string[]; reason: string },
 ): Promise<void> {
-  const res = await apiClient.post<ApiResponse<null>>(
-    `/api/loans/${loanId}/document-flag`,
-    payload,
-  )
-  if (!res.data.success)
-    throw new Error(res.data.message || 'Failed to flag documents')
+  await apiClient.post(`/api/loans/${loanId}/document-flag`, payload)
 }
 
-export async function clearDocumentFlag(loanId: number): Promise<void> {
-  const res = await apiClient.delete<ApiResponse<null>>(
-    `/api/loans/${loanId}/document-flag`,
-  )
-  if (!res.data.success)
-    throw new Error(res.data.message || 'Failed to clear document flag')
+export async function clearDocumentFlag(
+  loanId: number | string,
+): Promise<void> {
+  await apiClient.delete(`/api/loans/${loanId}/document-flag`)
 }
 
 /** `GET /api/loans/sla-policy` → bare `{ recommendationHours, evaluationHours, approvalHours }`. */

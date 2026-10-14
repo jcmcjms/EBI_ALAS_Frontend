@@ -4,6 +4,8 @@ export type EvaluationVerdict = 'Recommended' | 'NotRecommended'
 
 export interface LoanDetailResponse {
   id: string
+  /** Exact create-flow form snapshot when the API persisted it at submit. */
+  form?: unknown
   lamId: string
   applicationGroupNo: string
   branchCode: string
@@ -72,7 +74,7 @@ export interface LoanDetailResponse {
   evaluationVerdict: string | null
   documentFlag: {
     flaggedAt: string
-    flaggedById: number | null
+    flaggedById: number | string | null
     reason: string | null
     missingCount: number
   } | null
@@ -151,9 +153,9 @@ export interface ChecklistDocument {
 }
 
 export interface DeviationRemarkDto {
-  id: number
-  loanDeviationId: number
-  parentRemarkId: number | null
+  id: string
+  loanDeviationId: string
+  parentRemarkId: string | null
   authorName: string
   authorRole: string
   body: string
@@ -161,7 +163,7 @@ export interface DeviationRemarkDto {
 }
 
 export interface LoanDeviationDto {
-  id: number
+  id: string
   reasonText: string
   encoderJustification: string
   isFeeOverride: boolean
@@ -209,7 +211,7 @@ export interface RoutingEvaluatedInputs {
 }
 
 export interface LoanRoutingResponse {
-  loanId: number
+  loanId: string
   requiredApprovalTier: number | null
   deviationSeverity: number
   totalExposure: number
