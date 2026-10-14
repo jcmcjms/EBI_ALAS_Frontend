@@ -64,9 +64,15 @@ const matchesFilter = (e: TimelineEvent, f: Filter) =>
   (f === 'workflow' ? e.type === 'workflow' : e.type !== 'workflow' && !!e.type)
 
 interface ApplicationTimelineProps {
-  loanId: number | string | string
+  loanId: number | string
 
   variant?: 'panel' | 'inline'
+}
+
+function hasUsableLoanId(loanId: number | string): boolean {
+  if (typeof loanId === 'number') return Number.isFinite(loanId) && loanId > 0
+  const s = loanId.trim()
+  return s !== '' && s !== 'NaN' && s !== 'undefined' && s !== 'null'
 }
 
 export function ApplicationTimeline({
@@ -75,12 +81,12 @@ export function ApplicationTimeline({
 }: ApplicationTimelineProps) {
   const [filter, setFilter] = useState<Filter>('all')
   const [newestFirst, setNewestFirst] = useState(true)
-  const numericLoanId = Number(loanId)
+  const enabled = hasUsableLoanId(loanId)
 
   const query = useInfiniteQuery({
-    queryKey: loanKeys.review.timeline(numericLoanId),
-    queryFn: ({ pageParam }) =>
-      getLoanTimeline(numericLoanId, pageParam, PAGE_SIZE),
+    queryKey: loanKeys.review.timeline(loanId),
+    queryFn: ({ pageParam }) => getLoanTimeline(loanId, pageParam, PAGE_SIZE),
+    enabled,
     initialPageParam: 1,
     getNextPageParam: (last) => {
       if (

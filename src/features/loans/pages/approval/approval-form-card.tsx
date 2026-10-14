@@ -89,6 +89,11 @@ export function ApprovalFormCard({
               actions={actions}
               deviations={deviationsData}
               documentRemarks={documentRemarksData}
+              lamIdByLoanNo={
+                formData.loans?.[0]?.loanNo && formData.branchType?.lai
+                  ? { [formData.loans[0].loanNo]: formData.branchType.lai }
+                  : undefined
+              }
             />
           </ApprovalFormViewport>
         </CardContent>

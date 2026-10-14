@@ -78,11 +78,11 @@ function ThreadComposer({
   deviation: LoanDeviationDto
   canWrite: boolean
   frozen: boolean
-  onReply?: (remarkId: number) => void
+  onReply?: (remarkId: string) => void
 }) {
   const qc = useQueryClient()
   const [body, setBody] = useState('')
-  const [parentId, setParentId] = useState<number | null>(null)
+  const [parentId, setParentId] = useState<string | null>(null)
 
   const send = useMutation({
     mutationFn: () =>
@@ -94,7 +94,7 @@ function ThreadComposer({
       toastSuccess('Remark added.')
       setBody('')
       setParentId(null)
-      onReply?.(0)
+      onReply?.('')
       qc.invalidateQueries({
         queryKey: loanKeys.review.deviations(loanId),
       })
@@ -164,7 +164,7 @@ function DeviationThread({
   canWrite: boolean
   frozen: boolean
 }) {
-  const nameOf = (id: number | null) =>
+  const nameOf = (id: string | null) =>
     id ? deviation.remarks.find((r) => r.id === id)?.authorName : undefined
 
   return (

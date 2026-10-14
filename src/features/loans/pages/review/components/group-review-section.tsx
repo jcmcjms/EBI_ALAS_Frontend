@@ -52,7 +52,7 @@ export function GroupReviewSection({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [target, setTarget] = useState<string | null>(null)
   const [comments, setComments] = useState('')
-  const [picked, setPicked] = useState<Record<number, boolean>>({})
+  const [picked, setPicked] = useState<Record<string, boolean>>({})
   const [results, setResults] = useState<GroupStatusResponse | null>(null)
 
   const loans = group.data?.loans ?? []
