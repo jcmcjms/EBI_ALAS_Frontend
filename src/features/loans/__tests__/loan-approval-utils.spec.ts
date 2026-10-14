@@ -202,6 +202,38 @@ describe('computeLoanMetrics deduction convention', () => {
     expect(c.grossProceeds).toBeCloseTo(principal - c.deductionsSubtotal, 2)
   })
 
+  it('falls back to the 6% total deduction rate when the product rate is unset (0)', () => {
+    const c = computeLoanMetrics(loan, obligations, {
+      applicationChargeRate: 0,
+      notarialFee: 500,
+      insuranceFee: 0,
+      chargeAdvanceInterest: false,
+      advanceInterestRate: 0,
+    })
+    const principal = 322000
+    expect(c.deductionsSubtotal).toBeCloseTo(
+      principal * LEGACY_TOTAL_DEDUCTION_RATE,
+      2,
+    )
+    expect(c.applicationCharge).toBeGreaterThan(0)
+    expect(c.applicationCharge).toBeCloseTo(
+      principal * LEGACY_TOTAL_DEDUCTION_RATE - c.docStamp - 500,
+      2,
+    )
+  })
+
+  it('uses a configured product total deduction rate when present', () => {
+    const c = computeLoanMetrics(loan, obligations, {
+      applicationChargeRate: 0.075,
+      notarialFee: 500,
+      insuranceFee: 0,
+      chargeAdvanceInterest: false,
+      advanceInterestRate: 0,
+    })
+    expect(c.deductionsSubtotal).toBeCloseTo(322000 * 0.075, 2)
+    expect(c.deductionPct).toBeCloseTo(7.5, 5)
+  })
+
   it('computes Doc. Stamp as 0.75% of principal when total exposure exceeds 250k', () => {
     const c = computeLoanMetrics(
       { ...loan, cDocStamp: 3000 } as Parameters<typeof computeLoanMetrics>[0],
