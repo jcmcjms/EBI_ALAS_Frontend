@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -29,6 +29,12 @@ import {
   NumberField,
 } from './product-form-fields'
 import { SyncedDataCard } from './synced-data-card'
+import { ProductDocumentRequirementsEditor } from './product-document-requirements'
+import {
+  useLoanProductDocumentRequirements,
+  useReplaceLoanProductDocumentRequirements,
+} from '../hooks/use-loan-products'
+import type { DocumentRequirementItem } from '../api/loan-product-types'
 
 interface ProductEditSheetProps {
   product: LoanProductResponse | null
@@ -65,10 +71,60 @@ export function ProductEditSheet({
 
   const watchedRate = useWatch({ control, name: 'advanceInterestRate' })
 
+  const [requirements, setRequirements] = useState<DocumentRequirementItem[]>([])
+  const [requirementsError, setRequirementsError] = useState<string | null>(null)
+  const requirementsQuery = useLoanProductDocumentRequirements(product?.code ?? null)
+  const replaceRequirements = useReplaceLoanProductDocumentRequirements()
+
+  useEffect(() => {
+    if (requirementsQuery.data) {
+      setRequirements(requirementsQuery.data)
+      setRequirementsError(null)
+    }
+  }, [requirementsQuery.data])
+
+  useEffect(() => {
+    if (product) {
+      setRequirements([])
+      setRequirementsError(null)
+    }
+  }, [product])
+
   const submit = handleSubmit(async (values) => {
     if (!product) return
+
+    const cleaned = requirements
+      .map((row) => ({
+        code: row.code.trim(),
+        description: row.description.trim(),
+      }))
+      .filter((row) => row.code.length > 0)
+
+    for (const row of cleaned) {
+      if (row.description.length === 0) {
+        setRequirementsError(`Description is required for code ${row.code}.`)
+        return
+      }
+    }
+    const codes = cleaned.map((row) => row.code.toLowerCase())
+    if (new Set(codes).size !== codes.length) {
+      setRequirementsError('Document requirement codes must be unique.')
+      return
+    }
+    if (cleaned.length > 50) {
+      setRequirementsError('At most 50 document requirements are allowed.')
+      return
+    }
+    setRequirementsError(null)
+
     const ok = await onSave(product.code, values)
-    if (ok) onClose()
+    if (!ok) return
+
+    await replaceRequirements.mutateAsync({
+      code: product.code,
+      items: cleaned,
+    })
+    onClose()
   })
 
   const lastSyncedDisplay = useMemo(() => {
@@ -231,6 +287,30 @@ export function ProductEditSheet({
                   {...register('advanceInterestRate')}
                 />
               </div>
+            </section>
+
+            <Separator />
+
+            <section className="space-y-4">
+              <SectionHeading
+                title="Document Requirements"
+                description="Checklist items created on each new loan for this product. Codes stay stable for remarks and pushback."
+              />
+              {requirementsQuery.isLoading ? (
+                <Spinner className="size-5" />
+              ) : (
+                <ProductDocumentRequirementsEditor
+                  value={requirements}
+                  onChange={setRequirements}
+                  disabled={!canEdit}
+                />
+              )}
+              {requirementsError && (
+                <p className="flex items-center gap-1 text-[11px] text-destructive">
+                  <WarningCircle size={11} weight="fill" />
+                  {requirementsError}
+                </p>
+              )}
             </section>
 
             {!canEdit && (
