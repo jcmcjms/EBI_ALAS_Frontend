@@ -6,7 +6,7 @@ const MAX_LISTED = 6
 
 interface DocumentFlag {
   flaggedAt: string
-  flaggedById: number | null
+  flaggedById: number | string | null
   reason: string | null
   missingCount: number
 }

@@ -8,7 +8,7 @@ import {
 
 interface DocumentFlagDto {
   flaggedAt: string
-  flaggedById: number | null
+  flaggedById: number | string | null
   reason: string | null
   missingCount: number
 }

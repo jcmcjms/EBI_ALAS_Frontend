@@ -220,6 +220,7 @@ export type LoanType = 'New' | 'Reloan'
  */
 export interface LoanResponse {
   id: string
+  form?: unknown
   lamId: string
   applicationGroupNo: string
   clientName: string
@@ -241,6 +242,12 @@ export interface LoanResponse {
   lastActionById: string | null
   lastActionByName: string | null
   lastActionVerb: string | null
+  documentFlag?: {
+    flaggedAt: string
+    flaggedById: string | null
+    reason: string | null
+    missingCount: number
+  } | null
 }
 
 export interface LoanSubmissionPayload {
@@ -399,7 +406,7 @@ export interface CreatedLoanSummary {
 
   documentFlag?: {
     flaggedAt: string
-    flaggedById: number | null
+    flaggedById: number | string | null
     reason: string | null
     missingCount: number
   } | null
