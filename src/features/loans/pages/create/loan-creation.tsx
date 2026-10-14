@@ -27,6 +27,7 @@ import { LoanTransfersProvider } from './loan-transfers-provider'
 import { useCreateLoan } from '@/src/features/loans/hooks/use-create-loan'
 import { mapFormToSubmitLoanRequest } from '@/src/features/loans/model/map-form-to-request'
 import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
+import { parseEditLoanId } from './parse-edit-loan-id'
 
 import {
   SECTIONS,
@@ -41,18 +42,16 @@ const SCROLL_OFFSET_PX = 96
 
 export function LoanCreationPage() {
   const search = useSearch({ strict: false }) as { loanId?: string }
-  const editLoanIdRaw = Number(search.loanId)
-  const editLoanId =
-    Number.isFinite(editLoanIdRaw) && editLoanIdRaw > 0 ? editLoanIdRaw : null
+  const editLoanId = parseEditLoanId(search.loanId)
 
   const revisionRequests = useQuery({
-    queryKey: loanKeys.revisionRequests(editLoanId ?? 0),
-    queryFn: () => getRevisionRequests(editLoanId ?? 0),
+    queryKey: loanKeys.revisionRequests(editLoanId ?? 'new'),
+    queryFn: () => getRevisionRequests(editLoanId!),
     enabled: editLoanId != null,
   })
 
   const existingLoan = useQuery({
-    queryKey: loanKeys.review.detail(editLoanId ?? 0),
+    queryKey: loanKeys.review.detail(editLoanId ?? 'new'),
     queryFn: () => getLoanDetail(editLoanId!),
     enabled: editLoanId != null,
     staleTime: 30_000,
