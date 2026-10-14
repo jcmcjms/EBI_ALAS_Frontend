@@ -13,9 +13,9 @@ commits: b7071d6..36e663a
 
 ## What Was Built
 
-Product-level **document requirements** are configurable in the admin loan-product edit sheet and are copied onto each new loan at submit time. The loan **Document Requirements** tab now lists real checklist rows (stable codes + descriptions) instead of “No checklist items found.”
+Product-level **document requirements** (checklist codes per loan product) are configurable in the admin loan-product edit sheet. The loan **Document Requirements** tab **checks webloan** for those codes and reports upload status — it does not invent local checklist rows.
 
-Admins manage a per-product list of requirement codes (max 50) with descriptions. On loan submit, those rows become `DocumentChecklistItem`s so reviewers see what is required and which items are still unsubmitted.
+Admins manage which checklist codes apply to a product (max 50). On read, `GET /api/loans/{id}/checklist-documents` loads those codes and looks up webloan `check_list_data` for the client CIS from the form snapshot. `uploadStatus` is `Uploaded` when webloan `submitted` is set, otherwise `No uploaded documents`. Descriptions come from webloan when present.
 
 ## Architecture
 
@@ -26,9 +26,8 @@ Admins manage a per-product list of requirement codes (max 50) with descriptions
 | Entity | `Features/LoanProducts/LoanProductDocumentRequirement.cs` | `ProductCode`, `Code`, `Description` |
 | Catalog + seed | `ProductDocumentRequirementCatalog.cs`, `ProductDocumentRequirementSeeder.cs` | Default A16/A17/C02/C21/C23/C35 codes; seed only when table empty |
 | API | `Features/LoanProducts/DocumentRequirements/` | `GET/PUT /api/loan-products/{code}/document-requirements` |
-| Checklist id | `Features/Documents/DocumentChecklistItem.cs` | Added `Code` for stable `idCode` |
-| Submit | `Features/LoanApplications/Submit/SubmitLoanHandler.cs` | Clones product requirements into checklist items |
-| Checklist DTO | `ChecklistDocumentEndpoints.cs` | `IdCode = Code`, `ChecklistDescription = Name` |
+| Webloan check | `IWebLoanReader.GetChecklistItemsAsync` | Reads `check_list_data` by CIS |
+| Checklist API | `ChecklistDocumentEndpoints.cs` | Product codes × webloan `submitted` → upload status |
 
 Write PUT is Admin-only (same as product policy update). GET is authenticated.
 
@@ -45,9 +44,9 @@ Existing loan Document Requirements UI is unchanged and consumes the checklist A
 
 ### Design Decisions
 
-- **Approach A (catalog + copy-on-submit)** so missing/pushback status can live per loan. Read-time derivation cannot persist status.
-- **Stable `Code` on `DocumentChecklistItem`** so remarks/pushback key on `A1004`, not free-text description.
-- **Descriptions seed as the code** until edited — reference data only supplied codes (webloan `check_list_all` names are not in this stack). Do not invent display names.
+- **Requirements = product checklist codes; status = webloan check.** Matches the reference: `LoanProductChecklist` × webloan uploads. Not local rows created at submit.
+- **CIS from form snapshot** (`client.cisId`) keys webloan `check_list_data`.
+- **Descriptions prefer webloan**, fall back to the product requirement description.
 - **PUT is full replace** (including empty) for a simple admin contract.
 - No Backup source was copied; types and folders follow live feature-first rules.
 
@@ -71,7 +70,7 @@ Content-Type: application/json
 
 ### Loan checklist
 
-After submit, `GET /api/loans/{id}/checklist-documents` returns one row per product requirement (`uploadStatus` = `No uploaded documents` until submitted).
+After submit, `GET /api/loans/{id}/checklist-documents` returns one row per product requirement code. Upload status is read from webloan (`check_list_data.submitted`), not from local checklist rows.
 
 ## Verification
 
@@ -89,10 +88,11 @@ Covered behavior: catalog seed idempotency; GET/PUT replace + duplicate rejectio
 
 ## Journey Log
 
-- [lesson] Backend test project had pre-existing compile breaks (`IWebLoanReader.GetCatLoanClassAsync`, `SubmitLoanHandler`/`LoanWorkflowService` ctor, `ToReceiveNotification` link arg) — fixed before feature tests could run.
-- [lesson] `tests/` is in backend `.gitignore` but tracked files stay tracked; new test files need `git add -f`.
-- [pivot] Checklist `idCode` needed a dedicated `Code` column; mapping both id and description to `Name` would break remarks keys.
-- [lesson] Seed descriptions equal codes by design; inventing human labels would be fabricated product copy.
+- [dead end] First pass invented local `DocumentChecklistItem` copy-on-submit — wrong. Reference only **checks webloan** against product requirement codes.
+- [pivot] Reworked checklist API to product codes × `IWebLoanReader.GetChecklistItemsAsync` (webloan `check_list_data.submitted`).
+- [lesson] Backend test project had pre-existing compile breaks — fixed before feature tests could run.
+- [lesson] `tests/` is in backend `.gitignore`; new test files need `git add -f`.
+- [lesson] Do not invent display names or local workflow rows when the reference derives status from webloan.
 
 ## Source Materials
 
