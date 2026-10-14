@@ -1,4 +1,4 @@
-import type { QueuedLoanDto } from '../hooks/use-desk-queue'
+import type { DeskQueueResponse, QueuedLoanDto } from '../hooks/use-desk-queue'
 import { assessAging } from './loan-aging'
 import type { LoanStatus } from './loan-status'
 
@@ -14,6 +14,33 @@ export function formatPhp(amount: number): string {
 
 export function minutesSince(iso: string, now: number): number {
   return Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000))
+}
+
+export function resolveQueueState(
+  desk: DeskQueueResponse | undefined,
+  loanId: string,
+  userId: string | undefined,
+): {
+  isHead: boolean
+  ownerUserId: string | null
+  ownerName?: string
+  isMine: boolean
+  position?: number
+} | undefined {
+  const queueItem: QueuedLoanDto | undefined =
+    desk?.items.find((i) => i.loanId === loanId) ??
+    (desk?.currentClaim?.loanId === loanId ? desk.currentClaim : undefined)
+  if (!queueItem) return undefined
+  return {
+    isHead: queueItem.isHead,
+    ownerUserId: queueItem.ownerUserId,
+    ownerName: queueItem.ownerName ?? undefined,
+    isMine:
+      queueItem.ownerUserId != null &&
+      userId != null &&
+      queueItem.ownerUserId === userId,
+    position: queueItem.position,
+  }
 }
 
 export interface DeskQueueStats {

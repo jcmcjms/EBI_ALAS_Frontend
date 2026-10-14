@@ -6,6 +6,7 @@ import {
   useClaimById,
   useDeskQueue,
 } from '@/src/features/loans/hooks/use-desk-queue'
+import { resolveQueueState } from '@/src/features/loans/model/desk-queue'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useEntityViewers } from '@/src/shared/lib/signalr/use-presence'
 import { useLoanGroup } from '@/src/features/loans/hooks/use-loan-group'
@@ -147,18 +148,7 @@ export function useLoanApprovalPage() {
 
   const claimById = useClaimById()
   const { data: desk } = useDeskQueue()
-  const queueItem = desk?.items.find((i) => i.loanId === String(id))
-  const queueState = queueItem
-    ? {
-        isHead: queueItem.isHead,
-        ownerUserId: queueItem.ownerUserId,
-        ownerName: queueItem.ownerName ?? undefined,
-        isMine:
-          queueItem.ownerUserId != null &&
-          queueItem.ownerUserId === user?.userId,
-        position: queueItem.position,
-      }
-    : undefined
+  const queueState = resolveQueueState(desk, String(id), user?.userId)
 
   const needsDeskGate = detail
     ? (detail.status === 'ForRecommendation' && user?.role === 'Recommender') ||
