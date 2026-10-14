@@ -14,8 +14,8 @@ export interface RevisionSectionFeedback {
 }
 
 export interface RevisionRequest {
-  id: number
-  loanApplicationId: number
+  id: string | number
+  loanApplicationId: string | number
   requestedByName: string
   requestedByRole: string
   overallComments: string
