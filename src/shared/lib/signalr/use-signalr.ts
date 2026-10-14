@@ -8,6 +8,7 @@ import {
   classifyNotification,
   type AppNotification,
 } from '@/src/shared/store/notification-store'
+import { useSignalRConnectionStore } from '@/src/shared/store/signalr-connection-store'
 import { queryClient } from '@/src/shared/lib/queryClient'
 import {
   getSharedConnection,
@@ -48,7 +49,8 @@ function playChime() {
 export function useSignalR() {
   const token = useAuthStore((state) => state.accessToken)
   const addNotification = useNotificationStore((state) => state.addNotification)
-  const [isConnected, setIsConnected] = useState(false)
+  const isConnected = useSignalRConnectionStore((s) => s.isConnected)
+  const setConnected = useSignalRConnectionStore((s) => s.setConnected)
   const [connection, setConnection] = useState<signalR.HubConnection | null>(
     null,
   )
@@ -56,7 +58,7 @@ export function useSignalR() {
   useEffect(() => {
     if (!token) {
       setConnection(null)
-      setIsConnected(false)
+      setConnected(false)
       return
     }
 
@@ -64,13 +66,13 @@ export function useSignalR() {
     const conn = getSharedConnection(token)
 
     conn.onclose(() => {
-      if (!disposed) setIsConnected(false)
+      if (!disposed) setConnected(false)
     })
     conn.onreconnecting(() => {
-      if (!disposed) setIsConnected(false)
+      if (!disposed) setConnected(false)
     })
     conn.onreconnected(() => {
-      if (!disposed) setIsConnected(true)
+      if (!disposed) setConnected(true)
     })
 
     conn.on(
@@ -133,7 +135,7 @@ export function useSignalR() {
         existingStart
           .then(() => {
             if (!disposed) {
-              setIsConnected(true)
+              setConnected(true)
               setConnection(conn)
             }
           })
@@ -143,7 +145,7 @@ export function useSignalR() {
           .start()
           .then(() => {
             if (disposed) return
-            setIsConnected(true)
+            setConnected(true)
             setConnection(conn)
           })
           .catch(() => {})
@@ -153,15 +155,15 @@ export function useSignalR() {
         setStartingPromise(startPromise)
       }
     } else if (conn.state === signalR.HubConnectionState.Connected) {
-      setIsConnected(true)
+      setConnected(true)
       setConnection(conn)
     }
 
     return () => {
       disposed = true
-      setIsConnected(false)
+      setConnected(false)
     }
-  }, [token, addNotification])
+  }, [token, addNotification, setConnected])
 
   return { connection, isConnected }
 }
