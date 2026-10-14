@@ -34,6 +34,7 @@ import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
+import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import type { CreateRevisionRequestPayload } from '@/src/features/loans/types/revision-request'
 
 import {
@@ -136,10 +137,13 @@ export function useLoanApprovalPage() {
 
   const detail = loan.data
   const frozen = detail ? TERMINAL.includes(detail.status) : false
-  const formData = useMemo(
-    () => (detail ? mapLoanDetailToFormData(detail) : null),
-    [detail],
-  )
+  const formData = useMemo(() => {
+    if (!detail) return null
+    if (detail.form) {
+      return detail.form as LoanApplicationFormData
+    }
+    return mapLoanDetailToFormData(detail)
+  }, [detail])
 
   const claimById = useClaimById()
   const { data: desk } = useDeskQueue()
@@ -182,6 +186,8 @@ export function useLoanApprovalPage() {
       switch (payload.action) {
         case 'Recommend':
           return recommendLoan(id)
+        case 'EvaluateRecommend':
+          return evaluateLoan(id, true)
         case 'NotRecommend':
           return evaluateLoan(id, false)
         case 'Approve':

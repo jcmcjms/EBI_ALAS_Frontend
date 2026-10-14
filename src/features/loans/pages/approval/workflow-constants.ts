@@ -12,6 +12,7 @@ export const MIN_REMARKS = 10
 
 export type WorkflowAction =
   | 'Recommend'
+  | 'EvaluateRecommend'
   | 'NotRecommend'
   | 'Approve'
   | 'Reject'
@@ -38,6 +39,8 @@ const WORKFLOW_ACTION_MAP: Record<string, WorkflowAction> = {
 }
 
 export function deriveWorkflowAction(def: WorkflowButtonDef): WorkflowAction {
+  if (def.role === 'Evaluator' && def.from === 'ForChecking' && def.to === 'ForApproval')
+    return def.verdict === 'NotRecommended' ? 'NotRecommend' : 'EvaluateRecommend'
   const base = WORKFLOW_ACTION_MAP[def.to]
   if (base === 'Recommend' && def.verdict === 'NotRecommended')
     return 'NotRecommend'
