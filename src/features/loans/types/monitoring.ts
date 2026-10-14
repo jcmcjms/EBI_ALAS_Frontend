@@ -29,6 +29,8 @@ export interface LoanMonitoringRecord {
 
   assignedApproverName: string | null
 
+  assignedToUserId?: string | null
+
   requiredApprovalTier: number | null
 
   noAuthorityReason: string | null
