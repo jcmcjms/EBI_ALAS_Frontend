@@ -155,19 +155,17 @@ function loanResponseToDetail(loan: LoanResponse): LoanDetailResponse {
 
 export async function getLoanHistory(id: number | string) {
   const res = await apiClient.get<
-    ApiResponse<
-      {
-        id: number
-        actionBy: string
-        action: string
-        fromStatus: string | null
-        toStatus: string | null
-        comments: string | null
-        actionDate: string
-      }[]
-    >
+    {
+      id: string
+      actionBy: string
+      action: string
+      fromStatus: string | null
+      toStatus: string | null
+      comments: string | null
+      actionDate: string
+    }[]
   >(`/api/loans/${id}/history`)
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 /** `POST /api/loans/{id}/cancel` — empty body. Reason is not on the wire. */
