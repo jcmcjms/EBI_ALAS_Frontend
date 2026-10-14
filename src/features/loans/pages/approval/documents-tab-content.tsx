@@ -46,9 +46,7 @@ export function DocumentsTabContent({
             Document Requirements
           </CardTitle>
           <CardDescription className="pt-1 text-xs">
-            Checklist of required documents. Missing documents do
-            not block review — a reviewer may flag the file or
-            proceed to approval.
+            Checklist of required documents.
           </CardDescription>
         </div>
         <Button
