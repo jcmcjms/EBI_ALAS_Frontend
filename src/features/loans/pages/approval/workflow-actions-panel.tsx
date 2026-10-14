@@ -122,9 +122,9 @@ export function WorkflowActionsPanel({
             className="flex items-center gap-1.5 text-sm font-semibold"
           >
             Remarks / Conditions
-            {actions.some((a) => a.remarksRequired) && (
-              <span className="text-destructive">*</span>
-            )}
+            <span className="text-[11px] font-normal text-muted-foreground">
+              (optional for Recommend / Approve)
+            </span>
           </Label>
           <RichTextEditor
             value={remarks}
