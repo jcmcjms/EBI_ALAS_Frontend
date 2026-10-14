@@ -24,7 +24,7 @@ export function useUpdateGroupStatus() {
     Error,
     {
       groupNo: string
-      payload: { status: string; comments?: string; loanIds?: number[] }
+      payload: { status: string; comments?: string; loanIds?: string[] }
     }
   >({
     mutationFn: ({ groupNo, payload }) => updateGroupStatus(groupNo, payload),

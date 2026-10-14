@@ -2,7 +2,7 @@ import { apiClient } from '@/src/shared/lib/apiClient'
 import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 
 export interface GroupLoanSummary {
-  id: number
+  id: string
   lamId: string
   status: string
   branchCode: string
@@ -27,7 +27,7 @@ export interface LoanGroupResponse {
 }
 
 export interface GroupLoanResult {
-  loanId: number
+  loanId: string
   lamId: string
   succeeded: boolean
   error: string | null
@@ -42,10 +42,10 @@ export interface GroupStatusResponse {
 export async function getLoanGroup(
   groupNo: string,
 ): Promise<LoanGroupResponse> {
-  const res = await apiClient.get<ApiResponse<LoanGroupResponse>>(
+  const res = await apiClient.get<LoanGroupResponse>(
     `/api/loan-groups/${encodeURIComponent(groupNo)}`,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function updateGroupStatus(
@@ -53,7 +53,7 @@ export async function updateGroupStatus(
   payload: {
     status: string
     comments?: string
-    loanIds?: number[]
+    loanIds?: string[]
   },
 ): Promise<GroupStatusResponse> {
   const res = await apiClient.put<ApiResponse<GroupStatusResponse>>(
