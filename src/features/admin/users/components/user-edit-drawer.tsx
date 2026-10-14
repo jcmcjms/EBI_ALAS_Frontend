@@ -91,6 +91,10 @@ export function UserEditDrawer({
       toastError('Last name is required')
       return
     }
+    if (!profile.email.trim()) {
+      toastError('Email is required for password reset')
+      return
+    }
 
     setIsSaving(true)
     try {
@@ -98,6 +102,7 @@ export function UserEditDrawer({
         firstName: profile.firstName.trim(),
         middleName: profile.middleName.trim(),
         lastName: profile.lastName.trim(),
+        email: profile.email.trim(),
         branchId: profile.branchId,
         role: profile.role,
         jobTitle: profile.jobTitle.trim(),

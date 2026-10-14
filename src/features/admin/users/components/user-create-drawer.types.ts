@@ -4,6 +4,7 @@ export interface UserCreatePayload {
   firstName: string
   middleName: string
   lastName: string
+  email: string
   branchId: string
   role: string
   jobTitle: string
@@ -14,12 +15,14 @@ export const emptyForm = {
   firstName: '',
   middleName: '',
   lastName: '',
+  email: '',
   branchId: '',
   role: '',
   jobTitle: '',
 }
 
 export const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function generateTempPassword(length = 12): string {
   const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ'

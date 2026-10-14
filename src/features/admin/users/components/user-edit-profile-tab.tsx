@@ -64,6 +64,20 @@ export function ProfileTab({
           disabled={!canEdit}
         />
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="edit-email">Email *</Label>
+        <Input
+          id="edit-email"
+          type="email"
+          value={profile.email}
+          onChange={(e) => onFieldChange('email', e.target.value)}
+          className="h-9"
+          disabled={!canEdit}
+        />
+        <p className="text-xs text-muted-foreground">
+          Used to send temporary passwords for forgot-password resets.
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">

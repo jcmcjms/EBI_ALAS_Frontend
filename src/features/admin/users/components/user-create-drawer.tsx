@@ -15,6 +15,7 @@ import {
   type UserCreatePayload,
   emptyForm,
   USERNAME_PATTERN,
+  EMAIL_PATTERN,
   generateTempPassword,
 } from './user-create-drawer.types'
 import { CreateUserFormBody } from './create-user-form-body'
@@ -75,6 +76,14 @@ export function UserCreateDrawer({
       toastError('Last name is required')
       return
     }
+    if (!form.email.trim()) {
+      toastError('Email is required for password reset')
+      return
+    }
+    if (!EMAIL_PATTERN.test(form.email.trim())) {
+      toastError('Enter a valid email address')
+      return
+    }
     if (!form.branchId) {
       toastError('Branch is required')
       return
@@ -93,6 +102,7 @@ export function UserCreateDrawer({
         firstName: form.firstName.trim(),
         middleName: form.middleName.trim(),
         lastName: form.lastName.trim(),
+        email: form.email.trim(),
         branchId: form.branchId,
         role: form.role,
         jobTitle: form.jobTitle.trim(),

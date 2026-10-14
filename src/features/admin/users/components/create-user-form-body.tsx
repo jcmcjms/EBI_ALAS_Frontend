@@ -15,6 +15,7 @@ interface FormState {
   firstName: string
   middleName: string
   lastName: string
+  email: string
   branchId: string
   role: string
   jobTitle: string
@@ -86,6 +87,21 @@ export function CreateUserFormBody({
           placeholder="Dela Cruz"
           className="h-9"
         />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="create-email">Email *</Label>
+        <Input
+          id="create-email"
+          type="email"
+          value={form.email}
+          onChange={(e) => onFieldChange('email', e.target.value)}
+          placeholder="juan.delacruz@enterprisebank.ph"
+          autoComplete="off"
+          className="h-9"
+        />
+        <p className="text-xs text-muted-foreground">
+          Used to send temporary passwords for forgot-password resets.
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="create-branch">Assigned Branch *</Label>
