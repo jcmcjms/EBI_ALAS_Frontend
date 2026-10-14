@@ -35,7 +35,7 @@ export interface DashboardOverviewResponse {
     lamId: string
     isActive: boolean
   }[]
-  pushBacks?: {
+  pushBackItems?: {
     number: number
     lamId: string
     branchId: string
@@ -90,7 +90,7 @@ export function mapDashboardOverview(
       lamId: s.lamId,
       isActive: s.isActive,
     })),
-    pushBacks: (o.pushBacks ?? []).map((p) => ({
+    pushBacks: (o.pushBackItems ?? []).map((p) => ({
       number: p.number,
       lamId: p.lamId,
       branch: p.branchId,

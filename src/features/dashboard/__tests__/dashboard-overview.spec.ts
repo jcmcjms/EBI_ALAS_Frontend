@@ -51,7 +51,7 @@ describe('mapDashboardOverview', () => {
       nowServing: [
         { number: 1, checker: 'Eval', lamId: 'LAM-1', isActive: true },
       ],
-      pushBacks: [
+      pushBackItems: [
         {
           number: 1,
           lamId: 'LAM-2',
