@@ -28,3 +28,9 @@ export const changePasswordSchema = z
   })
 
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
+
+export const forgotPasswordSchema = z.object({
+  username: z.string().min(3, 'Username is required').max(50),
+})
+
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
