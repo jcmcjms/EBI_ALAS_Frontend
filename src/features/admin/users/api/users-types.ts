@@ -13,7 +13,7 @@ export interface CreateUserPayload {
   firstName: string
   middleName?: string | null
   lastName: string
-  email?: string | null
+  email: string
   branchId: string
   role: string
   jobTitle?: string | null
@@ -23,7 +23,7 @@ export interface UpdateUserPayload {
   firstName: string
   middleName?: string | null
   lastName: string
-  email?: string | null
+  email: string
   branchId: string
   role: string
   jobTitle?: string | null
