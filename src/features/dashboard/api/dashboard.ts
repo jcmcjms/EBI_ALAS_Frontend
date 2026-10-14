@@ -1,13 +1,13 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
-import type { DashboardData } from '../types'
+import type { DashboardData, LoanStatus } from '../types'
 
-/** Raw DTO returned by GET /api/dashboard/overview (no ApiResponse envelope). */
 export interface DashboardOverviewResponse {
   pendingRecommendation: number
   pendingEvaluation: number
   pendingApproval: number
   approvedToday: number
   pushbacks: number
+  nowServingCount?: number
   flaggedDocuments?: {
     id: string
     lamId: string
@@ -19,26 +19,95 @@ export interface DashboardOverviewResponse {
     flaggedByName: string | null
     flaggedAt: string | null
   }[]
+  pendingQueue?: {
+    position: number
+    lamId: string
+    branchId: string
+    status: string
+    statusKey: string
+    date: string
+    clientName: string
+    encoderName: string
+  }[]
+  nowServing?: {
+    number: number
+    checker: string
+    lamId: string
+    isActive: boolean
+  }[]
+  pushBacks?: {
+    number: number
+    lamId: string
+    branchId: string
+    date: string
+    reason: string
+  }[]
+  approvedLoans?: {
+    branchId: string
+    lamId: string
+    date: string
+    fullName: string
+  }[]
+  weeklyTrend?: {
+    day: string
+    approved: number
+    pushBacks: number
+  }[]
+}
+
+function toStatus(value: string): LoanStatus {
+  return value as LoanStatus
 }
 
 export function mapDashboardOverview(
   o: DashboardOverviewResponse,
 ): DashboardData {
+  const pendingQueue = o.pendingQueue ?? []
+  const nowServing = o.nowServing ?? []
   return {
     summary: {
       totalPending:
         o.pendingRecommendation + o.pendingEvaluation + o.pendingApproval,
       pendingDeltaFromYesterday: 0,
-      nowServing: 0,
+      nowServing: o.nowServingCount ?? nowServing.length,
       pushBacksToday: o.pushbacks,
       approvedToday: o.approvedToday,
       approvedVsAvgPercent: 0,
     },
-    pendingQueue: [],
-    nowServing: [],
-    pushBacks: [],
-    approvedLoans: [],
-    weeklyTrend: [],
+    pendingQueue: pendingQueue.map((p) => ({
+      position: p.position,
+      lamId: p.lamId,
+      branch: p.branchId,
+      status: toStatus(p.status),
+      statusKey: p.statusKey,
+      date: p.date,
+      clientName: p.clientName,
+      encoderName: p.encoderName,
+    })),
+    nowServing: nowServing.map((s) => ({
+      number: s.number,
+      checker: s.checker,
+      lamId: s.lamId,
+      isActive: s.isActive,
+    })),
+    pushBacks: (o.pushBacks ?? []).map((p) => ({
+      number: p.number,
+      lamId: p.lamId,
+      branch: p.branchId,
+      date: p.date,
+      reason: p.reason,
+    })),
+    approvedLoans: (o.approvedLoans ?? []).map((a) => ({
+      branch: a.branchId,
+      lamId: a.lamId,
+      date: a.date,
+      fullName: a.fullName,
+    })),
+    weeklyTrend: (o.weeklyTrend ?? []).map((w) => ({
+      day: w.day,
+      approved: w.approved,
+      pushBacks: w.pushBacks,
+    })),
     incompleteDocsQueue: (o.flaggedDocuments ?? []).map((f, index) => ({
       id: index + 1,
       position: index + 1,
