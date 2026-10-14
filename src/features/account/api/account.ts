@@ -2,7 +2,7 @@ import { apiClient } from '@/src/shared/lib/apiClient'
 import type { PagedResult } from '@/src/shared/lib/api/types'
 
 export interface AccountProfile {
-  id: number
+  id: string | number
   username: string
   firstName: string
   middleName?: string
@@ -25,7 +25,7 @@ export interface AccountStats {
 }
 
 export interface Session {
-  id: number
+  id: string | number
 
   deviceInfo: string | null
   createdAt: string
@@ -36,7 +36,7 @@ export interface Session {
 export type PagedSessionsResponse = PagedResult<Session>
 
 export interface Activity {
-  id: number
+  id: string | number
 
   lamId: string
   action: string
@@ -48,7 +48,7 @@ export interface Activity {
 }
 
 export interface ProcessedLoan {
-  id: number
+  id: string | number
   lamId: string
   clientName: string
   status: string
@@ -63,7 +63,7 @@ export interface UpdateProfilePayload {
 }
 
 export interface RecentClient {
-  cisId: string
+  cisId: string | null
   name: string
   agency: string
   lastInteraction: string
@@ -71,7 +71,7 @@ export interface RecentClient {
 
 export async function getAccountProfile(): Promise<AccountProfile> {
   const response = await apiClient.get('/api/account/me')
-  return response.data.data
+  return response.data
 }
 
 export async function updateAccountProfile(
@@ -87,31 +87,33 @@ export async function getAccountSessions(
   const response = await apiClient.get(
     `/api/account/me/sessions?pageNumber=${pageNumber}&pageSize=${pageSize}`,
   )
-  return response.data.data
+  return response.data
 }
 
-export async function revokeAccountSession(sessionId: number): Promise<void> {
+export async function revokeAccountSession(
+  sessionId: string | number,
+): Promise<void> {
   await apiClient.delete(`/api/account/me/sessions/${sessionId}`)
 }
 
 export async function revokeOtherSessions(): Promise<number> {
   const response = await apiClient.delete('/api/account/me/sessions/others')
-  return response.data.data?.revokedCount ?? 0
+  return response.data?.revokedCount ?? 0
 }
 
 export async function getAccountActivity(limit = 10): Promise<Activity[]> {
   const response = await apiClient.get(
     `/api/account/me/activity?limit=${limit}`,
   )
-  return response.data.data
+  return response.data
 }
 
 export async function getAccountLoans(limit = 10): Promise<ProcessedLoan[]> {
   const response = await apiClient.get(`/api/account/me/loans?limit=${limit}`)
-  return response.data.data
+  return response.data
 }
 
 export async function getAccountClients(limit = 5): Promise<RecentClient[]> {
   const response = await apiClient.get(`/api/account/me/clients?limit=${limit}`)
-  return response.data.data
+  return response.data
 }
