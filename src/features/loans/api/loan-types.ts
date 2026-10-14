@@ -248,6 +248,8 @@ export interface LoanResponse {
     reason: string | null
     missingCount: number
   } | null
+  assignedToUserId?: string | null
+  assignedToName?: string | null
 }
 
 export interface LoanSubmissionPayload {

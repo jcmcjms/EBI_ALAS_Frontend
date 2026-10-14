@@ -42,7 +42,10 @@ function toMonitoringRecord(loan: LoanResponse): LoanMonitoringRecord {
     createdById: loan.createdBy ?? null,
     documentsComplete: null,
     documentsCompleteAt: null,
-    assignedApproverName: null,
+    assignedApproverName:
+      loan.assignedToName ??
+      (loan.status === 'ForRevision' ? loan.lastActionByName : null) ??
+      null,
     requiredApprovalTier: null,
     queueStage: null,
     queuePosition: null,
