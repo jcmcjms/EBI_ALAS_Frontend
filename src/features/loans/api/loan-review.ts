@@ -129,7 +129,7 @@ function loanResponseToDetail(loan: LoanResponse): LoanDetailResponse {
     createdById: loan.createdBy,
     createdByName: loan.lastActionByName ?? '',
     actions: [],
-    evaluationVerdict: null,
+    evaluationVerdict: resolveEvaluationVerdict(loan.lastActionVerb),
     documentFlag: loan.documentFlag
       ? {
           flaggedAt: loan.documentFlag.flaggedAt,
@@ -147,10 +147,23 @@ function loanResponseToDetail(loan: LoanResponse): LoanDetailResponse {
     webLoanPnNumbers: [],
     documentsComplete: null,
     documentsCompleteAt: null,
-    assignedApproverName: null,
+    assignedApproverName: loan.assignedToName ?? null,
     requiredApprovalTier: null,
-    assignedApproverId: null,
+    assignedApproverId: loan.assignedToUserId ?? null,
   }
+}
+
+export function resolveEvaluationVerdict(
+  lastActionVerb: string | null | undefined,
+): string | null {
+  if (
+    lastActionVerb === 'EvaluatedRecommended' ||
+    lastActionVerb === 'EvaluatedNotRecommended'
+  ) {
+    return lastActionVerb
+  }
+
+  return null
 }
 
 export async function getLoanHistory(id: number | string) {
