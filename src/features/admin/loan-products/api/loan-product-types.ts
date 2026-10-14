@@ -1,3 +1,12 @@
+export interface DocumentRequirementItem {
+  code: string
+  description: string
+}
+
+export interface ReplaceDocumentRequirementsPayload {
+  items: DocumentRequirementItem[]
+}
+
 export interface UpdateLoanProductPayload {
   minAmount: number
   maxAmount: number

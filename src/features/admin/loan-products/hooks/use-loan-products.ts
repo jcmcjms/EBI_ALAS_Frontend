@@ -1,14 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { loanProductKeys } from '@/src/features/admin/loan-products/api/loan-product-queries'
 import type {
+  DocumentRequirementItem,
   LoanProductImportResult,
   UpdateLoanProductPayload,
 } from '../api/loan-product-types'
 import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 import {
   getLoanProductByCode,
+  getLoanProductDocumentRequirements,
   getLoanProducts,
   importLoanProducts,
+  replaceLoanProductDocumentRequirements,
   syncLoanProducts,
   updateLoanProduct,
 } from '../api/loan-products'
@@ -44,6 +47,36 @@ function useInvalidateLoanProducts() {
       queryKey: loanProductKeys.all,
     })
   }
+}
+
+export function useLoanProductDocumentRequirements(code: string | null) {
+  return useQuery({
+    queryKey:
+      code !== null
+        ? loanProductKeys.documentRequirements(code)
+        : ['loan-products', 'document-requirements', 'disabled'],
+    queryFn: () => getLoanProductDocumentRequirements(code!),
+    enabled: code !== null && code.trim().length > 0,
+    staleTime: LOAN_PRODUCTS_STALE_TIME,
+  })
+}
+
+export function useReplaceLoanProductDocumentRequirements() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      code,
+      items,
+    }: {
+      code: string
+      items: DocumentRequirementItem[]
+    }) => replaceLoanProductDocumentRequirements(code, items),
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: loanProductKeys.documentRequirements(variables.code),
+      })
+    },
+  })
 }
 
 export function useUpdateLoanProduct() {

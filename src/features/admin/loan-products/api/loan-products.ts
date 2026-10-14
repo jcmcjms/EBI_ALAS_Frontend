@@ -2,6 +2,7 @@ import { apiClient } from '@/src/shared/lib/apiClient'
 import type { LoanProductResponse } from '@/src/shared/lib/api/types'
 import { getLoanProducts as fetchAllLoanProducts } from '@/src/shared/lib/api/loan-product-api'
 import type {
+  DocumentRequirementItem,
   LoanProductImportResult,
   LoanProductSyncResult,
   UpdateLoanProductPayload,
@@ -18,6 +19,26 @@ export async function getLoanProductByCode(
 ): Promise<LoanProductResponse | null> {
   const res = await apiClient.get<LoanProductResponse>(
     `/api/loan-products/${encodeURIComponent(code)}`,
+  )
+  return res.data
+}
+
+export async function getLoanProductDocumentRequirements(
+  code: string,
+): Promise<DocumentRequirementItem[]> {
+  const res = await apiClient.get<DocumentRequirementItem[]>(
+    `/api/loan-products/${encodeURIComponent(code)}/document-requirements`,
+  )
+  return res.data
+}
+
+export async function replaceLoanProductDocumentRequirements(
+  code: string,
+  items: DocumentRequirementItem[],
+): Promise<DocumentRequirementItem[]> {
+  const res = await apiClient.put<DocumentRequirementItem[]>(
+    `/api/loan-products/${encodeURIComponent(code)}/document-requirements`,
+    { items },
   )
   return res.data
 }
