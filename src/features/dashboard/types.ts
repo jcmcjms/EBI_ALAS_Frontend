@@ -74,24 +74,6 @@ export interface IncompleteDocsQueueItem {
   flaggedAt?: string
 }
 
-export type ActionRequiredKind =
-  | 'Returned'
-  | 'FlaggedDocuments'
-  | 'AwaitingMyAction'
-
-export interface ActionRequiredItem {
-  kind: ActionRequiredKind
-  lamId: string
-  reason: string
-  occurredAt: string
-  canAct: boolean
-}
-
-export interface WeeklyTrendSummary {
-  approved: number
-  returned: number
-}
-
 export interface DashboardData {
   summary: DashboardSummary
   pendingQueue: PendingQueueItem[]
