@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { CheckCircle, PenNib } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import { cn } from '@/src/shared/lib/utils'
@@ -26,6 +26,8 @@ function SignatureField({ slot }: { slot: SignatureDisplaySlot }) {
   const name = slot.signedByName?.trim() || null
   const title = slot.signedByJobTitle?.trim() || slot.jobTitle || null
   const url = slot.signatureUrl ?? null
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  const showInk = signed && url !== null && failedUrl !== url
 
   return (
     <li
@@ -72,11 +74,12 @@ function SignatureField({ slot }: { slot: SignatureDisplaySlot }) {
         )}
       >
         {signed ? (
-          url ? (
+          showInk ? (
             <img
               src={url}
               alt={`Signature of ${name ?? slot.role}`}
               className="max-h-12 w-auto object-contain"
+              onError={() => setFailedUrl(url)}
             />
           ) : (
             <span className="text-base font-semibold italic tracking-tight">
