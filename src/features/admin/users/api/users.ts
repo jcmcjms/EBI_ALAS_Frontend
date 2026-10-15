@@ -53,12 +53,16 @@ function toUpdateBody(payload: UpdateUserPayload) {
 export async function listUsers(
   params: UserQueryParams,
 ): Promise<PagedResult<UserResponse>> {
+  const search = params.search?.trim()
   const res = await apiClient.get<BackendPageResult<BackendUserDto>>(
     '/api/users',
     {
       params: {
         page: params.pageNumber ?? 1,
         pageSize: params.pageSize ?? 20,
+        ...(search ? { search } : {}),
+        ...(params.role ? { role: params.role } : {}),
+        ...(params.branchId ? { branchId: params.branchId } : {}),
       },
     },
   )
