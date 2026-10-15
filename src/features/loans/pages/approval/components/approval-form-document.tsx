@@ -38,6 +38,7 @@ import { SingleLoanClientInfo } from '../../create/components/single-loan-client
 import { SingleLoanComputations } from '../../create/components/single-loan-computations'
 import { SingleLoanObligations } from '../../create/components/single-loan-obligations'
 import { AuditTrailSection } from './audit-trail-section'
+import { SignatureChainSection } from './signature-chain-section'
 
 interface ApprovalFormDocumentProps {
   data: LoanApplicationFormData
@@ -254,13 +255,19 @@ function ApprovalFormDocumentBase({
               </div>
 
               {signatureSlots && signatureSlots.length > 0 && (
-                <div className="border-t-2 border-black p-3 break-inside-avoid">
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                    {signatureSlots.map((slot) => (
-                      <SignatureBlock key={slot.order} slot={slot} />
-                    ))}
+                <>
+                  {/* Screen: modern form-styled signature chain */}
+                  <SignatureChainSection slots={signatureSlots} />
+
+                  {/* Print: official paper layout, unchanged */}
+                  <div className="hidden break-inside-avoid border-t-2 border-black p-3 print:block">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                      {signatureSlots.map((slot) => (
+                        <SignatureBlock key={slot.order} slot={slot} />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </section>
