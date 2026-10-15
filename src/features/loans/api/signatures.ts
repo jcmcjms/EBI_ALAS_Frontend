@@ -30,8 +30,10 @@ export interface SignatureSlot {
   signatureUrl: string | null
 }
 
-/** Either chain can feed the printable form's signature blocks. */
-export type SignatureDisplaySlot = SignatureSlotDto | LoanSignatureSlot
+/** Display slots for the approval form: printable fields plus optional ink URL. */
+export type SignatureDisplaySlot = SignatureSlotDto & {
+  signatureUrl?: string | null
+}
 
 export const signatureKeys = {
   chain: ['workflow', 'signature-chain'] as const,
