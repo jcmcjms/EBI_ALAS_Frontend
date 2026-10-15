@@ -71,6 +71,7 @@ export const PERMISSIONS = {
   loansEvaluate: 'loans.evaluate',
   loansApprove: 'loans.approve',
   loansReject: 'loans.reject',
+  loansRevise: 'loans.revise',
   loanProductManage: 'loan_product.manage',
   loanProductView: 'loan_product.manage',
   userCreate: 'users.manage',
