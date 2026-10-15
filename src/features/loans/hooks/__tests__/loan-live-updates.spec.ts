@@ -40,6 +40,17 @@ describe('shouldInvalidateLoansOnNotification', () => {
     ).toBe(false)
   })
 
+  it('refreshes loans for create submit notices', () => {
+    expect(
+      shouldInvalidateLoansOnNotification('Application submitted for evaluation'),
+    ).toBe(true)
+    expect(
+      shouldInvalidateLoansOnNotification(
+        'New application ready for recommendation',
+      ),
+    ).toBe(true)
+  })
+
   it('does not refresh loans for unrelated notices', () => {
     expect(shouldInvalidateLoansOnNotification('Password reset sent')).toBe(
       false,
