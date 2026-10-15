@@ -29,7 +29,6 @@ import {
   B,
   dash,
   fullNameOf,
-  SignatureBlock,
   type ApprovalFormActionEntry,
 } from './approval-form-document-utils'
 
@@ -56,7 +55,6 @@ function ApprovalFormDocumentBase({
   loanId,
   loanIndex = 0,
   catLoanClass,
-  signatureSlots,
   lamIdByLoanNo,
   ref,
 }: ApprovalFormDocumentProps & { ref?: Ref<HTMLDivElement> }) {
@@ -253,15 +251,7 @@ function ApprovalFormDocumentBase({
                 </div>
               </div>
 
-              {signatureSlots && signatureSlots.length > 0 && (
-                <div className="break-inside-avoid border-t-2 border-black p-3">
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                    {signatureSlots.map((slot) => (
-                      <SignatureBlock key={slot.order} slot={slot} />
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Signature section intentionally hidden on the approval form. */}
             </div>
           </section>
 
