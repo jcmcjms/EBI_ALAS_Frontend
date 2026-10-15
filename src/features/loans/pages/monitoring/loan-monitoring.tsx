@@ -68,6 +68,10 @@ export function LoanMonitoringPage() {
     touchedRef.current = true
     setFilters(next)
   }
+  const handleSearchChange = (search: string) => {
+    touchedRef.current = true
+    setFilters((f) => ({ ...f, search }))
+  }
 
   useEffect(() => {
     const policy = queueDefault.data
@@ -109,6 +113,7 @@ export function LoanMonitoringPage() {
         <MonitoringToolbar
           filters={filters}
           onFiltersChange={handleFiltersChange}
+          onSearchChange={handleSearchChange}
           roleQueue={queueDefaultForRole(role)}
         />
         <MonitoringTable

@@ -18,6 +18,55 @@ interface SortingState {
   desc: boolean
 }
 
+function toStartOfDayIso(date: Date): string {
+  const start = new Date(date)
+  start.setHours(0, 0, 0, 0)
+  return start.toISOString()
+}
+
+function toEndOfDayIso(date: Date): string {
+  const end = new Date(date)
+  end.setHours(23, 59, 59, 999)
+  return end.toISOString()
+}
+
+export function buildMonitoringParams(
+  filters: MonitoringFilters,
+  pagination: PaginationState,
+): Record<string, string> {
+  const params: Record<string, string> = {
+    page: String(pagination.pageIndex + 1),
+    pageSize: String(pagination.pageSize),
+  }
+
+  if (filters.status.length > 0) {
+    params.status = filters.status.join(',')
+  }
+
+  if (filters.branchCode && filters.branchCode !== 'all') {
+    params.branchCode = filters.branchCode
+  }
+
+  const search = filters.search.trim()
+  if (search) {
+    params.search = search
+  }
+
+  if (filters.dateRange.from) {
+    params.dateFrom = toStartOfDayIso(filters.dateRange.from)
+  }
+
+  if (filters.dateRange.to) {
+    params.dateTo = toEndOfDayIso(filters.dateRange.to)
+  }
+
+  if (filters.myTurn) {
+    params.myTurn = 'true'
+  }
+
+  return params
+}
+
 function toMonitoringRecord(loan: LoanResponse): LoanMonitoringRecord {
   const appliedAt = new Date(loan.createdAt)
   const lastActionAt = new Date(loan.lastActionDate ?? loan.updatedAt ?? loan.createdAt)
@@ -68,19 +117,7 @@ export function useLoanMonitoring(
       records: LoanMonitoringRecord[]
       rowCount: number
     }> => {
-      // GET /api/loans supports page, pageSize, status, branchId|branchCode only.
-      const params: Record<string, string> = {
-        page: String(pagination.pageIndex + 1),
-        pageSize: String(pagination.pageSize),
-      }
-
-      if (filters.status.length > 0) {
-        params.status = filters.status.join(',')
-      }
-
-      if (filters.branchCode && filters.branchCode !== 'all') {
-        params.branchCode = filters.branchCode
-      }
+      const params = buildMonitoringParams(filters, pagination)
 
       const { data: page } = await apiClient.get<
         BackendPageResult<LoanResponse>
