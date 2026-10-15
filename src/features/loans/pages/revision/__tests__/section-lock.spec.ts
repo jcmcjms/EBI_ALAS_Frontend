@@ -4,7 +4,7 @@ import {
   buildEditableSectionIds,
   isSectionEditable,
 } from '../section-lock'
-import type { RevisionRequest } from '../../types/revision-request'
+import type { RevisionRequest } from '@/src/features/loans/types/revision-request'
 
 const request = (sections: string[]): RevisionRequest => ({
   id: '1',

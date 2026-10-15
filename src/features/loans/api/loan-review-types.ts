@@ -58,6 +58,7 @@ export interface LoanDetailResponse {
   otherRemarks: string | null
   feeDeviationJustification: string | null
   status: string
+  rowVersion?: string
   applicationDate: string
   lastActionDate: string
   createdById: string | number

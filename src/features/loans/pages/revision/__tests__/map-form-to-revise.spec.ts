@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mapFormToReviseCommand } from '@/src/features/loans/model/map-form-to-revise'
-import type { LoanApplicationFormData } from '../../schemas/schema'
+import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 
 const form = {
   branchType: {
