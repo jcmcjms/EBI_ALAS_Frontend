@@ -98,7 +98,8 @@ export function ProfileEditSheet({
         email: parsed.data.email || null,
         phone: parsed.data.phone || null,
         emergencyContact: parsed.data.emergencyContact || null,
-        eSignature: signature,
+        // Empty string clears ink; omit/null would leave the stored signature unchanged.
+        eSignature: signature ?? '',
       },
       { onSuccess: () => onOpenChange(false) },
     )
