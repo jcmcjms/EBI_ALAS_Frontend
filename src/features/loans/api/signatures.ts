@@ -3,8 +3,8 @@ import { apiClient } from '@/src/shared/lib/apiClient'
 
 /**
  * Workflow template signature chain — `GET /api/workflow/signature-chain`.
- * Static 3-row preview (Recommend / Evaluate / Approve) used on the
- * printable approval form.
+ * Encoder always; Recommender only when recommendation is required.
+ * Used on the printable approval form preview.
  */
 export interface SignatureSlotDto {
   order: number
