@@ -11,6 +11,24 @@ describe('shouldInvalidateLoansOnNotification', () => {
     ).toBe(true)
   })
 
+  it('refreshes loans for revision resubmit notices', () => {
+    expect(
+      shouldInvalidateLoansOnNotification(
+        'Application resubmitted for recommendation',
+      ),
+    ).toBe(true)
+    expect(
+      shouldInvalidateLoansOnNotification(
+        'Application resubmitted after corrections',
+      ),
+    ).toBe(true)
+    expect(
+      shouldInvalidateLoansOnNotification(
+        'Application resubmitted for evaluation',
+      ),
+    ).toBe(true)
+  })
+
   it('does not refresh loans for unrelated notices', () => {
     expect(shouldInvalidateLoansOnNotification('Password reset sent')).toBe(
       false,
