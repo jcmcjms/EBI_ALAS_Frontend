@@ -18,30 +18,28 @@ import type { ApprovedLoanItem } from '../types'
 
 interface ApprovedLoansProps {
   data: ApprovedLoanItem[]
+  compact?: boolean
 }
 
-export function ApprovedLoans({ data }: ApprovedLoansProps) {
+export function ApprovedLoans({
+  data,
+  compact = false,
+}: ApprovedLoansProps) {
   const navigate = useNavigate()
   const displayData = useMemo(() => data.slice(0, 5), [data])
 
-  return (
-    <Card id="approved-loans" className="scroll-mt-24 flex flex-col">
-      <CardHeader className="flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          Approved Loans
-          {data.length > 0 && (
-            <Badge variant="secondary" className="tabular-nums">
-              {data.length}
-            </Badge>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0 flex-1">
-        {data.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-            No approvals yet today.
-          </p>
-        ) : (
+  const listBody =
+    data.length === 0 ? (
+      compact ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No approvals yet.
+        </p>
+      ) : (
+        <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+          No approvals yet today.
+        </p>
+      )
+    ) : (
           <ul className="divide-y">
             {displayData.map((item) => (
               <li
@@ -82,8 +80,25 @@ export function ApprovedLoans({ data }: ApprovedLoansProps) {
               </li>
             ))}
           </ul>
-        )}
-      </CardContent>
+    )
+
+  if (compact) {
+    return <div id="approved-loans">{listBody}</div>
+  }
+
+  return (
+    <Card id="approved-loans" className="scroll-mt-24 flex flex-col">
+      <CardHeader className="flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2 text-xl">
+          Approved Loans
+          {data.length > 0 && (
+            <Badge variant="secondary" className="tabular-nums">
+              {data.length}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 flex-1">{listBody}</CardContent>
       {data.length > 5 && (
         <CardFooter className="border-t p-3 justify-center">
           <Button
