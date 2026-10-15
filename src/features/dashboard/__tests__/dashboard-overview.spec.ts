@@ -82,4 +82,32 @@ describe('mapDashboardOverview', () => {
       pushBacks: 1,
     })
   })
+
+  it('keeps flagged document API ids for navigation', () => {
+    const data = mapDashboardOverview({
+      pendingRecommendation: 0,
+      pendingEvaluation: 0,
+      pendingApproval: 0,
+      approvedToday: 0,
+      pushbacks: 0,
+      flaggedDocuments: [
+        {
+          id: '3f2c1a00-0000-4000-8000-000000000001',
+          lamId: 'LAM-9',
+          branchId: '001',
+          waitingSinceUtc: '2026-10-14T01:00:00Z',
+          missingCount: 2,
+          clientName: 'Client',
+          encoderName: 'Enc',
+          flaggedByName: null,
+          flaggedAt: '2026-10-14T01:00:00Z',
+        },
+      ],
+    })
+
+    expect(data.incompleteDocsQueue[0]?.id).toBe(
+      '3f2c1a00-0000-4000-8000-000000000001',
+    )
+    expect(data.incompleteDocsQueue[0]?.lamId).toBe('LAM-9')
+  })
 })

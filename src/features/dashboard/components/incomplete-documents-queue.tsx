@@ -60,7 +60,7 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
                 <li key={item.lamId}>
                   <button
                     type="button"
-                    onClick={() => navigate({ to: '/loans/approval/$loanId', params: { loanId: String(item.id) } })}
+                    onClick={() => navigate({ to: '/loans/approval/$loanId', params: { loanId: item.id } })}
                     className={cn(
                       'flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/50',
                       'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
