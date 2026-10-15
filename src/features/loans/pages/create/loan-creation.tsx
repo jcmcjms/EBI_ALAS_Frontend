@@ -21,6 +21,10 @@ import { ActiveLoanProvider } from './active-loan-context'
 import { LoanTransfersProvider } from './loan-transfers-provider'
 import { useCreateLoan } from '@/src/features/loans/hooks/use-create-loan'
 import { mapFormToSubmitLoanRequest } from '@/src/features/loans/model/map-form-to-request'
+import {
+  findMaxLoanableSubmitBlock,
+  type MaxLoanableSubmitBlock,
+} from '@/src/features/loans/model/loan-approval-utils'
 
 import {
   SECTIONS,
@@ -165,6 +169,13 @@ export function LoanCreationPage() {
         )
         return
       }
+      const maxLoanableBlock = findMaxLoanableSubmitBlock(data)
+      if (maxLoanableBlock) {
+        toastError(
+          `Cannot submit ${maxLoanableBlock.loanLabel}: Maximum Loanable Amount does not cover the proposed loan. Adjust the proposed amount or client capacity first.`,
+        )
+        return
+      }
       createLoan(mapFormToSubmitLoanRequest(data))
     },
     [createLoan, isSubmitting],
@@ -204,6 +215,16 @@ export function LoanCreationPage() {
 
   const loans = useWatch({ control, name: 'loans' }) ?? []
   const preLoanSelected = loans.length > 0
+  const client = useWatch({ control, name: 'client' })
+  const outstandingLoans = useWatch({ control, name: 'outstandingLoans' }) ?? []
+  const maxLoanableBlock: MaxLoanableSubmitBlock | null =
+    isClientLoaded && preLoanSelected
+      ? findMaxLoanableSubmitBlock({
+          client,
+          loans,
+          outstandingLoans,
+        })
+      : null
 
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode)
 
@@ -220,7 +241,7 @@ export function LoanCreationPage() {
     visibleSections,
   }
 
-  const canSubmit = isClientLoaded && preLoanSelected
+  const canSubmit = isClientLoaded && preLoanSelected && !maxLoanableBlock
   const firstErrorSection = submitAttempted
     ? SECTIONS.find((s) => sectionErrorCount(errors, s.id) > 0)
     : undefined
@@ -265,6 +286,7 @@ export function LoanCreationPage() {
               isSubmitting={isSubmitting}
               firstErrorSection={firstErrorSection?.id}
               onNavigateToError={(id) => scrollToSection(id)}
+              maxLoanableBlock={maxLoanableBlock}
             />
 
             {showScrollTop && (

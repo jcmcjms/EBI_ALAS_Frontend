@@ -48,6 +48,42 @@ export function isMaxLoanableAlert(
   )
 }
 
+export interface MaxLoanableSubmitBlock {
+  loanLabel: string
+  maximumLoanableAmount: number
+  proposedAmount: number
+}
+
+/**
+ * Returns the first loan whose max loanable cannot cover the proposed amount.
+ * Encoder create-submit is blocked while this is non-null.
+ */
+export function findMaxLoanableSubmitBlock(
+  form: Pick<
+    LoanApplicationFormData,
+    'client' | 'loans' | 'outstandingLoans'
+  >,
+): MaxLoanableSubmitBlock | null {
+  for (const [index, loan] of form.loans.entries()) {
+    const metrics = computeLoanMetrics(loan, {
+      outstandingLoans: form.outstandingLoans,
+      ebiReloans: loan.ebiReloans ?? [],
+      buyOuts: loan.buyOuts ?? [],
+      incomingLoans: loan.incomingLoans ?? [],
+      client: form.client,
+    })
+    const proposedAmount = loan.parameters?.proposedAmount ?? 0
+    if (isMaxLoanableAlert(metrics.maximumLoanableAmount, proposedAmount)) {
+      return {
+        loanLabel: loan.loanNo || `Loan ${index + 1}`,
+        maximumLoanableAmount: metrics.maximumLoanableAmount,
+        proposedAmount,
+      }
+    }
+  }
+  return null
+}
+
 export interface ProductFeeConfig {
   applicationChargeRate: number
 
