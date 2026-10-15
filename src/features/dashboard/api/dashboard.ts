@@ -109,7 +109,7 @@ export function mapDashboardOverview(
       pushBacks: w.pushBacks,
     })),
     incompleteDocsQueue: (o.flaggedDocuments ?? []).map((f, index) => ({
-      id: index + 1,
+      id: f.id,
       position: index + 1,
       lamId: f.lamId,
       branch: f.branchId,
