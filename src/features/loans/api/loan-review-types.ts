@@ -173,12 +173,12 @@ export interface LoanDeviationDto {
 }
 
 export interface DocumentRemarkDto {
-  id: number
-  loanApplicationId: number
+  id: string
+  loanApplicationId: string
   checklistIdCode: string
   docId: number | null
-  parentRemarkId: number | null
-  authorId: number
+  parentRemarkId: string | null
+  authorId: string
   authorName: string
   authorRole: string
   body: string

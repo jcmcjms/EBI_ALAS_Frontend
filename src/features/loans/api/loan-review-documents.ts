@@ -104,15 +104,15 @@ export async function postDocumentRemark(
   payload: {
     checklistIdCode: string
     docId?: number | null
-    parentRemarkId?: number | null
+    parentRemarkId?: string | null
     body: string
   },
 ): Promise<DocumentRemarkDto> {
-  const res = await apiClient.post<ApiResponse<DocumentRemarkDto>>(
+  const res = await apiClient.post<DocumentRemarkDto>(
     `/api/loans/${loanId}/document-remarks`,
     payload,
   )
-  return unwrapApiData(res.data)
+  return res.data
 }
 
 export async function getDocumentChecklist(

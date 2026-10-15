@@ -92,7 +92,7 @@ export function DocumentRemarksThread({
 }: DocumentRemarksThreadProps) {
   const qc = useQueryClient()
   const [body, setBody] = useState('')
-  const [replyTo, setReplyTo] = useState<number | null>(null)
+  const [replyTo, setReplyTo] = useState<string | null>(null)
 
   const send = useMutation({
     mutationFn: () =>
@@ -114,9 +114,9 @@ export function DocumentRemarksThread({
   })
 
   const roots = remarks.filter((r) => r.parentRemarkId === null)
-  const repliesOf = (id: number) =>
+  const repliesOf = (id: string) =>
     remarks.filter((r) => r.parentRemarkId === id)
-  const nameOf = (id: number | null) =>
+  const nameOf = (id: string | null) =>
     id === null ? undefined : remarks.find((r) => r.id === id)?.authorName
   const replyTargetName = replyTo !== null ? nameOf(replyTo) : undefined
 
