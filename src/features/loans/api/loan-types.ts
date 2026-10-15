@@ -250,6 +250,7 @@ export interface LoanResponse {
   } | null
   assignedToUserId?: string | null
   assignedToName?: string | null
+  rowVersion?: string
 }
 
 export interface LoanSubmissionPayload {
