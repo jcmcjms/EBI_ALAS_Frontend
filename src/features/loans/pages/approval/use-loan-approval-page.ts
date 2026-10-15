@@ -75,12 +75,12 @@ export function useLoanApprovalPage() {
     placeholderData: keepPreviousData,
   })
 
-  // Encoders should edit, not review. Redirect them to the creation page.
+  // Encoders should edit, not review. Redirect them to the revision page.
   useEffect(() => {
     if (user?.role === 'Encoder' && loan.data?.status === 'ForRevision') {
       navigate({
-        to: '/loans/create',
-        search: { loanId: String(id) },
+        to: '/loans/revision/$loanId',
+        params: { loanId: String(id) },
         replace: true,
       })
     }

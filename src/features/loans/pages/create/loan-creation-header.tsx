@@ -1,29 +1,14 @@
 import { IdentificationBadge, LockSimple } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import type { PreLoanItem } from '../../api/loan-types'
-import {
-  LOAN_STATUS_META,
-  type LoanStatus,
-} from '@/src/features/loans/model/loan-status'
+import { LOAN_STATUS_META } from '@/src/features/loans/model/loan-status'
 import { cn } from '@/src/shared/lib/utils'
-
-function statusLabel(status?: string): string {
-  if (!status) return 'Draft'
-  return LOAN_STATUS_META[status as LoanStatus]?.label ?? status
-}
-
-function statusClass(status?: string): string {
-  if (!status) return LOAN_STATUS_META.Draft.className
-  return LOAN_STATUS_META[status as LoanStatus]?.className ?? LOAN_STATUS_META.Draft.className
-}
 
 interface LoanCreationHeaderProps {
   userBranchId: string
   userBranchName: string
   selectedPreLoan: { id: string; payload: PreLoanItem | null }
   isDirty: boolean
-  editLamId?: string
-  editStatus?: string
 }
 
 export function LoanCreationHeader({
@@ -31,27 +16,23 @@ export function LoanCreationHeader({
   userBranchName,
   selectedPreLoan,
   isDirty,
-  editLamId,
-  editStatus,
 }: LoanCreationHeaderProps) {
-  const isEditMode = !!editLamId
-
   return (
     <header className="border-b bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-6">
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="text-xl font-semibold tracking-tight">
-            {isEditMode ? editLamId : 'New Loan Application'}
+            New Loan Application
           </h1>
           <Badge
             variant="outline"
-            className={cn('gap-1.5 py-1', statusClass(editStatus))}
+            className={cn('gap-1.5 py-1', LOAN_STATUS_META.Draft.className)}
           >
             <span
               className="h-2 w-2 rounded-full bg-amber-500"
               aria-hidden
             />
-            {isEditMode ? statusLabel(editStatus) : 'Draft'}
+            Draft
           </Badge>
           {userBranchId && (
             <Badge
