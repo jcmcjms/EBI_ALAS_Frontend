@@ -52,4 +52,39 @@ describe('describeEvent', () => {
     })
     expect(result.headline).toBe('Submitted for approval')
   })
+
+  it('describes Revised resubmits, not as a recommendation', () => {
+    const result = describeEvent({
+      id: '4',
+      type: 'workflow',
+      occurredAtUtc: new Date().toISOString(),
+      actorName: 'Encoder',
+      actorRole: 'Encoder',
+      action: 'Revised',
+      fromStatus: 'ForRevision',
+      toStatus: 'ForChecking',
+      comment: 'Fixed address',
+      subject: null,
+      subjectCode: null,
+    })
+    expect(result.headline).toBe('Resubmitted after corrections')
+    expect(result.headline).not.toMatch(/recommend/i)
+  })
+
+  it('describes ForRevision -> ForRecommendation as resubmission', () => {
+    const result = describeEvent({
+      id: '5',
+      type: 'workflow',
+      occurredAtUtc: new Date().toISOString(),
+      actorName: 'Encoder',
+      actorRole: 'Encoder',
+      action: 'Revised',
+      fromStatus: 'ForRevision',
+      toStatus: 'ForRecommendation',
+      comment: null,
+      subject: null,
+      subjectCode: null,
+    })
+    expect(result.headline).toBe('Resubmitted for recommendation')
+  })
 })

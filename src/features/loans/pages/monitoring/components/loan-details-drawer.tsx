@@ -52,7 +52,7 @@ export function LoanDetailsDrawer({
     userRole === 'Encoder' && loanStatus === 'ForRevision'
 
   const reviewPath = isEncoderRevision
-    ? `/loans/create?loanId=${applicationId}`
+    ? `/loans/revision/${applicationId}`
     : `/loans/approval/${applicationId}`
 
   const reviewLabel = isEncoderRevision ? 'Edit application' : 'Review application'

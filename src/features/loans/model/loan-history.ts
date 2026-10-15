@@ -93,6 +93,12 @@ export function describeHistoryEntry(
         category: 'workflow',
         tone: 'warning',
       }
+    case 'Revised':
+      return {
+        title: 'Resubmitted after corrections',
+        category: 'workflow',
+        tone: 'info',
+      }
     case 'EvaluatedRecommended':
       return {
         title: 'Evaluated — recommended',
