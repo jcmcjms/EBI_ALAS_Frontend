@@ -94,6 +94,12 @@ export function LoanCreationPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
+  const registerSectionRef = useCallback(
+    (id: SectionId, el: HTMLElement | null) => {
+      sectionRefs.current[id] = el
+    },
+    [],
+  )
   const approvalFormRef = useRef<HTMLDivElement | null>(null)
 
   const { mutate: createLoan, isPending: isSubmitting } = useCreateLoan()
@@ -244,7 +250,7 @@ export function LoanCreationPage() {
                 isSubmitting={isSubmitting}
                 branchTypeCode={branchTypeCode}
                 methods={methods}
-                sectionRefs={sectionRefs}
+                registerSectionRef={registerSectionRef}
                 approvalFormRef={approvalFormRef}
                 onPreLoanChange={(id, payload) => setSelectedPreLoan({ id, payload })}
               />
