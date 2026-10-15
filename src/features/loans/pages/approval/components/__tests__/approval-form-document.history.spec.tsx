@@ -1,11 +1,22 @@
-import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import '@testing-library/jest-dom/vitest'
 import { ApprovalFormDocument } from '../approval-form-document'
-import type { ApprovalFormActionEntry } from '../approval-form-document'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
+import type { TimelineEvent } from '@/src/features/loans/api/loan-review'
+
+vi.mock('@/src/features/loans/api/loan-review-documents', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/src/features/loans/api/loan-review-documents')>()
+  return {
+    ...actual,
+    getLoanTimeline: vi.fn(),
+  }
+})
+
+import { getLoanTimeline } from '@/src/features/loans/api/loan-review-documents'
 
 const stubForm = {
   branchType: {
@@ -61,104 +72,91 @@ function renderWithQueryClient(ui: ReactElement) {
   )
 }
 
-describe('ApprovalFormDocument — application history (page 3)', () => {
-  it('does not render the history section when actions is undefined', () => {
-    renderWithQueryClient(<ApprovalFormDocument data={stubForm} />)
+function event(partial: Partial<TimelineEvent> & { id: string }): TimelineEvent {
+  return {
+    type: 'workflow',
+    occurredAtUtc: '2026-09-28T09:30:00Z',
+    actorName: 'Pedro Recommender',
+    actorRole: 'Recommender',
+    action: 'Recommended',
+    fromStatus: 'ForRecommendation',
+    toStatus: 'ForChecking',
+    comment: null,
+    subject: null,
+    subjectCode: null,
+    ...partial,
+  }
+}
+
+describe('ApprovalFormDocument — application history (print)', () => {
+  it('does not render history when timeline is empty', async () => {
+    vi.mocked(getLoanTimeline).mockResolvedValue({
+      items: [],
+      currentPage: 1,
+      pageSize: 50,
+      totalCount: 0,
+      totalPages: 0,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    })
+
+    renderWithQueryClient(
+      <ApprovalFormDocument data={stubForm} loanId="loan-1" />,
+    )
+
+    await waitFor(() => {
+      expect(getLoanTimeline).toHaveBeenCalled()
+    })
     expect(screen.queryByText('APPLICATION HISTORY')).not.toBeInTheDocument()
   })
 
-  it('does not render the history section when actions is empty', () => {
-    renderWithQueryClient(<ApprovalFormDocument data={stubForm} actions={[]} />)
-    expect(screen.queryByText('APPLICATION HISTORY')).not.toBeInTheDocument()
-  })
+  it('renders monitoring-style history with actor and remarks', async () => {
+    vi.mocked(getLoanTimeline).mockResolvedValue({
+      items: [
+        event({
+          id: '1',
+          actorName: 'Maria Encoder',
+          action: 'Created',
+          fromStatus: null,
+          toStatus: 'ForRecommendation',
+        }),
+        event({
+          id: '2',
+          action: 'Recommended',
+          comment: 'Docs complete, recommend for evaluation.',
+        }),
+        event({
+          id: '3',
+          type: 'documentRemark',
+          action: 'DocumentRemarkAdded',
+          actorName: 'Ana Cruz',
+          subject: 'PAYSIP',
+          comment: 'Please clarify this payslip',
+          fromStatus: null,
+          toStatus: null,
+        }),
+      ],
+      currentPage: 1,
+      pageSize: 50,
+      totalCount: 3,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    })
 
-  it('renders the history section with grouped entries', () => {
-    const actions: ApprovalFormActionEntry[] = [
-      {
-        id: 1,
-        action: 'Created',
-        fromStatus: null,
-        toStatus: 'Draft',
-        comments: null,
-        actionDate: '2026-09-28T08:00:00Z',
-        actionByUserName: 'Maria Encoder',
-      },
-      {
-        id: 2,
-        action: 'Recommended',
-        fromStatus: 'ForRecommendation',
-        toStatus: 'ForChecking',
-        comments: 'Docs complete, recommend for evaluation.',
-        actionDate: '2026-09-28T09:30:00Z',
-        actionByUserName: 'Pedro Recommender',
-      },
-    ]
+    renderWithQueryClient(
+      <ApprovalFormDocument data={stubForm} loanId="loan-1" />,
+    )
 
-    renderWithQueryClient(<ApprovalFormDocument data={stubForm} actions={actions} />)
-
-    expect(
-      screen.getByText('APPLICATION HISTORY & REMARKS'),
-    ).toBeInTheDocument()
+    await screen.findByText('APPLICATION HISTORY & REMARKS')
     expect(screen.getByText('Maria Encoder')).toBeInTheDocument()
     expect(screen.getByText('Pedro Recommender')).toBeInTheDocument()
-    expect(screen.getByText('Created')).toBeInTheDocument()
+    expect(screen.getByText(/Created the loan application/)).toBeInTheDocument()
+    expect(screen.getByText(/Recommended — sent for credit checking/)).toBeInTheDocument()
     expect(
       screen.getByText('Docs complete, recommend for evaluation.'),
     ).toBeInTheDocument()
-
-    expect(
-      screen.getByText(/ForRecommendation → ForChecking/),
-    ).toBeInTheDocument()
-
-    expect(screen.getByText(/— → Draft/)).toBeInTheDocument()
-  })
-
-  it('shows each entry date on its own row', () => {
-    const actions: ApprovalFormActionEntry[] = [
-      {
-        id: 1,
-        action: 'Created',
-        fromStatus: null,
-        toStatus: 'Draft',
-        comments: null,
-        actionDate: '2026-09-27T08:00:00Z',
-        actionByUserName: 'Encoder',
-      },
-      {
-        id: 2,
-        action: 'Recommended',
-        fromStatus: 'ForRecommendation',
-        toStatus: 'ForChecking',
-        comments: null,
-        actionDate: '2026-09-28T09:00:00Z',
-        actionByUserName: 'Recommender',
-      },
-    ]
-
-    renderWithQueryClient(<ApprovalFormDocument data={stubForm} actions={actions} />)
-
-    expect(screen.getByText('2026-09-27')).toBeInTheDocument()
-    expect(screen.getByText('2026-09-28')).toBeInTheDocument()
-  })
-
-  it('renders history comments as paragraph elements', () => {
-    const actions: ApprovalFormActionEntry[] = [
-      {
-        id: 1,
-        action: 'Recommended',
-        fromStatus: 'ForRecommendation',
-        toStatus: 'ForChecking',
-        comments: '<p>First history note</p><p>Second history note</p>',
-        actionDate: '2026-09-28T09:30:00Z',
-        actionByUserName: 'Pedro Recommender',
-      },
-    ]
-
-    renderWithQueryClient(<ApprovalFormDocument data={stubForm} actions={actions} />)
-    const first = screen.getByText('First history note')
-    const second = screen.getByText('Second history note')
-    expect(first.tagName).toBe('P')
-    expect(second.tagName).toBe('P')
-    expect(first.parentElement).toBe(second.parentElement)
+    expect(screen.getByText(/Left a note on a requirement/)).toBeInTheDocument()
+    expect(screen.getByText('Please clarify this payslip')).toBeInTheDocument()
   })
 })

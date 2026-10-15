@@ -20,6 +20,7 @@ import type { ApprovalFormActionEntry } from './components/approval-form-documen
 
 interface ApprovalFormCardProps {
   formData: LoanApplicationFormData
+  loanId?: number | string
   signatureSlots?: SignatureDisplaySlot[]
   actions?: ApprovalFormActionEntry[]
   deviationsData?: LoanDeviationDto[]
@@ -30,6 +31,7 @@ interface ApprovalFormCardProps {
 
 export function ApprovalFormCard({
   formData,
+  loanId,
   signatureSlots,
   actions,
   deviationsData,
@@ -84,6 +86,7 @@ export function ApprovalFormCard({
           <ApprovalFormViewport zoom={zoom}>
             <ApprovalFormDocument
               data={formData}
+              loanId={loanId}
               catLoanClass={null}
               signatureSlots={signatureSlots ?? undefined}
               actions={actions}

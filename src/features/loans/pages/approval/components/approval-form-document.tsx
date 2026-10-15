@@ -41,6 +41,7 @@ import { AuditTrailSection } from './audit-trail-section'
 
 interface ApprovalFormDocumentProps {
   data: LoanApplicationFormData
+  loanId?: number | string
   loanIndex?: number
   catLoanClass?: string | null
   signatureSlots?: SignatureDisplaySlot[]
@@ -52,12 +53,10 @@ interface ApprovalFormDocumentProps {
 
 function ApprovalFormDocumentBase({
   data,
+  loanId,
   loanIndex = 0,
   catLoanClass,
   signatureSlots,
-  actions,
-  deviations: deviationThreads,
-  documentRemarks,
   lamIdByLoanNo,
   ref,
 }: ApprovalFormDocumentProps & { ref?: Ref<HTMLDivElement> }) {
@@ -267,9 +266,7 @@ function ApprovalFormDocumentBase({
           </section>
 
           <AuditTrailSection
-            actions={actions}
-            deviationThreads={deviationThreads}
-            documentRemarks={documentRemarks}
+            loanId={loanId ?? data?.branchType?.lai ?? ''}
             client={client}
             branchType={branchType}
             primaryLoan={primaryLoan}

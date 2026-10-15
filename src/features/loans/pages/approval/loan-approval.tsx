@@ -147,6 +147,7 @@ export function LoanApprovalPage() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
           <ApprovalFormCard
             formData={formData}
+            loanId={id}
             signatureSlots={signatureSlots ?? undefined}
             actions={detail?.actions}
             deviationsData={deviationsData}
