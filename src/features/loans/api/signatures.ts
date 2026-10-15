@@ -18,16 +18,9 @@ export interface SignatureSlotDto {
 
 /**
  * Per-loan signature chain — `GET /api/loans/{id}/signature-chain`.
- * Who actually signed each stage of a specific application.
+ * Always the 3 printable slots; signed fields filled when a stage completed.
  */
-export interface LoanSignatureSlot {
-  id: string
-  order: number
-  roleName: string
-  status: string
-  signedAt: string | null
-  userId: string | null
-}
+export type LoanSignatureSlot = SignatureSlotDto
 
 export interface SignatureSlot {
   role: string
