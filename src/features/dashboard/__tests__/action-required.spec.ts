@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { actionRequiredTaskCount } from '../components/action-required'
+import { actionRequiredTaskCount } from '../lib/action-required-count'
 import type { IncompleteDocsQueueItem, PushBackItem } from '../types'
 
 describe('actionRequiredTaskCount', () => {

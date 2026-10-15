@@ -6,64 +6,54 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
 import { ErrorState } from '@/src/shared/ui/feedback/empty-state'
 
-import { ApprovedLoans } from '../components/approved-loans'
+import { ActionRequired } from '../components/action-required'
 import { DashboardSummary } from '../components/dashboard-summary'
-import { IncompleteDocumentsQueue } from '../components/incomplete-documents-queue'
-import { NowServing } from '../components/now-serving'
-import { PendingQueue } from '../components/pending-queue'
-import { PushBack } from '../components/push-back'
 import { WeeklyTrend } from '../components/weekly-trend'
+import { WorkloadOverview } from '../components/workload-overview'
 import { useDashboardData } from '../hooks/use-dashboard-data'
-
-function greeting(): string {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 18) return 'Good afternoon'
-  return 'Good evening'
-}
 
 export function Dashboard() {
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
-  const { data, isLoading, isError, dataUpdatedAt, refetch } =
-    useDashboardData()
+  const { data, isLoading, isError, dataUpdatedAt, refetch } = useDashboardData()
   const { data: branches } = useBranches()
 
   const asOf = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date()
+  const branchName = user?.branchId
+    ? findBranchName(branches, user.branchId)
+    : null
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex min-h-full flex-1 flex-col gap-6 bg-muted/30 p-6 pb-12">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">
-            {greeting()}, {user?.firstName ?? 'Officer'}
-          </h2>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {asOf.toLocaleDateString('en-PH', {
               weekday: 'long',
               month: 'long',
               day: 'numeric',
-              year: 'numeric',
             })}
-            {user?.branchId
-              ? ` • ${findBranchName(branches, user.branchId) || `Branch ${user.branchId}`}`
-              : ''}
+            {branchName && <span className="mx-1.5">•</span>}
+            {branchName && <span>{branchName}</span>}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs tabular-nums text-muted-foreground mr-2">
-            As of{' '}
+        <div className="flex items-center gap-4">
+          <span className="hidden text-xs tabular-nums text-muted-foreground sm:block">
+            Updated{' '}
             {asOf.toLocaleTimeString('en-PH', {
               hour: '2-digit',
               minute: '2-digit',
             })}
           </span>
-          <Button size="sm" onClick={() => navigate({ to: '/loans/create' })}>
-            <Plus size={16} weight="bold" className="mr-1" />
-            New Loan
-          </Button>
+          {user?.role === 'Encoder' && (
+            <Button size="sm" onClick={() => navigate({ to: '/loans/create' })}>
+              <Plus size={16} weight="bold" className="mr-1.5" />
+              Create Loan
+            </Button>
+          )}
         </div>
-      </div>
+      </header>
 
       {isError ? (
         <ErrorState
@@ -74,28 +64,23 @@ export function Dashboard() {
       ) : isLoading ? (
         <DashboardSkeleton />
       ) : data ? (
-        <>
+        <div className="flex flex-col gap-6">
+          <ActionRequired
+            pushBacks={data.pushBacks}
+            incompleteDocs={data.incompleteDocsQueue}
+          />
           <DashboardSummary data={data.summary} />
-
-          <div className="grid gap-6 xl:grid-cols-3">
-            <div className="xl:col-span-2 space-y-6">
-              <PendingQueue data={data.pendingQueue} />
-              <IncompleteDocumentsQueue data={data.incompleteDocsQueue} />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <WorkloadOverview data={data} />
             </div>
-            <div className="flex flex-col gap-6">
-              <NowServing
-                data={data.nowServing}
-                pendingCount={data.summary.totalPending}
-              />
-              <WeeklyTrend data={data.weeklyTrend} />
+            <div>
+              {data.weeklyTrend.some((d) => d.approved > 0 || d.pushBacks > 0) && (
+                <WeeklyTrend data={data.weeklyTrend} />
+              )}
             </div>
           </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <PushBack data={data.pushBacks} />
-            <ApprovedLoans data={data.approvedLoans} />
-          </div>
-        </>
+        </div>
       ) : null}
     </div>
   )
@@ -103,21 +88,14 @@ export function Dashboard() {
 
 function DashboardSkeleton() {
   return (
-    <div className="flex flex-col gap-6 animate-pulse">
+    <div className="flex animate-pulse flex-col gap-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-32 w-full rounded-lg" />
+          <Skeleton key={i} className="h-24 w-full rounded-lg" />
         ))}
       </div>
-      <div className="grid gap-6 xl:grid-cols-3">
-        <Skeleton className="h-80 xl:col-span-2 w-full rounded-lg" />
-        <div className="flex flex-col gap-6">
-          <Skeleton className="h-56 w-full rounded-lg" />
-          <Skeleton className="h-56 w-full rounded-lg" />
-        </div>
-      </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Skeleton className="h-80 w-full rounded-lg" />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Skeleton className="h-80 w-full rounded-lg lg:col-span-2" />
         <Skeleton className="h-80 w-full rounded-lg" />
       </div>
     </div>
