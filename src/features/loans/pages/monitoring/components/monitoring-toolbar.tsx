@@ -30,22 +30,25 @@ import { cn } from '@/src/shared/lib/utils'
 interface ToolbarProps {
   filters: MonitoringFilters
   onFiltersChange: (filters: MonitoringFilters) => void
+  onSearchChange: (search: string) => void
   roleQueue: LoanStatus[]
 }
 
 export function MonitoringToolbar({
   filters,
   onFiltersChange,
+  onSearchChange,
   roleQueue,
 }: ToolbarProps) {
   const [localSearch, setLocalSearch] = useState(filters.search)
 
   useEffect(() => {
+    if (localSearch === filters.search) return
     const timer = setTimeout(() => {
-      onFiltersChange({ ...filters, search: localSearch })
+      onSearchChange(localSearch)
     }, 300)
     return () => clearTimeout(timer)
-  }, [localSearch])
+  }, [localSearch, filters.search, onSearchChange])
 
   const isRoleQueue =
     roleQueue.length > 0 && sameStatusSet(filters.status, roleQueue)

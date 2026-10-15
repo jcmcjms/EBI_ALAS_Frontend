@@ -23,8 +23,8 @@ export type {
 }
 
 /**
- * Query params actually supported by `GET /api/loans`.
- * Wire uses `page` (1-based) — not `pageNumber`. No search/date/sort filters.
+ * Query params supported by `GET /api/loans`.
+ * Wire uses `page` (1-based) — not `pageNumber`. Sorting is client-chosen only.
  */
 export interface ListLoansParams {
   page: number
@@ -33,6 +33,10 @@ export interface ListLoansParams {
   status?: string
   branchId?: string
   branchCode?: string
+  search?: string
+  dateFrom?: string
+  dateTo?: string
+  myTurn?: boolean | string
 }
 
 export interface LoanHistoryEntry {
@@ -87,7 +91,7 @@ export async function createLoan(
 }
 
 /**
- * `GET /api/loans?page&pageSize&status&branchId|branchCode`
+ * `GET /api/loans?page&pageSize&status&branchId|branchCode&search&dateFrom&dateTo&myTurn`
  * → bare `BackendPageResult<LoanResponse>` on the wire; mapped for the UI.
  */
 export async function listLoans(
@@ -102,6 +106,10 @@ export async function listLoans(
         status: params.status || undefined,
         branchId: params.branchId || undefined,
         branchCode: params.branchCode || undefined,
+        search: params.search || undefined,
+        dateFrom: params.dateFrom || undefined,
+        dateTo: params.dateTo || undefined,
+        myTurn: params.myTurn || undefined,
       },
     },
   )
