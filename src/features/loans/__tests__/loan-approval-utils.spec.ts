@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   computeLoanMetrics,
   computeDocStamp,
+  isMaxLoanableAlert,
   resolveApprovalTermDays,
   toAnnualRatePercent,
   formatRatePercent,
@@ -300,6 +301,24 @@ describe('computeLoanMetrics deduction convention', () => {
     const c = computeLoanMetrics(legacy, obligations)
     expect(c.approvalTermDays).toBe(1800)
     expect(c.annualRatePercent).toBe(7.5)
+  })
+})
+
+describe('isMaxLoanableAlert', () => {
+  it('is true when maximum loanable is negative', () => {
+    expect(isMaxLoanableAlert(-1, 50_000)).toBe(true)
+    expect(isMaxLoanableAlert(-50_000, 0)).toBe(true)
+  })
+
+  it('is true when maximum loanable is below proposed loan for approval', () => {
+    expect(isMaxLoanableAlert(40_000, 50_000)).toBe(true)
+    expect(isMaxLoanableAlert(0, 1)).toBe(true)
+  })
+
+  it('is false when maximum loanable covers the proposed loan', () => {
+    expect(isMaxLoanableAlert(50_000, 50_000)).toBe(false)
+    expect(isMaxLoanableAlert(60_000, 50_000)).toBe(false)
+    expect(isMaxLoanableAlert(1, 0)).toBe(false)
   })
 })
 

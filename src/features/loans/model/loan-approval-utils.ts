@@ -38,6 +38,16 @@ export function computeDocStamp(
     : 0
 }
 
+/** True when max loanable is negative or cannot cover the proposed loan for approval. */
+export function isMaxLoanableAlert(
+  maximumLoanableAmount: number,
+  proposedAmount: number,
+): boolean {
+  return (
+    maximumLoanableAmount < 0 || maximumLoanableAmount < proposedAmount
+  )
+}
+
 export interface ProductFeeConfig {
   applicationChargeRate: number
 
@@ -232,6 +242,7 @@ export function computeLoanMetrics(
     totalDeductionsFinal,
     totalDisposableNet,
     maximumLoanableAmount,
+    proposedAmount: principal,
   }
 }
 

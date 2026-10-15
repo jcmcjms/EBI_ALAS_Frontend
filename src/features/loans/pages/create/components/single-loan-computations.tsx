@@ -3,7 +3,7 @@ import type {
   LoanApplicationFormData,
   SelectedLoan,
 } from '@/src/features/loans/schemas/schema'
-import { computeLoanMetrics } from '@/src/features/loans/model/loan-approval-utils'
+import { computeLoanMetrics, isMaxLoanableAlert } from '@/src/features/loans/model/loan-approval-utils'
 import {
   BLUE,
   B,
@@ -31,6 +31,10 @@ export function SingleLoanComputations({
   outstandingLoans,
 }: SingleLoanComputationsProps) {
   const maximumLoanableAmount = c.maximumLoanableAmount
+  const maxLoanableAlert = isMaxLoanableAlert(
+    maximumLoanableAmount,
+    c.proposedAmount,
+  )
   const applicationCharge = c.applicationCharge
   const docStamp = c.docStamp
   const notarialFee = c.notarialFee
@@ -54,9 +58,24 @@ export function SingleLoanComputations({
       <div className={cn(B, 'border-r-0 p-2')}>
         <AmtRow
           label={
-            <span className="font-bold">Maximum Loanable Amount **</span>
+            <span
+              className={cn(
+                'font-bold',
+                maxLoanableAlert && 'text-red-700',
+              )}
+            >
+              Maximum Loanable Amount **
+            </span>
           }
-          value={num(maximumLoanableAmount)}
+          value={
+            <span
+              className={cn(
+                maxLoanableAlert && 'font-bold text-red-700',
+              )}
+            >
+              {num(maximumLoanableAmount)}
+            </span>
+          }
           blue
           underline
         />
