@@ -3,7 +3,7 @@ import { dashboardKeys } from '@/src/features/dashboard/api/dashboard-queries'
 import { useSignalRConnectionStore } from '@/src/shared/store/signalr-connection-store'
 import { getDashboardOverview } from '../api/dashboard'
 
-export const DASHBOARD_POLL_MS = 30_000
+export const DASHBOARD_POLL_MS = 300_000
 
 export function dashboardPollInterval(
   isSignalRConnected: boolean,
