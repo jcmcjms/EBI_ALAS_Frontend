@@ -1,140 +1,85 @@
 import { memo } from 'react'
 import {
-  ArrowArcLeft,
-  ArrowUpRight,
-  CheckCircle,
-  ClipboardText,
-  TrendDown,
-  TrendUp,
-  UserCircleCheck,
-  WarningCircle,
-} from '@phosphor-icons/react'
-import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/src/shared/ui/data-display/card'
-import { cn } from '@/src/shared/lib/utils'
+import { Badge } from '@/src/shared/ui/primitives/badge'
 import type { DashboardSummary as DashboardSummaryType } from '../types'
 
 interface DashboardSummaryProps {
   data: DashboardSummaryType
 }
 
-function scrollTo(id: string) {
-  const el = document.getElementById(id)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1')
-    el.focus({ preventScroll: true })
-  }
-}
-
 export const DashboardSummary = memo(function DashboardSummary({
   data,
 }: DashboardSummaryProps) {
+  const pendingContext =
+    data.pendingDeltaFromYesterday === 0
+      ? 'No change from yesterday'
+      : `${data.pendingDeltaFromYesterday > 0 ? '+' : ''}${data.pendingDeltaFromYesterday} from yesterday`
+
+  const approvedContext =
+    data.approvedVsAvgPercent === 0
+      ? 'No change vs 7-day average'
+      : `${data.approvedVsAvgPercent > 0 ? '+' : ''}${data.approvedVsAvgPercent}% vs 7-day average`
+
   const stats = [
     {
-      title: 'Total Pending',
+      label: 'Pending Applications',
       value: data.totalPending,
-      icon: ClipboardText,
-      iconWrap:
-        'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400',
-      trend: `${data.pendingDeltaFromYesterday >= 0 ? '+' : ''}${data.pendingDeltaFromYesterday} from yesterday`,
-      trendIcon: data.pendingDeltaFromYesterday >= 0 ? TrendUp : TrendDown,
-      trendClass:
-        data.pendingDeltaFromYesterday >= 0
-          ? 'text-amber-600 dark:text-amber-400'
-          : 'text-emerald-600 dark:text-emerald-400',
-      target: 'pending-queue',
+      context: pendingContext,
+      isAlert: false,
     },
     {
-      title: 'Now Serving',
+      label: 'In Progress',
       value: data.nowServing,
-      icon: UserCircleCheck,
-      iconWrap:
-        'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-400',
-      trend: 'Active checkers (last 60 min)',
-      trendIcon: null,
-      trendClass: 'text-muted-foreground',
-      target: 'now-serving',
+      context: 'Currently being reviewed',
+      isAlert: false,
     },
     {
-      title: 'Push Backs Today',
+      label: 'Returned Today',
       value: data.pushBacksToday,
-      icon: ArrowArcLeft,
-      iconWrap:
-        'bg-red-500/10 text-red-500 dark:bg-red-500/20 dark:text-red-400',
-      trend: data.pushBacksToday > 0 ? 'Needs attention' : 'All clear',
-      trendIcon: data.pushBacksToday > 0 ? WarningCircle : CheckCircle,
-      trendClass:
+      context:
         data.pushBacksToday > 0
-          ? 'text-red-600 dark:text-red-400'
-          : 'text-emerald-600 dark:text-emerald-400',
-      target: 'push-back',
+          ? 'Requires correction'
+          : 'No corrections needed',
+      isAlert: data.pushBacksToday > 0,
     },
     {
-      title: 'Approved Today',
+      label: 'Approved Today',
       value: data.approvedToday,
-      icon: CheckCircle,
-      iconWrap:
-        'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-400',
-      trend: `${data.approvedVsAvgPercent >= 0 ? '+' : ''}${data.approvedVsAvgPercent}% vs 7-day avg`,
-      trendIcon: data.approvedVsAvgPercent >= 0 ? TrendUp : TrendDown,
-      trendClass:
-        data.approvedVsAvgPercent >= 0
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : 'text-amber-600 dark:text-amber-400',
-      target: 'approved-loans',
+      context: approvedContext,
+      isAlert: false,
     },
   ]
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => (
-        <Card
-          key={stat.title}
-          onClick={() => scrollTo(stat.target)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              scrollTo(stat.target)
-            }
-          }}
-          tabIndex={0}
-          role="button"
-          aria-label={`View ${stat.title}: ${stat.value}. ${stat.trend}`}
-          className="group cursor-pointer scroll-mt-24 transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-            <div className={cn('rounded-md p-2', stat.iconWrap)}>
-              <stat.icon className="size-5" weight="bold" aria-hidden="true" />
-            </div>
+        <Card key={stat.label}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {stat.label}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold tabular-nums">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-3xl font-bold tabular-nums tracking-tight">
                 {stat.value}
-              </div>
-              <ArrowUpRight
-                size={16}
-                weight="bold"
-                className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-                aria-hidden="true"
-              />
+              </span>
+              {stat.isAlert && (
+                <Badge
+                  variant="destructive"
+                  className="h-4 px-1.5 py-0 text-[10px] font-medium"
+                >
+                  Action
+                </Badge>
+              )}
             </div>
-            <p
-              className={cn(
-                'mt-1 flex items-center gap-1 text-xs',
-                stat.trendClass,
-              )}
-            >
-              {stat.trendIcon && (
-                <stat.trendIcon size={12} weight="bold" aria-hidden="true" />
-              )}
-              {stat.trend}
+            <p className="mt-1 text-xs text-muted-foreground">
+              {stat.context}
             </p>
           </CardContent>
         </Card>
