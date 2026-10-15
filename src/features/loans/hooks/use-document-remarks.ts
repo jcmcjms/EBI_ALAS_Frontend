@@ -22,7 +22,7 @@ export function useDocumentRemarks(loanId: number | string) {
     mutationFn: (payload: {
       checklistIdCode: string
       body: string
-      parentRemarkId?: number
+      parentRemarkId?: string
     }) => postDocumentRemark(loanId, payload),
     onSettled: () =>
       qc.invalidateQueries({
