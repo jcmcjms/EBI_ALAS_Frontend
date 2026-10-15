@@ -42,6 +42,9 @@ const BranchesPage = lazy(() =>
 const LoanCreation = lazy(
   () => import('@/src/features/loans/pages/create/index'),
 )
+const LoanRevision = lazy(
+  () => import('@/src/features/loans/pages/revision/index'),
+)
 const LoanMonitoring = lazy(
   () => import('@/src/features/loans/pages/monitoring/index'),
 )
@@ -127,19 +130,6 @@ function parseMonitoringSearch(
   }
 }
 
-type LoanCreateSearch = {
-  loanId?: string
-}
-
-function parseLoanCreateSearch(
-  search: Record<string, unknown>,
-): LoanCreateSearch {
-  const raw = search.loanId
-  return {
-    loanId: typeof raw === 'string' ? raw : raw != null ? String(raw) : undefined,
-  }
-}
-
 const rootRoute = createRootRoute({
   component: () => (
     <Suspense fallback={<RoutePending />}>
@@ -212,13 +202,25 @@ const loanMonitoringRoute = createRoute({
 const loanCreateRoute = createRoute({
   getParentRoute: () => authedShellRoute,
   path: '/loans/create',
-  validateSearch: parseLoanCreateSearch,
   component: () => (
     <GuardedRoute
       requiredPermission={PERMISSIONS.loansCreate}
       featureName="Loan Creation"
     >
       <LoanCreation />
+    </GuardedRoute>
+  ),
+})
+
+const loanRevisionRoute = createRoute({
+  getParentRoute: () => authedShellRoute,
+  path: '/loans/revision/$loanId',
+  component: () => (
+    <GuardedRoute
+      requiredPermission={PERMISSIONS.loansRevise}
+      featureName="Loan Revision"
+    >
+      <LoanRevision />
     </GuardedRoute>
   ),
 })
@@ -348,6 +350,7 @@ const authedRouteTree = authedShellRoute.addChildren([
   dashboardRoute,
   loanMonitoringRoute,
   loanCreateRoute,
+  loanRevisionRoute,
   loanQueueRoute,
   loanApprovalRoute,
   loanEvaluationRoute,

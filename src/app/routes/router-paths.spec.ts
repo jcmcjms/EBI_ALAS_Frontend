@@ -24,6 +24,7 @@ describe('app router config', () => {
       '/dashboard',
       '/loans/monitoring',
       '/loans/create',
+      '/loans/revision/$loanId',
       '/loans/queue',
       '/loans/approval/$loanId',
       '/loans/evaluation/$loanId',

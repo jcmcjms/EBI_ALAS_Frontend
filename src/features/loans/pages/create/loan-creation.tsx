@@ -2,8 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import type { FieldErrors, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQuery } from '@tanstack/react-query'
-import { useSearch } from '@tanstack/react-router'
 import { ArrowUp } from '@phosphor-icons/react'
 import { toastError } from '@/src/shared/ui/feedback/toast'
 
@@ -11,9 +9,6 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 import type { PreLoanItem } from '../../api/loan-types'
-import { loanKeys } from '@/src/features/loans/api/loan-queries'
-import { getRevisionRequests, getLoanDetail } from '@/src/features/loans/api/loan-review'
-import { RevisionFeedbackBanner } from '@/src/features/loans/components/revision-feedback-banner'
 import { LoanCreationHeader } from './loan-creation-header'
 import { FormFooter } from './form-footer'
 
@@ -26,8 +21,6 @@ import { ActiveLoanProvider } from './active-loan-context'
 import { LoanTransfersProvider } from './loan-transfers-provider'
 import { useCreateLoan } from '@/src/features/loans/hooks/use-create-loan'
 import { mapFormToSubmitLoanRequest } from '@/src/features/loans/model/map-form-to-request'
-import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
-import { parseEditLoanId } from './parse-edit-loan-id'
 
 import {
   SECTIONS,
@@ -41,22 +34,6 @@ import { LoanFormSections } from './loan-form-sections'
 const SCROLL_OFFSET_PX = 96
 
 export function LoanCreationPage() {
-  const search = useSearch({ strict: false }) as { loanId?: string }
-  const editLoanId = parseEditLoanId(search.loanId)
-
-  const revisionRequests = useQuery({
-    queryKey: loanKeys.revisionRequests(editLoanId ?? 'new'),
-    queryFn: () => getRevisionRequests(editLoanId!),
-    enabled: editLoanId != null,
-  })
-
-  const existingLoan = useQuery({
-    queryKey: loanKeys.review.detail(editLoanId ?? 'new'),
-    queryFn: () => getLoanDetail(editLoanId!),
-    enabled: editLoanId != null,
-    staleTime: 30_000,
-  })
-
   const userBranchId = useAuthStore((s) => s.user?.branchId ?? '')
   const { data: branches } = useBranches()
   const userBranchName = findBranchName(branches, userBranchId) || userBranchId
@@ -109,13 +86,6 @@ export function LoanCreationPage() {
   const { handleSubmit, formState } = methods
   const { isDirty, errors } = formState
   const { control } = methods
-
-  // Populate form when editing an existing loan (must be after methods is declared)
-  useEffect(() => {
-    if (existingLoan.data) {
-      methods.reset(mapLoanDetailToFormData(existingLoan.data))
-    }
-  }, [existingLoan.data, methods])
 
   const cisId = useWatch({ control, name: 'client.cisId' }) ?? ''
   const isClientLoaded = cisId.length > 0
@@ -262,20 +232,9 @@ export function LoanCreationPage() {
               userBranchName={userBranchName}
               selectedPreLoan={selectedPreLoan}
               isDirty={isDirty}
-              editLamId={existingLoan.data?.lamId}
-              editStatus={existingLoan.data?.status}
             />
 
             <MobileSectionNav {...stepperProps} />
-
-            {revisionRequests.data && revisionRequests.data.length > 0 && (
-              <div className="container mx-auto px-6 pt-6">
-                <RevisionFeedbackBanner
-                  requests={revisionRequests.data}
-                  onNavigateToSection={scrollToSection}
-                />
-              </div>
-            )}
 
             <div className="container mx-auto flex flex-1 gap-8 px-6 py-8">
               <DesktopStepper {...stepperProps} />
