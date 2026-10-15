@@ -1,5 +1,5 @@
 import { cn } from '@/src/shared/lib/utils'
-import { computeLoanMetrics } from '@/src/features/loans/model/loan-approval-utils'
+import { isMaxLoanableAlert, computeLoanMetrics } from '@/src/features/loans/model/loan-approval-utils'
 import {
   DOUBLE_UNDERLINE,
   num,
@@ -37,6 +37,10 @@ export function SingleLoanObligations({
   const totalDeductionsFinal = c.totalDeductionsFinal
   const totalDisposableNet = c.totalDisposableNet
   const maximumLoanableAmount = c.maximumLoanableAmount
+  const maxLoanableAlert = isMaxLoanableAlert(
+    maximumLoanableAmount,
+    c.proposedAmount,
+  )
 
   return (
     <div className={cn('border border-black border-t-0 p-2 break-inside-avoid')}>
@@ -206,9 +210,19 @@ export function SingleLoanObligations({
             <td />
           </tr>
           <tr className="[&>td]:px-1 [&>td]:py-0.5">
-            <td className="font-bold">Maximum Loanable Amount</td>
             <td
-              className="text-right font-bold tabular-nums"
+              className={cn(
+                'font-bold',
+                maxLoanableAlert && 'text-red-700',
+              )}
+            >
+              Maximum Loanable Amount
+            </td>
+            <td
+              className={cn(
+                'text-right font-bold tabular-nums',
+                maxLoanableAlert && 'text-red-700',
+              )}
               style={DOUBLE_UNDERLINE}
             >
               {maximumLoanableAmount < 0
