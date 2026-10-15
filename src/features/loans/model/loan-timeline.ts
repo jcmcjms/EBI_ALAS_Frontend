@@ -42,6 +42,13 @@ export function describeEvent(e: TimelineEvent): TimelineSentence {
     return { headline: 'Evaluation complete — recommended for approval' }
   if (action === 'EvaluatedNotRecommended')
     return { headline: 'Evaluation complete — forwarded as NOT recommended' }
+  if (action === 'Revised' || fromStatus === 'ForRevision') {
+    if (toStatus === 'ForRecommendation')
+      return { headline: 'Resubmitted for recommendation' }
+    if (toStatus === 'ForChecking')
+      return { headline: 'Resubmitted after corrections' }
+    return { headline: 'Resubmitted after corrections' }
+  }
   if (fromStatus === 'Draft') {
     if (toStatus === 'ForChecking')
       return { headline: 'Submitted for evaluation' }
