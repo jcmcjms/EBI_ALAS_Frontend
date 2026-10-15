@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   computeLoanMetrics,
   computeDocStamp,
+  findMaxLoanableSubmitBlock,
   isMaxLoanableAlert,
   resolveApprovalTermDays,
   toAnnualRatePercent,
@@ -319,6 +320,73 @@ describe('isMaxLoanableAlert', () => {
     expect(isMaxLoanableAlert(50_000, 50_000)).toBe(false)
     expect(isMaxLoanableAlert(60_000, 50_000)).toBe(false)
     expect(isMaxLoanableAlert(1, 0)).toBe(false)
+  })
+})
+
+describe('findMaxLoanableSubmitBlock', () => {
+  const baseForm = {
+    client: {
+      cisId: 'CIS-1',
+      firstName: 'Ana',
+      lastName: 'Cruz',
+      netTakeHomePay: 20_000,
+    },
+    outstandingLoans: [],
+    loans: [
+      {
+        loanNo: 'PN-1',
+        productCode: 'A16',
+        productDescription: 'Salary',
+        parameters: {
+          product: 'A16',
+          proposedAmount: 10_000,
+          term: 30,
+          interestRate: 0.05,
+        },
+        ebiReloans: [],
+        buyOuts: [],
+        incomingLoans: [],
+      },
+    ],
+  } as unknown as Parameters<typeof findMaxLoanableSubmitBlock>[0]
+
+  it('returns null when max loanable covers proposed', () => {
+    expect(findMaxLoanableSubmitBlock(baseForm)).toBeNull()
+  })
+
+  it('blocks when max loanable is below proposed', () => {
+    const form = {
+      ...baseForm,
+      client: { ...baseForm.client, netTakeHomePay: 100 },
+    } as Parameters<typeof findMaxLoanableSubmitBlock>[0]
+    const block = findMaxLoanableSubmitBlock(form)
+    expect(block).not.toBeNull()
+    expect(block?.loanLabel).toBe('PN-1')
+  })
+
+  it('blocks the first failing loan in a multi-loan application', () => {
+    const form = {
+      ...baseForm,
+      loans: [
+        {
+          ...baseForm.loans[0],
+          loanNo: 'PN-OK',
+          parameters: {
+            ...baseForm.loans[0].parameters,
+            proposedAmount: 1,
+          },
+        },
+        {
+          ...baseForm.loans[0],
+          loanNo: 'PN-BAD',
+          parameters: {
+            ...baseForm.loans[0].parameters,
+            proposedAmount: 999_999,
+          },
+        },
+      ],
+    } as Parameters<typeof findMaxLoanableSubmitBlock>[0]
+    expect(findMaxLoanableSubmitBlock(form)?.loanLabel).toBe('PN-BAD')
   })
 })
 

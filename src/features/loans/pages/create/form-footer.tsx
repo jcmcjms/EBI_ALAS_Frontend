@@ -11,6 +11,7 @@ interface FormFooterProps {
   isSubmitting: boolean
   firstErrorSection?: SectionId
   onNavigateToError: (id: SectionId) => void
+  maxLoanableBlock?: { loanLabel: string } | null
 }
 
 export function FormFooter({
@@ -22,11 +23,23 @@ export function FormFooter({
   isSubmitting,
   firstErrorSection,
   onNavigateToError,
+  maxLoanableBlock,
 }: FormFooterProps) {
   return (
     <footer className="sticky bottom-0 z-20 border-t bg-background/95 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-6">
-        {totalErrors > 0 ? (
+        {maxLoanableBlock ? (
+          <div
+            className="hidden items-center gap-1.5 text-sm text-destructive md:flex"
+            role="alert"
+          >
+            <WarningCircle size={16} weight="fill" />
+            <p>
+              {maxLoanableBlock.loanLabel}: Maximum Loanable Amount does not
+              cover the proposed loan.
+            </p>
+          </div>
+        ) : totalErrors > 0 ? (
           <div
             className="hidden items-center gap-1.5 text-sm text-destructive md:flex"
             role="alert"
@@ -61,7 +74,9 @@ export function FormFooter({
             size="lg"
             className="gap-2 px-6"
             disabled={!canSubmit || isSubmitting}
-            aria-describedby={canSubmit ? undefined : 'submit-hint'}
+            aria-describedby={
+              canSubmit ? undefined : maxLoanableBlock ? undefined : 'submit-hint'
+            }
           >
             <PaperPlaneTilt size={16} weight="bold" />
             {isSubmitting ? 'Submitting…' : 'Submit Application'}
