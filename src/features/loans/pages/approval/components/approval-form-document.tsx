@@ -206,7 +206,7 @@ function ApprovalFormDocumentBase({
           <section className="break-before-page">
             <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
               <span className="text-sm font-bold underline">
-                LOAN APPROVAL FORM (Continuation)
+                LOAN APPROVAL FORM
               </span>
               <span className="tabular-nums">
                 {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{' '}
