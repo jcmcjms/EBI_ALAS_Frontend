@@ -11,6 +11,7 @@ import {
   type WebLoanAccount,
   type WebLoanCisSearchResponse,
 } from '../../../api/loan-types'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 
 import { ActiveLoansTable } from './active-loans-table'
@@ -31,6 +32,8 @@ interface CISLookupProps {
 export function CISLookup({ onPreLoanChange }: CISLookupProps) {
   const { control, setValue } = useFormContext<LoanApplicationFormData>()
   const { data: branches } = useBranches()
+  const userBranchId = useAuthStore((s) => s.user?.branchId ?? '')
+  const canSeeAllBranches = useAuthStore((s) => s.user?.role === 'Admin')
 
   const [searchQuery, setSearchQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -145,13 +148,22 @@ export function CISLookup({ onPreLoanChange }: CISLookupProps) {
     query: string,
   ) => {
     const b = result.borrower
-    const accounts = result.accounts ?? []
+    const allAccounts = result.accounts ?? []
+    // Defense in depth: only the caller's branch LAI may attach to an application.
+    const accounts = canSeeAllBranches
+      ? allAccounts
+      : allAccounts.filter(
+          (a) =>
+            a.branchCode &&
+            userBranchId &&
+            a.branchCode.trim().toLowerCase() === userBranchId.trim().toLowerCase(),
+        )
 
     setLaiAccounts(accounts)
 
     setOutstandingCount(0)
 
-    const firstBranchCode = accounts[0]?.branchCode ?? ''
+    const firstBranchCode = accounts[0]?.branchCode ?? userBranchId
     const branchName = firstBranchCode
       ? findBranchName(branches, firstBranchCode)
       : ''
