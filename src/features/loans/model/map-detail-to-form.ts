@@ -8,9 +8,30 @@ import {
 
 const DEVIATION_REASON_SET: ReadonlySet<string> = new Set(DEVIATION_REASONS)
 
+function readFormSnapshot(form: unknown): LoanApplicationFormData | null {
+  if (!form || typeof form !== 'object') return null
+  const candidate = form as {
+    client?: { cisId?: unknown }
+    loans?: unknown
+  }
+  if (
+    typeof candidate.client?.cisId !== 'string' ||
+    candidate.client.cisId.length === 0 ||
+    !Array.isArray(candidate.loans)
+  ) {
+    return null
+  }
+  return form as LoanApplicationFormData
+}
+
 export function mapLoanDetailToFormData(
   l: LoanDetailResponse,
 ): LoanApplicationFormData {
+  const snapshot = readFormSnapshot(l.form)
+  if (snapshot) {
+    return snapshot
+  }
+
   const creationTypeCode: 0 | 1 | 2 | 6 =
     l.creationTypeCode === CREATION_TYPE.RELOAN
       ? CREATION_TYPE.RELOAN

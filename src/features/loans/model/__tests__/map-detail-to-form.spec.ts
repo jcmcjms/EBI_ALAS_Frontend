@@ -178,4 +178,60 @@ describe('mapLoanDetailToFormData', () => {
     expect(loan.cDocStamp).toBeUndefined()
     expect(loan.parameters.policyTermMonths).toBeUndefined()
   })
+
+  it('prefers the create-flow form snapshot so edit mode can load the client', () => {
+    const detail = baseDetail()
+    detail.cisId = null
+    detail.firstName = 'Snapshot'
+    detail.form = {
+      branchType: {
+        creationTypeCode: 0,
+        creationTypeLabel: 'New Loan',
+        branch: '011',
+        requestingOfficer: 'AO One',
+        lai: 'LAI-77',
+      },
+      client: {
+        cisId: 'CIS-999',
+        firstName: 'Snap',
+        lastName: 'Shot',
+        netTakeHomePay: 18000,
+      },
+      loans: [
+        {
+          loanNo: 'PN-55',
+          productCode: 'A16',
+          productDescription: 'A16 - APDS',
+          creationTypeCode: 0,
+          creationTypeLabel: 'New Loan',
+          branchCode: '011',
+          parameters: {
+            product: 'A16 - APDS',
+            purpose: 'Salary',
+            proposedAmount: 50000,
+            term: 365,
+            interestRate: 5,
+          },
+          ebiReloans: [],
+          buyOuts: [],
+          incomingLoans: [],
+          verification: { findings: '' },
+          deviations: {
+            hasDeviations: false,
+            deviationDetails: [],
+            deviationJustifications: {},
+          },
+        },
+      ],
+      outstandingLoans: [],
+      loanType: 'New',
+    }
+
+    const form = mapLoanDetailToFormData(detail)
+
+    expect(form.client.cisId).toBe('CIS-999')
+    expect(form.client.firstName).toBe('Snap')
+    expect(form.loans[0].loanNo).toBe('PN-55')
+    expect(form.loans[0].parameters.proposedAmount).toBe(50000)
+  })
 })
