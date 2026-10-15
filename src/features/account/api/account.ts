@@ -12,6 +12,7 @@ export interface AccountProfile {
   email?: string
   phone?: string
   emergencyContact?: string
+  eSignature?: string | null
   profilePhotoUrl?: string
   createdAt: string
   passwordChangedAt?: string
@@ -60,6 +61,7 @@ export interface UpdateProfilePayload {
   email: string | null
   phone: string | null
   emergencyContact: string | null
+  eSignature: string | null
 }
 
 export interface RecentClient {

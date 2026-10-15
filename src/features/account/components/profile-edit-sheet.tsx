@@ -11,6 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/src/shared/ui/navigation/sheet'
+import { SignaturePad } from '@/src/shared/ui/forms/signature-pad'
 import { useAccountProfile, useUpdateProfile } from '../hooks/use-account'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -54,6 +55,7 @@ export function ProfileEditSheet({
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [emergencyContact, setEmergencyContact] = useState('')
+  const [signature, setSignature] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
@@ -61,8 +63,12 @@ export function ProfileEditSheet({
     setEmail(profile.email ?? '')
     setPhone(profile.phone ?? '')
     setEmergencyContact(profile.emergencyContact ?? '')
+    setSignature(profile.eSignature ?? null)
     setErrors({})
   }, [open, profile])
+
+  const hasStoredSignature = Boolean(profile?.eSignature)
+  const signatureMissing = !hasStoredSignature && !signature
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -79,11 +85,20 @@ export function ProfileEditSheet({
       return
     }
 
+    if (signatureMissing) {
+      setErrors((prev) => ({
+        ...prev,
+        signature: 'E-signature is required. Sign the pad to continue.',
+      }))
+      return
+    }
+
     updateProfile.mutate(
       {
         email: parsed.data.email || null,
         phone: parsed.data.phone || null,
         emergencyContact: parsed.data.emergencyContact || null,
+        eSignature: signature,
       },
       { onSuccess: () => onOpenChange(false) },
     )
@@ -95,8 +110,8 @@ export function ProfileEditSheet({
         <SheetHeader>
           <SheetTitle>Edit profile</SheetTitle>
           <SheetDescription>
-            These details are used for contact tracing on loan actions. Leave a
-            field empty to remove it.
+            Contact details are used for loan action tracing. An e-signature is
+            required for audit compliance and appears on loan forms.
           </SheetDescription>
         </SheetHeader>
 
@@ -149,6 +164,38 @@ export function ProfileEditSheet({
             {errors.emergencyContact && (
               <p className="text-xs text-destructive">
                 {errors.emergencyContact}
+              </p>
+            )}
+          </div>
+
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="profile-signature">E-Signature</Label>
+              {signature && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setSignature(null)}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+            <SignaturePad
+              value={signature}
+              onChange={setSignature}
+              heightClassName="h-36"
+            />
+            <p className="text-xs text-muted-foreground">
+              {hasStoredSignature && profile && signature === profile.eSignature
+                ? 'Signature on file. Redraw to replace it.'
+                : 'Sign inside the box. Required until a signature is saved.'}
+            </p>
+            {errors.signature && (
+              <p role="alert" className="text-xs text-destructive">
+                {errors.signature}
               </p>
             )}
           </div>
