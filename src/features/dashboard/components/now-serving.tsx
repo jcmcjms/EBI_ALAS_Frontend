@@ -12,30 +12,29 @@ import type { NowServingItem } from '../types'
 interface NowServingProps {
   data: NowServingItem[]
   pendingCount?: number
+  compact?: boolean
 }
 
-export function NowServing({ data, pendingCount }: NowServingProps) {
-  return (
-    <Card id="now-serving" className="scroll-mt-24 flex flex-col">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl">
-          Now Serving
-          {data.length > 0 && (
-            <Badge variant="secondary" className="tabular-nums">
-              {data.length}
-            </Badge>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0 flex-1">
-        {data.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-            No one is serving right now
-            {pendingCount != null
-              ? ` — ${pendingCount} file${pendingCount === 1 ? '' : 's'} waiting in queue.`
-              : '.'}
-          </p>
-        ) : (
+export function NowServing({
+  data,
+  pendingCount,
+  compact = false,
+}: NowServingProps) {
+  const listBody =
+    data.length === 0 ? (
+      compact ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No applications in progress.
+        </p>
+      ) : (
+        <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+          No one is serving right now
+          {pendingCount != null
+            ? ` — ${pendingCount} file${pendingCount === 1 ? '' : 's'} waiting in queue.`
+            : '.'}
+        </p>
+      )
+    ) : (
           <ul className="divide-y">
             {data.map((item) => (
               <li
@@ -69,8 +68,25 @@ export function NowServing({ data, pendingCount }: NowServingProps) {
               </li>
             ))}
           </ul>
-        )}
-      </CardContent>
+    )
+
+  if (compact) {
+    return <div id="now-serving">{listBody}</div>
+  }
+
+  return (
+    <Card id="now-serving" className="scroll-mt-24 flex flex-col">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-xl">
+          Now Serving
+          {data.length > 0 && (
+            <Badge variant="secondary" className="tabular-nums">
+              {data.length}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 flex-1">{listBody}</CardContent>
     </Card>
   )
 }

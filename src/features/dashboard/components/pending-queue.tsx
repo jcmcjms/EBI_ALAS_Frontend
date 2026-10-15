@@ -45,11 +45,13 @@ const statusStyles: Record<LoanStatus, string> = {
 interface PendingQueueProps {
   data: PendingQueueItem[]
   slaPolicy?: Record<string, number> | null
+  compact?: boolean
 }
 
 export const PendingQueue = memo(function PendingQueue({
   data,
   slaPolicy = null,
+  compact = false,
 }: PendingQueueProps) {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
@@ -60,35 +62,28 @@ export const PendingQueue = memo(function PendingQueue({
     [data],
   )
 
-  return (
-    <Card id="pending-queue" className="scroll-mt-24 flex flex-col">
-      <CardHeader className="flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          Pending Queue
-          {data.length > 0 && (
-            <Badge variant="secondary" className="tabular-nums">
-              {data.length}
-            </Badge>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0 flex-1">
-        {data.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <p className="text-sm text-muted-foreground mb-4">
-              Queue is clear — no pending applications.
-            </p>
-            {user?.role === 'Encoder' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate({ to: '/loans/create' })}
-              >
-                Create New Loan
-              </Button>
-            )}
-          </div>
-        ) : (
+  const listBody = data.length === 0 ? (
+    compact ? (
+      <p className="py-8 text-center text-sm text-muted-foreground">
+        No pending applications.
+      </p>
+    ) : (
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <p className="text-sm text-muted-foreground mb-4">
+          Queue is clear — no pending applications.
+        </p>
+        {user?.role === 'Encoder' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate({ to: '/loans/create' })}
+          >
+            Create New Loan
+          </Button>
+        )}
+      </div>
+    )
+  ) : (
           <ul className="divide-y">
             {displayData.map((item) => {
               const mins = waitingMinutes(item.date)
@@ -168,15 +163,35 @@ export const PendingQueue = memo(function PendingQueue({
               )
             })}
           </ul>
-        )}
-      </CardContent>
+  )
+
+  if (compact) {
+    return <div id="pending-queue">{listBody}</div>
+  }
+
+  return (
+    <Card id="pending-queue" className="scroll-mt-24 flex flex-col">
+      <CardHeader className="flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2 text-xl">
+          Pending Queue
+          {data.length > 0 && (
+            <Badge variant="secondary" className="tabular-nums">
+              {data.length}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 flex-1">{listBody}</CardContent>
       {data.length > 5 && (
         <CardFooter className="border-t p-3 justify-center">
           <Button
             variant="ghost"
             size="sm"
             onClick={() =>
-              navigate({ to: '/loans/monitoring', search: { status: pendingStatuses } })
+              navigate({
+                to: '/loans/monitoring',
+                search: { status: pendingStatuses },
+              })
             }
             className="w-full text-sm"
           >
