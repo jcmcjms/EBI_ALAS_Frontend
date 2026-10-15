@@ -51,6 +51,12 @@ describe('shouldInvalidateLoansOnNotification', () => {
     ).toBe(true)
   })
 
+  it('refreshes loans for deviation remark notices', () => {
+    expect(shouldInvalidateLoansOnNotification('New deviation remark')).toBe(
+      true,
+    )
+  })
+
   it('does not refresh loans for unrelated notices', () => {
     expect(shouldInvalidateLoansOnNotification('Password reset sent')).toBe(
       false,
