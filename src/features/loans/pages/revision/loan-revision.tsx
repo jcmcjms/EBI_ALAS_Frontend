@@ -114,6 +114,12 @@ export function LoanRevisionPage() {
   const [notes, setNotes] = useState('')
   const [notesError, setNotesError] = useState<string | undefined>()
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
+  const registerSectionRef = useCallback(
+    (id: SectionId, el: HTMLElement | null) => {
+      sectionRefs.current[id] = el
+    },
+    [],
+  )
   const approvalFormRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -268,7 +274,7 @@ export function LoanRevisionPage() {
                   isSubmitting={reviseMutation.isPending}
                   branchTypeCode={branchTypeCode}
                   methods={methods}
-                  sectionRefs={sectionRefs}
+                  registerSectionRef={registerSectionRef}
                   approvalFormRef={approvalFormRef}
                   onPreLoanChange={() => undefined}
                   isSectionEditable={isEditable}

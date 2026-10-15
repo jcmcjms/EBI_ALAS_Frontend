@@ -1,4 +1,4 @@
-import { type ReactNode, type RefObject } from 'react'
+import { type RefObject } from 'react'
 import type { PreLoanItem } from '../../api/loan-types'
 import type { LoanApplicationFormData, CreationTypeCode } from '@/src/features/loans/schemas/schema'
 import { HidesOutstandingLoans } from '@/src/features/loans/schemas/schema'
@@ -19,36 +19,11 @@ interface LoanFormSectionsProps {
   isSubmitting: boolean
   branchTypeCode: CreationTypeCode | null
   methods: UseFormReturn<LoanApplicationFormData>
-  sectionRefs: RefObject<Record<string, HTMLElement | null>>
+  registerSectionRef: (id: SectionId, el: HTMLElement | null) => void
   approvalFormRef: RefObject<HTMLDivElement | null>
   onPreLoanChange: (id: string, payload: PreLoanItem | null) => void
   /** When provided, sections that return false render read-only. */
   isSectionEditable?: (id: SectionId) => boolean
-}
-
-function SectionShell({
-  id,
-  editable,
-  sectionRefs,
-  children,
-}: {
-  id: SectionId
-  editable: boolean
-  sectionRefs: RefObject<Record<string, HTMLElement | null>>
-  children: ReactNode
-}) {
-  return (
-    <section
-      id={id}
-      ref={(el) => {
-        sectionRefs.current[id] = el
-      }}
-    >
-      <fieldset disabled={!editable} className="contents">
-        {children}
-      </fieldset>
-    </section>
-  )
 }
 
 export function LoanFormSections({
@@ -56,97 +31,105 @@ export function LoanFormSections({
   isSubmitting,
   branchTypeCode,
   methods,
-  sectionRefs,
+  registerSectionRef,
   approvalFormRef,
   onPreLoanChange,
   isSectionEditable,
 }: LoanFormSectionsProps) {
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode)
   const canEdit = (id: SectionId) =>
-    isSectionEditable ? isSectionEditable(id) : true
+    (isSectionEditable ? isSectionEditable(id) : true) && !isSubmitting
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-8">
-      <SectionShell
+      <section
         id="cis-lookup"
-        editable={canEdit('cis-lookup') && !isSubmitting}
-        sectionRefs={sectionRefs}
+        ref={(el) => registerSectionRef('cis-lookup', el)}
       >
-        <CISLookup
-          onPreLoanChange={(id, payload) => {
-            onPreLoanChange(id, payload)
-            if (payload) {
-              methods.setValue('preLoan', {
-                id: payload.id,
-                accountNo: payload.accountNo,
-                bch: payload.bch,
-                formNumber: payload.formNumber ?? undefined,
-                productDescription:
-                  payload.productDescription ?? undefined,
-              })
-            } else {
-              methods.setValue('preLoan', undefined)
-            }
-          }}
-        />
-      </SectionShell>
+        <fieldset disabled={!canEdit('cis-lookup')} className="contents">
+          <CISLookup
+            onPreLoanChange={(id, payload) => {
+              onPreLoanChange(id, payload)
+              if (payload) {
+                methods.setValue('preLoan', {
+                  id: payload.id,
+                  accountNo: payload.accountNo,
+                  bch: payload.bch,
+                  formNumber: payload.formNumber ?? undefined,
+                  productDescription:
+                    payload.productDescription ?? undefined,
+                })
+              } else {
+                methods.setValue('preLoan', undefined)
+              }
+            }}
+          />
+        </fieldset>
+      </section>
 
       {isClientLoaded ? (
         <div className="contents space-y-8">
-          <SectionShell
+          <section
             id="personal-info"
-            editable={canEdit('personal-info') && !isSubmitting}
-            sectionRefs={sectionRefs}
+            ref={(el) => registerSectionRef('personal-info', el)}
           >
-            <PersonalInfoSection />
-          </SectionShell>
+            <fieldset disabled={!canEdit('personal-info')} className="contents">
+              <PersonalInfoSection />
+            </fieldset>
+          </section>
 
-          <SectionShell
+          <section
             id="loan-params"
-            editable={canEdit('loan-params') && !isSubmitting}
-            sectionRefs={sectionRefs}
+            ref={(el) => registerSectionRef('loan-params', el)}
           >
-            <LoanParametersTabsSection />
-          </SectionShell>
+            <fieldset disabled={!canEdit('loan-params')} className="contents">
+              <LoanParametersTabsSection />
+            </fieldset>
+          </section>
 
           {!hideOutstandingSection && (
-            <SectionShell
+            <section
               id="obligations"
-              editable={canEdit('obligations') && !isSubmitting}
-              sectionRefs={sectionRefs}
+              ref={(el) => registerSectionRef('obligations', el)}
             >
-              <ObligationsSection />
-            </SectionShell>
+              <fieldset disabled={!canEdit('obligations')} className="contents">
+                <ObligationsSection />
+              </fieldset>
+            </section>
           )}
-          <SectionShell
+          <section
             id="other-obligations"
-            editable={canEdit('other-obligations') && !isSubmitting}
-            sectionRefs={sectionRefs}
+            ref={(el) => registerSectionRef('other-obligations', el)}
           >
-            <OtherObligationsSection />
-          </SectionShell>
-          <SectionShell
+            <fieldset disabled={!canEdit('other-obligations')} className="contents">
+              <OtherObligationsSection />
+            </fieldset>
+          </section>
+          <section
             id="verification"
-            editable={canEdit('verification') && !isSubmitting}
-            sectionRefs={sectionRefs}
+            ref={(el) => registerSectionRef('verification', el)}
           >
-            <VerificationSection />
-          </SectionShell>
-          <SectionShell
+            <fieldset disabled={!canEdit('verification')} className="contents">
+              <VerificationSection />
+            </fieldset>
+          </section>
+          <section
             id="deviations"
-            editable={canEdit('deviations') && !isSubmitting}
-            sectionRefs={sectionRefs}
+            ref={(el) => registerSectionRef('deviations', el)}
           >
-            <DeviationsSection />
-          </SectionShell>
+            <fieldset disabled={!canEdit('deviations')} className="contents">
+              <DeviationsSection />
+            </fieldset>
+          </section>
 
-          <SectionShell
+          <section
             id="approval-form"
-            editable={false}
-            sectionRefs={sectionRefs}
+            ref={(el) => registerSectionRef('approval-form', el)}
           >
-            <ApprovalFormPreview ref={approvalFormRef} />
-          </SectionShell>
+            <fieldset disabled className="contents">
+              <ApprovalFormPreview ref={approvalFormRef} />
+            </fieldset>
+          </section>
         </div>
       ) : (
         <WorkflowOverview />
