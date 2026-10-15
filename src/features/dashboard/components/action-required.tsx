@@ -10,18 +10,12 @@ import {
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import { Button } from '@/src/shared/ui/primitives/button'
 import { formatRelativeTime } from '@/src/shared/lib/format'
+import { actionRequiredTaskCount } from '../lib/action-required-count'
 import type { IncompleteDocsQueueItem, PushBackItem } from '../types'
 
 interface ActionRequiredProps {
   pushBacks: PushBackItem[]
   incompleteDocs: IncompleteDocsQueueItem[]
-}
-
-export function actionRequiredTaskCount(
-  pushBacks: PushBackItem[],
-  incompleteDocs: IncompleteDocsQueueItem[],
-): number {
-  return pushBacks.length + incompleteDocs.length
 }
 
 export const ActionRequired = memo(function ActionRequired({
