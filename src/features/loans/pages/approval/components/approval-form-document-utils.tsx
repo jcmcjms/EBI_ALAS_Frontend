@@ -238,11 +238,20 @@ export type SignatureBlockSlot = SignatureSlotDto
 
 export function SignatureBlock({ slot }: { slot: SignatureBlockSlot }) {
   const name = slot.signedByName?.trim()
-  const title = slot.signedByJobTitle?.trim() || slot.jobTitle || '�'
+  const title = slot.signedByJobTitle?.trim() || slot.jobTitle || '—'
+  const ink = slot.signatureUrl?.trim() || null
   return (
     <div>
       <div className="font-bold">{slot.action}:</div>
-      <div className="mt-8 border-b border-black" />
+      <div className="relative mt-8 border-b border-black">
+        {ink ? (
+          <img
+            src={ink}
+            alt={`Signature of ${name ?? slot.role}`}
+            className="pointer-events-none absolute bottom-0 left-0 max-h-12 w-auto max-w-full object-contain object-left-bottom"
+          />
+        ) : null}
+      </div>
       <div className="mt-0.5 font-bold">{name ?? ' '}</div>
       <div>
         {title} <span className="font-bold">({slot.role})</span>

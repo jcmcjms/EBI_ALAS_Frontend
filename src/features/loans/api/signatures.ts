@@ -14,6 +14,8 @@ export interface SignatureSlotDto {
   signedByName: string | null
   signedByJobTitle: string | null
   signedAt: string | null
+  /** Signer's ink snapshot (base64 data URL); null until the slot is signed. */
+  signatureUrl: string | null
 }
 
 /**
