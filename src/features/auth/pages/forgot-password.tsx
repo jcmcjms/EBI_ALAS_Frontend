@@ -3,13 +3,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { CircleNotch } from '@phosphor-icons/react'
-import { cn } from '@/src/shared/lib/utils'
 import { Field, FieldGroup, FieldLabel } from '@/src/shared/ui/forms/field'
 import { Input } from '@/src/shared/ui/primitives/input'
 import { Button } from '@/src/shared/ui/primitives/button'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
 import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { forgotPasswordSchema, type ForgotPasswordFormData } from '../schemas'
+
+const ENTERPRISE_BANK_URL = 'https://www.enterprisebank.ph/'
 
 interface ForgotPasswordResponse {
   message: string
@@ -44,6 +45,15 @@ export default function ForgotPassword() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
+        <div className="flex justify-center gap-2 md:justify-start">
+          <a href={ENTERPRISE_BANK_URL}>
+            <img
+              src="/enterprise_bank-logo.png"
+              alt="Enterprise Bank Inc"
+              className="h-8 object-contain"
+            />
+          </a>
+        </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs space-y-8">
             <div className="text-center">
@@ -54,7 +64,7 @@ export default function ForgotPassword() {
             </div>
 
             {submitted ? (
-              <div className="flex flex-col gap-6 rounded-lg border bg-card p-8 shadow-sm text-center">
+              <div className="flex flex-col gap-6 text-center">
                 <h2 className="text-2xl font-bold">Check your email</h2>
                 <p className="text-sm text-muted-foreground">
                   A temporary password was sent to the registered email. Sign in
@@ -67,9 +77,7 @@ export default function ForgotPassword() {
             ) : (
               <form
                 onSubmit={handleSubmit(onSubmit)}
-                className={cn(
-                  'flex flex-col gap-6 rounded-lg border bg-card p-8 shadow-sm',
-                )}
+                className="flex flex-col gap-6"
                 noValidate
               >
                 <FieldGroup>
@@ -102,10 +110,15 @@ export default function ForgotPassword() {
                     className="w-full"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting && (
-                      <CircleNotch className="animate-spin" size={16} />
+                    {isSubmitting ? (
+                      <CircleNotch
+                        size={20}
+                        weight="bold"
+                        className="animate-spin"
+                      />
+                    ) : (
+                      'Send temporary password'
                     )}
-                    Send temporary password
                   </Button>
 
                   <div className="text-center text-sm">
@@ -132,7 +145,6 @@ export default function ForgotPassword() {
         <img
           src="/EBI_bg_login.png"
           alt=""
-          aria-hidden="true"
           className="absolute inset-0 h-full w-full object-contain dark:brightness-[0.2] dark:grayscale"
         />
       </div>
