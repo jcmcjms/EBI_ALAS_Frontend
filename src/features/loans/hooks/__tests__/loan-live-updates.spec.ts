@@ -29,6 +29,17 @@ describe('shouldInvalidateLoansOnNotification', () => {
     ).toBe(true)
   })
 
+  it('refreshes loans for document remark notices', () => {
+    expect(shouldInvalidateLoansOnNotification('New document remark')).toBe(
+      true,
+    )
+    expect(
+      shouldInvalidateLoansOnNotification(
+        'Loan LAM-1 · PAYSIP: Please clarify',
+      ),
+    ).toBe(false)
+  })
+
   it('does not refresh loans for unrelated notices', () => {
     expect(shouldInvalidateLoansOnNotification('Password reset sent')).toBe(
       false,
