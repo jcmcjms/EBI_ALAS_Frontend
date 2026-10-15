@@ -71,6 +71,7 @@ function loanResponseToDetail(loan: LoanResponse): LoanDetailResponse {
   return {
     id: loan.id,
     form: loan.form,
+    rowVersion: loan.rowVersion,
     lamId: loan.lamId,
     applicationGroupNo: loan.applicationGroupNo,
     branchCode: loan.branchId,
