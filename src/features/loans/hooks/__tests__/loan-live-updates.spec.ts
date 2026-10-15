@@ -1,0 +1,20 @@
+import { describe, expect, it } from 'vitest'
+import { shouldInvalidateLoansOnNotification } from '../loan-live-updates'
+
+describe('shouldInvalidateLoansOnNotification', () => {
+  it('refreshes loans for returned/revision pushback notices', () => {
+    expect(
+      shouldInvalidateLoansOnNotification('Application returned for revision'),
+    ).toBe(true)
+    expect(
+      shouldInvalidateLoansOnNotification('Your application was returned'),
+    ).toBe(true)
+  })
+
+  it('does not refresh loans for unrelated notices', () => {
+    expect(shouldInvalidateLoansOnNotification('Password reset sent')).toBe(
+      false,
+    )
+    expect(shouldInvalidateLoansOnNotification('Welcome')).toBe(false)
+  })
+})
