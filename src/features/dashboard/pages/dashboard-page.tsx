@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useNavigate } from '@tanstack/react-router'
 import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
@@ -10,18 +11,22 @@ import { ActionRequired } from '../components/action-required'
 import { DashboardSummary } from '../components/dashboard-summary'
 import { WeeklyTrend } from '../components/weekly-trend'
 import { WorkloadOverview } from '../components/workload-overview'
+import { manilaTodayIso } from '../api/dashboard'
 import { useDashboardData } from '../hooks/use-dashboard-data'
 
 export function Dashboard() {
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
-  const { data, isLoading, isError, dataUpdatedAt, refetch } = useDashboardData()
+  const [asOfDay, setAsOfDay] = useState(() => manilaTodayIso())
+  const { data, isLoading, isError, dataUpdatedAt, refetch } =
+    useDashboardData(asOfDay)
   const { data: branches } = useBranches()
 
   const asOf = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date()
   const branchName = user?.branchId
     ? findBranchName(branches, user.branchId)
     : null
+  const isToday = asOfDay === manilaTodayIso()
 
   return (
     <div className="flex min-h-full flex-1 flex-col gap-6 bg-muted/30 p-6 pb-12">
@@ -39,6 +44,15 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            As of
+            <input
+              type="date"
+              value={asOfDay}
+              onChange={(e) => setAsOfDay(e.target.value)}
+              className="h-8 rounded-md border border-input bg-background px-2 text-xs tabular-nums text-foreground"
+            />
+          </label>
           <span className="hidden text-xs tabular-nums text-muted-foreground sm:block">
             Updated{' '}
             {asOf.toLocaleTimeString('en-PH', {
@@ -69,7 +83,11 @@ export function Dashboard() {
             pushBacks={data.pushBacks}
             incompleteDocs={data.incompleteDocsQueue}
           />
-          <DashboardSummary data={data.summary} />
+          <DashboardSummary
+            data={data.summary}
+            asOfDay={asOfDay}
+            isToday={isToday}
+          />
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <WorkloadOverview data={data} />
