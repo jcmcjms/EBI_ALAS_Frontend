@@ -30,9 +30,7 @@ export const ACTIVITY_META: Record<
 }
 
 export const PASSWORD_POLICY = [
-  'Rotate every 90 days',
-  'Minimum 8 characters',
-  'Upper, lower, digit and a symbol (! ? * .)',
+  'Minimum 12 characters',
+  'Maximum 128 characters',
+  'Use a passphrase you can remember but others cannot guess',
 ] as const
-
-export const ROTATION_DAYS = 90
