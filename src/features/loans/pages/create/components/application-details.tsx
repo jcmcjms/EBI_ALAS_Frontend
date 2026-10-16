@@ -30,10 +30,10 @@ export function ApplicationDetailsSection() {
       <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground flex items-center gap-1">
-            <LockSimple size={12} /> Loan Application ID (LAI)
+            <LockSimple size={12} /> Loan Application ID (LAM)
           </Label>
           <Input
-            value="LA-2026-08-9942"
+            value="Generated upon submission"
             readOnly
             className="bg-muted/50 h-9 text-xs font-bold"
           />

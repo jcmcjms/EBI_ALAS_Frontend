@@ -85,14 +85,14 @@ export function ActiveLoansTable({
               htmlFor="active-loans-account"
               className="text-xs font-medium text-muted-foreground"
             >
-              LAI (Loan Application Index)
+              Account
             </label>
             <Select
               value={selectedAccountId}
               onValueChange={(val) => handleFetch(val as string)}
             >
               <SelectTrigger id="active-loans-account" className="h-10 w-full">
-                <SelectValue placeholder="Select an LAI..." />
+                <SelectValue placeholder="Select an account..." />
               </SelectTrigger>
               <SelectContent>
                 {accounts.map((acct) => (
