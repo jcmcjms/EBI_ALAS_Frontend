@@ -16,7 +16,7 @@ import {
 import { Spinner } from '@/src/shared/ui/feedback/spinner'
 
 import { DeviationRemarksPanel } from './components/deviation-remarks-panel'
-import { IncompleteDocumentsWarning } from '../review/components/incomplete-documents-warning'
+import { IncompleteDocumentsAlert } from './components/incomplete-documents-alert'
 import { GroupReviewSection } from '../review/components/group-review-section'
 import { FlagIncompleteDocumentsDialog } from './components/flag-incomplete-documents-dialog'
 import { PushbackDialog } from '@/src/features/loans/components/pushback-dialog'
@@ -138,10 +138,12 @@ export function LoanApprovalPage() {
 
       <div className="container mx-auto px-6 py-8">
         <div className="mb-6">
-          <IncompleteDocumentsWarning
-            status={detail.status}
-            checklist={checklist.data}
-            documentFlag={detail.documentFlag}
+          <IncompleteDocumentsAlert
+            count={
+              checklist.data?.filter((d) => d.uploadStatus !== 'Uploaded')
+                .length ?? 0
+            }
+            onReview={() => setTab('files')}
           />
         </div>
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
@@ -189,6 +191,11 @@ export function LoanApprovalPage() {
                   act={act}
                   claimById={claimById}
                   detailStatus={detail.status}
+                  missingDocCount={
+                    checklist.data?.filter(
+                      (d) => d.uploadStatus !== 'Uploaded',
+                    ).length ?? 0
+                  }
                 />
               </TabsContent>
 
