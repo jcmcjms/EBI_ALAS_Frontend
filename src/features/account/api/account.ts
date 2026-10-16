@@ -1,5 +1,6 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
 import type { PagedResult } from '@/src/shared/lib/api/types'
+import { buildActivityQuery, type ActivityFilters } from './activity-query'
 
 export interface AccountProfile {
   id: string | number
@@ -47,6 +48,7 @@ export interface Activity {
   comments?: string
   actionDate: string
   loanClientName: string
+  isInformal?: boolean
 }
 
 export interface ProcessedLoan {
@@ -104,10 +106,12 @@ export async function revokeOtherSessions(): Promise<number> {
   return response.data?.revokedCount ?? 0
 }
 
-export async function getAccountActivity(limit = 10): Promise<Activity[]> {
-  const response = await apiClient.get(
-    `/api/account/me/activity?limit=${limit}`,
-  )
+export async function getAccountActivity(
+  limit = 10,
+  filters: ActivityFilters = {},
+): Promise<Activity[]> {
+  const query = buildActivityQuery(limit, filters)
+  const response = await apiClient.get(`/api/account/me/activity?${query}`)
   return response.data
 }
 

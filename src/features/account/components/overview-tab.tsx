@@ -81,17 +81,18 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
     [profile],
   )
 
+  const clients = clientsQuery.data
   const uniqueClients = useMemo(() => {
     const seen = new Set<string>()
-    const result: typeof clientsQuery.data = []
-    for (const client of clientsQuery.data ?? []) {
+    const result: NonNullable<typeof clients> = []
+    for (const client of clients ?? []) {
       const key = client.cisId ?? client.name
       if (seen.has(key)) continue
       seen.add(key)
       result.push(client)
     }
     return result
-  }, [clientsQuery.data])
+  }, [clients])
 
   const contactRows = useMemo(() => {
     const rawEmployeeId = String(user?.userId ?? profile?.id ?? '')
