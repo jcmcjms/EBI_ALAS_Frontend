@@ -74,7 +74,7 @@ export function SubSectionHeading({
   icon,
   actions,
 }: {
-  step: string
+  step?: string
   title: string
   icon?: ReactNode
   actions?: ReactNode
@@ -83,7 +83,9 @@ export function SubSectionHeading({
     <div className="flex flex-wrap items-center justify-between gap-2">
       <h3 className="flex items-center gap-1.5 text-sm font-semibold">
         {icon}
-        <span className="tabular-nums text-muted-foreground">{step}</span>
+        {step && (
+          <span className="tabular-nums text-muted-foreground">{step}</span>
+        )}
         <span>{title}</span>
       </h3>
       {actions}

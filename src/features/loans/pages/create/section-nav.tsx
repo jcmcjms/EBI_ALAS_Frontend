@@ -73,20 +73,18 @@ export function DesktopStepper({
                 disabled={status === 'locked'}
                 aria-current={status === 'active' ? 'step' : undefined}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all',
+                  'flex w-full items-center gap-3 rounded-md px-2 py-2.5 text-left text-sm font-medium transition-colors',
                   status === 'active'
-                    ? 'border-l-4 border-primary bg-primary/5 pl-2 text-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
                   status === 'locked' &&
-                    'cursor-not-allowed opacity-50 hover:bg-transparent',
+                    'cursor-not-allowed opacity-60 hover:bg-transparent hover:text-muted-foreground',
                 )}
               >
                 <div className="flex w-6 shrink-0 items-center justify-center">
                   <StatusIcon status={status} />
                 </div>
-                <span className="min-w-0 flex-1 truncate">
-                  {section.step}. {section.label}
-                </span>
+                <span className="min-w-0 flex-1 truncate">{section.label}</span>
                 {errors > 0 ? (
                   <Badge
                     variant="destructive"
@@ -149,7 +147,7 @@ export function MobileSectionNav({
                   status === 'locked' && 'opacity-50',
                 )}
               >
-                {section.step}. {section.label}
+                {section.label}
                 {errors > 0 && (
                   <span className="tabular-nums font-bold">({errors})</span>
                 )}
