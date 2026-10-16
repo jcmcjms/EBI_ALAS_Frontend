@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Desktop, DeviceMobile, Key, ShieldCheck } from '@phosphor-icons/react'
 import {
@@ -27,8 +27,9 @@ import {
   useRevokeSession,
 } from '../hooks/use-account'
 import type { Session } from '../api/account'
-import { PASSWORD_POLICY, ROTATION_DAYS } from '../types'
+import { PASSWORD_POLICY } from '../types'
 import { EmptyState, ErrorState, LoadingState } from './account-states'
+import { sessionTitle } from './session-display'
 
 type RevokeConfirm =
   | { kind: 'single'; session: Session }
@@ -47,23 +48,13 @@ export function SecurityTab() {
   const sessions = sessionsQuery.data?.items ?? []
   const otherCount = sessions.filter((s) => !s.isCurrent).length
 
-  const orderedSessions = useMemo(
-    () =>
-      [...sessions].sort((a, b) => Number(b.isCurrent) - Number(a.isCurrent)),
-    [sessions],
+  const orderedSessions = [...sessions].sort(
+    (a, b) => Number(b.isCurrent) - Number(a.isCurrent),
   )
 
-  const rotation = useMemo(() => {
-    if (!profile?.passwordChangedAt)
-      return { label: 'Never changed', overdue: true }
-    const days = Math.floor(
-      (Date.now() - new Date(profile.passwordChangedAt).getTime()) / 86_400_000,
-    )
-    return {
-      label: `Last changed ${formatRelativeTime(profile.passwordChangedAt)}`,
-      overdue: days >= ROTATION_DAYS,
-    }
-  }, [profile])
+  const passwordLabel = profile?.passwordChangedAt
+    ? `Last changed ${formatRelativeTime(profile.passwordChangedAt)}`
+    : 'Never changed'
 
   const confirmPending =
     confirm?.kind === 'single'
@@ -84,17 +75,7 @@ export function SecurityTab() {
         </CardHeader>
         <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-4">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium">{rotation.label}</p>
-              {rotation.overdue && (
-                <Badge
-                  variant="outline"
-                  className="border-amber-300 bg-amber-50 font-normal text-amber-700"
-                >
-                  Update recommended
-                </Badge>
-              )}
-            </div>
+            <p className="text-sm font-medium">{passwordLabel}</p>
             <ul className="space-y-1 text-xs text-muted-foreground">
               {PASSWORD_POLICY.map((rule) => (
                 <li key={rule}>• {rule}</li>
@@ -155,14 +136,15 @@ export function SecurityTab() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">
-                          {session.deviceInfo?.trim()
-                            ? session.deviceInfo
-                            : 'Unknown Device'}
+                          {sessionTitle(session)}
                         </p>
                         <p
                           className="text-xs text-muted-foreground"
                           title={`Signed in ${new Date(session.createdAt).toLocaleString()} • expires ${new Date(session.expiresAt).toLocaleString()}`}
                         >
+                          {session.ipAddress ? (
+                            <span className="mr-2">IP: {session.ipAddress}</span>
+                          ) : null}
                           Signed in {formatRelativeTime(session.createdAt)} •
                           Expires {formatRelativeTime(session.expiresAt)}
                         </p>
@@ -221,7 +203,7 @@ export function SecurityTab() {
             <AlertDialogDescription>
               {confirm?.kind === 'others'
                 ? `This signs out ${confirm.count} other device${confirm.count === 1 ? '' : 's'}. Your current session stays active.`
-                : `The device "${confirm?.kind === 'single' ? (confirm.session.deviceInfo ?? 'Unknown Device') : ''}" will be signed out immediately.`}
+                : `The device "${confirm?.kind === 'single' ? sessionTitle(confirm.session) : ''}" will be signed out immediately.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

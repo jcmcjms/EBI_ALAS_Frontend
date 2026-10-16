@@ -2,10 +2,7 @@ import { z } from 'zod'
 
 export const loginSchema = z.object({
   username: z.string().min(3, 'Username is required').max(50),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(100),
+  password: z.string().min(1, 'Password is required').max(100),
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
@@ -15,11 +12,8 @@ export const changePasswordSchema = z
     currentPassword: z.string().min(1, 'Current password is required'),
     newPassword: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/[A-Z]/, 'Must contain uppercase')
-      .regex(/[a-z]/, 'Must contain lowercase')
-      .regex(/[0-9]/, 'Must contain digit')
-      .regex(/[!?*.]/, 'Must contain one of !?*.'),
+      .min(12, 'Password must be at least 12 characters')
+      .max(128, 'Password must be at most 128 characters'),
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

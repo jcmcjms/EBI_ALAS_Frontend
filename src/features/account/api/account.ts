@@ -29,6 +29,7 @@ export interface Session {
   id: string | number
 
   deviceInfo: string | null
+  ipAddress?: string | null
   createdAt: string
   expiresAt: string
   isCurrent: boolean
