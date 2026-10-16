@@ -4,8 +4,8 @@ import { cn } from '@/src/shared/lib/utils'
 const RULES = [
   {
     id: 'len',
-    label: 'At least 8 characters',
-    test: (pw: string) => pw.length >= 8,
+    label: 'At least 12 characters',
+    test: (pw: string) => pw.length >= 12,
   },
   {
     id: 'upper',
