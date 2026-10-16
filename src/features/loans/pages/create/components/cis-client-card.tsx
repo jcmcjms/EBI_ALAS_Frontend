@@ -1,5 +1,6 @@
 import {
   ArrowCounterClockwise,
+  CheckCircle,
   WarningCircle,
 } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
@@ -14,6 +15,8 @@ interface CisClientCardProps {
   position?: string
   employeeId?: string
   confirmClear: boolean
+  confirmed: boolean
+  onConfirmClient: () => void
   onChangeClient: () => void
 }
 
@@ -25,6 +28,8 @@ export function CisClientCard({
   position,
   employeeId,
   confirmClear,
+  confirmed,
+  onConfirmClient,
   onChangeClient,
 }: CisClientCardProps) {
   return (
@@ -37,11 +42,7 @@ export function CisClientCard({
           {fullName || '—'}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {[
-            agency,
-            position,
-            employeeId && `ID ${employeeId}`,
-          ]
+          {[agency, position, employeeId && `ID ${employeeId}`]
             .filter(Boolean)
             .join(' • ') || 'No agency details on file'}
         </p>
@@ -49,6 +50,19 @@ export function CisClientCard({
       <Badge variant="outline" className="tabular-nums">
         CIS {cisId}
       </Badge>
+      {confirmed ? (
+        <Badge
+          variant="outline"
+          className="gap-1 border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
+        >
+          <CheckCircle size={12} weight="bold" />
+          Client confirmed
+        </Badge>
+      ) : (
+        <Button type="button" size="sm" onClick={onConfirmClient}>
+          Confirm Client
+        </Button>
+      )}
       <Button
         type="button"
         variant="ghost"

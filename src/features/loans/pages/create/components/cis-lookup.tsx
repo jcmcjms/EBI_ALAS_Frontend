@@ -27,9 +27,17 @@ function toDateInput(iso?: string | null): string {
 
 interface CISLookupProps {
   onPreLoanChange: (id: string, preloan: PreLoanItem | null) => void
+  clientConfirmed: boolean
+  onConfirmClient: () => void
+  onClientCleared: () => void
 }
 
-export function CISLookup({ onPreLoanChange }: CISLookupProps) {
+export function CISLookup({
+  onPreLoanChange,
+  clientConfirmed,
+  onConfirmClient,
+  onClientCleared,
+}: CISLookupProps) {
   const { control, setValue } = useFormContext<LoanApplicationFormData>()
   const { data: branches } = useBranches()
   const userBranchId = useAuthStore((s) => s.user?.branchId ?? '')
@@ -48,6 +56,11 @@ export function CISLookup({ onPreLoanChange }: CISLookupProps) {
   useEffect(() => {
     onPreLoanChangeRef.current = onPreLoanChange
   }, [onPreLoanChange])
+
+  const onClientClearedRef = useRef(onClientCleared)
+  useEffect(() => {
+    onClientClearedRef.current = onClientCleared
+  }, [onClientCleared])
 
   const client = useWatch({ control, name: 'client' })
 
@@ -103,6 +116,7 @@ export function CISLookup({ onPreLoanChange }: CISLookupProps) {
     setOutstandingCount(0)
 
     onPreLoanChangeRef.current('', null)
+    onClientClearedRef.current()
   }, [setValue])
 
   const handleChangeClient = () => {
@@ -227,6 +241,8 @@ export function CISLookup({ onPreLoanChange }: CISLookupProps) {
               position={client.position}
               employeeId={client.employeeId}
               confirmClear={confirmClear}
+              confirmed={clientConfirmed}
+              onConfirmClient={onConfirmClient}
               onChangeClient={handleChangeClient}
             />
 
