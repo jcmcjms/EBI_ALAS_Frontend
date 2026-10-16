@@ -10,7 +10,6 @@ import { OtherObligationsSection } from './components/other-obligations'
 import { VerificationSection } from './components/verification-section'
 import { DeviationsSection } from './components/deviations-section'
 import { ApprovalFormPreview } from './components/approval-form-preview'
-import { WorkflowOverview } from '@/src/features/loans/components/workflow-overview'
 import type { UseFormReturn } from 'react-hook-form'
 import type { SectionId } from '@/src/features/loans/constants/sections'
 
@@ -22,6 +21,9 @@ interface LoanFormSectionsProps {
   registerSectionRef: (id: SectionId, el: HTMLElement | null) => void
   approvalFormRef: RefObject<HTMLDivElement | null>
   onPreLoanChange: (id: string, payload: PreLoanItem | null) => void
+  clientConfirmed: boolean
+  onConfirmClient: () => void
+  onClientCleared: () => void
   /** When provided, sections that return false render read-only. */
   isSectionEditable?: (id: SectionId) => boolean
 }
@@ -34,6 +36,9 @@ export function LoanFormSections({
   registerSectionRef,
   approvalFormRef,
   onPreLoanChange,
+  clientConfirmed,
+  onConfirmClient,
+  onClientCleared,
   isSectionEditable,
 }: LoanFormSectionsProps) {
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode)
@@ -48,6 +53,9 @@ export function LoanFormSections({
       >
         <fieldset disabled={!canEdit('cis-lookup')} className="contents">
           <CISLookup
+            clientConfirmed={clientConfirmed}
+            onConfirmClient={onConfirmClient}
+            onClientCleared={onClientCleared}
             onPreLoanChange={(id, payload) => {
               onPreLoanChange(id, payload)
               if (payload) {
@@ -131,9 +139,7 @@ export function LoanFormSections({
             </fieldset>
           </section>
         </div>
-      ) : (
-        <WorkflowOverview />
-      )}
+      ) : null}
 
       <div className="h-24" />
     </main>
