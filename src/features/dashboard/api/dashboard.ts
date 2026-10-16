@@ -124,9 +124,25 @@ export function mapDashboardOverview(
   }
 }
 
-export async function getDashboardOverview(): Promise<DashboardData> {
+export function manilaTodayIso(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+}
+
+export function dashboardOverviewUrl(date?: string): string {
+  const day = date ?? manilaTodayIso()
+  return `/api/dashboard/overview?date=${encodeURIComponent(day)}`
+}
+
+export async function getDashboardOverview(
+  date?: string,
+): Promise<DashboardData> {
   const res = await apiClient.get<DashboardOverviewResponse>(
-    '/api/dashboard/overview',
+    dashboardOverviewUrl(date),
   )
   return mapDashboardOverview(res.data)
 }

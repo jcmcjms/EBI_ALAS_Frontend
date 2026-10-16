@@ -10,10 +10,14 @@ import type { DashboardSummary as DashboardSummaryType } from '../types'
 
 interface DashboardSummaryProps {
   data: DashboardSummaryType
+  asOfDay?: string
+  isToday?: boolean
 }
 
 export const DashboardSummary = memo(function DashboardSummary({
   data,
+  asOfDay,
+  isToday = true,
 }: DashboardSummaryProps) {
   const pendingContext =
     data.pendingDeltaFromYesterday === 0
@@ -24,6 +28,12 @@ export const DashboardSummary = memo(function DashboardSummary({
     data.approvedVsAvgPercent === 0
       ? 'No change vs 7-day average'
       : `${data.approvedVsAvgPercent > 0 ? '+' : ''}${data.approvedVsAvgPercent}% vs 7-day average`
+
+  const dayLabel = isToday
+    ? 'Today'
+    : asOfDay
+      ? `on ${asOfDay}`
+      : 'on selected day'
 
   const stats = [
     {
@@ -39,7 +49,7 @@ export const DashboardSummary = memo(function DashboardSummary({
       isAlert: false,
     },
     {
-      label: 'Returned Today',
+      label: `Returned ${dayLabel}`,
       value: data.pushBacksToday,
       context:
         data.pushBacksToday > 0
@@ -48,7 +58,7 @@ export const DashboardSummary = memo(function DashboardSummary({
       isAlert: data.pushBacksToday > 0,
     },
     {
-      label: 'Approved Today',
+      label: `Approved ${dayLabel}`,
       value: data.approvedToday,
       context: approvedContext,
       isAlert: false,
