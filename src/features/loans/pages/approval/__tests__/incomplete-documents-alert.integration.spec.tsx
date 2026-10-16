@@ -77,7 +77,7 @@ describe('IncompleteDocumentsAlert → Document Requirements', () => {
 
     const recheck = screen.getByRole('button', { name: /re-check documents/i })
     expect(recheck).toBeVisible()
-    // CardAction places the control in the header action column (right side)
+    
     expect(recheck.closest('[data-slot="card-action"]')).not.toBeNull()
   })
 })

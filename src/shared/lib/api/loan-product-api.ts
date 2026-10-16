@@ -10,8 +10,8 @@ export const loanProductKeys = {
 }
 
 export async function getLoanProducts(): Promise<LoanProductResponse[]> {
-  // GET /api/loan-products is paged (ApiOptions DefaultPageSize=20, MaxPageSize=100).
-  // Load every page so the admin catalog shows the full 80+ product set.
+  
+  
   const items: LoanProductResponse[] = []
   const pageSize = 100
   let page = 1

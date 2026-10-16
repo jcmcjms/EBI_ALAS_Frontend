@@ -163,7 +163,7 @@ export function CISLookup({
   ) => {
     const b = result.borrower
     const allAccounts = result.accounts ?? []
-    // Defense in depth: only the caller's branch LAI may attach to an application.
+    
     const accounts = canSeeAllBranches
       ? allAccounts
       : allAccounts.filter(

@@ -47,7 +47,7 @@ export default defineConfig([
               from: './src/app/**',
               message: 'Features cannot import from app',
             },
-            // Blanket feature-to-feature restriction
+            
             ...[
               'account',
               'admin',

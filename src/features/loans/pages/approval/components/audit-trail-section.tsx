@@ -37,7 +37,7 @@ async function loadTimelineHistory(
 
 interface AuditTrailSectionProps {
   loanId: number | string
-  /** Generated LAM application id (`LAM-…`) for print headers. */
+  
   lamId?: string
   client: ClientFormData
   primaryLoan: SelectedLoan

@@ -48,7 +48,7 @@ export type UsersTableMeta = {
   onForcePasswordReset?: (user: UserResponse) => void
   onRevokeSessions?: (user: UserResponse) => void
   onToggleStatus?: (user: UserResponse) => void
-  /** Renders `branch code - Branch name` for the Branch column. */
+  
   branchLabelOf?: (code: string) => string
 }
 

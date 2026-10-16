@@ -55,7 +55,7 @@ interface WorkflowActionsPanelProps {
     mutate: (id: string | number) => void
   }
   detailStatus: string
-  /** Informational only — never disables workflow actions. */
+  
   missingDocCount?: number
 }
 

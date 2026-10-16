@@ -16,7 +16,7 @@ export const workflowKeys = {
   configuration: ['workflow', 'configuration'] as const,
 }
 
-/** Bare DTO — the API does not wrap this payload in an ApiResponse envelope. */
+
 export async function getWorkflowConfiguration(): Promise<WorkflowConfigurationDto> {
   const res = await apiClient.get<WorkflowConfigurationDto>(
     '/api/workflow/configuration',
@@ -34,7 +34,7 @@ export async function updateWorkflowConfiguration(
   return res.data
 }
 
-/** Count via the bare `BackendPageResult` from `GET /api/loans`. */
+
 export async function getLoanCountByStatus(status: string): Promise<number> {
   const res = await apiClient.get<BackendPageResult<{ id: string }>>(
     '/api/loans',

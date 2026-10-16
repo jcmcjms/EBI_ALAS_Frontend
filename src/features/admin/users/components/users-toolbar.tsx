@@ -107,7 +107,6 @@ export function UsersToolbar({
             Import
           </Button>
         )}
-        {/* Export omitted until the users export API is implemented. */}
         {canCreateUsers && (
           <Button size="sm" className="gap-1.5 text-xs" onClick={onCreateUser}>
             <Plus size={14} weight="bold" data-icon="inline-start" />

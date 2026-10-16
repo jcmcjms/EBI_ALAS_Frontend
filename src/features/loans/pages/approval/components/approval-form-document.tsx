@@ -47,7 +47,7 @@ interface ApprovalFormDocumentProps {
   actions?: ApprovalFormActionEntry[]
   deviations?: LoanDeviationDto[]
   documentRemarks?: DocumentRemarkDto[]
-  /** Generated LAM application id (`LAM-…`). Never use `branchType.lai` for this. */
+  
   lamId?: string
   lamIdByLoanNo?: Record<string, string>
 }
@@ -258,8 +258,6 @@ function ApprovalFormDocumentBase({
                   ) : null}
                 </div>
               </div>
-
-              {/* Signature section intentionally hidden on the approval form. */}
             </div>
           </section>
 

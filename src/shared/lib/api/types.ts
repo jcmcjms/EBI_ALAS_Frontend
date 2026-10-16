@@ -6,12 +6,7 @@ export interface ApiResponse<T> {
   timestamp: string
 }
 
-/**
- * Flat auth body returned by POST /api/auth/login and /api/auth/refresh.
- * The API does not wrap payloads in an ApiResponse envelope.
- * The refresh token is cookie-only (HttpOnly `alas_refresh`) and is never
- * present in this body.
- */
+
 export interface AuthTokenResponse {
   accessToken: string
   accessTokenExpiresAt: string
@@ -28,10 +23,7 @@ export interface PagedResult<T> {
   hasNextPage: boolean
 }
 
-/**
- * Backend PageResult shape: `page` is 1-based; the wire does not carry
- * hasPreviousPage/hasNextPage — derive those in mapPageResult for the UI.
- */
+
 export interface BackendPageResult<T> {
   items: T[]
   totalCount: number
@@ -60,10 +52,7 @@ export function unwrapApiData<T>(body: ApiResponse<T>): T {
   return body.data
 }
 
-/**
- * Permission strings must match RoleCatalog in Ebi.Alas.Api.
- * Admin is granted `users.manage` (not granular user.* keys).
- */
+
 export const PERMISSIONS = {
   loansCreate: 'loans.create',
   loansView: 'loans.view',
@@ -150,7 +139,7 @@ export interface LoanProductResponse {
   lastSyncedAt: string
 }
 
-// ── Loan Status ────────────────────────────────────────────────────
+
 
 export type LoanStatus =
   | 'Draft'

@@ -24,7 +24,7 @@ interface LoanFormSectionsProps {
   clientConfirmed: boolean
   onConfirmClient: () => void
   onClientCleared: () => void
-  /** When provided, sections that return false render read-only. */
+  
   isSectionEditable?: (id: SectionId) => boolean
 }
 

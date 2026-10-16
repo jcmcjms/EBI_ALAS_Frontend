@@ -10,10 +10,7 @@ function makeJwt(payload: Record<string, unknown>): string {
   return `${header}.${body}.sig`
 }
 
-/**
- * Mirrors extractXsrfToken in apiClient.ts so we can lock the contract
- * against the backend JwtTokenService claim name "XsrfToken".
- */
+
 function extractXsrfToken(jwt: string | null): string | null {
   if (!jwt) return null
   const parts = jwt.split('.')

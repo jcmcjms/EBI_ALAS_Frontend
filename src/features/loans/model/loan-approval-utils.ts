@@ -38,7 +38,7 @@ export function computeDocStamp(
     : 0
 }
 
-/** True when max loanable is negative or cannot cover the proposed loan for approval. */
+
 export function isMaxLoanableAlert(
   maximumLoanableAmount: number,
   proposedAmount: number,
@@ -54,10 +54,7 @@ export interface MaxLoanableSubmitBlock {
   proposedAmount: number
 }
 
-/**
- * Returns the first loan whose max loanable cannot cover the proposed amount.
- * Encoder create-submit is blocked while this is non-null.
- */
+
 export function findMaxLoanableSubmitBlock(
   form: Pick<
     LoanApplicationFormData,
@@ -190,8 +187,8 @@ export function computeLoanMetrics(
 
   const totalExposure = principal + totalPrincipal
 
-  // Product rate 0 means "not configured" (import default) — same fallback as
-  // the backup LoanComputationService.FromEntity (rate > 0 ? rate : 0.06).
+  
+  
   const configuredChargeRate = productFees?.applicationChargeRate ?? 0
   const totalDeductionRate =
     configuredChargeRate > 0

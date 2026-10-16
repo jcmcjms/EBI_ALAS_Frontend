@@ -98,7 +98,7 @@ export function useSignalR() {
 
         addNotification(appNotification)
 
-        // Keep inbox/list query data in sync with the live row (same DB id).
+        
         void queryClient.invalidateQueries({ queryKey: ['notifications'] })
 
         toastInfo(payload.title, {

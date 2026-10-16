@@ -1,4 +1,4 @@
-/** @type {import('dependency-cruiser').IConfiguration} */
+
 const features = [
   'account',
   'admin',

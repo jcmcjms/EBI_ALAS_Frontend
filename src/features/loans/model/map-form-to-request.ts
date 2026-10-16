@@ -47,10 +47,7 @@ export function mapFormToSubmissionPayload(
   }
 }
 
-/**
- * Multi-loan body for `POST /api/loans`. One application group, one entry per
- * selected loan. Group number left empty so the API allocates APP-{date}-{seq}.
- */
+
 export function mapFormToSubmitLoanRequest(
   form: LoanApplicationFormData,
 ): SubmitLoanApplicationsRequest {

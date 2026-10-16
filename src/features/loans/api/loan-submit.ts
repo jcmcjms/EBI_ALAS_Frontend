@@ -1,7 +1,4 @@
-/**
- * Wire contract for `POST /api/loans` (backend `SubmitLoanApplicationsRequest`).
- * One client application group with one or more loans.
- */
+
 export interface SubmitLoanLine {
   productCode: string
   product: string
@@ -19,7 +16,7 @@ export interface SubmitLoanApplicationsRequest {
   branchId: string
   loanType: 'New' | 'Reloan'
   loans: SubmitLoanLine[]
-  /** Full create-flow form snapshot so review/approval shows the same values as the preview. */
+  
   form?: unknown
 }
 
@@ -37,7 +34,7 @@ export interface LoanSubmissionResult {
   loans: CreatedLoanSummary[]
 }
 
-/** UI models spell the reloan case `Renewal`; the wire enum value is `Reloan`. */
+
 export function toSubmitLoanApplicationsRequest(input: {
   applicationGroupNo: string
   clientName: string

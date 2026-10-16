@@ -8,7 +8,7 @@ import { cancelLoan, pushbackLoan, type LoanResponse } from '@/src/features/loan
 import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 import { parseQueueDefault } from './queue-default'
 
-// Re-export all types and document operations
+
 export * from './loan-review-types'
 export * from './loan-review-documents'
 
@@ -23,8 +23,8 @@ import type {
   RevisionRequest,
 } from '../types/revision-request'
 
-// Real workflow actions live in ./loans — re-exported so review screens
-// can import from one place.
+
+
 export {
   approveLoan,
   cancelLoan,
@@ -55,10 +55,7 @@ export async function getLoanRouting(id: number | string): Promise<LoanRoutingRe
   return res.data
 }
 
-/**
- * `GET /api/loans/{id}` returns a bare `LoanResponse` (GUID id).
- * Adapt it to the review-screen detail shape the approval form expects.
- */
+
 export async function getLoanDetail(id: number | string): Promise<LoanDetailResponse> {
   const res = await apiClient.get<LoanResponse>(`/api/loans/${id}`)
   return loanResponseToDetail(res.data)
@@ -181,7 +178,7 @@ export async function getLoanHistory(id: number | string) {
   return res.data
 }
 
-/** `POST /api/loans/{id}/cancel` — empty body. Reason is not on the wire. */
+
 export async function cancelLoanApplication(
   id: number | string,
 ): Promise<LoanResponse> {
@@ -201,7 +198,7 @@ export async function clearDocumentFlag(
   await apiClient.delete(`/api/loans/${loanId}/document-flag`)
 }
 
-/** `GET /api/loans/sla-policy` → bare `{ recommendationHours, evaluationHours, approvalHours }`. */
+
 export async function getSlaPolicy(): Promise<SlaPolicy> {
   const res = await apiClient.get<SlaPolicy>('/api/loans/sla-policy')
   return res.data
@@ -225,10 +222,7 @@ export async function syncDisbursementStatus(
   return res.data.data!
 }
 
-/**
- * `POST /api/loans/{id}/pushback` with `{ section, comment }` → bare `LoanResponse`.
- * The dialog collects several sections; they are folded into one wire call.
- */
+
 export async function pushbackWithRevision(
   loanId: number | string,
   payload: CreateRevisionRequestPayload,

@@ -25,7 +25,7 @@ export function extractProductCode(desc: string | undefined): string | null {
   return dash === -1 ? desc.trim() : desc.slice(0, dash).trim()
 }
 
-/** Force yyyy-MM-dd for &lt;input type="date"&gt; / form models. */
+
 export function normalizeIsoDate(value: string): string {
   const trimmed = value.trim()
   if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10)
@@ -108,7 +108,7 @@ export function useLoanLoader(
 
     if (outstandingResult.status === 'fulfilled') {
       const obRows = outstandingResult.value.loans ?? []
-      // Selected (pending) loan numbers are not outstanding obligations.
+      
       const selectedNos = new Set(
         (getValues('loans') ?? []).map((l) => l.loanNo).filter(Boolean),
       )
@@ -141,7 +141,7 @@ export function useLoanLoader(
       if (pending.nthpDate) {
         const d = normalizeIsoDate(pending.nthpDate)
         setPendingNthpDate(d)
-        // Keep already-selected loan parameters in sync with the loaded NTHP date.
+        
         const current = getValues('loans') ?? []
         if (current.length > 0) {
           fieldArray.replace(

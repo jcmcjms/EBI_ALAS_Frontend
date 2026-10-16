@@ -1,4 +1,4 @@
-/** Canonical PHP money display for banking tables, panels, and summaries. */
+
 export function formatPhp(
   amount: number | null | undefined,
   options?: { decimals?: number },
@@ -11,7 +11,7 @@ export function formatPhp(
   })}`
 }
 
-/** Canonical loan date (date only). Fixed en-PH so workstations cannot flip D/M. */
+
 export function formatLoanDate(value: string | number | Date): string {
   return new Date(value).toLocaleDateString('en-PH', {
     year: 'numeric',
@@ -20,7 +20,7 @@ export function formatLoanDate(value: string | number | Date): string {
   })
 }
 
-/** Canonical loan timestamp for timelines and audit rows. Always Asia/Manila (PH). */
+
 export function formatLoanDateTime(value: string | number | Date): string {
   return new Date(value).toLocaleString('en-PH', {
     timeZone: 'Asia/Manila',

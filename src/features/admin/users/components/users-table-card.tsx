@@ -1,4 +1,6 @@
-import { FlexRender } from '@tanstack/react-table'
+import { FlexRender, type ReactTable } from '@tanstack/react-table'
+import type { UserResponse } from '../api/users-types'
+import { features } from './user-columns'
 import { Users } from '@phosphor-icons/react'
 
 import { Badge } from '@/src/shared/ui/primitives/badge'
@@ -23,8 +25,8 @@ import { TablePagination } from '@/src/shared/ui/data-display/table-pagination'
 import { UsersToolbar, type UsersToolbarProps } from './users-toolbar'
 
 interface UsersTableCardProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  table: any
+  
+  table: ReactTable<typeof features, UserResponse>
   columnCount: number
   isLoading: boolean
   isError: boolean
@@ -94,12 +96,12 @@ export function UsersTableCard({
       <CardContent className="p-0">
         <Table>
           <TableHeader className="bg-muted/40">
-            {table.getHeaderGroups().map((headerGroup: any) => (
+            {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
                 className="border-b hover:bg-transparent"
               >
-                {headerGroup.headers.map((header: any) => (
+                {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
                     className="h-9 px-4 text-xs font-semibold text-muted-foreground"
@@ -132,12 +134,12 @@ export function UsersTableCard({
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row: any) => (
+              table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   className="transition-colors hover:bg-muted/30"
                 >
-                  {row.getVisibleCells().map((cell: any) => (
+                  {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="h-12 px-4 py-2">
                       <FlexRender cell={cell} />
                     </TableCell>

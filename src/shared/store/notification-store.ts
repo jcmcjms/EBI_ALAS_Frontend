@@ -45,7 +45,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
   setNotifications: (rows) =>
     set((state) => {
       const restIds = new Set(rows.map((r) => r.id))
-      // Keep live rows the REST snapshot has not caught up with yet.
+      
       const pendingLive = state.notifications.filter(
         (n) => !restIds.has(n.id) && n.id.startsWith('live-'),
       )

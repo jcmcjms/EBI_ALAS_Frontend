@@ -4,7 +4,7 @@ export type EvaluationVerdict = 'Recommended' | 'NotRecommended'
 
 export interface LoanDetailResponse {
   id: string
-  /** Exact create-flow form snapshot when the API persisted it at submit. */
+  
   form?: unknown
   lamId: string
   applicationGroupNo: string
@@ -195,10 +195,7 @@ export interface DocumentChecklistItem {
   updatedAtUtc: string
 }
 
-/**
- * Bare body of `GET /api/loans/sla-policy`.
- * Hours allowed per stage — not keyed by status name.
- */
+
 export type SlaPolicy = {
   recommendationHours: number
   evaluationHours: number

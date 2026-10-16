@@ -2,13 +2,13 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite";
 
-// https://vite.dev/config/
+
 export default defineConfig({
   plugins: [
       tailwindcss(),
     react({
-      // React Compiler is configured via babel plugins for Vite.
-      // Cast keeps vitest/config plugin typings happy.
+      
+      
       babel: {
         plugins: ['babel-plugin-react-compiler'],
       },

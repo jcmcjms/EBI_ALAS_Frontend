@@ -6,9 +6,9 @@ import { env } from '@/src/shared/config/env'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  /** All listed permissions are required (AND). */
+  
   requiredPermission?: string | string[]
-  /** At least one listed permission is required (OR). */
+  
   requiredAnyPermission?: string[]
 }
 

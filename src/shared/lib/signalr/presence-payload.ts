@@ -1,4 +1,4 @@
-/** Raw DTO row from GET /api/presence/online (no ApiResponse envelope). */
+
 export interface PresenceApiRow {
   userId: string
   name: string

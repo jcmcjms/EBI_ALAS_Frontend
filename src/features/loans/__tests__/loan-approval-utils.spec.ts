@@ -241,7 +241,7 @@ describe('computeLoanMetrics deduction convention', () => {
       { ...loan, cDocStamp: 3000 } as Parameters<typeof computeLoanMetrics>[0],
       obligations,
     )
-    // principal 322000, no outstanding → total exposure 322000 > 250000
+    
     expect(c.docStamp).toBeCloseTo((322000 / 200) * 1.5, 2)
     expect(c.docStamp).toBeCloseTo(2415, 2)
     expect(c.applicationCharge).toBeCloseTo(322000 * 0.06 - 2415 - 500, 2)
@@ -276,7 +276,7 @@ describe('computeLoanMetrics deduction convention', () => {
         { outstandingBalance: 60000, principalBalance: 60000 },
       ],
     } as Parameters<typeof computeLoanMetrics>[1])
-    // exposure = 200000 + 60000 = 260000 > 250000
+    
     expect(c.totalExposure).toBe(260000)
     expect(c.docStamp).toBeCloseTo((200000 / 200) * 1.5, 2)
   })

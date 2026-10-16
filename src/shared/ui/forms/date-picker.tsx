@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { CalendarBlank } from '@phosphor-icons/react'
 
 import { Button } from '@/src/shared/ui/primitives/button'
