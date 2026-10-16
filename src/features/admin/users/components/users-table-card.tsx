@@ -137,7 +137,10 @@ export function UsersTableCard({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="transition-colors hover:bg-muted/30"
+                  className="cursor-pointer transition-colors hover:bg-muted/30"
+                  onClick={() =>
+                    table.options.meta?.onEditUser?.(row.original)
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="h-12 px-4 py-2">

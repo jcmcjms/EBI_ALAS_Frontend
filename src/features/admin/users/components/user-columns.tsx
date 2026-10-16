@@ -149,18 +149,20 @@ export const columns = columnHelper.columns([
       const meta = info.table.options.meta
       return (
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`Actions for ${user.username}`}
-              />
-            }
-          >
-            <CaretDown size={16} weight="bold" />
-            <span className="sr-only">Open menu</span>
-          </DropdownMenuTrigger>
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Actions for ${user.username}`}
+                />
+              }
+            >
+              <CaretDown size={16} weight="bold" />
+              <span className="sr-only">Open menu</span>
+            </DropdownMenuTrigger>
+          </div>
           <DropdownMenuContent align="end" className="w-[200px]">
             <DropdownMenuItem onClick={() => meta?.onEditUser?.(user)}>
               <Pencil size={14} /> Edit Details
