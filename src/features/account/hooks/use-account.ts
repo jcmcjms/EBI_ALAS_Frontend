@@ -13,6 +13,7 @@ import {
   revokeOtherSessions,
   type PagedSessionsResponse,
 } from '../api/account'
+import type { ActivityFilters } from '../api/activity-query'
 
 export function useAccountProfile() {
   return useQuery({
@@ -30,10 +31,13 @@ export function useAccountSessions(pageNumber = 1, pageSize = 10) {
   })
 }
 
-export function useAccountActivity(limit = 10) {
+export function useAccountActivity(
+  limit = 10,
+  filters: ActivityFilters = {},
+) {
   return useQuery({
-    queryKey: accountKeys.activity(limit),
-    queryFn: () => getAccountActivity(limit),
+    queryKey: accountKeys.activity(limit, filters),
+    queryFn: () => getAccountActivity(limit, filters),
     staleTime: 2 * 60_000,
   })
 }

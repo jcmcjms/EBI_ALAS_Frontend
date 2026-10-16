@@ -16,6 +16,8 @@ export interface TimelineItem {
   title: string
   description: string
   createdAt: string
+  comments?: string
+  isInformal?: boolean
 }
 
 const ICON_MAP: Record<ActivityKind, typeof Clock> = {
@@ -50,7 +52,6 @@ export function toTimelineItems(records: Activity[]): TimelineItem[] {
     const fromTo = [a.fromStatus, a.toStatus].filter(Boolean).join(' → ')
     const description =
       [
-        a.comments,
         a.loanClientName ? `Client: ${a.loanClientName}` : null,
         fromTo || null,
       ]
@@ -63,6 +64,8 @@ export function toTimelineItems(records: Activity[]): TimelineItem[] {
       title: `${a.lamId} — ${a.action}`,
       description,
       createdAt: a.actionDate,
+      comments: a.comments,
+      isInformal: a.isInformal,
     }
   })
 }
@@ -86,6 +89,17 @@ export function ActivityTimeline({ items }: { items: TimelineItem[] }) {
                 <Clock size={12} weight="bold" />
                 {formatRelativeTime(item.createdAt)}
               </p>
+              {item.comments ? (
+                <p
+                  className={
+                    item.isInformal
+                      ? 'mt-1 text-sm italic text-muted-foreground'
+                      : 'mt-1 text-sm text-muted-foreground'
+                  }
+                >
+                  {item.comments}
+                </p>
+              ) : null}
               <p className="mt-1 text-sm text-muted-foreground">
                 {item.description}
               </p>
