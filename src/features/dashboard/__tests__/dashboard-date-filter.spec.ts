@@ -3,6 +3,10 @@ import {
   dashboardOverviewUrl,
   manilaTodayIso,
 } from '../api/dashboard'
+import {
+  dateToIsoString,
+  isoStringToDate,
+} from '@/src/shared/ui/forms/date-picker'
 
 describe('dashboard date filter', () => {
   it('formats Manila today as yyyy-MM-dd', () => {
@@ -14,5 +18,11 @@ describe('dashboard date filter', () => {
       '/api/dashboard/overview?date=2026-10-09',
     )
     expect(dashboardOverviewUrl()).toContain('?date=')
+  })
+
+  it('round-trips calendar dates without timezone drift', () => {
+    const date = isoStringToDate('2026-10-09')
+    expect(date).toBeDefined()
+    expect(dateToIsoString(date!)).toBe('2026-10-09')
   })
 })
