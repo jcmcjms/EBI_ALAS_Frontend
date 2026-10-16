@@ -22,14 +22,11 @@ export type {
   LoanResponse,
 }
 
-/**
- * Query params supported by `GET /api/loans`.
- * Wire uses `page` (1-based) — not `pageNumber`. Sorting is client-chosen only.
- */
+
 export interface ListLoansParams {
   page: number
   pageSize: number
-  /** Comma-separated PascalCase `LoanStatus` names. */
+  
   status?: string
   branchId?: string
   branchCode?: string
@@ -50,7 +47,7 @@ export interface LoanHistoryEntry {
   actionByRole: string
 }
 
-/** `POST /api/loans` — bare `LoanSubmissionResult` (201), no `ApiResponse` envelope. */
+
 export async function submitLoan(
   request: SubmitLoanApplicationsRequest,
 ): Promise<LoanSubmissionResult> {
@@ -90,10 +87,7 @@ export async function createLoan(
   return unwrapApiData(res.data)
 }
 
-/**
- * `GET /api/loans?page&pageSize&status&branchId|branchCode&search&dateFrom&dateTo&myTurn`
- * → bare `BackendPageResult<LoanResponse>` on the wire; mapped for the UI.
- */
+
 export async function listLoans(
   params: ListLoansParams,
 ): Promise<PagedResult<LoanResponse>> {
@@ -125,13 +119,13 @@ export async function getLoanHistory(
   return unwrapApiData(res.data)
 }
 
-/** `GET /api/loans/{id}` → bare `LoanResponse` (not the review-screen detail). */
+
 export async function getLoanById(id: number | string): Promise<LoanResponse> {
   const res = await apiClient.get<LoanResponse>(`/api/loans/${id}`)
   return res.data
 }
 
-/** `GET /api/loans/lam/{lamId}` → bare `LoanResponse`. */
+
 export async function getLoanByLamId(lamId: string): Promise<LoanResponse> {
   const res = await apiClient.get<LoanResponse>(
     `/api/loans/lam/${encodeURIComponent(lamId)}`,
@@ -139,8 +133,8 @@ export async function getLoanByLamId(lamId: string): Promise<LoanResponse> {
   return res.data
 }
 
-// ── Workflow actions (auth + CSRF) ─────────────────────────────────
-// Each returns the updated bare `LoanResponse`.
+
+
 
 export async function recommendLoan(id: number | string): Promise<LoanResponse> {
   const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/recommend`)

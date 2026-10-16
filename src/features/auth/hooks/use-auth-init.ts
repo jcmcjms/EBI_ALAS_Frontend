@@ -34,7 +34,6 @@ export function useAuthInit(): void {
             'Server is temporarily unavailable. Please try again later.',
           )
         } else if (status === 401 || status === 403) {
-          // No session is the expected cold-start path; stay signed out silently.
         } else if (!axiosError?.response) {
           toastError(
             'Unable to connect to the server. Please check your network connection.',

@@ -27,7 +27,7 @@ export function findBranchName(
   return match?.name ?? code
 }
 
-/** Canonical user-directory label: `branch code - Branch name`. */
+
 export function formatBranchLabel(
   code: string | null | undefined,
   name?: string | null,

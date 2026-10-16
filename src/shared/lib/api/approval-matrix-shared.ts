@@ -4,7 +4,7 @@ import { apiClient } from '@/src/shared/lib/apiClient'
 export interface DeviationCatalogItemDto {
   id: number
   description: string
-  /** 1 = Minor, 2 = Major (matches DeviationSeverity in the API). */
+  
   severity: 0 | 1 | 2
 }
 
@@ -15,7 +15,7 @@ export const approvalMatrixKeys = {
   routing: (id: number | string) => ['loans', id, 'routing'] as const,
 }
 
-/** Bare array — the API does not wrap this payload in an ApiResponse envelope. */
+
 export async function getDeviationCatalog(): Promise<
   DeviationCatalogItemDto[]
 > {
@@ -34,7 +34,7 @@ export function useDeviationCatalog(enabled = true) {
   })
 }
 
-/** Major = 2, Minor = 1. Tolerates numeric strings from JSON. */
+
 export function isMajorSeverity(severity: number | string): boolean {
   return Number(severity) === 2
 }

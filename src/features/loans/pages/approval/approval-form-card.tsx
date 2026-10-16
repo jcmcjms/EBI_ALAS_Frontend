@@ -24,7 +24,7 @@ import type { ApprovalFormActionEntry } from './components/approval-form-documen
 interface ApprovalFormCardProps {
   formData: LoanApplicationFormData
   loanId?: number | string
-  /** Generated LAM application id (`LAM-…`) from the loan detail. */
+  
   lamId?: string
   signatureSlots?: SignatureDisplaySlot[]
   actions?: ApprovalFormActionEntry[]

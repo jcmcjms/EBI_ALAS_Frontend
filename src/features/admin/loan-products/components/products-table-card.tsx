@@ -1,4 +1,6 @@
-import { FlexRender } from '@tanstack/react-table'
+import { FlexRender, type ReactTable } from '@tanstack/react-table'
+import type { LoanProductResponse } from '@/src/shared/lib/api/types'
+import { features } from './product-columns'
 import { Database } from '@phosphor-icons/react'
 
 import { Badge } from '@/src/shared/ui/primitives/badge'
@@ -24,8 +26,8 @@ import { TablePagination } from '@/src/shared/ui/data-display/table-pagination'
 import { ProductsToolbar, type ProductsToolbarProps } from './products-toolbar'
 
 interface ProductsTableCardProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  table: any
+  
+  table: ReactTable<typeof features, LoanProductResponse>
   columnCount: number
   isLoading: boolean
   isError: boolean
@@ -89,12 +91,12 @@ export function ProductsTableCard({
       <CardContent className="p-0">
         <Table>
           <TableHeader className="bg-muted/40">
-            {table.getHeaderGroups().map((headerGroup: any) => (
+            {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
                 className="border-b hover:bg-transparent"
               >
-                {headerGroup.headers.map((header: any) => (
+                {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
                     className="h-9 px-4 text-xs font-semibold text-muted-foreground"
@@ -124,7 +126,7 @@ export function ProductsTableCard({
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row: any) => (
+              table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   onClick={() =>
@@ -135,7 +137,7 @@ export function ProductsTableCard({
                     row.original.isRetired && 'opacity-70',
                   )}
                 >
-                  {row.getVisibleCells().map((cell: any) => (
+                  {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
                       className="h-14 px-4 py-2 align-middle"

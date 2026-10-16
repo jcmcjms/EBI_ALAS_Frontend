@@ -24,11 +24,7 @@ function extractXsrfToken(jwt: string | null): string | null {
   }
 }
 
-/**
- * Detects CSRF rejection from RFC 7807 ProblemDetails (or plain text).
- * The backend does not send a `code` field — match title/detail/message
- * against /csrf/i on HTTP 403 only.
- */
+
 export function isCsrfError(error: unknown): boolean {
   if (!axios.isAxiosError(error) || !error.response) return false
   if (error.response.status !== 403) return false

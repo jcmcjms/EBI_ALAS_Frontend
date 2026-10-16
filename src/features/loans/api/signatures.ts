@@ -1,11 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/src/shared/lib/apiClient'
 
-/**
- * Workflow template signature chain — `GET /api/workflow/signature-chain`.
- * Encoder always; Recommender only when recommendation is required.
- * Used on the printable approval form preview.
- */
+
 export interface SignatureSlotDto {
   order: number
   action: string
@@ -14,14 +10,11 @@ export interface SignatureSlotDto {
   signedByName: string | null
   signedByJobTitle: string | null
   signedAt: string | null
-  /** Signer's ink snapshot (base64 data URL); null until the slot is signed. */
+  
   signatureUrl: string | null
 }
 
-/**
- * Per-loan signature chain — `GET /api/loans/{id}/signature-chain`.
- * Always the 3 printable slots; signed fields filled when a stage completed.
- */
+
 export type LoanSignatureSlot = SignatureSlotDto
 
 export interface SignatureSlot {
@@ -32,7 +25,7 @@ export interface SignatureSlot {
   signatureUrl: string | null
 }
 
-/** Display slots for the approval form: printable fields plus optional ink URL. */
+
 export type SignatureDisplaySlot = SignatureSlotDto & {
   signatureUrl?: string | null
 }

@@ -277,6 +277,9 @@ export function LoanRevisionPage() {
                   registerSectionRef={registerSectionRef}
                   approvalFormRef={approvalFormRef}
                   onPreLoanChange={() => undefined}
+                  clientConfirmed={isClientLoaded}
+                  onConfirmClient={() => undefined}
+                  onClientCleared={() => undefined}
                   isSectionEditable={isEditable}
                 />
               </form>

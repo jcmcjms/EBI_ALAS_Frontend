@@ -100,7 +100,7 @@ function DeviationsFields({
 
   const { majorItems, minorItems } = useMemo(() => {
     if (!catalog || catalog.length === 0) {
-      // Offline / API unavailable: still split the known list so Major is never hidden.
+      
       return {
         majorItems: DEVIATION_MAJOR_REASONS.map((description, i) => ({
           id: i + 1,

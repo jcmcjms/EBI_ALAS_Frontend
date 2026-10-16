@@ -1,7 +1,7 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
 import type { LoanResponse } from './loan-types'
 
-/** Wire contract for `PUT /api/loans/{id}/revise`. Immutable identity fields are omitted on purpose. */
+
 export interface ReviseLoanCommand {
   clientName?: string
   principal: number

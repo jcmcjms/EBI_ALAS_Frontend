@@ -33,7 +33,7 @@ export function useUser(id: string | null) {
 export function useUserStats() {
   const stats = useQuery({
     queryKey: userKeys.stats('total'),
-    // Backend list has no isActive filter; sample a wide page for counts.
+    
     queryFn: () => listUsers({ pageNumber: 1, pageSize: 500 }),
   })
 

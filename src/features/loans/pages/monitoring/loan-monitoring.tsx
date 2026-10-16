@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearch, useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
@@ -47,13 +47,11 @@ export function LoanMonitoringPage() {
   const slaPolicy = useSlaPolicy()
   const queueDefault = useQueueDefault()
 
-  const urlStatus = useMemo(() => {
+  const [urlStatus] = useState(() => {
     const raw = search.status
     if (!raw) return null
     return raw.split(',').filter((s): s is LoanStatus => s in LOAN_STATUS_META)
-    // Intentionally read once from the initial URL, matching prior behavior.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  })
 
   const [filters, setFilters] = useState<MonitoringFilters>(() => ({
     search: '',

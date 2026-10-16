@@ -40,7 +40,7 @@ export interface ResetPasswordResponse {
 }
 
 export interface UserResponse {
-  /** Backend user id (GUID string). */
+  
   id: string
   username: string
   firstName: string
@@ -85,7 +85,7 @@ export interface RoleMatrixEntry {
   permissions: string[]
 }
 
-/** Raw DTO returned by GET /api/users (no ApiResponse envelope). */
+
 export interface BackendUserDto {
   id: string
   userName: string

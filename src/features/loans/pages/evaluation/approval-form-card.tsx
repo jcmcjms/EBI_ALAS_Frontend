@@ -10,7 +10,7 @@ import type { SignatureDisplaySlot } from '@/src/features/loans/api/signatures'
 interface ApprovalFormCardProps {
   formData: LoanApplicationFormData
   catLoanClass: string | null
-  /** Generated LAM application id (`LAM-…`) from the loan detail. */
+  
   lamId?: string
   signatureSlots?: SignatureDisplaySlot[]
 }

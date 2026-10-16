@@ -1,9 +1,6 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
 
-/**
- * Raw DTO returned by GET /api/notifications (no ApiResponse envelope).
- * Field names match Ebi.Alas.Api.Features.Notifications.NotificationResponse.
- */
+
 export interface NotificationResponse {
   id: string
   title: string
