@@ -1,5 +1,9 @@
 import { cn } from '@/src/shared/lib/utils'
-import { isMaxLoanableAlert, computeLoanMetrics } from '@/src/features/loans/model/loan-approval-utils'
+import {
+  isMaxLoanableAlert,
+  computeLoanMetrics,
+  obToBePaidClosed,
+} from '@/src/features/loans/model/loan-approval-utils'
 import {
   DOUBLE_UNDERLINE,
   num,
@@ -13,8 +17,20 @@ interface ObligationRow {
   existingDeduction?: number
   amortization?: number
   outstandingBalance?: number
+  payToClose?: number
   deductions?: number
   remarks?: string
+}
+
+function ObligationColumnHeaders({ secondColumn }: { secondColumn: string }) {
+  return (
+    <tr className="[&>td]:px-1 [&>td]:py-0.5">
+      <td className="font-bold underline">Name of Financial Institution</td>
+      <td className="font-bold underline">{secondColumn}</td>
+      <td className="font-bold underline">OB to be paid/closed</td>
+      <td className="font-bold underline">PN Number</td>
+    </tr>
+  )
 }
 
 interface SingleLoanObligationsProps {
@@ -54,11 +70,18 @@ export function SingleLoanObligations({
         <tbody>
           {reloanRows.length > 0 && (
             <>
-              <tr>
-                <td colSpan={4} className="px-1 pt-2 font-bold">
+              <tr className="[&>td]:px-1 [&>td]:pt-2">
+                <td colSpan={2} className="font-bold">
                   Add: EBI Accounts for reloans
                 </td>
+                <td className="font-bold leading-tight">
+                  Old Loan/Buy-Out
+                  <br />
+                  Balance
+                </td>
+                <td />
               </tr>
+              <ObligationColumnHeaders secondColumn="Deductions" />
               {reloanRows.map((r, i) => (
                 <tr
                   key={`reloan-${i}`}
@@ -69,7 +92,7 @@ export function SingleLoanObligations({
                     {num(r.existingDeduction)}
                   </td>
                   <td className="text-right tabular-nums">
-                    {num(r.outstandingBalance)}
+                    {num(obToBePaidClosed(r))}
                   </td>
                   <td>{r.pn}</td>
                 </tr>
@@ -95,11 +118,18 @@ export function SingleLoanObligations({
 
           {buyOutRows.length > 0 && (
             <>
-              <tr>
-                <td colSpan={4} className="px-1 pt-2 font-bold">
-                  Add: Buy-Out Accounts from other FI's
+              <tr className="[&>td]:px-1 [&>td]:pt-2">
+                <td colSpan={2} className="font-bold">
+                  Add: Buy-Out Accounts from other FI&apos;s
                 </td>
+                <td className="font-bold leading-tight">
+                  Old Loan/Buy-Out
+                  <br />
+                  Balance
+                </td>
+                <td />
               </tr>
+              <ObligationColumnHeaders secondColumn="Monthly Amortization" />
               {buyOutRows.map((b, i) => (
                 <tr
                   key={`buyout-${i}`}
@@ -110,7 +140,7 @@ export function SingleLoanObligations({
                     {num(b.amortization)}
                   </td>
                   <td className="text-right tabular-nums">
-                    {num(b.outstandingBalance)}
+                    {num(obToBePaidClosed(b))}
                   </td>
                   <td>{b.pn}</td>
                 </tr>
