@@ -10,12 +10,15 @@ import type { SignatureDisplaySlot } from '@/src/features/loans/api/signatures'
 interface ApprovalFormCardProps {
   formData: LoanApplicationFormData
   catLoanClass: string | null
+  /** Generated LAM application id (`LAM-…`) from the loan detail. */
+  lamId?: string
   signatureSlots?: SignatureDisplaySlot[]
 }
 
 export function ApprovalFormCard({
   formData,
   catLoanClass,
+  lamId,
   signatureSlots,
 }: ApprovalFormCardProps) {
   const [zoom, setZoom] = useState(1)
@@ -68,9 +71,10 @@ export function ApprovalFormCard({
             data={formData}
             catLoanClass={catLoanClass}
             signatureSlots={signatureSlots}
+            lamId={lamId}
             lamIdByLoanNo={
-              formData.loans?.[0]?.loanNo && formData.branchType?.lai
-                ? { [formData.loans[0].loanNo]: formData.branchType.lai }
+              formData.loans?.[0]?.loanNo && lamId
+                ? { [formData.loans[0].loanNo]: lamId }
                 : undefined
             }
           />

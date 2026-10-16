@@ -47,6 +47,8 @@ interface ApprovalFormDocumentProps {
   actions?: ApprovalFormActionEntry[]
   deviations?: LoanDeviationDto[]
   documentRemarks?: DocumentRemarkDto[]
+  /** Generated LAM application id (`LAM-…`). Never use `branchType.lai` for this. */
+  lamId?: string
   lamIdByLoanNo?: Record<string, string>
 }
 
@@ -55,6 +57,7 @@ function ApprovalFormDocumentBase({
   loanId,
   loanIndex = 0,
   catLoanClass,
+  lamId,
   lamIdByLoanNo,
   ref,
 }: ApprovalFormDocumentProps & { ref?: Ref<HTMLDivElement> }) {
@@ -156,6 +159,7 @@ function ApprovalFormDocumentBase({
       deviations?.aoRecommendation,
     ].filter((x): x is string => !!x)
     const otherRemarks = deviations?.otherRemarks
+    const resolvedLamId = lamIdByLoanNo?.[primaryLoan.loanNo] ?? lamId ?? ''
 
     return (
       <div
@@ -178,7 +182,11 @@ function ApprovalFormDocumentBase({
               approvalTermDays={approvalTermDays}
               productLine={productLine}
               purpose={params.purpose}
-              lamIdByLoanNo={lamIdByLoanNo}
+              lamIdByLoanNo={
+                resolvedLamId
+                  ? { [primaryLoan.loanNo]: resolvedLamId }
+                  : undefined
+              }
             />
 
             <div className={cn(B, 'text-center font-bold')}>
@@ -206,7 +214,7 @@ function ApprovalFormDocumentBase({
                 LOAN APPROVAL FORM
               </span>
               <span className="tabular-nums">
-                {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{' '}
+                {fullNameOf(client)} · LAM {dash(resolvedLamId)} · PN{' '}
                 {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}
               </span>
             </div>
@@ -256,9 +264,9 @@ function ApprovalFormDocumentBase({
           </section>
 
           <AuditTrailSection
-            loanId={loanId ?? data?.branchType?.lai ?? ''}
+            loanId={loanId ?? ''}
+            lamId={resolvedLamId}
             client={client}
-            branchType={branchType}
             primaryLoan={primaryLoan}
             data={data}
           />

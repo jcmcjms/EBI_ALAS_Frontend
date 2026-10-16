@@ -37,16 +37,17 @@ async function loadTimelineHistory(
 
 interface AuditTrailSectionProps {
   loanId: number | string
+  /** Generated LAM application id (`LAM-…`) for print headers. */
+  lamId?: string
   client: ClientFormData
-  branchType: LoanApplicationFormData['branchType']
   primaryLoan: SelectedLoan
   data: LoanApplicationFormData
 }
 
 export function AuditTrailSection({
   loanId,
+  lamId,
   client,
-  branchType,
   primaryLoan,
   data,
 }: AuditTrailSectionProps) {
@@ -70,7 +71,7 @@ export function AuditTrailSection({
       <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
         <span className="text-sm font-bold underline">LOAN APPROVAL FORM</span>
         <span className="tabular-nums">
-          {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{' '}
+          {fullNameOf(client)} · LAM {dash(lamId)} · PN{' '}
           {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}
         </span>
       </div>
@@ -155,7 +156,7 @@ export function AuditTrailSection({
         </table>
 
         <div className="mt-4 px-2 pb-3 text-[10px] italic text-slate-600">
-          End of application history for LAM {dash(branchType.lai)} · PN{' '}
+          End of application history for LAM {dash(lamId)} · PN{' '}
           {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}. Generated{' '}
           {new Date().toLocaleString('en-PH', {
             dateStyle: 'medium',
