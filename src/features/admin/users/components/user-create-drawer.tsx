@@ -11,6 +11,7 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { toastError } from '@/src/shared/ui/feedback/toast'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import { useRoles } from '../hooks/use-roles'
+import { assignableRoles } from '../api/roles'
 import {
   type UserCreatePayload,
   emptyForm,
@@ -34,14 +35,15 @@ export function UserCreateDrawer({
   onCreate,
 }: UserCreateDrawerProps) {
   const { data: roles } = useRoles()
+  const assignable = useMemo(() => assignableRoles(roles), [roles])
 
   const roleSelectItems = useMemo(
     () =>
-      roles.map((role) => ({
+      assignable.map((role) => ({
         value: role.name,
         label: stripRoleDisplayName(role.displayName),
       })),
-    [roles],
+    [assignable],
   )
   const [form, setForm] = useState(emptyForm)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -135,7 +137,7 @@ export function UserCreateDrawer({
           form={form}
           onFieldChange={handleFieldChange}
           roleSelectItems={roleSelectItems}
-          roles={roles}
+          roles={assignable}
         />
 
         <SheetFooter className="flex flex-row gap-2 border-t bg-muted/10 p-4">
