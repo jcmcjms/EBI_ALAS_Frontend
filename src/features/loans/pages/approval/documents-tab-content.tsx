@@ -4,6 +4,7 @@ import {
 } from '@phosphor-icons/react'
 import {
   Card,
+  CardAction,
   CardContent,
   CardHeader,
   CardTitle,
@@ -34,8 +35,8 @@ export function DocumentsTabContent({
   onRecheck,
 }: DocumentsTabContentProps) {
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between border-b pb-4">
+    <Card id="document-requirements">
+      <CardHeader className="border-b pb-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
             <ListChecks
@@ -49,18 +50,20 @@ export function DocumentsTabContent({
             Checklist of required documents.
           </CardDescription>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="gap-1.5"
-          onClick={onRecheck}
-          disabled={recheckPending}
-          title="Re-verify document completeness"
-        >
-          <ArrowCounterClockwise size={14} weight="bold" />
-          Re-check documents
-        </Button>
+        <CardAction>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={onRecheck}
+            disabled={recheckPending}
+            title="Re-verify document completeness"
+          >
+            <ArrowCounterClockwise size={14} weight="bold" />
+            Re-check documents
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent className="pt-4">
         <AttachmentsPanel

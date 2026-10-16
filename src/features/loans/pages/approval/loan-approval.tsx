@@ -143,7 +143,16 @@ export function LoanApprovalPage() {
               checklist.data?.filter((d) => d.uploadStatus !== 'Uploaded')
                 .length ?? 0
             }
-            onReview={() => setTab('files')}
+            onReview={() => {
+              setTab('files')
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  document
+                    .getElementById('document-requirements')
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                })
+              })
+            }}
           />
         </div>
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),400px]">
