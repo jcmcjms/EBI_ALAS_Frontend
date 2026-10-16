@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 import { Plus } from '@phosphor-icons/react'
 import { Button } from '@/src/shared/ui/primitives/button'
+import { DatePicker } from '@/src/shared/ui/forms/date-picker'
 import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
 import { ErrorState } from '@/src/shared/ui/feedback/empty-state'
 
@@ -44,15 +45,13 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            As of
-            <input
-              type="date"
-              value={asOfDay}
-              onChange={(e) => setAsOfDay(e.target.value)}
-              className="h-8 rounded-md border border-input bg-background px-2 text-xs tabular-nums text-foreground"
-            />
-          </label>
+          <DatePicker
+            id="dashboard-as-of"
+            label="As of"
+            value={asOfDay}
+            onChange={setAsOfDay}
+            className="min-w-[12rem]"
+          />
           <span className="hidden text-xs tabular-nums text-muted-foreground sm:block">
             Updated{' '}
             {asOf.toLocaleTimeString('en-PH', {
