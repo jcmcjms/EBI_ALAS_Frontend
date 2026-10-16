@@ -47,7 +47,7 @@ export function Dashboard() {
         <div className="flex items-center gap-4">
           <DatePicker
             id="dashboard-as-of"
-            label="As of"
+            label=""
             value={asOfDay}
             onChange={setAsOfDay}
             className="min-w-[12rem]"

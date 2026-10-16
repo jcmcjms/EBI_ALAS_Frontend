@@ -43,10 +43,16 @@ export function DatePicker({
   className,
 }: DatePickerProps) {
   const selected = isoStringToDate(value)
+  const accessibleLabel = label || 'Date'
 
   return (
     <Field className={cn('gap-1.5', className)}>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <FieldLabel
+        htmlFor={id}
+        className={label ? undefined : 'sr-only'}
+      >
+        {accessibleLabel}
+      </FieldLabel>
       <Popover>
         <PopoverTrigger
           render={
@@ -54,6 +60,7 @@ export function DatePicker({
               variant="outline"
               id={id}
               type="button"
+              aria-label={accessibleLabel}
               className="justify-start px-2.5 font-normal"
             />
           }
