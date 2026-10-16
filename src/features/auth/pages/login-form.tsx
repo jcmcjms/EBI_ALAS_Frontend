@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { CircleNotch, Eye, EyeSlash } from '@phosphor-icons/react'
 import { cn } from '@/src/shared/lib/utils'
 import { Field, FieldGroup, FieldLabel } from '@/src/shared/ui/forms/field'
@@ -91,14 +91,12 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
         <Field>
           <div className="flex items-center justify-between">
             <FieldLabel htmlFor="password">Password</FieldLabel>
-            <a
-              href="https://itsupport.enterprisebank.ph/support"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/forgot-password"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
           <div className="relative">
             <Input
