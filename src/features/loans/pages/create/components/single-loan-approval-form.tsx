@@ -1,6 +1,9 @@
 import { RichText } from '@/src/shared/ui/data-display/rich-text'
 import { cn } from '@/src/shared/lib/utils'
-import { ApprovalFormSheet } from '@/src/features/loans/components/approval-form-sheet'
+import {
+  ApprovalFormSheet,
+  PrintPaperHeader,
+} from '@/src/features/loans/components/approval-form-sheet'
 import { useCatLoanClass } from '@/src/features/loans/hooks/use-cat-loan-class'
 import {
   parseProductCode,
@@ -143,7 +146,7 @@ export function SingleLoanApprovalForm({
           </div>
         )}
 
-        <h1 className="mb-2 text-sm font-bold underline">LOAN APPROVAL FORM</h1>
+        <PrintPaperHeader title="LOAN APPROVAL FORM" />
 
         <div className="border-2 border-b-0 border-black print:border-b-2">
           <SingleLoanClientInfo
@@ -177,16 +180,17 @@ export function SingleLoanApprovalForm({
         </div>
 
         <section className="break-before-page">
-          <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
-            <span className="text-sm font-bold underline">
-              LOAN APPROVAL FORM
-            </span>
-            <span className="tabular-nums">
-              {fullNameOf(client)} · LAM{' '}
-              {dash(lamIdByLoanNo?.[loan.loanNo])} · PN{' '}
-              {dash(loan.loanNo)}
-            </span>
-          </div>
+          <PrintPaperHeader
+            className="hidden print:block"
+            title="LOAN APPROVAL FORM"
+            meta={
+              <>
+                {fullNameOf(client)} · LAM{' '}
+                {dash(lamIdByLoanNo?.[loan.loanNo])} · PN{' '}
+                {dash(loan.loanNo)}
+              </>
+            }
+          />
 
           <div className="border-2 border-t-0 border-black print:border-t-2 break-inside-avoid">
             <div className="grid grid-cols-2">

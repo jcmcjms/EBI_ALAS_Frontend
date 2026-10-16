@@ -15,7 +15,10 @@ import {
   printableObligationRows,
   type ProductFeeConfig,
 } from '@/src/features/loans/model/loan-approval-utils'
-import { ApprovalFormSheet } from '@/src/features/loans/components/approval-form-sheet'
+import {
+  ApprovalFormSheet,
+  PrintPaperHeader,
+} from '@/src/features/loans/components/approval-form-sheet'
 import { useLoanProduct } from '@/src/shared/lib/api/loan-product-api'
 import { useCatLoanClass } from '@/src/features/loans/hooks/use-cat-loan-class'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
@@ -112,9 +115,7 @@ function ApprovalFormDocumentBase({
           className="bg-white p-5 text-black print:bg-white"
         >
           <ApprovalFormSheet>
-            <h1 className="mb-2 text-sm font-bold underline">
-              LOAN APPROVAL FORM
-            </h1>
+            <PrintPaperHeader title="LOAN APPROVAL FORM" />
             <p className="text-sm">
               Select a loan in Step 1.3 to render its approval form.
             </p>
@@ -169,9 +170,7 @@ function ApprovalFormDocumentBase({
         className="bg-white p-5 text-black print:bg-white"
       >
         <ApprovalFormSheet>
-          <h1 className="mb-2 text-sm font-bold underline">
-            LOAN APPROVAL FORM
-          </h1>
+          <PrintPaperHeader title="LOAN APPROVAL FORM" />
 
           <div className="border-2 border-b-0 border-black print:border-b-2">
             <SingleLoanClientInfo
@@ -209,15 +208,16 @@ function ApprovalFormDocumentBase({
           </div>
 
           <section className="break-before-page">
-            <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
-              <span className="text-sm font-bold underline">
-                LOAN APPROVAL FORM
-              </span>
-              <span className="tabular-nums">
-                {fullNameOf(client)} · LAM {dash(resolvedLamId)} · PN{' '}
-                {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}
-              </span>
-            </div>
+            <PrintPaperHeader
+              className="hidden print:block"
+              title="LOAN APPROVAL FORM"
+              meta={
+                <>
+                  {fullNameOf(client)} · LAM {dash(resolvedLamId)} · PN{' '}
+                  {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}
+                </>
+              }
+            />
 
             <div className="border-2 border-t-0 border-black print:border-t-2">
               <div className="grid grid-cols-2">

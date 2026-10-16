@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { RichText } from '@/src/shared/ui/data-display/rich-text'
 import { cn } from '@/src/shared/lib/utils'
+import { PrintPaperHeader } from '@/src/features/loans/components/approval-form-sheet'
 import type {
   ClientFormData,
   LoanApplicationFormData,
@@ -68,13 +69,15 @@ export function AuditTrailSection({
 
   return (
     <section className="hidden break-before-page print:block">
-      <div className="hidden print:mb-3 print:flex print:items-baseline print:justify-between print:border-b-2 print:border-black print:pb-1">
-        <span className="text-sm font-bold underline">LOAN APPROVAL FORM</span>
-        <span className="tabular-nums">
-          {fullNameOf(client)} · LAM {dash(lamId)} · PN{' '}
-          {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}
-        </span>
-      </div>
+      <PrintPaperHeader
+        title="LOAN APPROVAL FORM"
+        meta={
+          <>
+            {fullNameOf(client)} · LAM {dash(lamId)} · PN{' '}
+            {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}
+          </>
+        }
+      />
 
       <div className="border-2 border-t-0 border-black print:border-t-2">
         <div className={cn(B, 'text-center font-bold')}>
