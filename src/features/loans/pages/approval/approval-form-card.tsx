@@ -21,6 +21,8 @@ import type { ApprovalFormActionEntry } from './components/approval-form-documen
 interface ApprovalFormCardProps {
   formData: LoanApplicationFormData
   loanId?: number | string
+  /** Generated LAM application id (`LAM-…`) from the loan detail. */
+  lamId?: string
   signatureSlots?: SignatureDisplaySlot[]
   actions?: ApprovalFormActionEntry[]
   deviationsData?: LoanDeviationDto[]
@@ -32,6 +34,7 @@ interface ApprovalFormCardProps {
 export function ApprovalFormCard({
   formData,
   loanId,
+  lamId,
   signatureSlots,
   actions,
   deviationsData,
@@ -87,14 +90,15 @@ export function ApprovalFormCard({
             <ApprovalFormDocument
               data={formData}
               loanId={loanId}
+              lamId={lamId}
               catLoanClass={null}
               signatureSlots={signatureSlots ?? undefined}
               actions={actions}
               deviations={deviationsData}
               documentRemarks={documentRemarksData}
               lamIdByLoanNo={
-                formData.loans?.[0]?.loanNo && formData.branchType?.lai
-                  ? { [formData.loans[0].loanNo]: formData.branchType.lai }
+                formData.loans?.[0]?.loanNo && lamId
+                  ? { [formData.loans[0].loanNo]: lamId }
                   : undefined
               }
             />

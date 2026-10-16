@@ -185,6 +185,7 @@ export function LoanEvaluationPage() {
             <ApprovalFormCard
               formData={formData}
               catLoanClass={loanClass.data?.catLoanClass ?? null}
+              lamId={detail.lamId}
               signatureSlots={signatureSlots ?? undefined}
             />
           </div>

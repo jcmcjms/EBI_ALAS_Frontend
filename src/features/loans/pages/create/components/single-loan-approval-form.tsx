@@ -182,7 +182,8 @@ export function SingleLoanApprovalForm({
               LOAN APPROVAL FORM
             </span>
             <span className="tabular-nums">
-              {fullNameOf(client)} · LAM {dash(branchType.lai)} · PN{' '}
+              {fullNameOf(client)} · LAM{' '}
+              {dash(lamIdByLoanNo?.[loan.loanNo])} · PN{' '}
               {dash(loan.loanNo)}
             </span>
           </div>

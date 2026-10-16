@@ -148,6 +148,7 @@ export function LoanApprovalPage() {
           <ApprovalFormCard
             formData={formData}
             loanId={id}
+            lamId={detail.lamId}
             signatureSlots={signatureSlots ?? undefined}
             actions={detail?.actions}
             deviationsData={deviationsData}

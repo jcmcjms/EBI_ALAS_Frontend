@@ -78,6 +78,15 @@ describe('ApprovalFormDocument — matches preview page form', () => {
     ).toBeInTheDocument()
   })
 
+  it('uses the lamId prop for LAM ID, not branchType.lai', () => {
+    renderWithQueryClient(
+      <ApprovalFormDocument data={stubForm} lamId="LAM-20261015-000001" />,
+    )
+    expect(screen.getByText('LAM-20261015-000001')).toBeInTheDocument()
+    expect(screen.queryByText('LAM-REVIEW-001')).not.toBeInTheDocument()
+    expect(screen.queryByText('LAM LAI')).not.toBeInTheDocument()
+  })
+
   it('renders loan purpose from the form parameters like the preview', () => {
     renderWithQueryClient(
       <ApprovalFormDocument
