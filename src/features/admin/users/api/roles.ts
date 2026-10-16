@@ -10,3 +10,7 @@ export async function listRoles(): Promise<RoleInfo[]> {
     displayName: item.role,
   }))
 }
+
+export function assignableRoles(roles: RoleInfo[]): RoleInfo[] {
+  return roles.filter((role) => role.name !== 'System')
+}

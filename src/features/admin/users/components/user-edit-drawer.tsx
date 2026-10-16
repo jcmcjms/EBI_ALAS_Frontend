@@ -18,6 +18,7 @@ import { toastError } from '@/src/shared/ui/feedback/toast'
 import type { UserResponse } from '../api/users-types'
 import { stripRoleDisplayName } from '@/src/features/admin/users/components/role-badges'
 import { useRoles } from '../hooks/use-roles'
+import { assignableRoles } from '../api/roles'
 import {
   type EditableProfile,
   type UserProfileChanges,
@@ -50,14 +51,15 @@ export function UserEditDrawer({
   onRevokeSessions,
 }: UserEditDrawerProps) {
   const { data: roles } = useRoles()
+  const assignable = useMemo(() => assignableRoles(roles), [roles])
 
   const roleSelectItems = useMemo(
     () =>
-      roles.map((role) => ({
+      assignable.map((role) => ({
         value: role.name,
         label: stripRoleDisplayName(role.displayName),
       })),
-    [roles],
+    [assignable],
   )
   const [profile, setProfile] = useState<EditableProfile>(emptyProfile)
   const [isDirty, setIsDirty] = useState(false)
@@ -165,7 +167,7 @@ export function UserEditDrawer({
               canEdit={canEdit}
               onFieldChange={handleFieldChange}
               roleSelectItems={roleSelectItems}
-              roles={roles}
+              roles={assignable}
             />
           </TabsContent>
 
