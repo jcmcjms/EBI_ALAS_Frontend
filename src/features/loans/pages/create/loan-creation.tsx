@@ -34,6 +34,7 @@ import {
 import { sectionErrorCount } from './section-stepper-utils'
 import { DesktopStepper, MobileSectionNav, type StepperProps } from './section-nav'
 import { LoanFormSections } from './loan-form-sections'
+import { isCreateFormUnlocked } from './client-confirm-utils'
 
 const SCROLL_OFFSET_PX = 96
 
@@ -46,6 +47,7 @@ export function LoanCreationPage() {
     id: string
     payload: PreLoanItem | null
   }>({ id: '', payload: null })
+  const [clientConfirmed, setClientConfirmed] = useState(false)
 
   const methods = useForm<LoanApplicationFormData>({
     resolver: zodResolver(
@@ -92,7 +94,7 @@ export function LoanCreationPage() {
   const { control } = methods
 
   const cisId = useWatch({ control, name: 'client.cisId' }) ?? ''
-  const isClientLoaded = cisId.length > 0
+  const isClientLoaded = isCreateFormUnlocked(cisId, clientConfirmed)
 
   const [activeSection, setActiveSection] = useState<SectionId>('cis-lookup')
   const [submitAttempted, setSubmitAttempted] = useState(false)
@@ -246,6 +248,19 @@ export function LoanCreationPage() {
     ? SECTIONS.find((s) => sectionErrorCount(errors, s.id) > 0)
     : undefined
 
+  const visibleSectionIds = visibleSections.map((s) => s.id)
+  const activeIndex = Math.max(0, visibleSectionIds.indexOf(activeSection))
+
+  const onBack = useCallback(() => {
+    const prev = visibleSectionIds[activeIndex - 1]
+    if (prev) scrollToSection(prev)
+  }, [activeIndex, scrollToSection, visibleSectionIds])
+
+  const onNext = useCallback(() => {
+    const next = visibleSectionIds[activeIndex + 1]
+    if (next) scrollToSection(next)
+  }, [activeIndex, scrollToSection, visibleSectionIds])
+
   return (
     <FormProvider {...methods}>
       <ActiveLoanProvider loans={loans}>
@@ -274,19 +289,23 @@ export function LoanCreationPage() {
                 registerSectionRef={registerSectionRef}
                 approvalFormRef={approvalFormRef}
                 onPreLoanChange={(id, payload) => setSelectedPreLoan({ id, payload })}
+                clientConfirmed={clientConfirmed}
+                onConfirmClient={() => setClientConfirmed(true)}
+                onClientCleared={() => setClientConfirmed(false)}
               />
             </div>
 
             <FormFooter
               totalErrors={totalErrors}
-              isClientLoaded={isClientLoaded}
-              preLoanSelected={preLoanSelected}
-              loanCount={loans.length}
+              activeSection={activeSection}
+              visibleSectionIds={visibleSectionIds}
               canSubmit={canSubmit}
               isSubmitting={isSubmitting}
               firstErrorSection={firstErrorSection?.id}
               onNavigateToError={(id) => scrollToSection(id)}
               maxLoanableBlock={maxLoanableBlock}
+              onNext={onNext}
+              onBack={onBack}
             />
 
             {showScrollTop && (

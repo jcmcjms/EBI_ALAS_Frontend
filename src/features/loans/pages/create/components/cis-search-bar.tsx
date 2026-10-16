@@ -27,32 +27,40 @@ export function CisSearchBar({
 }: CisSearchBarProps) {
   return (
     <div className="space-y-4">
-      <SubSectionHeading step="1.1" title="Client lookup (CIS number)" />
+      <SubSectionHeading title="Client Lookup" />
 
-      <div className="flex items-center gap-3">
-        <div className="relative min-w-0 flex-1">
-          <MagnifyingGlass
-            size={16}
-            weight="bold"
-            className="absolute left-3 top-3 text-muted-foreground"
-          />
-          <Input
-            placeholder="Enter CIS number…"
-            aria-label="CIS number"
-            value={searchQuery}
-            onChange={(e) => onSearchQueryChange(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && onLookup()}
-            className="h-10 pl-9 tabular-nums"
-            disabled={isLoading}
-          />
-        </div>
-        <Button
-          onClick={onLookup}
-          disabled={isLoading || !searchQuery.trim()}
-          className="h-10 shrink-0 px-6"
+      <div className="space-y-2">
+        <label
+          htmlFor="cis-number"
+          className="text-xs font-medium text-foreground"
         >
-          {isLoading ? 'Fetching…' : 'Fetch Profile'}
-        </Button>
+          CIS Number
+        </label>
+        <div className="flex items-center gap-3">
+          <div className="relative min-w-0 flex-1">
+            <MagnifyingGlass
+              size={16}
+              weight="bold"
+              className="absolute left-3 top-3 text-muted-foreground"
+            />
+            <Input
+              id="cis-number"
+              placeholder="Enter CIS number…"
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && onLookup()}
+              className="h-10 pl-9 tabular-nums"
+              disabled={isLoading}
+            />
+          </div>
+          <Button
+            onClick={onLookup}
+            disabled={isLoading || !searchQuery.trim()}
+            className="h-10 shrink-0 px-6"
+          >
+            {isLoading ? 'Searching…' : 'Search Client'}
+          </Button>
+        </div>
       </div>
 
       {lookupError && (
