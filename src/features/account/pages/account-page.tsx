@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { GearSix } from '@phosphor-icons/react'
+import { ShieldCheck } from '@phosphor-icons/react'
 import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Tabs,
@@ -24,9 +24,13 @@ export function AccountPage() {
         {}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">My Account</h1>
-          <Button className="gap-2" onClick={() => setTab('security')}>
-            <GearSix size={16} weight="bold" />
-            Settings
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setTab('security')}
+          >
+            <ShieldCheck size={16} weight="bold" />
+            Security settings
           </Button>
         </div>
 
