@@ -4,6 +4,7 @@ import {
   computeDocStamp,
   findMaxLoanableSubmitBlock,
   isMaxLoanableAlert,
+  obToBePaidClosed,
   resolveApprovalTermDays,
   toAnnualRatePercent,
   formatRatePercent,
@@ -15,6 +16,25 @@ import {
   DOC_STAMP_EXPOSURE_THRESHOLD,
 } from '@/src/features/loans/model/loan-approval-utils'
 import { computeMonthlyAmortization } from '@/src/features/loans/model/loan-computations'
+
+describe('obToBePaidClosed', () => {
+  it('uses the encoder-certified payoff amount when present', () => {
+    expect(
+      obToBePaidClosed({ payToClose: 34910.88, outstandingBalance: 35200 }),
+    ).toBe(34910.88)
+  })
+
+  it('falls back to the CIS outstanding balance', () => {
+    expect(obToBePaidClosed({ outstandingBalance: 35200 })).toBe(35200)
+    expect(obToBePaidClosed({ payToClose: 0, outstandingBalance: 35200 })).toBe(
+      35200,
+    )
+  })
+
+  it('returns zero when neither value exists', () => {
+    expect(obToBePaidClosed({})).toBe(0)
+  })
+})
 
 describe('resolveApprovalTermDays', () => {
   it.each([

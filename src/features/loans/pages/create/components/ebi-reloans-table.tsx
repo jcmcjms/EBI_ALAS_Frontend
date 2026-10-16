@@ -46,15 +46,18 @@ export function EbiReloansTable({
       <Table className="mt-3">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[180px]">PN / Account No.</TableHead>
+            <TableHead className="w-[180px]">PN Number</TableHead>
             <TableHead className="flex-1 min-w-[140px]">
-              Product Name
+              Name of Financial Institution
             </TableHead>
             <TableHead className="text-right flex-1 min-w-[140px]">
-              Existing Deduction
+              Deductions
             </TableHead>
-            <TableHead className="text-right w-[160px]">
-              Pay to Close
+            <TableHead
+              className="text-right w-[160px]"
+              title="Defaults to the CIS outstanding balance; adjust to the certified payoff amount"
+            >
+              OB to be paid/closed
             </TableHead>
             <TableHead className="w-[50px]">
               <span className="sr-only">Row actions</span>
@@ -102,7 +105,7 @@ export function EbiReloansTable({
                     )
                   }
                   placeholder="0.00"
-                  aria-label={`Pay to close for ${row.name ?? row.pn ?? `row ${i + 1}`}`}
+                  aria-label={`OB to be paid/closed for ${row.name ?? row.pn ?? `row ${i + 1}`}`}
                   className="h-8 text-right text-xs"
                 />
               </TableCell>

@@ -39,6 +39,15 @@ export function computeDocStamp(
 }
 
 
+export function obToBePaidClosed(row: {
+  payToClose?: number
+  outstandingBalance?: number
+}): number {
+  return row.payToClose && row.payToClose > 0
+    ? row.payToClose
+    : (row.outstandingBalance ?? 0)
+}
+
 export function isMaxLoanableAlert(
   maximumLoanableAmount: number,
   proposedAmount: number,
@@ -160,7 +169,7 @@ export function computeLoanMetrics(
     (s, r) => s + (r.existingDeduction || 0),
     0,
   )
-  const ebiOb = ebiReloans.reduce((s, r) => s + (r.outstandingBalance || 0), 0)
+  const ebiOb = ebiReloans.reduce((s, r) => s + obToBePaidClosed(r), 0)
   const buyOutDeductions = buyOuts.reduce(
     (s, b) => s + (b.amortization || 0),
     0,
@@ -284,7 +293,8 @@ export function isBlankReloan(row: EbiReloan): boolean {
     !row.name?.trim() &&
     !row.pn?.trim() &&
     !row.existingDeduction &&
-    !row.outstandingBalance
+    !row.outstandingBalance &&
+    !row.payToClose
   )
 }
 
