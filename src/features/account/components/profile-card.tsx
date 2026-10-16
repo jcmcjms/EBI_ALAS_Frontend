@@ -1,4 +1,4 @@
-import { Envelope, PencilSimple } from '@phosphor-icons/react'
+import { Copy, Envelope, PencilSimple } from '@phosphor-icons/react'
 import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import { Button } from '@/src/shared/ui/primitives/button'
@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/src/shared/ui/data-display/card'
+import { toastError, toastSuccess } from '@/src/shared/ui/feedback/toast'
 import { cn } from '@/src/shared/lib/utils'
 import { LoadingState } from './account-states'
 
@@ -22,6 +23,8 @@ interface ProfileCardProps {
     text: string
     missing: boolean
     key: string
+    sensitive?: boolean
+    rawValue?: string
   }[]
   isLoading: boolean
   onEditProfile: () => void
@@ -116,7 +119,22 @@ export function ProfileCard({
                   >
                     {row.text}
                   </span>
-                  {row.missing && row.key !== 'branch' && (
+                  {row.sensitive && row.rawValue ? (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                      aria-label="Copy full identifier"
+                      onClick={() => {
+                        navigator.clipboard
+                          .writeText(row.rawValue!)
+                          .then(() => toastSuccess('Copied to clipboard'))
+                          .catch(() => toastError('Could not copy identifier'))
+                      }}
+                    >
+                      <Copy size={14} weight="bold" />
+                    </Button>
+                  ) : row.missing && row.key !== 'branch' ? (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -125,7 +143,7 @@ export function ProfileCard({
                     >
                       Add
                     </Button>
-                  )}
+                  ) : null}
                 </li>
               ))}
             </ul>

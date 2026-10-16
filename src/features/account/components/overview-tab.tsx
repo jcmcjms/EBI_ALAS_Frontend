@@ -6,7 +6,6 @@ import {
   Envelope,
   IdentificationCard,
   MapPin,
-  PencilSimple,
   Phone,
   Sparkle,
 } from '@phosphor-icons/react'
@@ -32,6 +31,7 @@ import { ActivityTimeline, toTimelineItems } from './activity-timeline'
 import { EmptyState, ErrorState, LoadingState } from './account-states'
 import { ProfileCard } from './profile-card'
 import { RecentApplicationsList } from './recent-applications-list'
+import { maskEmployeeId } from './employee-id'
 
 interface OverviewTabProps {
   onEditProfile: () => void
@@ -81,12 +81,27 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
     [profile],
   )
 
+  const uniqueClients = useMemo(() => {
+    const seen = new Set<string>()
+    const result: typeof clientsQuery.data = []
+    for (const client of clientsQuery.data ?? []) {
+      const key = client.cisId ?? client.name
+      if (seen.has(key)) continue
+      seen.add(key)
+      result.push(client)
+    }
+    return result
+  }, [clientsQuery.data])
+
   const contactRows = useMemo(() => {
+    const rawEmployeeId = String(user?.userId ?? profile?.id ?? '')
     const rows: {
       icon: typeof Envelope
       text: string
       missing: boolean
       key: string
+      sensitive?: boolean
+      rawValue?: string
     }[] = [
       {
         key: 'email',
@@ -109,8 +124,10 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
       {
         key: 'employee',
         icon: IdentificationCard,
-        text: `Employee ID ${user?.userId ?? profile?.id ?? '—'}`,
+        text: `Employee ID ${maskEmployeeId(rawEmployeeId)}`,
         missing: false,
+        sensitive: true,
+        rawValue: rawEmployeeId,
       },
     ]
     if (profile?.createdAt) {
@@ -148,30 +165,33 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
     <div className="space-y-6">
       {}
       {missingFields.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Sparkle
-              size={16}
-              weight="fill"
-              className="shrink-0 text-primary"
-            />
-            <p className="text-sm text-muted-foreground">
-              Your profile is missing your{' '}
-              <span className="font-medium text-foreground">
-                {missingFields.join(', ')}
-              </span>
-              .
+        <Card className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base text-amber-900 dark:text-amber-200">
+              <Sparkle size={18} weight="fill" />
+              Complete your profile
+            </CardTitle>
+            <p className="text-sm text-amber-800/80 dark:text-amber-300/80">
+              Adding your contact details ensures account recovery and important
+              notifications.
             </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={onEditProfile}
-          >
-            <PencilSimple size={14} weight="bold" /> Complete profile
-          </Button>
-        </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {missingFields.map((field) => (
+              <div
+                key={field}
+                className="flex items-center justify-between rounded-md border border-amber-500/30 bg-background px-3 py-2"
+              >
+                <span className="text-sm font-medium capitalize">
+                  {field.replace(/-/g, ' ')}
+                </span>
+                <Button size="sm" variant="outline" onClick={onEditProfile}>
+                  Add {field.replace(/-/g, ' ')}
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
@@ -250,13 +270,13 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
                     message="Failed to load recent clients."
                     onRetry={() => clientsQuery.refetch()}
                   />
-                ) : (clientsQuery.data ?? []).length === 0 ? (
+                ) : uniqueClients.length === 0 ? (
                   <EmptyState
                     title="No recent clients"
                     hint="Clients from your applications will appear here."
                   />
                 ) : (
-                  clientsQuery.data!.map((client) => (
+                  uniqueClients.map((client) => (
                     <div
                       key={client.cisId}
                       className="flex items-center gap-3 px-4 py-3"
