@@ -55,6 +55,8 @@ interface WorkflowActionsPanelProps {
     mutate: (id: string | number) => void
   }
   detailStatus: string
+  /** Informational only — never disables workflow actions. */
+  missingDocCount?: number
 }
 
 export function WorkflowActionsPanel({
@@ -78,66 +80,50 @@ export function WorkflowActionsPanel({
       <CardHeader className="border-b pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           <CheckCircle size={18} weight="bold" className="text-primary" />
-          Workflow Actions
+          Decision Actions
         </CardTitle>
         <CardDescription className="pt-1 text-xs">
-          Review the approval form, then take action.
+          {frozen ? 'This application is locked.' : 'Select a decision to proceed.'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-4">
-        <div className="space-y-3">
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <Clock size={12} /> Remarks
-          </h3>
-          <ApplicationTimeline loanId={loanId} variant="panel" />
-        </div>
+        {needsDeskGate &&
+          !canAct &&
+          (queueState?.isHead && !queueState.ownerName ? (
+            <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 p-3 text-sm">
+              <span>You&apos;re next in the queue.</span>
+              <Button
+                onClick={() => claimById.mutate(String(loanId))}
+                disabled={claimById.isPending}
+                className="gap-2"
+              >
+                Claim &amp; review
+              </Button>
+            </div>
+          ) : queueState?.ownerName ? (
+            <div className="rounded-md border bg-muted/30 p-3 text-sm">
+              Currently with {queueState.ownerName}. You have view-only
+              access until the current review is finished.
+            </div>
+          ) : (
+            <div className="rounded-md border bg-muted/30 p-3 text-sm">
+              Queued #{queueState?.position} — serve files in order from the
+              Review Desk.
+            </div>
+          ))}
 
-        <div className="h-px bg-border" />
+        {frozen && (
+          <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
+            This application is{' '}
+            <strong>
+              {LOAN_STATUS_META[detailStatus as LoanStatus]?.label ??
+                detailStatus}
+            </strong>{' '}
+            — no further actions.
+          </p>
+        )}
 
         <div className="space-y-2">
-          {needsDeskGate &&
-            !canAct &&
-            (queueState?.isHead && !queueState.ownerName ? (
-              <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 p-3 text-sm">
-                <span>You're next in the queue.</span>
-                <Button
-                  onClick={() => claimById.mutate(String(loanId))}
-                  disabled={claimById.isPending}
-                  className="gap-2"
-                >
-                  Claim &amp; review
-                </Button>
-              </div>
-            ) : queueState?.ownerName ? (
-              <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                Currently with {queueState.ownerName}. You have view-only
-                access until the current review is finished.
-              </div>
-            ) : (
-              <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                Queued #{queueState?.position} — serve files in order from the
-                Review Desk.
-              </div>
-            ))}
-          {canCancel && (
-            <Button
-              variant="destructive"
-              className="w-full gap-2"
-              onClick={onCancel}
-            >
-              <XCircle size={16} /> Cancel Application
-            </Button>
-          )}
-          {frozen && (
-            <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
-              This application is{' '}
-              <strong>
-                {LOAN_STATUS_META[detailStatus as LoanStatus]?.label ??
-                  detailStatus}
-              </strong>{' '}
-              — no further actions.
-            </p>
-          )}
           {actions.map((a) => {
             const disabled = act.isPending || !canAct
             const icon =
@@ -157,7 +143,7 @@ export function WorkflowActionsPanel({
               return (
                 <Button
                   key={`${a.to}-${a.verdict ?? a.kind}`}
-                  className="w-full gap-2 border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  className="w-full gap-2 border-amber-500/50 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:text-amber-400"
                   variant="outline"
                   disabled={disabled}
                   onClick={onPushback}
@@ -201,6 +187,25 @@ export function WorkflowActionsPanel({
               />
             )
           })}
+        </div>
+
+        {canCancel && !frozen && (
+          <div className="border-t pt-4">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="mx-auto flex items-center gap-1.5 text-xs font-medium text-destructive hover:underline"
+            >
+              <XCircle size={12} weight="bold" /> Cancel this application
+            </button>
+          </div>
+        )}
+
+        <div className="space-y-3 border-t pt-4">
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Clock size={12} /> Activity Timeline
+          </h3>
+          <ApplicationTimeline loanId={loanId} variant="panel" />
         </div>
       </CardContent>
     </Card>

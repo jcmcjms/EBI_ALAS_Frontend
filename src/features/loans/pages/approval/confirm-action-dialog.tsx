@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import {
   CheckCircle,
   ThumbsDown,
@@ -40,7 +40,7 @@ export function ConfirmActionDialog({
   onRemarksChange: (v: string) => void
   onConfirm: () => void
   isPending: boolean
-  children?: ReactNode
+  children?: ReactElement
 }) {
   const needsRemarks = collectRemarksInDialog(action)
   const remarksOk = !needsRemarks || remarks.trim().length >= MIN_REMARKS
