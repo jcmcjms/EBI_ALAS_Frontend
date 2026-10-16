@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import {
+  ArrowsOut,
   FilePdf,
   MagnifyingGlassMinus,
   MagnifyingGlassPlus,
   Printer,
+  X,
 } from '@phosphor-icons/react'
 import {
   Card,
@@ -42,6 +45,61 @@ export function ApprovalFormCard({
   zoom,
   onZoomChange,
 }: ApprovalFormCardProps) {
+  const [isFullScreen, setIsFullScreen] = useState(false)
+
+  const previewContent = (
+    <ApprovalFormViewport zoom={zoom}>
+      <ApprovalFormDocument
+        data={formData}
+        loanId={loanId}
+        lamId={lamId}
+        catLoanClass={null}
+        signatureSlots={signatureSlots ?? undefined}
+        actions={actions}
+        deviations={deviationsData}
+        documentRemarks={documentRemarksData}
+        lamIdByLoanNo={
+          formData.loans?.[0]?.loanNo && lamId
+            ? { [formData.loans[0].loanNo]: lamId }
+            : undefined
+        }
+      />
+    </ApprovalFormViewport>
+  )
+
+  if (isFullScreen) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col bg-background">
+        <header className="flex items-center justify-between border-b bg-muted/30 px-6 py-3">
+          <div className="flex items-center gap-2">
+            <FilePdf size={20} weight="bold" className="text-primary" />
+            <h2 className="text-lg font-semibold">Approval Form Preview</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => window.print()}
+            >
+              <Printer size={14} weight="bold" /> Print
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsFullScreen(false)}
+              aria-label="Close full screen"
+            >
+              <X size={20} weight="bold" />
+            </Button>
+          </div>
+        </header>
+        <div className="flex-1 overflow-auto bg-muted/40 p-6">{previewContent}</div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <Card className="overflow-hidden">
@@ -79,31 +137,22 @@ export function ApprovalFormCard({
               variant="outline"
               size="sm"
               className="ml-2 gap-1.5"
+              onClick={() => setIsFullScreen(true)}
+            >
+              <ArrowsOut size={14} weight="bold" /> Full Screen
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
               onClick={() => window.print()}
             >
               <Printer size={14} weight="bold" /> Print
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <ApprovalFormViewport zoom={zoom}>
-            <ApprovalFormDocument
-              data={formData}
-              loanId={loanId}
-              lamId={lamId}
-              catLoanClass={null}
-              signatureSlots={signatureSlots ?? undefined}
-              actions={actions}
-              deviations={deviationsData}
-              documentRemarks={documentRemarksData}
-              lamIdByLoanNo={
-                formData.loans?.[0]?.loanNo && lamId
-                  ? { [formData.loans[0].loanNo]: lamId }
-                  : undefined
-              }
-            />
-          </ApprovalFormViewport>
-        </CardContent>
+        <CardContent className="p-0">{previewContent}</CardContent>
       </Card>
     </div>
   )
