@@ -72,7 +72,7 @@ export function findMaxLoanableSubmitBlock(
 ): MaxLoanableSubmitBlock | null {
   for (const [index, loan] of form.loans.entries()) {
     const metrics = computeLoanMetrics(loan, {
-      outstandingLoans: form.outstandingLoans,
+      outstandingLoans: loan.outstandingLoans ?? form.outstandingLoans ?? [],
       ebiReloans: loan.ebiReloans ?? [],
       buyOuts: loan.buyOuts ?? [],
       incomingLoans: loan.incomingLoans ?? [],

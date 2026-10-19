@@ -95,7 +95,7 @@ export function SingleLoanApprovalForm({
     loanClass?.catLoanClass,
   )
 
-  const outstandingLoans = form?.outstandingLoans ?? []
+  const outstandingLoans = loan.outstandingLoans ?? []
   const ebiReloans = loan.ebiReloans ?? []
   const buyOuts = loan.buyOuts ?? []
   const incomingLoans = loan.incomingLoans ?? []

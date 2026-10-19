@@ -30,10 +30,11 @@ export function mapFormToSubmissionPayload(
       ebiReloans: loan.ebiReloans.map((row) => ({ ...row })),
       buyOuts: loan.buyOuts.map((row) => ({ ...row })),
       incomingLoans: loan.incomingLoans.map((row) => ({ ...row })),
+      outstandingLoans: (loan.outstandingLoans ?? []).map((row) => ({ ...row })),
       verification: { findings: loan.verification.findings },
       deviations: { ...loan.deviations },
     })),
-    outstandingLoans: form.outstandingLoans.map((row) => ({ ...row })),
+    outstandingLoans: (form.outstandingLoans ?? []).map((row) => ({ ...row })),
     preLoan: form.preLoan
       ? {
           id: form.preLoan.id,

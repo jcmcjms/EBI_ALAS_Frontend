@@ -73,7 +73,8 @@ function ApprovalFormDocumentBase({
     const verification = primaryLoan?.verification
     const deviations = primaryLoan?.deviations
     const deviationEntries = buildPrintableDeviationEntries(deviations)
-    const outstandingLoans = data?.outstandingLoans ?? []
+    const outstandingLoans =
+      primaryLoan?.outstandingLoans ?? data?.outstandingLoans ?? []
     const ebiReloans = primaryLoan?.ebiReloans ?? []
     const buyOuts = primaryLoan?.buyOuts ?? []
     const incomingLoans = primaryLoan?.incomingLoans ?? []

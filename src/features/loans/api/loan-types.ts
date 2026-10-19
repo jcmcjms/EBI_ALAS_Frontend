@@ -315,6 +315,16 @@ export interface LoanSubmissionPayload {
       outstandingBalance: number
     }>
     incomingLoans: Array<{ name: string; deductions: number; remarks: string }>
+    outstandingLoans: Array<{
+      pn: string
+      principalBalance: number
+      amortization: number
+      outstandingBalance: number
+      dateGranted?: string
+      dateMaturity?: string
+      status: string
+      productWithDescription?: string
+    }>
     verification: { findings: string }
     deviations: {
       hasDeviations: boolean
