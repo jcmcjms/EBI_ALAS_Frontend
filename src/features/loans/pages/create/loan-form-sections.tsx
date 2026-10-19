@@ -134,9 +134,7 @@ export function LoanFormSections({
             id="approval-form"
             ref={(el) => registerSectionRef('approval-form', el)}
           >
-            <fieldset disabled className="contents">
-              <ApprovalFormPreview ref={approvalFormRef} />
-            </fieldset>
+            <ApprovalFormPreview ref={approvalFormRef} />
           </section>
         </div>
       ) : null}
