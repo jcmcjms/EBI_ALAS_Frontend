@@ -18,6 +18,8 @@ import { ActiveLoansTable } from './active-loans-table'
 import { ReadOnlyField, SectionCard, SubSectionHeading } from './section-card'
 import { CisSearchBar } from './cis-search-bar'
 import { CisClientCard } from './cis-client-card'
+import { PerLoanTabs } from './per-loan-tabs'
+import { useActiveLoan } from '../active-loan-context'
 import { getSection } from '@/src/features/loans/constants/sections'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 
@@ -65,7 +67,11 @@ export function CISLookup({
   const client = useWatch({ control, name: 'client' })
 
   const branchType = useWatch({ control, name: 'branchType' })
+  const { loans: activeLoans } = useActiveLoan()
   const isLoaded = !!client.cisId
+
+  const branchNameFor = (code: string | undefined) =>
+    code ? findBranchName(branches, code) || code : branchType.branch
 
   const fullName = [
     client.firstName,
@@ -261,22 +267,48 @@ export function CISLookup({
                   </Badge>
                 }
               />
-              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <ReadOnlyField
-                  label="Loan type"
-                  value={branchType.creationTypeLabel}
-                  hint={
-                    branchType.creationTypeLabel
-                      ? undefined
-                      : 'Set from the selected preloan'
-                  }
+              {activeLoans.length > 1 ? (
+                <PerLoanTabs
+                  idPrefix="branch-type"
+                  ariaLabel="Branch and type per application"
+                  mountStrategy="active-only"
+                  renderPanel={(loan) => (
+                    <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <ReadOnlyField
+                        label="Loan type"
+                        value={
+                          loan.creationTypeLabel || branchType.creationTypeLabel
+                        }
+                      />
+                      <ReadOnlyField
+                        label="Branch"
+                        value={branchNameFor(loan.branchCode) || branchType.branch}
+                      />
+                      <ReadOnlyField
+                        label="Requesting officer"
+                        value={branchType.requestingOfficer}
+                      />
+                    </dl>
+                  )}
                 />
-                <ReadOnlyField label="Branch" value={branchType.branch} />
-                <ReadOnlyField
-                  label="Requesting officer"
-                  value={branchType.requestingOfficer}
-                />
-              </dl>
+              ) : (
+                <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <ReadOnlyField
+                    label="Loan type"
+                    value={branchType.creationTypeLabel}
+                    hint={
+                      branchType.creationTypeLabel
+                        ? undefined
+                        : 'Set from the selected preloan'
+                    }
+                  />
+                  <ReadOnlyField label="Branch" value={branchType.branch} />
+                  <ReadOnlyField
+                    label="Requesting officer"
+                    value={branchType.requestingOfficer}
+                  />
+                </dl>
+              )}
             </div>
 
             {}
