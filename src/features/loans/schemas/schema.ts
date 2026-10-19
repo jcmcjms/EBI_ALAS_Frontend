@@ -249,6 +249,7 @@ export const selectedLoanSchema = z.object({
   ebiReloans: z.array(ebiReloanSchema).default([]),
   buyOuts: z.array(buyOutSchema).default([]),
   incomingLoans: z.array(incomingLoanSchema).default([]),
+  outstandingLoans: z.array(outstandingLoanSchema).default([]),
 
   verification: verificationSchema,
 
@@ -344,6 +345,7 @@ export function createPerLoanSectionDefaults() {
     ebiReloans: [] as EbiReloan[],
     buyOuts: [] as BuyOut[],
     incomingLoans: [] as IncomingLoan[],
+    outstandingLoans: [] as OutstandingLoan[],
     verification: { findings: '' },
     deviations: {
       hasDeviations: false,

@@ -185,6 +185,7 @@ describe('computeLoanMetrics deduction convention', () => {
     ebiReloans: [],
     buyOuts: [],
     incomingLoans: [],
+    outstandingLoans: [],
     verification: { findings: '' },
     deviations: {
       hasDeviations: false,

@@ -13,10 +13,7 @@ import {
   mapToOutstanding,
   type TransferSourceRow,
 } from '../model/loan-transfer-utils'
-import type {
-  LoanApplicationFormData,
-  OutstandingLoan,
-} from '../schemas/schema'
+import type { LoanApplicationFormData, OutstandingLoan } from '../schemas/schema'
 
 export type PerLoanArrayKind = 'ebiReloans' | 'buyOuts' | 'incomingLoans'
 
@@ -77,59 +74,53 @@ export function useLoanTransfers(activeLoanIndex: number | null) {
       source: 'outstanding' | 'ebi',
       rowIndex: number,
       target: 'outstanding' | 'ebi',
-      targetLoanIndex?: number,
+      loanIndex: number,
     ) => {
       if (source === target) return
 
-      const resolveEbiTarget = (): number | null => {
-        const index = targetLoanIndex ?? activeLoanIndex
-        if (index === null || index === undefined) {
-          toastError(
-            'Select a loan number in Step 1.3 before transferring to EBI accounts.',
-          )
-          return null
-        }
-        return index
-      }
+      const loanPath = (kind: 'outstandingLoans' | 'ebiReloans') =>
+        `loans.${loanIndex}.${kind}` as ArrayPath
 
-      if (source === 'outstanding') {
-        const targetIndex = resolveEbiTarget()
-        if (targetIndex === null) return
+      const liveOutstanding =
+        (getValues(loanPath('outstandingLoans')) as
+          | OutstandingLoan[]
+          | undefined) ?? []
+      const liveEbi =
+        (getValues(loanPath('ebiReloans')) as TransferSourceRow[] | undefined) ??
+        []
 
-        const live =
-          (getValues('outstandingLoans') as OutstandingLoan[] | undefined) ?? []
-        const rowData = live[rowIndex]
+      if (source === 'outstanding' && target === 'ebi') {
+        const rowData = liveOutstanding[rowIndex]
         if (!rowData) {
           toastError('Could not transfer loan — source row not found.')
           return
         }
         const mapped = mapToEbi(normalize(rowData), 'outstanding')
-        setRows(targetIndex, 'ebiReloans', [
-          ...getRows(targetIndex, 'ebiReloans'),
-          mapped,
-        ])
-        outstanding.remove(rowIndex)
-      } else {
-        const sourceIndex = activeLoanIndex
-        if (sourceIndex === null) {
-          toastError(
-            'Select a loan number in Step 1.3 before transferring to EBI accounts.',
-          )
-          return
-        }
-        const live = getRows<TransferSourceRow>(sourceIndex, 'ebiReloans')
-        const rowData = live[rowIndex]
+        setValue(
+          loanPath('outstandingLoans'),
+          liveOutstanding.filter((_, i) => i !== rowIndex) as never,
+          { shouldDirty: true },
+        )
+        setValue(loanPath('ebiReloans'), [...liveEbi, mapped] as never, {
+          shouldDirty: true,
+        })
+      } else if (source === 'ebi' && target === 'outstanding') {
+        const rowData = liveEbi[rowIndex]
         if (!rowData) {
           toastError('Could not transfer loan — source row not found.')
           return
         }
         const mapped = mapToOutstanding(normalize(rowData), 'ebi')
-        setRows(
-          sourceIndex,
-          'ebiReloans',
-          live.filter((_, i) => i !== rowIndex),
+        setValue(
+          loanPath('ebiReloans'),
+          liveEbi.filter((_, i) => i !== rowIndex) as never,
+          { shouldDirty: true },
         )
-        outstanding.append(mapped as never, { shouldFocus: false })
+        setValue(
+          loanPath('outstandingLoans'),
+          [...liveOutstanding, mapped] as never,
+          { shouldDirty: true },
+        )
       }
 
       toastSuccess(
@@ -137,7 +128,7 @@ export function useLoanTransfers(activeLoanIndex: number | null) {
       )
     },
 
-    [activeLoanIndex, outstanding],
+    [getValues, setValue],
   )
 
   return {

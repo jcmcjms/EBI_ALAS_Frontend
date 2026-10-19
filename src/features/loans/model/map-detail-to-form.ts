@@ -120,6 +120,16 @@ export function mapLoanDetailToFormData(
           deductions: i.deductions,
           remarks: i.remarks,
         })),
+        outstandingLoans: l.outstandingLoans.map((o) => ({
+          pn: o.pn,
+          principalBalance: o.principalBalance,
+          amortization: o.amortization,
+          outstandingBalance: o.outstandingBalance,
+          dateGranted: o.dateGranted ?? undefined,
+          dateMaturity: o.dateMaturity ?? undefined,
+          status: o.status,
+          productWithDescription: o.productWithDescription ?? undefined,
+        })),
         verification: {
           findings: l.verificationFindings ?? '',
         },

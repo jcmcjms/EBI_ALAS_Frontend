@@ -20,6 +20,7 @@ interface EbiReloansTableProps {
     source: 'outstanding' | 'ebi',
     index: number,
     target: 'outstanding' | 'ebi',
+    loanIndex: number,
   ) => void
 }
 
@@ -29,6 +30,7 @@ export function EbiReloansTable({
   setCell,
   handleTransfer,
 }: EbiReloansTableProps) {
+  const loanIndex = Number(loanPath.split('.')[1] ?? 0)
   return (
     <div className="p-4">
       <SubSectionHeading
@@ -113,7 +115,12 @@ export function EbiReloansTable({
                 <TransferActionMenu
                   currentSection="ebi"
                   onTransfer={(target) =>
-                    handleTransfer('ebi', i, target as 'outstanding' | 'ebi')
+                    handleTransfer(
+                      'ebi',
+                      i,
+                      target as 'outstanding' | 'ebi',
+                      loanIndex,
+                    )
                   }
                 />
               </TableCell>

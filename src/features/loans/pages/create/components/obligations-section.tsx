@@ -128,11 +128,12 @@ export function ObligationsSection() {
                             'outstanding',
                             i,
                             target as 'outstanding' | 'ebi',
+                            activeIndex,
                           )
                           return
                         }
                         if (loans.length <= 1) {
-                          handleTransfer('outstanding', i, 'ebi')
+                          handleTransfer('outstanding', i, 'ebi', activeIndex)
                           return
                         }
                         setPending({
