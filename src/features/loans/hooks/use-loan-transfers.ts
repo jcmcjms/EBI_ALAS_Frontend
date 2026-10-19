@@ -77,17 +77,25 @@ export function useLoanTransfers(activeLoanIndex: number | null) {
       source: 'outstanding' | 'ebi',
       rowIndex: number,
       target: 'outstanding' | 'ebi',
+      targetLoanIndex?: number,
     ) => {
       if (source === target) return
 
-      if (target === 'ebi' && activeLoanIndex === null) {
-        toastError(
-          'Select a loan number in Step 1.3 before transferring to EBI accounts.',
-        )
-        return
+      const resolveEbiTarget = (): number | null => {
+        const index = targetLoanIndex ?? activeLoanIndex
+        if (index === null || index === undefined) {
+          toastError(
+            'Select a loan number in Step 1.3 before transferring to EBI accounts.',
+          )
+          return null
+        }
+        return index
       }
 
       if (source === 'outstanding') {
+        const targetIndex = resolveEbiTarget()
+        if (targetIndex === null) return
+
         const live =
           (getValues('outstandingLoans') as OutstandingLoan[] | undefined) ?? []
         const rowData = live[rowIndex]
@@ -96,14 +104,19 @@ export function useLoanTransfers(activeLoanIndex: number | null) {
           return
         }
         const mapped = mapToEbi(normalize(rowData), 'outstanding')
-        const targetIndex = activeLoanIndex as number
         setRows(targetIndex, 'ebiReloans', [
           ...getRows(targetIndex, 'ebiReloans'),
           mapped,
         ])
         outstanding.remove(rowIndex)
       } else {
-        const sourceIndex = activeLoanIndex as number
+        const sourceIndex = activeLoanIndex
+        if (sourceIndex === null) {
+          toastError(
+            'Select a loan number in Step 1.3 before transferring to EBI accounts.',
+          )
+          return
+        }
         const live = getRows<TransferSourceRow>(sourceIndex, 'ebiReloans')
         const rowData = live[rowIndex]
         if (!rowData) {
