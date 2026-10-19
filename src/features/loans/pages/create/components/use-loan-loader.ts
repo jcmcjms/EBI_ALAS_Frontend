@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useWatch, type UseFieldArrayReturn, type UseFormReturn } from 'react-hook-form'
 import { toastError } from '@/src/shared/ui/feedback/toast'
 import axios from 'axios'
@@ -8,21 +8,31 @@ import {
   getPendingLoan,
 } from '@/src/features/loans/api/webloans'
 import type {
-  OutstandingLoan,
+  OutstandingLoan as WebOutstandingLoan,
   PendingLoan,
   WebLoanAccount,
 } from '../../../api/loan-types'
 import type {
   LoanApplicationFormData,
   CreationTypeCode,
+  OutstandingLoan,
 } from '@/src/features/loans/schemas/schema'
-import { CREATION_TYPE } from '@/src/features/loans/schemas/schema'
+import {
+  CREATION_TYPE,
+  createPerLoanSectionDefaults,
+} from '@/src/features/loans/schemas/schema'
 
 export function extractProductCode(desc: string | undefined): string | null {
   if (!desc) return null
   if (desc.startsWith('Consolidated')) return null
   const dash = desc.indexOf(' - ')
   return dash === -1 ? desc.trim() : desc.slice(0, dash).trim()
+}
+
+export function seedOutstandingForLoan(
+  cisOutstanding: OutstandingLoan[],
+): OutstandingLoan[] {
+  return cisOutstanding.map((row) => ({ ...row }))
 }
 
 
@@ -50,6 +60,7 @@ export function useLoanLoader(
   const selectedProductCodes = new Set(
     watchedLoans.map((f) => f.productCode).filter(Boolean),
   )
+  const cisOutstandingRef = useRef<OutstandingLoan[]>([])
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>('')
   const [loans, setLoans] = useState<PendingLoan[]>([])
@@ -108,26 +119,41 @@ export function useLoanLoader(
 
     if (outstandingResult.status === 'fulfilled') {
       const obRows = outstandingResult.value.loans ?? []
-      
+
       const selectedNos = new Set(
         (getValues('loans') ?? []).map((l) => l.loanNo).filter(Boolean),
       )
-      setValue(
-        'outstandingLoans',
-        obRows
-          .filter((row: OutstandingLoan) => !selectedNos.has(row.loanNo ?? ''))
-          .map((row: OutstandingLoan) => ({
-            pn: row.loanNo ?? '',
-            principalBalance: row.principal ?? 0,
-            amortization: row.amortAmount ?? 0,
-            outstandingBalance: row.principalBalance ?? 0,
-            dateGranted: row.dateGranted ? row.dateGranted.slice(0, 10) : '',
-            dateMaturity: row.dateMaturity ? row.dateMaturity.slice(0, 10) : '',
-            status: row.productStatus ?? 'Active',
-            productWithDescription: row.productWithDescription ?? '',
-          })),
-        { shouldDirty: false },
-      )
+      const mapped = obRows
+        .filter((row: WebOutstandingLoan) => !selectedNos.has(row.loanNo ?? ''))
+        .map((row: WebOutstandingLoan) => ({
+          pn: row.loanNo ?? '',
+          principalBalance: row.principal ?? 0,
+          amortization: row.amortAmount ?? 0,
+          outstandingBalance: row.principalBalance ?? 0,
+          dateGranted: row.dateGranted ? row.dateGranted.slice(0, 10) : '',
+          dateMaturity: row.dateMaturity ? row.dateMaturity.slice(0, 10) : '',
+          status: row.productStatus ?? 'Active',
+          productWithDescription: row.productWithDescription ?? '',
+        }))
+      cisOutstandingRef.current = mapped
+      setValue('outstandingLoans', mapped, { shouldDirty: false })
+
+      const currentLoans = getValues('loans') ?? []
+      if (currentLoans.length > 0) {
+        fieldArray.replace(
+          currentLoans.map((entry) => {
+            const hasWork =
+              (entry.outstandingLoans?.length ?? 0) > 0 ||
+              (entry.ebiReloans?.length ?? 0) > 0
+            return hasWork
+              ? entry
+              : {
+                  ...entry,
+                  outstandingLoans: seedOutstandingForLoan(mapped),
+                }
+          }),
+        )
+      }
     }
 
     if (pendingResult.status === 'fulfilled') {
@@ -222,6 +248,8 @@ export function useLoanLoader(
       creationTypeLabel: loan.creationTypeLabel ?? '',
       branchCode,
       cDocStamp: loan.cDocStamp ?? undefined,
+      ...createPerLoanSectionDefaults(),
+      outstandingLoans: seedOutstandingForLoan(cisOutstandingRef.current),
       parameters: {
         product: loan.productWithDescription ?? '',
         purpose: loan.loanPurpose ?? '',
