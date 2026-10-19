@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useFormContext, useWatch } from 'react-hook-form'
+import { useFormContext, useWatch, type FieldPath } from 'react-hook-form'
 import {
   Table,
   TableBody,
@@ -13,48 +12,16 @@ import { Badge } from '@/src/shared/ui/primitives/badge'
 import { useLoanTransfersContext } from '../loan-transfers-provider'
 import { useActiveLoan } from '../active-loan-context'
 import { TransferActionMenu } from './transfer-action-menu'
-import {
-  TransferTargetDialog,
-  type TransferTargetOption,
-} from './transfer-target-dialog'
+import { PerLoanTabs } from './per-loan-tabs'
 import { SectionCard } from './section-card'
 import { getSection } from '@/src/features/loans/constants/sections'
+import type {
+  LoanApplicationFormData,
+  OutstandingLoan,
+} from '@/src/features/loans/schemas/schema'
 
 export function ObligationsSection() {
-  const { control } = useFormContext()
-
-  const { outstanding, handleTransfer } = useLoanTransfersContext()
-  const { loans, activeIndex } = useActiveLoan()
-  const outstandingFields = outstanding.fields
-
-  const watchedLoans =
-    (useWatch({ control, name: 'outstandingLoans' }) as Array<{
-      pn?: string
-      principalBalance?: number
-      amortization?: number
-      outstandingBalance?: number
-      dateGranted?: string
-      dateMaturity?: string
-      status?: string
-      productWithDescription?: string
-    }>) || []
-
-  const [pending, setPending] = useState<{
-    rowIndex: number
-    rowLabel: string
-  } | null>(null)
-
-  const loanOptions: TransferTargetOption[] = loans.map((l, index) => ({
-    loanIndex: index,
-    productCode: l.productCode ?? '',
-    loanNo: l.loanNo ?? '',
-  }))
-
-  const totalOutstanding = watchedLoans.reduce(
-    (sum, loan) => sum + (loan?.outstandingBalance || 0),
-    0,
-  )
-
+  const { loans } = useActiveLoan()
   const section = getSection('obligations')
 
   return (
@@ -64,15 +31,54 @@ export function ObligationsSection() {
       description={section.description}
       systemSourced
       badge={
-        <span className="text-xs text-muted-foreground">
-          Total outstanding:{' '}
-          <span className="font-bold text-foreground">
-            ₱{totalOutstanding.toLocaleString()}
-          </span>
-        </span>
+        loans.length > 0 ? (
+          <Badge variant="secondary">
+            {loans.length} loan{loans.length === 1 ? '' : 's'}
+          </Badge>
+        ) : undefined
       }
-      contentClassName="p-0"
+      contentClassName="p-0 divide-y"
     >
+      {loans.length === 0 ? (
+        <div className="p-6 text-center text-sm text-muted-foreground">
+          Select loan numbers in Step 1.3 to review existing loans per
+          application.
+        </div>
+      ) : (
+        <PerLoanTabs
+          idPrefix="existing-loans"
+          ariaLabel="Existing loans per application"
+          mountStrategy="active-only"
+          renderPanel={(_loan, i) => <OutstandingForLoan loanIndex={i} />}
+        />
+      )}
+    </SectionCard>
+  )
+}
+
+function OutstandingForLoan({ loanIndex }: { loanIndex: number }) {
+  const { control } = useFormContext<LoanApplicationFormData>()
+  const { handleTransfer } = useLoanTransfersContext()
+
+  const rows =
+    (useWatch({
+      control,
+      name: `loans.${loanIndex}.outstandingLoans` as FieldPath<LoanApplicationFormData>,
+    }) as OutstandingLoan[] | undefined) ?? []
+
+  const totalOutstanding = rows.reduce(
+    (sum, loan) => sum + (loan?.outstandingBalance || 0),
+    0,
+  )
+
+  return (
+    <div>
+      <div className="flex items-center justify-end px-4 pt-3 text-xs text-muted-foreground">
+        Total outstanding:{' '}
+        <span className="ml-1 font-bold text-foreground">
+          ₱{totalOutstanding.toLocaleString()}
+        </span>
+      </div>
       <Table>
         <TableHeader className="bg-muted/40">
           <TableRow>
@@ -89,91 +95,61 @@ export function ObligationsSection() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {outstandingFields.length > 0 ? (
-            outstandingFields.map((field, i) => {
-              const loan = watchedLoans[i]
-              return (
-                <TableRow key={field.id} className="hover:bg-muted/30">
-                  <TableCell className="text-xs">{loan?.pn}</TableCell>
-                  <TableCell className="text-right">
-                    ₱{(loan?.principalBalance ?? 0).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    ₱{(loan?.amortization ?? 0).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">
-                    ₱{(loan?.outstandingBalance ?? 0).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {loan?.dateGranted
-                      ? new Date(loan.dateGranted).toLocaleDateString()
-                      : '—'}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {loan?.dateMaturity
-                      ? new Date(loan.dateMaturity).toLocaleDateString()
-                      : '—'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="font-normal text-xs">
-                      {loan?.status || '—'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <TransferActionMenu
-                      currentSection="outstanding"
-                      onTransfer={(target) => {
-                        if (target !== 'ebi') {
-                          handleTransfer(
-                            'outstanding',
-                            i,
-                            target as 'outstanding' | 'ebi',
-                            activeIndex,
-                          )
-                          return
-                        }
-                        if (loans.length <= 1) {
-                          handleTransfer('outstanding', i, 'ebi', activeIndex)
-                          return
-                        }
-                        setPending({
-                          rowIndex: i,
-                          rowLabel: [loan?.pn, loan?.productWithDescription]
-                            .filter(Boolean)
-                            .join(' · '),
-                        })
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              )
-            })
+          {rows.length > 0 ? (
+            rows.map((loan, i) => (
+              <TableRow key={`${loan.pn}-${i}`} className="hover:bg-muted/30">
+                <TableCell className="text-xs">{loan.pn}</TableCell>
+                <TableCell className="text-right">
+                  ₱{(loan.principalBalance ?? 0).toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  ₱{(loan.amortization ?? 0).toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right font-semibold">
+                  ₱{(loan.outstandingBalance ?? 0).toLocaleString()}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {loan.dateGranted
+                    ? new Date(loan.dateGranted).toLocaleDateString()
+                    : '—'}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {loan.dateMaturity
+                    ? new Date(loan.dateMaturity).toLocaleDateString()
+                    : '—'}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className="font-normal text-xs">
+                    {loan.status || '—'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <TransferActionMenu
+                    currentSection="outstanding"
+                    onTransfer={(target) =>
+                      handleTransfer(
+                        'outstanding',
+                        i,
+                        target as 'outstanding' | 'ebi',
+                        loanIndex,
+                      )
+                    }
+                  />
+                </TableCell>
+              </TableRow>
+            ))
           ) : (
             <TableRow>
               <TableCell
                 colSpan={8}
                 className="text-center text-xs text-muted-foreground py-4"
               >
-                No outstanding loans found.
+                No outstanding loans found for this application.
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
-      {pending && (
-        <TransferTargetDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) setPending(null)
-          }}
-          rowLabel={pending.rowLabel}
-          options={loanOptions}
-          defaultLoanIndex={activeIndex}
-          onConfirm={(loanIndex) =>
-            handleTransfer('outstanding', pending.rowIndex, 'ebi', loanIndex)
-          }
-        />
-      )}
-    </SectionCard>
+    </div>
   )
 }

@@ -35,13 +35,25 @@ function makeLoan(loanNo: string, productCode: string) {
       standardFeesSnapshot: { notarialFee: 0, docStamps: 0, insurance: 0 },
     },
     ...createPerLoanSectionDefaults(),
+    outstandingLoans: [
+      {
+        pn: 'OLD-1',
+        principalBalance: 1000,
+        amortization: 100,
+        outstandingBalance: 1000,
+        dateGranted: '',
+        dateMaturity: '',
+        status: 'Active',
+        productWithDescription: 'OLD - Prior',
+      },
+    ],
   }
 }
 
 function Harness({
   onReady,
 }: {
-  onReady?: (methods: ReturnType<typeof useForm<LoanApplicationFormData>>) => void
+  onReady?: (m: ReturnType<typeof useForm<LoanApplicationFormData>>) => void
 }) {
   const methods = useForm<LoanApplicationFormData>({
     defaultValues: {
@@ -59,24 +71,10 @@ function Harness({
         agency: 'DepEd',
       },
       loans: [makeLoan('PN-10001', 'A16'), makeLoan('PN-20002', 'B17')],
-      outstandingLoans: [
-        {
-          pn: 'OLD-1',
-          principalBalance: 1000,
-          amortization: 100,
-          outstandingBalance: 1000,
-          dateGranted: '',
-          dateMaturity: '',
-          status: 'Active',
-          productWithDescription: 'OLD - Prior',
-        },
-      ],
       loanType: 'New',
     } as LoanApplicationFormData,
   })
-
   onReady?.(methods)
-
   return (
     <FormProvider {...methods}>
       <ActiveLoanProvider loans={methods.getValues('loans')}>
@@ -88,8 +86,8 @@ function Harness({
   )
 }
 
-describe('Outstanding → EBI transfer targeting', () => {
-  it('asks which loan application should receive the reloan', async () => {
+describe('Existing Loans per application tabs', () => {
+  it('transfers only the active application and leaves the other outstanding', async () => {
     const user = userEvent.setup()
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -100,36 +98,31 @@ describe('Outstanding → EBI transfer targeting', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <Harness
-          onReady={(methods) => {
-            methodsRef = methods
+          onReady={(m) => {
+            methodsRef = m
           }}
         />
       </QueryClientProvider>,
     )
+
+    expect(screen.getByRole('tab', { name: /A16/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /B17/ })).toBeInTheDocument()
 
     const trigger = screen.getByRole('button', {
       name: /transfer to ebi reloans/i,
     })
     fireEvent.pointerDown(trigger)
     await user.click(trigger)
-
-    const menuItem = await screen.findByRole('menuitem', {
-      name: /ebi reloans/i,
-    })
-    await user.click(menuItem)
-
-    expect(await screen.findByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText(/A16 · PN-10001/)).toBeInTheDocument()
-    expect(screen.getByText(/B17 · PN-20002/)).toBeInTheDocument()
-
-    await user.click(screen.getByRole('radio', { name: /B17 · PN-20002/ }))
-    await user.click(screen.getByRole('button', { name: /move to ebi reloans/i }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: /ebi reloans/i }),
+    )
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(methodsRef).not.toBeNull()
+
     const loans = methodsRef!.getValues('loans')
-    expect(loans[0].ebiReloans).toHaveLength(0)
-    expect(loans[1].ebiReloans).toHaveLength(1)
-    expect(loans[1].ebiReloans[0]).toMatchObject({ pn: 'OLD-1' })
+    expect(loans[0].outstandingLoans).toHaveLength(0)
+    expect(loans[0].ebiReloans).toHaveLength(1)
+    expect(loans[1].outstandingLoans).toHaveLength(1)
+    expect(loans[1].ebiReloans).toHaveLength(0)
   })
 })
