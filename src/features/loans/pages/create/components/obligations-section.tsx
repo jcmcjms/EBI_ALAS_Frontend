@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
 import {
   Table,
@@ -10,7 +11,12 @@ import {
 import { Badge } from '@/src/shared/ui/primitives/badge'
 
 import { useLoanTransfersContext } from '../loan-transfers-provider'
+import { useActiveLoan } from '../active-loan-context'
 import { TransferActionMenu } from './transfer-action-menu'
+import {
+  TransferTargetDialog,
+  type TransferTargetOption,
+} from './transfer-target-dialog'
 import { SectionCard } from './section-card'
 import { getSection } from '@/src/features/loans/constants/sections'
 
@@ -18,6 +24,7 @@ export function ObligationsSection() {
   const { control } = useFormContext()
 
   const { outstanding, handleTransfer } = useLoanTransfersContext()
+  const { loans, activeIndex } = useActiveLoan()
   const outstandingFields = outstanding.fields
 
   const watchedLoans =
@@ -29,7 +36,19 @@ export function ObligationsSection() {
       dateGranted?: string
       dateMaturity?: string
       status?: string
+      productWithDescription?: string
     }>) || []
+
+  const [pending, setPending] = useState<{
+    rowIndex: number
+    rowLabel: string
+  } | null>(null)
+
+  const loanOptions: TransferTargetOption[] = loans.map((l, index) => ({
+    loanIndex: index,
+    productCode: l.productCode ?? '',
+    loanNo: l.loanNo ?? '',
+  }))
 
   const totalOutstanding = watchedLoans.reduce(
     (sum, loan) => sum + (loan?.outstandingBalance || 0),
@@ -103,13 +122,26 @@ export function ObligationsSection() {
                   <TableCell className="text-right">
                     <TransferActionMenu
                       currentSection="outstanding"
-                      onTransfer={(target) =>
-                        handleTransfer(
-                          'outstanding',
-                          i,
-                          target as 'outstanding' | 'ebi',
-                        )
-                      }
+                      onTransfer={(target) => {
+                        if (target !== 'ebi') {
+                          handleTransfer(
+                            'outstanding',
+                            i,
+                            target as 'outstanding' | 'ebi',
+                          )
+                          return
+                        }
+                        if (loans.length <= 1) {
+                          handleTransfer('outstanding', i, 'ebi')
+                          return
+                        }
+                        setPending({
+                          rowIndex: i,
+                          rowLabel: [loan?.pn, loan?.productWithDescription]
+                            .filter(Boolean)
+                            .join(' · '),
+                        })
+                      }}
                     />
                   </TableCell>
                 </TableRow>
@@ -127,6 +159,20 @@ export function ObligationsSection() {
           )}
         </TableBody>
       </Table>
+      {pending && (
+        <TransferTargetDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPending(null)
+          }}
+          rowLabel={pending.rowLabel}
+          options={loanOptions}
+          defaultLoanIndex={activeIndex}
+          onConfirm={(loanIndex) =>
+            handleTransfer('outstanding', pending.rowIndex, 'ebi', loanIndex)
+          }
+        />
+      )}
     </SectionCard>
   )
 }

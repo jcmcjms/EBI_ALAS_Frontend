@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -33,17 +33,15 @@ export function TransferTargetDialog({
   defaultLoanIndex,
   onConfirm,
 }: TransferTargetDialogProps) {
-  const [selected, setSelected] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const fallback =
+  const [selected, setSelected] = useState<number | null>(() => {
+    if (
       defaultLoanIndex !== undefined &&
       options.some((o) => o.loanIndex === defaultLoanIndex)
-        ? defaultLoanIndex
-        : (options[0]?.loanIndex ?? null)
-    setSelected(fallback)
-  }, [open, defaultLoanIndex, options])
+    ) {
+      return defaultLoanIndex
+    }
+    return options[0]?.loanIndex ?? null
+  })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
