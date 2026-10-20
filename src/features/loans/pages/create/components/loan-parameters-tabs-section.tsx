@@ -47,7 +47,10 @@ export function LoanParametersTabsSection() {
         ariaLabel="Selected loans"
         hasError={(i) => Boolean(loanErrors?.[i])}
         renderPanel={(_, i) => (
-          <LoanParametersFields fieldPrefix={`loans.${i}.parameters`} />
+          <LoanParametersFields
+            fieldPrefix={`loans.${i}.parameters`}
+            loanIndex={i}
+          />
         )}
       />
     </SectionCard>

@@ -4,6 +4,7 @@ import {
   RICH_TEXT_MAX_CHARS,
   richTextToPlainText,
 } from '@/src/shared/lib/rich-text'
+import { validateNthpDate } from '@/src/features/loans/model/nthp-date-window'
 
 export const CREATION_TYPE = {
   NEW_LOAN: 0,
@@ -122,7 +123,18 @@ export const loanParametersSchema = z.object({
   term: z.number().default(0),
   policyTermMonths: z.number().optional(),
   interestRate: z.number().optional(),
-  nthpDate: z.string().optional(),
+  nthpDate: z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      const result = validateNthpDate(value, new Date())
+      if (!result.ok) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: result.message,
+        })
+      }
+    }),
 
   notarialFee: z.number().default(0),
   docStamps: z.number().default(0),

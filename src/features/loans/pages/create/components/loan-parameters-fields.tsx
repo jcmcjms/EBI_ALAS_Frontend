@@ -3,15 +3,23 @@ import { CalendarBlank } from '@phosphor-icons/react'
 
 import { Input } from '@/src/shared/ui/primitives/input'
 import { Label } from '@/src/shared/ui/primitives/label'
+import { cn } from '@/src/shared/lib/utils'
+import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 
 interface LoanParametersFieldsProps {
   fieldPrefix: string
+  loanIndex: number
 }
 
 export function LoanParametersFields({
   fieldPrefix,
+  loanIndex,
 }: LoanParametersFieldsProps) {
   const { register } = useFormContext()
+  const {
+    formState: { errors },
+  } = useFormContext<LoanApplicationFormData>()
+  const nthpError = errors.loans?.[loanIndex]?.parameters?.nthpDate?.message
 
   const productPath = `${fieldPrefix}.product` as const
   const proposedAmountPath = `${fieldPrefix}.proposedAmount` as const
@@ -117,8 +125,15 @@ export function LoanParametersFields({
             type="text"
             placeholder="yyyy-mm-dd"
             readOnly
-            className="h-9 bg-muted/50 tabular-nums"
+            aria-invalid={!!nthpError}
+            className={cn(
+              'h-9 bg-muted/50 tabular-nums',
+              nthpError && 'border-destructive focus-visible:ring-destructive',
+            )}
           />
+          {nthpError ? (
+            <p className="text-xs font-medium text-destructive">{nthpError}</p>
+          ) : null}
         </div>
       </div>
     </div>

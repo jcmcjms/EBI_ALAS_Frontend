@@ -22,7 +22,7 @@ export function LoanParametersSection({
       description={section.description}
       icon={<CurrencyDollar size={20} weight="bold" className="text-primary" />}
     >
-      <LoanParametersFields fieldPrefix={fieldPrefix} />
+      <LoanParametersFields fieldPrefix={fieldPrefix} loanIndex={loanIndex} />
     </SectionCard>
   )
 }
