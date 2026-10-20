@@ -3,7 +3,9 @@ import {
   computeLoanMetrics,
   computeDocStamp,
   findMaxLoanableSubmitBlock,
+  findNegativeNetProceedsSubmitBlock,
   isMaxLoanableAlert,
+  isNegativeNetProceeds,
   obToBePaidClosed,
   resolveApprovalTermDays,
   toAnnualRatePercent,
@@ -408,6 +410,73 @@ describe('findMaxLoanableSubmitBlock', () => {
       ],
     } as Parameters<typeof findMaxLoanableSubmitBlock>[0]
     expect(findMaxLoanableSubmitBlock(form)?.loanLabel).toBe('PN-BAD')
+  })
+})
+
+describe('isNegativeNetProceeds', () => {
+  it('is true only when net proceeds to client is strictly negative', () => {
+    expect(isNegativeNetProceeds(-0.01)).toBe(true)
+    expect(isNegativeNetProceeds(-1)).toBe(true)
+  })
+
+  it('is false when net proceeds is zero or positive', () => {
+    expect(isNegativeNetProceeds(0)).toBe(false)
+    expect(isNegativeNetProceeds(0.01)).toBe(false)
+  })
+})
+
+describe('findNegativeNetProceedsSubmitBlock', () => {
+  const baseForm = {
+    client: {
+      cisId: 'CIS-1',
+      firstName: 'Ana',
+      lastName: 'Cruz',
+      netTakeHomePay: 20_000,
+    },
+    outstandingLoans: [],
+    loans: [
+      {
+        loanNo: 'PN-1',
+        productCode: 'A16',
+        productDescription: 'Salary',
+        parameters: {
+          product: 'A16',
+          proposedAmount: 10_000,
+          term: 30,
+          interestRate: 0.05,
+        },
+        ebiReloans: [],
+        buyOuts: [],
+        incomingLoans: [],
+      },
+    ],
+  } as unknown as Parameters<typeof findNegativeNetProceedsSubmitBlock>[0]
+
+  it('returns null when net proceeds to client is not negative', () => {
+    expect(findNegativeNetProceedsSubmitBlock(baseForm)).toBeNull()
+  })
+
+  it('blocks when buy-outs exceed gross proceeds', () => {
+    const form = {
+      ...baseForm,
+      loans: [
+        {
+          ...baseForm.loans[0],
+          buyOuts: [
+            {
+              pn: 'BO-1',
+              name: 'Buy out',
+              amortization: 0,
+              outstandingBalance: 999_999,
+            },
+          ],
+        },
+      ],
+    } as Parameters<typeof findNegativeNetProceedsSubmitBlock>[0]
+    const block = findNegativeNetProceedsSubmitBlock(form)
+    expect(block).not.toBeNull()
+    expect(block?.loanLabel).toBe('PN-1')
+    expect(block?.netProceedsClient).toBeLessThan(0)
   })
 })
 

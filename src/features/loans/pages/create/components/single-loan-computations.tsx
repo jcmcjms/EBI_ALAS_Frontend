@@ -3,7 +3,11 @@ import type {
   LoanApplicationFormData,
   SelectedLoan,
 } from '@/src/features/loans/schemas/schema'
-import { computeLoanMetrics, isMaxLoanableAlert } from '@/src/features/loans/model/loan-approval-utils'
+import {
+  computeLoanMetrics,
+  isMaxLoanableAlert,
+  isNegativeNetProceeds,
+} from '@/src/features/loans/model/loan-approval-utils'
 import {
   BLUE,
   B,
@@ -45,6 +49,7 @@ export function SingleLoanComputations({
   const netProceedsDs = c.netProceedsDs
   const buyOutBalance = c.buyOutBalance
   const netProceedsClient = c.netProceedsClient
+  const negativeNetProceeds = isNegativeNetProceeds(netProceedsClient)
   const monthlyAmortization = c.amortization
   const netPayAfterDeduction = c.netPayAfterDeduction
   const nthp = c.nthp
@@ -143,10 +148,24 @@ export function SingleLoanComputations({
         />
         <AmtRow
           label={
-            <span className="font-bold">NET PROCEEDS to Client</span>
+            <span
+              className={cn(
+                'font-bold',
+                negativeNetProceeds && 'text-red-700',
+              )}
+            >
+              NET PROCEEDS to Client
+            </span>
           }
           value={
-            <span className="font-bold">{num(netProceedsClient)}</span>
+            <span
+              className={cn(
+                'font-bold',
+                negativeNetProceeds && 'text-red-700',
+              )}
+            >
+              {num(netProceedsClient)}
+            </span>
           }
           blue
         />

@@ -23,7 +23,9 @@ import { useCreateLoan } from '@/src/features/loans/hooks/use-create-loan'
 import { mapFormToSubmitLoanRequest } from '@/src/features/loans/model/map-form-to-request'
 import {
   findMaxLoanableSubmitBlock,
+  findNegativeNetProceedsSubmitBlock,
   type MaxLoanableSubmitBlock,
+  type NegativeNetProceedsSubmitBlock,
 } from '@/src/features/loans/model/loan-approval-utils'
 
 import {
@@ -178,6 +180,13 @@ export function LoanCreationPage() {
         )
         return
       }
+      const negativeNetProceedsBlock = findNegativeNetProceedsSubmitBlock(data)
+      if (negativeNetProceedsBlock) {
+        toastError(
+          `Cannot submit ${negativeNetProceedsBlock.loanLabel}: Net Proceeds to Client is negative. Adjust the proposed amount or obligations first.`,
+        )
+        return
+      }
       createLoan(mapFormToSubmitLoanRequest(data))
     },
     [createLoan, isSubmitting],
@@ -227,6 +236,14 @@ export function LoanCreationPage() {
           outstandingLoans,
         })
       : null
+  const negativeNetProceedsBlock: NegativeNetProceedsSubmitBlock | null =
+    isClientLoaded && preLoanSelected
+      ? findNegativeNetProceedsSubmitBlock({
+          client,
+          loans,
+          outstandingLoans,
+        })
+      : null
 
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode)
 
@@ -243,7 +260,11 @@ export function LoanCreationPage() {
     visibleSections,
   }
 
-  const canSubmit = isClientLoaded && preLoanSelected && !maxLoanableBlock
+  const canSubmit =
+    isClientLoaded &&
+    preLoanSelected &&
+    !maxLoanableBlock &&
+    !negativeNetProceedsBlock
   const firstErrorSection = submitAttempted
     ? SECTIONS.find((s) => sectionErrorCount(errors, s.id) > 0)
     : undefined
@@ -304,6 +325,7 @@ export function LoanCreationPage() {
               firstErrorSection={firstErrorSection?.id}
               onNavigateToError={(id) => scrollToSection(id)}
               maxLoanableBlock={maxLoanableBlock}
+              negativeNetProceedsBlock={negativeNetProceedsBlock}
               onNext={onNext}
               onBack={onBack}
             />

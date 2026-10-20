@@ -57,6 +57,39 @@ export function isMaxLoanableAlert(
   )
 }
 
+export function isNegativeNetProceeds(netProceedsClient: number): boolean {
+  return netProceedsClient < 0
+}
+
+export interface NegativeNetProceedsSubmitBlock {
+  loanLabel: string
+  netProceedsClient: number
+}
+
+export function findNegativeNetProceedsSubmitBlock(
+  form: Pick<
+    LoanApplicationFormData,
+    'client' | 'loans' | 'outstandingLoans'
+  >,
+): NegativeNetProceedsSubmitBlock | null {
+  for (const [index, loan] of form.loans.entries()) {
+    const metrics = computeLoanMetrics(loan, {
+      outstandingLoans: loan.outstandingLoans ?? form.outstandingLoans ?? [],
+      ebiReloans: loan.ebiReloans ?? [],
+      buyOuts: loan.buyOuts ?? [],
+      incomingLoans: loan.incomingLoans ?? [],
+      client: form.client,
+    })
+    if (isNegativeNetProceeds(metrics.netProceedsClient)) {
+      return {
+        loanLabel: loan.loanNo || `Loan ${index + 1}`,
+        netProceedsClient: metrics.netProceedsClient,
+      }
+    }
+  }
+  return null
+}
+
 export interface MaxLoanableSubmitBlock {
   loanLabel: string
   maximumLoanableAmount: number

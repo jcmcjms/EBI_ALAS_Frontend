@@ -17,6 +17,7 @@ interface FormFooterProps {
   firstErrorSection?: SectionId
   onNavigateToError: (id: SectionId) => void
   maxLoanableBlock?: { loanLabel: string } | null
+  negativeNetProceedsBlock?: { loanLabel: string } | null
   onNext: () => void
   onBack: () => void
 }
@@ -30,6 +31,7 @@ export function FormFooter({
   firstErrorSection,
   onNavigateToError,
   maxLoanableBlock,
+  negativeNetProceedsBlock,
   onNext,
   onBack,
 }: FormFooterProps) {
@@ -51,6 +53,17 @@ export function FormFooter({
               <p>
                 {maxLoanableBlock.loanLabel}: Maximum Loanable Amount does not
                 cover the proposed loan.
+              </p>
+            </div>
+          ) : negativeNetProceedsBlock ? (
+            <div
+              className="flex items-center gap-1.5 text-sm text-destructive"
+              role="alert"
+            >
+              <WarningCircle size={16} weight="fill" className="shrink-0" />
+              <p>
+                {negativeNetProceedsBlock.loanLabel}: Net Proceeds to Client is
+                negative.
               </p>
             </div>
           ) : totalErrors > 0 ? (
