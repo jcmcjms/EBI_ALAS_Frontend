@@ -10,7 +10,8 @@ ALAS handles the full lifecycle of a consumer loan application at the branch lev
 
 - **CIS lookup**: search borrowers and pull profiles, accounts, and outstanding loans from the legacy WebLoan system (branch-isolated)
 - **Loan creation**: multi-step form covering client confirmation, loan parameters (one or many loans per application group), obligations, deviations, and verification — with live amortization / NTHP computations and a full-screen, print-ready approval form preview
-- **Review desk**: role-based desk queue (recommend / evaluate / approve) with claim & release against the backend's leased workflow queues
+- **Review desk**: role-based desk queue (recommend / evaluate / approve) served **per client** — bundled applications (one `ApplicationGroupNo`) are claimed, reviewed and released together — with claim & release against the backend's leased workflow queues
+- **Auto-saved review drafts**: reviewer remarks on the approval/evaluation pages persist to a server-side per-user draft (debounced, with a localStorage offline mirror and keepalive flush), and are submitted with the workflow action and recorded in history
 - **Approval and evaluation**: dedicated pages per step in the approval chain — decision-first action panels, document requirements and checklists, incomplete-document alerts, document flags, deviation remarks, signature chain with e-signature ink, application timeline, and printable Enterprise Bank approval forms
 - **Loan revision**: respond to pushbacks at `/loans/revision/:loanId` with revision notes and resubmission
 - **Monitoring**: searchable loan table (status / id / flagged filters in the URL), detail drawers, summary cards, weekly trends, and queue widgets
@@ -73,7 +74,7 @@ src/
 │   │   │   ├── create/           # Multi-step loan creation + approval form preview
 │   │   │   ├── evaluation/       # Evaluation page
 │   │   │   ├── monitoring/       # Loan monitoring table + detail drawer
-│   │   │   ├── queue/            # Review desk (claim/release, role desks)
+│   │   │   ├── queue/            # Review desk (per-client bundles, claim/release, role desks)
 │   │   │   ├── review/           # Shared review components
 │   │   │   └── revision/         # Pushback response + resubmission
 │   │   ├── api/                  # Typed API functions (loans, groups, webloans, review,

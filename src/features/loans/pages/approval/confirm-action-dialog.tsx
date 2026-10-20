@@ -20,6 +20,8 @@ import {
 } from '@/src/shared/ui/feedback/alert-dialog'
 import { RichTextEditor } from '@/src/shared/ui/data-display/rich-text-editor'
 import { cn } from '@/src/shared/lib/utils'
+import { DraftSaveIndicator } from '@/src/features/loans/components/draft-save-indicator'
+import type { ReviewDraftStatus } from '@/src/features/loans/hooks/use-review-draft'
 import {
   MIN_REMARKS,
   collectRemarksInDialog,
@@ -33,6 +35,10 @@ export function ConfirmActionDialog({
   onRemarksChange,
   onConfirm,
   isPending,
+  draftStatus,
+  draftSavedAt,
+  draftError,
+  onRetryDraftSave,
   children,
 }: {
   action: WorkflowButtonDef
@@ -40,6 +46,10 @@ export function ConfirmActionDialog({
   onRemarksChange: (v: string) => void
   onConfirm: () => void
   isPending: boolean
+  draftStatus?: ReviewDraftStatus
+  draftSavedAt?: number | null
+  draftError?: string | null
+  onRetryDraftSave?: () => void
   children?: ReactElement
 }) {
   const needsRemarks = collectRemarksInDialog(action)
@@ -93,6 +103,14 @@ export function ConfirmActionDialog({
               ariaLabel="Workflow remarks"
               placeholder="Add your comments, conditions, or reasons"
             />
+            {draftStatus && (
+              <DraftSaveIndicator
+                status={draftStatus}
+                savedAt={draftSavedAt ?? null}
+                errorMessage={draftError}
+                onRetry={onRetryDraftSave}
+              />
+            )}
             {remarks.trim().length < MIN_REMARKS && (
               <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <WarningCircle size={12} weight="fill" /> Required (min{' '}

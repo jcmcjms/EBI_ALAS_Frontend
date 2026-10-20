@@ -6,8 +6,10 @@ import {
   CurrencyCircleDollar,
   Info,
   Queue,
+  Stack,
   Timer,
   Tray,
+  Users,
   WarningCircle,
 } from '@phosphor-icons/react'
 
@@ -19,7 +21,7 @@ import { useSlaPolicy } from '@/src/features/loans/api/loan-review'
 import { useClaimNext, useDeskQueue } from '@/src/features/loans/hooks/use-desk-queue'
 import { summarizeDeskQueue, formatPhp } from '@/src/features/loans/model/desk-queue'
 import { useAuthStore } from '@/src/shared/store/auth-store'
-import { NextUpCard, StatCard } from './review-desk-cards'
+import { NextClientCard, StatCard } from './review-desk-cards'
 import { DeskHeader } from './desk-header'
 import { DeskQueueRow, DeskMessage, DeskSkeleton, formatClock } from './review-desk-queue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/data-display/card'
@@ -38,22 +40,25 @@ export function ReviewDeskPage() {
   const slaPolicy = useSlaPolicy()
   const currentUserId = useAuthStore((s) => s.user?.userId)
 
+  const currentClaimLoanId = desk?.currentClaim?.applications[0]?.loanId
+
   useEffect(() => {
-    if (desk?.currentClaim) {
+    if (currentClaimLoanId) {
       navigate({
         to: '/loans/approval/$loanId',
-        params: { loanId: String(desk.currentClaim.loanId) },
+        params: { loanId: String(currentClaimLoanId) },
         replace: true,
       })
     }
-  }, [desk?.currentClaim, navigate])
+  }, [currentClaimLoanId, navigate])
 
   const now = Date.now()
   const head = desk?.items[0]
   const queueBehind = useMemo(() => (desk ? desk.items.slice(1) : []), [desk])
+  const policy = slaPolicy.data ?? null
   const stats = useMemo(
-    () => (desk ? summarizeDeskQueue(desk.items, now) : null),
-    [desk, now],
+    () => (desk ? summarizeDeskQueue(desk.items, now, policy) : null),
+    [desk, now, policy],
   )
 
   const canServe =
@@ -134,7 +139,7 @@ export function ReviewDeskPage() {
           <DeskMessage
             icon={<Tray size={22} weight="bold" />}
             title="Queue is clear"
-            description={`Nothing waiting at your ${desk.deskLabel} desk. Files promoted for approval appear here automatically.`}
+            description={`No clients waiting at your ${desk.deskLabel} desk. Bundles promoted for review appear here automatically.`}
             meta={`Last checked ${formatClock(dataUpdatedAt)} · auto-refreshes every 30s`}
             action={
               <div className="flex items-center gap-2">
@@ -167,8 +172,8 @@ export function ReviewDeskPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="space-y-0.5" aria-live="polite">
                 <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight tabular-nums">
-                  {desk.items.length} file{desk.items.length === 1 ? '' : 's'}{' '}
-                  waiting
+                  {desk.items.length} client
+                  {desk.items.length === 1 ? '' : 's'} waiting
                   <span className="flex items-center gap-1.5 text-[11px] font-normal text-muted-foreground">
                     <span
                       className="size-1.5 animate-pulse rounded-full bg-emerald-500"
@@ -178,8 +183,9 @@ export function ReviewDeskPage() {
                   </span>
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Oldest file first · last checked {formatClock(dataUpdatedAt)}{' '}
-                  · auto-refreshes every 30s
+                  Oldest client first · bundled applications are reviewed
+                  together · last checked {formatClock(dataUpdatedAt)} ·
+                  auto-refreshes every 30s
                 </p>
               </div>
               <Button
@@ -200,9 +206,10 @@ export function ReviewDeskPage() {
             {stats && (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
-                  icon={<Queue size={16} weight="bold" />}
-                  label="In queue"
-                  value={String(stats.fileCount)}
+                  icon={<Users size={16} weight="bold" />}
+                  label="Clients in queue"
+                  value={String(stats.clientCount)}
+                  hint={`${stats.applicationCount} application${stats.applicationCount === 1 ? '' : 's'} across all bundles`}
                 />
                 <StatCard
                   icon={<Timer size={16} weight="bold" />}
@@ -213,7 +220,7 @@ export function ReviewDeskPage() {
                   icon={<Clock size={16} weight="bold" />}
                   label="Overdue files"
                   value={String(stats.slaBreachCount)}
-                  hint="Files past their handling deadline"
+                  hint="Applications past their handling deadline"
                   tone={stats.slaBreachCount > 0 ? 'destructive' : 'default'}
                 />
                 <StatCard
@@ -226,13 +233,13 @@ export function ReviewDeskPage() {
             )}
 
             {head && (
-              <NextUpCard
-                item={head}
+              <NextClientCard
+                client={head}
                 canServe={canServe}
                 claiming={claim.isPending}
                 onServe={() => claim.mutate()}
                 currentUserId={currentUserId}
-                slaPolicy={slaPolicy.data ?? null}
+                slaPolicy={policy}
                 now={now}
               />
             )}
@@ -241,8 +248,9 @@ export function ReviewDeskPage() {
               <CardHeader className="flex-row items-center justify-between space-y-0 py-4">
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                   <Queue size={16} weight="bold" />
-                  Pending queue
-                  <Badge variant="secondary" className="tabular-nums">
+                  Pending clients
+                  <Badge variant="secondary" className="gap-1 tabular-nums">
+                    <Stack size={11} weight="bold" aria-hidden />
                     {queueBehind.length}
                   </Badge>
                 </CardTitle>
@@ -253,16 +261,16 @@ export function ReviewDeskPage() {
               <CardContent className="p-0">
                 {queueBehind.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    No other files in queue — new submissions will appear
+                    No other clients in queue — new submissions will appear
                     here automatically.
                   </p>
                 ) : (
                   <ul className="divide-y">
-                    {queueBehind.map((item) => (
+                    {queueBehind.map((client) => (
                       <DeskQueueRow
-                        key={item.loanId}
-                        item={item}
-                        slaPolicy={slaPolicy.data ?? null}
+                        key={client.groupNo}
+                        client={client}
+                        slaPolicy={policy}
                         now={now}
                       />
                     ))}
@@ -272,8 +280,10 @@ export function ReviewDeskPage() {
             </Card>
 
             <p className="text-xs text-muted-foreground">
-              Only one reviewer can work on a file at a time. The assigned
-              name stays until the review period ends.
+              One reviewer handles an entire client bundle at a time — every
+              application of the client is claimed together. The assigned name
+              stays until the review period ends. Your remarks auto-save while
+              you review.
             </p>
           </div>
         )}

@@ -53,6 +53,10 @@ export function LoanEvaluationPage() {
     commentsRequired,
     canAct,
     updateStatus,
+    draftStatus,
+    draftSavedAt,
+    draftError,
+    retryDraftSave,
   } = useEvaluationPage(id)
 
   if (!id || id === 'NaN' || id === 'undefined') {
@@ -195,6 +199,10 @@ export function LoanEvaluationPage() {
             historyLoading={history.isLoading}
             comments={comments}
             onCommentsChange={setComments}
+            draftStatus={draftStatus}
+            draftSavedAt={draftSavedAt}
+            draftError={draftError}
+            onRetryDraftSave={retryDraftSave}
             frozen={frozen}
             showEvaluatorActions={showEvaluatorActions}
             commentsRequired={commentsRequired}

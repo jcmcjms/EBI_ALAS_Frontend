@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useReviewDraft } from '@/src/features/loans/hooks/use-review-draft'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { keepPreviousData } from '@tanstack/react-query'
@@ -52,7 +53,6 @@ export function useLoanApprovalPage() {
   const qc = useQueryClient()
   const hasLoanId = Boolean(id) && id !== 'NaN' && id !== 'undefined'
 
-  const [remarks, setRemarks] = useState('')
   const [zoom, setZoom] = useState(1)
   const [tab, setTab] = useState('workflow')
 
@@ -86,6 +86,14 @@ export function useLoanApprovalPage() {
     }
   }, [user?.role, loan.data?.status, id, navigate])
 
+  // Auto-saved review remarks: server draft with an on-device fallback copy.
+  const draft = useReviewDraft({
+    loanId: hasLoanId ? id : null,
+    enabled: hasLoanId && !!loan.data && !TERMINAL.includes(loan.data.status),
+  })
+  const remarks = draft.value
+  const setRemarks = draft.setValue
+
   const checklist = useQuery({
     queryKey: loanKeys.review.checklistDocuments(id),
     queryFn: () => getChecklistDocuments(id),
@@ -113,7 +121,6 @@ export function useLoanApprovalPage() {
   const groupLoans = group.data?.loans ?? []
 
   useEffect(() => {
-    setRemarks('')
     setZoom(1)
     setTab('workflow')
     setCancelOpen(false)
@@ -175,15 +182,15 @@ export function useLoanApprovalPage() {
     }) => {
       switch (payload.action) {
         case 'Recommend':
-          return recommendLoan(id)
+          return recommendLoan(id, remarks)
         case 'EvaluateRecommend':
-          return evaluateLoan(id, true)
+          return evaluateLoan(id, true, remarks)
         case 'NotRecommend':
-          return evaluateLoan(id, false)
+          return evaluateLoan(id, false, remarks)
         case 'Approve':
-          return approveLoan(id)
+          return approveLoan(id, remarks)
         case 'Reject':
-          return rejectLoan(id)
+          return rejectLoan(id, remarks)
         default:
           throw new Error(`Unsupported workflow action: ${payload.action}`)
       }
@@ -196,7 +203,7 @@ export function useLoanApprovalPage() {
             ? 'Application pushed back to the encoder.'
             : 'Application forwarded successfully.',
       )
-      setRemarks('')
+      draft.clear()
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
       qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
       qc.invalidateQueries({ queryKey: loanKeys.all })
@@ -216,6 +223,7 @@ export function useLoanApprovalPage() {
     onSuccess: () => {
       toastSuccess('Application pushed back with revision instructions.')
       setPushbackOpen(false)
+      draft.clear()
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
       qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
       qc.invalidateQueries({ queryKey: loanKeys.revisionRequests(id) })
@@ -343,5 +351,9 @@ export function useLoanApprovalPage() {
     setPushbackOpen,
     pushbackMutation,
     handlePushbackSubmit,
+    draftStatus: draft.status,
+    draftSavedAt: draft.savedAt,
+    draftError: draft.errorMessage,
+    retryDraftSave: draft.retry,
   }
 }

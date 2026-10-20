@@ -1,5 +1,5 @@
 import { memo, type ReactNode } from 'react'
-import { Clock, WarningCircle } from '@phosphor-icons/react'
+import { Clock, Stack, WarningCircle } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import {
   Card,
@@ -10,12 +10,11 @@ import {
   formatWaiting,
   waitingMinutes,
 } from '@/src/shared/lib/format'
-import type { QueuedLoanDto } from '@/src/features/loans/hooks/use-desk-queue'
+import type { QueuedClientDto } from '@/src/features/loans/hooks/use-desk-queue'
 import {
   AGING_BADGE_CLASS,
-  assessAging,
 } from '@/src/shared/lib/loan-aging'
-import { formatPhp } from '@/src/features/loans/model/desk-queue'
+import { formatPhp, summarizeClient } from '@/src/features/loans/model/desk-queue'
 import {
   LOAN_STATUS_META,
   type LoanStatus,
@@ -23,40 +22,48 @@ import {
 import { cn } from '@/src/shared/lib/utils'
 
 interface DeskQueueRowProps {
-  item: QueuedLoanDto
+  client: QueuedClientDto
   slaPolicy: Record<string, number> | null
   now: number
 }
 
 export const DeskQueueRow = memo(function DeskQueueRow({
-  item,
+  client,
   slaPolicy,
   now,
 }: DeskQueueRowProps) {
-  const assessment = assessAging(
-    item.status as LoanStatus,
-    item.enqueuedAt,
-    now,
-    slaPolicy,
-  )
+  const summary = summarizeClient(client, now, slaPolicy)
+  const assessment = summary.worstAging
   const waitTone =
     assessment.tier === 'breach'
       ? 'text-destructive'
       : assessment.tier === 'warning'
         ? 'text-amber-600 dark:text-amber-400'
         : 'text-muted-foreground'
+  const isBundle = summary.applicationCount > 1
+  const lamIds = client.applications.map((a) => a.lamId).join(', ')
 
   return (
     <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
       <span className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted/60 text-xs font-semibold tabular-nums text-muted-foreground">
-        #{item.position}
+        #{client.position}
       </span>
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-xs font-medium">{item.lamId}</span>
-          <StatusBadge status={item.status} />
-          {item.hasDeviations && (
+          <span
+            className="truncate text-sm font-medium"
+            title={client.clientName}
+          >
+            {client.clientName}
+          </span>
+          {isBundle && (
+            <Badge variant="outline" className="gap-1 font-normal tabular-nums">
+              <Stack size={11} weight="bold" aria-hidden />
+              {summary.applicationCount} apps
+            </Badge>
+          )}
+          {summary.hasDeviations && (
             <WarningCircle
               size={12}
               weight="bold"
@@ -66,34 +73,35 @@ export const DeskQueueRow = memo(function DeskQueueRow({
           )}
         </div>
         <p
-          className="truncate text-xs text-muted-foreground"
-          title={`${item.clientName} · ${item.product} · Branch ${item.branchCode}`}
+          className="truncate font-mono text-xs text-muted-foreground"
+          title={`${lamIds} · group ${client.groupNo}`}
         >
-          <span className="font-medium text-foreground/85">
-            {item.clientName}
-          </span>
-          {' · '}
-          {item.product}
-          {' · '}
-          {item.loanType ?? '—'}
-          {' · '}
-          {item.branchCode}
+          {lamIds}
         </p>
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <span className="hidden text-sm font-medium tabular-nums sm:block">
-          {formatPhp(item.proposedAmount)}
+        <span
+          className="hidden text-sm font-medium tabular-nums sm:block"
+          title={
+            isBundle
+              ? `Combined total of ${summary.applicationCount} applications`
+              : undefined
+          }
+        >
+          {formatPhp(summary.totalAmount)}
         </span>
         <span
           className={cn(
             'flex items-center gap-1 text-xs tabular-nums',
             waitTone,
           )}
+          title={assessment.label}
         >
-          <Clock size={12} /> {formatWaiting(waitingMinutes(item.enqueuedAt))}
+          <Clock size={12} />{' '}
+          {formatWaiting(waitingMinutes(summary.oldestEnqueuedAt))}
         </span>
-        <AgingPill assessment={assessment} />
+        <AgingPill tier={assessment.tier} />
       </div>
     </li>
   )
@@ -114,20 +122,17 @@ export function StatusBadge({ status }: { status: string }) {
 }
 
 export function AgingPill({
-  assessment,
+  tier,
 }: {
-  assessment: ReturnType<typeof assessAging>
+  tier: 'none' | 'ok' | 'warning' | 'breach'
 }) {
-  if (assessment.tier !== 'warning' && assessment.tier !== 'breach') return null
+  if (tier !== 'warning' && tier !== 'breach') return null
   return (
     <Badge
       variant="outline"
-      className={cn(
-        'h-4 px-1.5 text-[10px] font-normal',
-        AGING_BADGE_CLASS[assessment.tier],
-      )}
+      className={cn('h-4 px-1.5 text-[10px] font-normal', AGING_BADGE_CLASS[tier])}
     >
-      {assessment.tier === 'breach' ? 'Overdue' : 'Watch'}
+      {tier === 'breach' ? 'Overdue' : 'Watch'}
     </Badge>
   )
 }
@@ -192,13 +197,13 @@ export function DeskSkeleton() {
           <Skeleton key={i} className="h-[76px]" />
         ))}
       </div>
-      <Skeleton className="h-40" />
+      <Skeleton className="h-56" />
       <Card className="shadow-none">
         <CardContent className="divide-y p-0">
           {[0, 1].map((row) => (
             <div key={row} className="flex items-center gap-3 px-4 py-3">
               <Skeleton className="size-7" />
-              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-40" />
               <Skeleton className="h-4 flex-1" />
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-12" />

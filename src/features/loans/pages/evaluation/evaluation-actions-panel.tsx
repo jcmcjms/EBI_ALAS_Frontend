@@ -5,6 +5,8 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { Textarea } from '@/src/shared/ui/primitives/textarea'
 import { Label } from '@/src/shared/ui/primitives/label'
 import { Spinner } from '@/src/shared/ui/feedback/spinner'
+import { DraftSaveIndicator } from '@/src/features/loans/components/draft-save-indicator'
+import type { ReviewDraftStatus } from '@/src/features/loans/hooks/use-review-draft'
 
 type EvaluationAction = 'recommended' | 'notRecommended' | 'pushback'
 
@@ -31,6 +33,10 @@ interface EvaluationActionsPanelProps {
   onAction: (action: EvaluationAction) => void
   onFlagOpen: () => void
   status: string
+  draftStatus?: ReviewDraftStatus
+  draftSavedAt?: number | null
+  draftError?: string | null
+  onRetryDraftSave?: () => void
 }
 
 export function EvaluationActionsPanel({
@@ -47,6 +53,10 @@ export function EvaluationActionsPanel({
   onAction,
   onFlagOpen,
   status,
+  draftStatus,
+  draftSavedAt,
+  draftError,
+  onRetryDraftSave,
 }: EvaluationActionsPanelProps) {
   return (
     <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit lg:self-start">
@@ -149,6 +159,14 @@ export function EvaluationActionsPanel({
               )}
               <span className="ml-auto">{comments.length}/2000</span>
             </div>
+            {draftStatus && !frozen && (
+              <DraftSaveIndicator
+                status={draftStatus}
+                savedAt={draftSavedAt ?? null}
+                errorMessage={draftError}
+                onRetry={onRetryDraftSave}
+              />
+            )}
           </div>
 
           <div className="space-y-2">

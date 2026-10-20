@@ -16,6 +16,7 @@ import {
 import { Button } from '@/src/shared/ui/primitives/button'
 import { ApplicationTimeline } from '@/src/features/loans/components/application-timeline'
 
+import type { ReviewDraftStatus } from '@/src/features/loans/hooks/use-review-draft'
 import {
   deriveWorkflowAction,
   type WorkflowButtonDef,
@@ -55,8 +56,12 @@ interface WorkflowActionsPanelProps {
     mutate: (id: string | number) => void
   }
   detailStatus: string
-  
+
   missingDocCount?: number
+  draftStatus?: ReviewDraftStatus
+  draftSavedAt?: number | null
+  draftError?: string | null
+  onRetryDraftSave?: () => void
 }
 
 export function WorkflowActionsPanel({
@@ -74,6 +79,10 @@ export function WorkflowActionsPanel({
   act,
   claimById,
   detailStatus,
+  draftStatus,
+  draftSavedAt,
+  draftError,
+  onRetryDraftSave,
 }: WorkflowActionsPanelProps) {
   return (
     <Card>
@@ -107,8 +116,8 @@ export function WorkflowActionsPanel({
             </div>
           ) : (
             <div className="rounded-md border bg-muted/30 p-3 text-sm">
-              Queued #{queueState?.position} — serve files in order from the
-              Review Desk.
+              This client is queued #{queueState?.position ?? '—'} — serve
+              clients in order from the Review Desk.
             </div>
           ))}
 
@@ -178,6 +187,10 @@ export function WorkflowActionsPanel({
                 remarks={remarks}
                 onRemarksChange={onRemarksChange}
                 isPending={disabled}
+                draftStatus={draftStatus}
+                draftSavedAt={draftSavedAt}
+                draftError={draftError}
+                onRetryDraftSave={onRetryDraftSave}
                 onConfirm={() =>
                   act.mutate({
                     action: deriveWorkflowAction(a),

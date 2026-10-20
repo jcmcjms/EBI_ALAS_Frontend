@@ -39,6 +39,23 @@ export function isCsrfError(error: unknown): boolean {
   return /csrf/i.test(text)
 }
 
+/**
+ * Current Authorization + CSRF headers, for raw fetch() calls that bypass the
+ * axios interceptors (e.g. keepalive flushes during pagehide).
+ */
+export function buildAuthHeaders(): Record<string, string> {
+  const { accessToken } = useAuthStore.getState()
+  const headers: Record<string, string> = {}
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`
+    const xsrfToken = extractXsrfToken(accessToken)
+    if (xsrfToken) {
+      headers[CSRF_HEADER] = xsrfToken
+    }
+  }
+  return headers
+}
+
 export const apiClient = axios.create({
   baseURL,
   withCredentials: true,

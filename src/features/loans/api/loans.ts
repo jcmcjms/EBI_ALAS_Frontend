@@ -136,28 +136,54 @@ export async function getLoanByLamId(lamId: string): Promise<LoanResponse> {
 
 
 
-export async function recommendLoan(id: number | string): Promise<LoanResponse> {
-  const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/recommend`)
+/** Optional reviewer remarks recorded with the workflow action's history entry. */
+function remarksBody(remarks?: string | null): { remarks: string } | undefined {
+  const trimmed = remarks?.trim()
+  return trimmed ? { remarks: trimmed } : undefined
+}
+
+export async function recommendLoan(
+  id: number | string,
+  remarks?: string | null,
+): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>(
+    `/api/loans/${id}/recommend`,
+    remarksBody(remarks),
+  )
   return res.data
 }
 
 export async function evaluateLoan(
   id: number | string,
   recommend: boolean,
+  remarks?: string | null,
 ): Promise<LoanResponse> {
   const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/evaluate`, {
     recommend,
+    ...remarksBody(remarks),
   })
   return res.data
 }
 
-export async function approveLoan(id: number | string): Promise<LoanResponse> {
-  const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/approve`)
+export async function approveLoan(
+  id: number | string,
+  remarks?: string | null,
+): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>(
+    `/api/loans/${id}/approve`,
+    remarksBody(remarks),
+  )
   return res.data
 }
 
-export async function rejectLoan(id: number | string): Promise<LoanResponse> {
-  const res = await apiClient.post<LoanResponse>(`/api/loans/${id}/reject`)
+export async function rejectLoan(
+  id: number | string,
+  remarks?: string | null,
+): Promise<LoanResponse> {
+  const res = await apiClient.post<LoanResponse>(
+    `/api/loans/${id}/reject`,
+    remarksBody(remarks),
+  )
   return res.data
 }
 

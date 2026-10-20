@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useReviewDraft } from '@/src/features/loans/hooks/use-review-draft'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
@@ -37,7 +38,6 @@ export function useEvaluationPage(id: string) {
   const user = useAuthStore((s) => s.user)
   const hasLoanId = Boolean(id) && id !== 'NaN' && id !== 'undefined'
 
-  const [comments, setComments] = useState('')
   const [pendingAction, setPendingAction] = useState<EvaluationAction | null>(null)
   const [flagOpen, setFlagOpen] = useState(false)
   const [pushbackOpen, setPushbackOpen] = useState(false)
@@ -66,6 +66,15 @@ export function useEvaluationPage(id: string) {
 
   const detail = loan.data
   const frozen = detail ? TERMINAL.includes(detail.status) : false
+
+  // Auto-saved evaluation notes: server draft with an on-device fallback copy.
+  const draft = useReviewDraft({
+    loanId: hasLoanId ? id : null,
+    enabled: hasLoanId && !!detail && !frozen,
+  })
+  const comments = draft.value
+  const setComments = draft.setValue
+
   const formData = useMemo(() => {
     if (!detail) return null
     if (detail.form) {
@@ -81,14 +90,19 @@ export function useEvaluationPage(id: string) {
   )
 
   const updateStatus = useMutation({
-    mutationFn: ({ recommend }: { recommend: boolean }) =>
-      evaluateLoan(id, recommend),
+    mutationFn: ({
+      recommend,
+      remarks,
+    }: {
+      recommend: boolean
+      remarks?: string
+    }) => evaluateLoan(id, recommend, remarks),
     onSuccess: (_data, { recommend }) => {
       const actionLabel = recommend
         ? 'forwarded to Approver'
         : 'recorded as Not Recommended'
       toastSuccess(`Application ${actionLabel}.`)
-      setComments('')
+      draft.clear()
       setPendingAction(null)
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
       qc.invalidateQueries({ queryKey: loanKeys.review.history(id) })
@@ -179,6 +193,7 @@ export function useEvaluationPage(id: string) {
       toastSuccess('Application pushed back with revision instructions.')
       setPushbackOpen(false)
       setPendingAction(null)
+      draft.clear()
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
       qc.invalidateQueries({ queryKey: loanKeys.review.history(id) })
       qc.invalidateQueries({ queryKey: loanKeys.revisionRequests(id) })
@@ -204,7 +219,10 @@ export function useEvaluationPage(id: string) {
 
     setPendingAction(action)
 
-    updateStatus.mutate({ recommend: action === 'recommended' })
+    updateStatus.mutate({
+      recommend: action === 'recommended',
+      remarks: trimmed || undefined,
+    })
   }
 
   const handlePushbackSubmit = (payload: {
@@ -251,5 +269,9 @@ export function useEvaluationPage(id: string) {
     showEvaluatorActions,
     commentsRequired,
     canAct,
+    draftStatus: draft.status,
+    draftSavedAt: draft.savedAt,
+    draftError: draft.errorMessage,
+    retryDraftSave: draft.retry,
   }
 }

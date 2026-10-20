@@ -71,6 +71,10 @@ export function LoanApprovalPage() {
     setPushbackOpen,
     pushbackMutation,
     handlePushbackSubmit,
+    draftStatus,
+    draftSavedAt,
+    draftError,
+    retryDraftSave,
   } = useLoanApprovalPage()
 
   if (!id || id === 'NaN' || id === 'undefined') {
@@ -200,6 +204,10 @@ export function LoanApprovalPage() {
                   act={act}
                   claimById={claimById}
                   detailStatus={detail.status}
+                  draftStatus={draftStatus}
+                  draftSavedAt={draftSavedAt}
+                  draftError={draftError}
+                  onRetryDraftSave={retryDraftSave}
                   missingDocCount={
                     checklist.data?.filter(
                       (d) => d.uploadStatus !== 'Uploaded',

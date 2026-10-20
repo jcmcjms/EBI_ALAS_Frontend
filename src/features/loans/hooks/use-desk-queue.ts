@@ -25,19 +25,50 @@ export interface QueuedLoanDto {
   hasDeviations: boolean
 }
 
+/**
+ * One client's bundle of applications waiting at the desk. The desk serves
+ * clients — claiming takes every application in the bundle together.
+ */
+export interface QueuedClientDto {
+  groupNo: string
+  clientName: string
+  position: number
+  isHead: boolean
+  ownerUserId: string | null
+  ownerName: string | null
+  enqueuedAt: string
+  applications: QueuedLoanDto[]
+}
+
 export interface DeskQueueResponse {
   deskLabel: string
-  items: QueuedLoanDto[]
-  currentClaim: QueuedLoanDto | null
+  items: QueuedClientDto[]
+  currentClaim: QueuedClientDto | null
   scopeDescription: string
 }
 
+export interface ClaimApplicationDto {
+  loanId: string
+  lamId: string
+  status: string
+}
+
 export interface ClaimResponse {
+  /** Primary application to open first. */
   loanId: string
   lamId: string
   clientName: string
   status: string
   leasedAt: string
+  groupNo: string
+  applications: ClaimApplicationDto[]
+}
+
+function bundleSummary(result: ClaimResponse): string {
+  const count = result.applications?.length ?? 1
+  return count > 1
+    ? `Serving ${result.clientName} — ${count} applications in bundle ${result.groupNo}.`
+    : `Serving ${result.clientName} — ${result.lamId}.`
 }
 
 export function useDeskQueue() {
@@ -66,7 +97,7 @@ export function useClaimNext() {
     },
     onSuccess: (result) => {
       if (result) {
-        toastSuccess(`Serving ${result.lamId} — ${result.clientName}.`)
+        toastSuccess(bundleSummary(result))
       } else {
         toastInfo('Queue is clear — nothing to serve.')
       }
@@ -86,7 +117,7 @@ export function useReleaseClaim() {
       await apiClient.post('/api/loans/queue/release')
     },
     onSuccess: () => {
-      toastSuccess('Claim released — file returned to the queue.')
+      toastSuccess('Claim released — the client bundle returned to the queue.')
       qc.invalidateQueries({ queryKey: loanKeys.desk })
       qc.invalidateQueries({ queryKey: loanKeys.all })
       qc.invalidateQueries({ queryKey: queryKeys.dashboardRoot })
@@ -95,13 +126,7 @@ export function useReleaseClaim() {
   })
 }
 
-export interface ClaimByIdResponse {
-  loanId: string
-  lamId: string
-  clientName: string
-  status: string
-  leasedAt: string
-}
+export type ClaimByIdResponse = ClaimResponse
 
 export function useClaimById() {
   const qc = useQueryClient()
@@ -114,7 +139,7 @@ export function useClaimById() {
       return data
     },
     onSuccess: (result) => {
-      toastSuccess(`Serving ${result.lamId} — ${result.clientName}.`)
+      toastSuccess(bundleSummary(result))
       qc.invalidateQueries({ queryKey: loanKeys.desk })
       qc.invalidateQueries({ queryKey: loanKeys.all })
       qc.invalidateQueries({ queryKey: queryKeys.dashboardRoot })
