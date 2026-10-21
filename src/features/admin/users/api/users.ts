@@ -110,6 +110,23 @@ export async function updateUserStatus(
   return toUserResponse(res.data)
 }
 
+export async function updateUserAvailability(
+  id: string,
+  available: boolean,
+): Promise<UserResponse> {
+  const res = await apiClient.put<BackendUserDto>(
+    `/api/users/${id}/availability`,
+    { available },
+  )
+  return toUserResponse(res.data)
+}
+
+export async function setMyAvailability(
+  available: boolean,
+): Promise<void> {
+  await apiClient.put('/api/account/me/availability', { available })
+}
+
 export async function importUsers(file: File): Promise<UserImportResult> {
   const form = new FormData()
   form.append('file', file)

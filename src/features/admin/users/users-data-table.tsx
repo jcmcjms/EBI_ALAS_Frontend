@@ -79,6 +79,7 @@ export function UsersDataTable() {
       onForcePasswordReset: actions.handleForcePasswordResetRequest,
       onRevokeSessions: actions.handleRevokeSessionsRequest,
       onToggleStatus: actions.handleToggleStatusRequest,
+      onToggleAvailability: actions.handleToggleAvailabilityRequest,
       branchLabelOf: (code: string) => findBranchLabel(branches, code),
     },
   })

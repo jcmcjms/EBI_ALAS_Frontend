@@ -28,6 +28,8 @@ interface ProfileCardProps {
   }[]
   isLoading: boolean
   onEditProfile: () => void
+  isAvailable?: boolean
+  onToggleAvailability?: () => void
 }
 
 export function ProfileCard({
@@ -39,6 +41,8 @@ export function ProfileCard({
   contactRows,
   isLoading,
   onEditProfile,
+  isAvailable,
+  onToggleAvailability,
 }: ProfileCardProps) {
   return (
     <Card>
@@ -76,7 +80,7 @@ export function ProfileCard({
                 </AvatarFallback>
               )}
             </Avatar>
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
               <h2 className="text-xl font-semibold">{fullName}</h2>
               <Badge
                 variant="outline"
@@ -84,6 +88,27 @@ export function ProfileCard({
               >
                 {role ?? '—'}
               </Badge>
+              {typeof isAvailable === 'boolean' && onToggleAvailability && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={onToggleAvailability}
+                >
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'h-5 px-1.5 text-[10px]',
+                      isAvailable
+                        ? 'border-emerald-600/25 bg-emerald-500/10 text-emerald-700'
+                        : 'border-amber-600/25 bg-amber-500/10 text-amber-700',
+                    )}
+                  >
+                    {isAvailable ? 'Available' : 'Unavailable'}
+                  </Badge>
+                  Switch
+                </Button>
+              )}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
               {branchLabel ?? '—'}

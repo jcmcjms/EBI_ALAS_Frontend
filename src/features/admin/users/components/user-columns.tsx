@@ -48,6 +48,7 @@ export type UsersTableMeta = {
   onForcePasswordReset?: (user: UserResponse) => void
   onRevokeSessions?: (user: UserResponse) => void
   onToggleStatus?: (user: UserResponse) => void
+  onToggleAvailability?: (user: UserResponse) => void
   
   branchLabelOf?: (code: string) => string
 }
@@ -133,6 +134,25 @@ export const columns = columnHelper.columns([
       )
     },
   }),
+  columnHelper.accessor('isAvailable', {
+    header: 'Duty',
+    cell: (info) => {
+      const available = info.getValue()
+      return (
+        <Badge
+          variant="outline"
+          className={cn(
+            'font-normal text-xs',
+            available
+              ? 'border-emerald-600/25 bg-emerald-500/10 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400'
+              : 'border-amber-600/25 bg-amber-500/10 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-400',
+          )}
+        >
+          {available ? 'Available' : 'Unavailable'}
+        </Badge>
+      )
+    },
+  }),
   columnHelper.accessor('createdAt', {
     header: 'Created',
     cell: (info) => (
@@ -177,6 +197,14 @@ export const columns = columnHelper.columns([
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => meta?.onRevokeSessions?.(user)}>
               <SignOut size={14} /> Revoke Sessions
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => meta?.onToggleAvailability?.(user)}
+            >
+              {user.isAvailable
+                ? 'Mark Unavailable'
+                : 'Mark Available'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {user.isActive ? (

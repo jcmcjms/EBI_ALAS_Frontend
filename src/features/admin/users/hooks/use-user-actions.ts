@@ -8,7 +8,7 @@ import type {
   UserResponse,
 } from '../api/users-types'
 import { useAuthStore } from '@/src/shared/store/auth-store'
-import { useCreateUser, useUpdateUser, useUpdateUserStatus } from './use-users'
+import { useCreateUser, useUpdateUser, useUpdateUserAvailability, useUpdateUserStatus } from './use-users'
 import type { UserProfileChanges } from '../components/user-edit-drawer'
 import type { UserCreatePayload } from '../components/user-create-drawer'
 import type { TemporaryCredential } from '../components/temporary-password-dialog'
@@ -33,6 +33,7 @@ export function useUserActions() {
   const createUserMutation = useCreateUser()
   const updateUserMutation = useUpdateUser()
   const updateUserStatusMutation = useUpdateUserStatus()
+  const updateUserAvailabilityMutation = useUpdateUserAvailability()
 
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(
     null,
@@ -88,6 +89,21 @@ export function useUserActions() {
         },
       })
     }
+  }
+
+  function handleToggleAvailabilityRequest(user: UserResponse) {
+    updateUserAvailabilityMutation.mutate(
+      { id: user.id, available: !user.isAvailable },
+      {
+        onSuccess: () =>
+          toastSuccess(
+            user.isAvailable
+              ? `${formatFullName(user)} marked unavailable for new work`
+              : `${formatFullName(user)} marked available for new work`,
+          ),
+        onError: (e) => toastError(getErrorMessage(e)),
+      },
+    )
   }
 
   function handleResetPasswordRequest(user: UserResponse) {
@@ -166,6 +182,7 @@ export function useUserActions() {
     tempCred,
     setTempCred,
     handleToggleStatusRequest,
+    handleToggleAvailabilityRequest,
     handleResetPasswordRequest,
     handleForcePasswordResetRequest,
     handleRevokeSessionsRequest,

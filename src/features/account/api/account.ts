@@ -18,6 +18,7 @@ export interface AccountProfile {
   createdAt: string
   passwordChangedAt?: string
   stats: AccountStats
+  isAvailable?: boolean
 }
 
 export interface AccountStats {
@@ -83,6 +84,10 @@ export async function updateAccountProfile(
   data: UpdateProfilePayload,
 ): Promise<void> {
   await apiClient.put('/api/account/me', data)
+}
+
+export async function setMyDutyAvailability(available: boolean): Promise<void> {
+  await apiClient.put('/api/account/me/availability', { available })
 }
 
 export async function getAccountSessions(

@@ -40,7 +40,7 @@ export interface ResetPasswordResponse {
 }
 
 export interface UserResponse {
-  
+
   id: string
   username: string
   firstName: string
@@ -51,6 +51,7 @@ export interface UserResponse {
   jobTitle: string | null
   role: string
   isActive: boolean
+  isAvailable: boolean
   createdAt: string
 }
 
@@ -99,6 +100,7 @@ export interface BackendUserDto {
   status: string
   mustChangePassword: boolean
   createdAt: string
+  isAvailable?: boolean
 }
 
 export interface BackendRoleCatalogItem {
@@ -118,6 +120,7 @@ export function toUserResponse(dto: BackendUserDto): UserResponse {
     jobTitle: dto.jobTitle ?? null,
     role: dto.role,
     isActive: dto.status.toLowerCase() === 'active',
+    isAvailable: dto.isAvailable !== false,
     createdAt: dto.createdAt,
   }
 }

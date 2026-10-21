@@ -11,6 +11,7 @@ import {
   getUser,
   listUsers,
   updateUser,
+  updateUserAvailability,
   updateUserStatus,
 } from '../api/users'
 
@@ -84,6 +85,17 @@ export function useUpdateUserStatus() {
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       updateUserStatus(id, isActive),
+    onSuccess: async () => {
+      await invalidate()
+    },
+  })
+}
+
+export function useUpdateUserAvailability() {
+  const invalidate = useInvalidateUsers()
+  return useMutation({
+    mutationFn: ({ id, available }: { id: string; available: boolean }) =>
+      updateUserAvailability(id, available),
     onSuccess: async () => {
       await invalidate()
     },

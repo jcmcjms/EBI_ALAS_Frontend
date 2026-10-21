@@ -26,6 +26,8 @@ import {
   useAccountLoans,
   useAccountClients,
 } from '../hooks/use-account'
+import { setMyDutyAvailability } from '../api/account'
+import { toastError } from '@/src/shared/ui/feedback/toast'
 import type { AccountTab } from '../types'
 import { ActivityTimeline, toTimelineItems } from './activity-timeline'
 import { EmptyState, ErrorState, LoadingState } from './account-states'
@@ -205,6 +207,13 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
           contactRows={contactRows}
           isLoading={profileQuery.isLoading}
           onEditProfile={onEditProfile}
+          isAvailable={profile?.isAvailable}
+          onToggleAvailability={() => {
+            const next = !(profile?.isAvailable !== false)
+            setMyDutyAvailability(next)
+              .then(() => profileQuery.refetch())
+              .catch(() => toastError('Could not update availability'))
+          }}
         />
 
         {}
