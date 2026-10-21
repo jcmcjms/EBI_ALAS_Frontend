@@ -1,5 +1,6 @@
 import { create } from 'zustand/react'
 import { dropSharedConnection } from '@/src/shared/lib/signalr/connection'
+import { resetRestoreSession } from '@/src/shared/lib/restore-session'
 
 interface UserSession {
   userId: string
@@ -38,6 +39,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   clearSession: () => {
     dropSharedConnection()
+    resetRestoreSession()
     set({ accessToken: null, user: null })
   },
 
