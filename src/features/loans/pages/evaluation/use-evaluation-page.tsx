@@ -210,7 +210,10 @@ export function useEvaluationPage(id: string) {
 
     const trimmed = comments.trim()
 
-    if (action === 'notRecommended' && trimmed.length < 10) {
+    if (
+      (action === 'notRecommended' || action === 'recommended') &&
+      trimmed.length < 10
+    ) {
       toastError(
         'Comments are required (minimum 10 characters) for this action.',
       )
@@ -236,7 +239,7 @@ export function useEvaluationPage(id: string) {
   const isForChecking = detail?.status === 'ForChecking'
   const showEvaluatorActions = isEvaluator && isForChecking && !frozen
 
-  const commentsRequired = pendingAction === 'notRecommended'
+  const commentsRequired = showEvaluatorActions
   const canAct =
     (!commentsRequired || comments.trim().length >= 10) &&
     !updateStatus.isPending &&
