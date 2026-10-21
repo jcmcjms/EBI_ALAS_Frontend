@@ -257,7 +257,17 @@ export function getErrorMessage(error: unknown): string {
       )
         return data
 
-      if (data?.detail) return data.detail
+      if (data?.detail) {
+        if (data.detail.includes('•') || data.detail.includes('is missing')) {
+          return data.detail
+        }
+        const list = Array.isArray(data.errors)
+          ? data.errors.filter((e: unknown): e is string => typeof e === 'string' && e.trim().length > 0)
+          : []
+        return list.length > 0
+          ? `${data.detail}\n${list.map((e: string) => `• ${e}`).join('\n')}`
+          : data.detail
+      }
       if (data?.message) {
         const details =
           Array.isArray(data.errors) && data.errors.length > 0

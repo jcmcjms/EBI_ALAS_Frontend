@@ -140,6 +140,38 @@ describe('getErrorMessage with ProblemDetails', () => {
     )
   })
 
+  it('returns ProblemDetails detail as-is when it already lists missing documents', () => {
+    const error = makeAxiosError(400, {
+      type: 'https://tools.ietf.org/html/rfc9110#section-15.5.1',
+      title: 'Missing required documents',
+      status: 400,
+      detail:
+        'Cannot submit the application. Required documents are missing:\n' +
+        '• CIBI Report is missing\n' +
+        '• Bank Statement is missing\n' +
+        'Upload them in the checklist, then try again.',
+      errors: ['CIBI Report is missing', 'Bank Statement is missing'],
+    })
+    expect(getErrorMessage(error)).toBe(
+      'Cannot submit the application. Required documents are missing:\n' +
+        '• CIBI Report is missing\n' +
+        '• Bank Statement is missing\n' +
+        'Upload them in the checklist, then try again.',
+    )
+  })
+
+  it('formats errors list under detail when detail is only a summary', () => {
+    const error = makeAxiosError(400, {
+      title: 'Missing required documents',
+      status: 400,
+      detail: 'Required documents are missing.',
+      errors: ['CIBI Report is missing'],
+    })
+    expect(getErrorMessage(error)).toBe(
+      'Required documents are missing.\n• CIBI Report is missing',
+    )
+  })
+
   it('falls back to message with errors when detail is absent', () => {
     const error = makeAxiosError(400, {
       message: 'Validation failed',
