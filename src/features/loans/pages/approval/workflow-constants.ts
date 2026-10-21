@@ -93,7 +93,8 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     label: 'Recommended',
     kind: 'advance',
     verdict: 'Recommended',
-    remarksRequired: false,
+    remarksRequired: true,
+    confirm: true,
   },
   {
     role: 'Evaluator',

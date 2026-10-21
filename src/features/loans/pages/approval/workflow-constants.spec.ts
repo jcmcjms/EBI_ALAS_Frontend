@@ -4,15 +4,15 @@ import {
   WORKFLOW_ACTIONS,
 } from './workflow-constants'
 
-describe('evaluator recommend without remarks', () => {
-  it('Recommended action does not require remarks', () => {
+describe('evaluator recommend requires remarks', () => {
+  it('Recommended action requires remarks', () => {
     const recommended = WORKFLOW_ACTIONS.find(
       (a) =>
         a.role === 'Evaluator' &&
         a.verdict === 'Recommended' &&
         a.from === 'ForChecking',
     )
-    expect(recommended?.remarksRequired).toBe(false)
+    expect(recommended?.remarksRequired).toBe(true)
   })
 
   it('maps evaluator recommend to evaluate-recommend, not recommender recommend', () => {

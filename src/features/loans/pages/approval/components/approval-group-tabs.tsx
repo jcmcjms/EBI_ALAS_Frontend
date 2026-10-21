@@ -27,7 +27,7 @@ export function ApprovalGroupTabs({
 
   const activeIndex = Math.max(
     0,
-    loans.findIndex((l) => l.id === currentLoanId),
+    loans.findIndex((l) => String(l.id) === String(currentLoanId)),
   )
 
   return (
@@ -49,7 +49,7 @@ export function ApprovalGroupTabs({
             hasWarning: l.unresolvedDocs > 0,
           }))}
           value={String(currentLoanId)}
-          onValueChange={(v) => onSelect(Number(v))}
+          onValueChange={onSelect}
           trailing={
             <>
               <Button

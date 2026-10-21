@@ -1,11 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
-import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import {
   getLoanGroup,
-  updateGroupStatus,
   type LoanGroupResponse,
-  type GroupStatusResponse,
 } from '@/src/features/loans/api/loan-groups'
 
 export function useLoanGroup(groupNo: string | undefined, enabled = true) {
@@ -14,24 +11,5 @@ export function useLoanGroup(groupNo: string | undefined, enabled = true) {
     queryFn: () => getLoanGroup(groupNo!),
     enabled: enabled && !!groupNo,
     staleTime: 15_000,
-  })
-}
-
-export function useUpdateGroupStatus() {
-  const qc = useQueryClient()
-  return useMutation<
-    GroupStatusResponse,
-    Error,
-    {
-      groupNo: string
-      payload: { status: string; comments?: string; loanIds?: string[] }
-    }
-  >({
-    mutationFn: ({ groupNo, payload }) => updateGroupStatus(groupNo, payload),
-    onSuccess: (_d, v) => {
-      qc.invalidateQueries({ queryKey: loanKeys.group(v.groupNo) })
-      qc.invalidateQueries({ queryKey: queryKeys.dashboardRoot })
-      qc.invalidateQueries({ queryKey: loanKeys.all })
-    },
   })
 }

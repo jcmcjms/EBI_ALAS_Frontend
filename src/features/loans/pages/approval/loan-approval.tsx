@@ -17,7 +17,6 @@ import { Spinner } from '@/src/shared/ui/feedback/spinner'
 
 import { DeviationRemarksPanel } from './components/deviation-remarks-panel'
 import { IncompleteDocumentsAlert } from './components/incomplete-documents-alert'
-import { GroupReviewSection } from '../review/components/group-review-section'
 import { FlagIncompleteDocumentsDialog } from './components/flag-incomplete-documents-dialog'
 import { PushbackDialog } from '@/src/features/loans/components/pushback-dialog'
 import { useLoanApprovalPage } from './use-loan-approval-page'
@@ -266,22 +265,6 @@ export function LoanApprovalPage() {
                 />
               </TabsContent>
             </Tabs>
-
-            {}
-            {detail.applicationGroupNo && (
-              <GroupReviewSection
-                groupNo={detail.applicationGroupNo}
-                currentLoanId={id}
-                allowedTargets={actions.map((a) => a.to)}
-                statusOf={(s) => s}
-                onSelectLoan={(loanId) =>
-                  navigate({
-                    to: '/loans/approval/$loanId',
-                    params: { loanId: String(loanId) },
-                  })
-                }
-              />
-            )}
           </aside>
         </div>
       </div>
