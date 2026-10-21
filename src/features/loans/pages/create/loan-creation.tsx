@@ -37,6 +37,7 @@ import { sectionErrorCount } from './section-stepper-utils'
 import { DesktopStepper, MobileSectionNav, type StepperProps } from './section-nav'
 import { LoanFormSections } from './loan-form-sections'
 import { isCreateFormUnlocked } from './client-confirm-utils'
+import { useLoanCreationDraft } from './use-loan-creation-draft'
 
 const SCROLL_OFFSET_PX = 96
 
@@ -95,6 +96,9 @@ export function LoanCreationPage() {
   const { isDirty, errors } = formState
   const { control } = methods
 
+  const userId = useAuthStore((s) => s.user?.userId ?? 'anon')
+  const draft = useLoanCreationDraft({ methods, userId })
+
   const cisId = useWatch({ control, name: 'client.cisId' }) ?? ''
   const isClientLoaded = isCreateFormUnlocked(cisId, clientConfirmed)
 
@@ -110,7 +114,9 @@ export function LoanCreationPage() {
   )
   const approvalFormRef = useRef<HTMLDivElement | null>(null)
 
-  const { mutate: createLoan, isPending: isSubmitting } = useCreateLoan()
+  const { mutate: createLoan, isPending: isSubmitting } = useCreateLoan({
+    onSuccess: () => draft.discardDraft(),
+  })
 
   useEffect(() => {
     if (!isClientLoaded) return
@@ -295,6 +301,11 @@ export function LoanCreationPage() {
               userBranchName={userBranchName}
               selectedPreLoan={selectedPreLoan}
               isDirty={isDirty}
+              draftStatus={draft.status}
+              draftSavedAt={draft.savedAt}
+              draftError={draft.errorMessage}
+              onRetryDraftSave={draft.retry}
+              onClearForm={draft.clearDraft}
             />
 
             <MobileSectionNav {...stepperProps} />

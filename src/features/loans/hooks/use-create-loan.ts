@@ -16,7 +16,7 @@ import type {
   SubmitLoanApplicationsRequest,
 } from '../api/loan-submit'
 
-export function useCreateLoan() {
+export function useCreateLoan(options?: { onSuccess?: () => void }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
@@ -35,9 +35,11 @@ export function useCreateLoan() {
       return res.data
     },
 
-    retry: 1,
+    // 4xx validation responses are final — retrying delays the error toast.
+    retry: false,
 
     onSuccess: (response) => {
+      options?.onSuccess?.()
       queryClient.invalidateQueries({ queryKey: loanKeys.all })
 
       const workflow = queryClient.getQueryData<WorkflowConfigurationDto>(
