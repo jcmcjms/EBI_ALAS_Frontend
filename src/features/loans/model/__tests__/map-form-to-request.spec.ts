@@ -87,6 +87,26 @@ describe('mapFormToSubmitLoanRequest', () => {
     expect(body.loans[1].principal).toBe(11000)
   })
 
+  it('maps Reloan creation type to Reloan even when form.loanType stays New', () => {
+    const form = makeForm(1)
+    form.loans[0].creationTypeCode = 1
+    form.loans[0].creationTypeLabel = 'Reloan'
+
+    const body = mapFormToSubmitLoanRequest(form)
+
+    expect(body.loanType).toBe('Reloan')
+  })
+
+  it('maps Additional Loan creation type to Reloan', () => {
+    const form = makeForm(1)
+    form.loans[0].creationTypeCode = 6
+    form.loans[0].creationTypeLabel = 'Additional Loan'
+
+    const body = mapFormToSubmitLoanRequest(form)
+
+    expect(body.loanType).toBe('Reloan')
+  })
+
   it('includes the full create-form snapshot so review can render the preview values', () => {
     const form = makeForm(1)
     const body = mapFormToSubmitLoanRequest(form)

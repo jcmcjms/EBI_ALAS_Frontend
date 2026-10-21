@@ -1,10 +1,21 @@
 import type { LoanSubmissionPayload } from '../api/loan-types'
 import type { LoanApplicationFormData } from '../schemas/schema'
+import { CREATION_TYPE } from '../schemas/schema'
 import {
   toSubmitLoanApplicationsRequest,
   type SubmitLoanApplicationsRequest,
   type SubmitLoanLine,
 } from '../api/loan-submit'
+
+function resolveSubmitLoanType(form: LoanApplicationFormData): 'New' | 'Reloan' {
+  const code =
+    form.loans.find((l) => l.creationTypeCode != null)?.creationTypeCode ??
+    form.branchType.creationTypeCode
+  if (code === CREATION_TYPE.RELOAN || code === CREATION_TYPE.ADDITIONAL_LOAN) {
+    return 'Reloan'
+  }
+  return form.loanType === 'Renewal' ? 'Reloan' : 'New'
+}
 
 export function mapFormToSubmissionPayload(
   form: LoanApplicationFormData,
@@ -80,7 +91,7 @@ export function mapFormToSubmitLoanRequest(
     applicationGroupNo: '',
     clientName,
     branchId: form.loans[0]?.branchCode || fallbackBranch,
-    loanType: form.loanType === 'Renewal' ? 'Reloan' : 'New',
+    loanType: resolveSubmitLoanType(form),
     loans,
     form,
   })
