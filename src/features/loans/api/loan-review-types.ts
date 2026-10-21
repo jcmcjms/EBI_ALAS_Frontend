@@ -217,7 +217,7 @@ export interface LoanRoutingResponse {
   matchedRule: string | null
   documentsComplete: boolean
   missingDocuments: string[]
-  assignedApproverId: number | null
+  assignedApproverId: string | null
   assignedApproverName: string | null
   escalatedFromTier: number | null
   noAuthorityReason: string | null

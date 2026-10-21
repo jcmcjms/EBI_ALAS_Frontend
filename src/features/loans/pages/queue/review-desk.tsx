@@ -103,7 +103,7 @@ export function ReviewDeskPage() {
       icon={<WarningCircle size={22} weight="bold" />}
       tone="destructive"
       title="Couldn't load your desk"
-      description="Your queue is unchanged — try again in a moment."
+      description=" Try again in a moment."
       action={
         <Button
           variant="outline"
@@ -183,9 +183,7 @@ export function ReviewDeskPage() {
                   </span>
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Oldest client first · bundled applications are reviewed
-                  together · last checked {formatClock(dataUpdatedAt)} ·
-                  auto-refreshes every 30s
+                  Last checked {formatClock(dataUpdatedAt)}
                 </p>
               </div>
               <Button
@@ -254,15 +252,12 @@ export function ReviewDeskPage() {
                     {queueBehind.length}
                   </Badge>
                 </CardTitle>
-                <span className="text-xs text-muted-foreground">
-                  Queue order matches Loan Monitoring
-                </span>
+               
               </CardHeader>
               <CardContent className="p-0">
                 {queueBehind.length === 0 ? (
                   <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    No other clients in queue — new submissions will appear
-                    here automatically.
+                    No other clients in queue
                   </p>
                 ) : (
                   <ul className="divide-y">
@@ -279,12 +274,7 @@ export function ReviewDeskPage() {
               </CardContent>
             </Card>
 
-            <p className="text-xs text-muted-foreground">
-              One reviewer handles an entire client bundle at a time — every
-              application of the client is claimed together. The assigned name
-              stays until the review period ends. Your remarks auto-save while
-              you review.
-            </p>
+            
           </div>
         )}
       </main>
