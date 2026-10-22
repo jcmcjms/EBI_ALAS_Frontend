@@ -142,6 +142,9 @@ export function LoanRevisionPage() {
     (id: SectionId) => canRevise && isSectionEditable(id, editableIds),
     [canRevise, editableIds],
   )
+  // Focused revision: only render sections that need correction (e.g. Deviations).
+  const onlySectionIds =
+    editableIds.size > 0 ? ([...editableIds] as SectionId[]) : undefined
 
   const reviseMutation = useMutation({
     mutationFn: (command: ReturnType<typeof mapFormToReviseCommand>) =>
@@ -281,6 +284,7 @@ export function LoanRevisionPage() {
                   onConfirmClient={() => undefined}
                   onClientCleared={() => undefined}
                   isSectionEditable={isEditable}
+                  onlySectionIds={onlySectionIds}
                 />
               </form>
 

@@ -175,3 +175,17 @@ export async function postDeviationRemark(
   )
   return res.data
 }
+
+/**
+ * Ask the encoder to update/add deviations. Routes through push-back with only
+ * the Deviations section so the encoder gets the revise form with selection +
+ * justifications unlocked.
+ */
+export async function requestDeviationUpdate(
+  loanId: number | string,
+  instructions: string,
+): Promise<void> {
+  await apiClient.post(`/api/loans/${loanId}/deviation-update-request`, {
+    instructions,
+  })
+}

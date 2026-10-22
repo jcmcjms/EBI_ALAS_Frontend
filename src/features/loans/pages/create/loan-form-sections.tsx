@@ -26,6 +26,11 @@ interface LoanFormSectionsProps {
   onClientCleared: () => void
   
   isSectionEditable?: (id: SectionId) => boolean
+  /**
+   * When set, render only these sections (e.g. revision focused on Deviations).
+   * Sections not listed are omitted entirely, not just disabled.
+   */
+  onlySectionIds?: SectionId[]
 }
 
 export function LoanFormSections({
@@ -40,62 +45,71 @@ export function LoanFormSections({
   onConfirmClient,
   onClientCleared,
   isSectionEditable,
+  onlySectionIds,
 }: LoanFormSectionsProps) {
   const hideOutstandingSection = HidesOutstandingLoans(branchTypeCode)
   const canEdit = (id: SectionId) =>
     (isSectionEditable ? isSectionEditable(id) : true) && !isSubmitting
+  const show = (id: SectionId) =>
+    !onlySectionIds || onlySectionIds.includes(id)
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-8">
-      <section
-        id="cis-lookup"
-        ref={(el) => registerSectionRef('cis-lookup', el)}
-      >
-        <fieldset disabled={!canEdit('cis-lookup')} className="contents">
-          <CISLookup
-            clientConfirmed={clientConfirmed}
-            onConfirmClient={onConfirmClient}
-            onClientCleared={onClientCleared}
-            onPreLoanChange={(id, payload) => {
-              onPreLoanChange(id, payload)
-              if (payload) {
-                methods.setValue('preLoan', {
-                  id: payload.id,
-                  accountNo: payload.accountNo,
-                  bch: payload.bch,
-                  formNumber: payload.formNumber ?? undefined,
-                  productDescription:
-                    payload.productDescription ?? undefined,
-                })
-              } else {
-                methods.setValue('preLoan', undefined)
-              }
-            }}
-          />
-        </fieldset>
-      </section>
+      {show('cis-lookup') && (
+        <section
+          id="cis-lookup"
+          ref={(el) => registerSectionRef('cis-lookup', el)}
+        >
+          <fieldset disabled={!canEdit('cis-lookup')} className="contents">
+            <CISLookup
+              clientConfirmed={clientConfirmed}
+              onConfirmClient={onConfirmClient}
+              onClientCleared={onClientCleared}
+              onPreLoanChange={(id, payload) => {
+                onPreLoanChange(id, payload)
+                if (payload) {
+                  methods.setValue('preLoan', {
+                    id: payload.id,
+                    accountNo: payload.accountNo,
+                    bch: payload.bch,
+                    formNumber: payload.formNumber ?? undefined,
+                    productDescription:
+                      payload.productDescription ?? undefined,
+                  })
+                } else {
+                  methods.setValue('preLoan', undefined)
+                }
+              }}
+            />
+          </fieldset>
+        </section>
+      )}
 
-      {isClientLoaded ? (
+      {isClientLoaded || onlySectionIds ? (
         <div className="contents space-y-8">
-          <section
-            id="personal-info"
-            ref={(el) => registerSectionRef('personal-info', el)}
-          >
-            <fieldset disabled={!canEdit('personal-info')} className="contents">
-              <PersonalInfoSection />
-            </fieldset>
-          </section>
+          {show('personal-info') && (
+            <section
+              id="personal-info"
+              ref={(el) => registerSectionRef('personal-info', el)}
+            >
+              <fieldset disabled={!canEdit('personal-info')} className="contents">
+                <PersonalInfoSection />
+              </fieldset>
+            </section>
+          )}
 
-          <section
-            id="loan-params"
-            ref={(el) => registerSectionRef('loan-params', el)}
-          >
-            <fieldset disabled={!canEdit('loan-params')} className="contents">
-              <LoanParametersTabsSection />
-            </fieldset>
-          </section>
+          {show('loan-params') && (
+            <section
+              id="loan-params"
+              ref={(el) => registerSectionRef('loan-params', el)}
+            >
+              <fieldset disabled={!canEdit('loan-params')} className="contents">
+                <LoanParametersTabsSection />
+              </fieldset>
+            </section>
+          )}
 
-          {!hideOutstandingSection && (
+          {show('obligations') && !hideOutstandingSection && (
             <section
               id="obligations"
               ref={(el) => registerSectionRef('obligations', el)}
@@ -105,37 +119,45 @@ export function LoanFormSections({
               </fieldset>
             </section>
           )}
-          <section
-            id="other-obligations"
-            ref={(el) => registerSectionRef('other-obligations', el)}
-          >
-            <fieldset disabled={!canEdit('other-obligations')} className="contents">
-              <OtherObligationsSection />
-            </fieldset>
-          </section>
-          <section
-            id="verification"
-            ref={(el) => registerSectionRef('verification', el)}
-          >
-            <fieldset disabled={!canEdit('verification')} className="contents">
-              <VerificationSection />
-            </fieldset>
-          </section>
-          <section
-            id="deviations"
-            ref={(el) => registerSectionRef('deviations', el)}
-          >
-            <fieldset disabled={!canEdit('deviations')} className="contents">
-              <DeviationsSection />
-            </fieldset>
-          </section>
+          {show('other-obligations') && (
+            <section
+              id="other-obligations"
+              ref={(el) => registerSectionRef('other-obligations', el)}
+            >
+              <fieldset disabled={!canEdit('other-obligations')} className="contents">
+                <OtherObligationsSection />
+              </fieldset>
+            </section>
+          )}
+          {show('verification') && (
+            <section
+              id="verification"
+              ref={(el) => registerSectionRef('verification', el)}
+            >
+              <fieldset disabled={!canEdit('verification')} className="contents">
+                <VerificationSection />
+              </fieldset>
+            </section>
+          )}
+          {show('deviations') && (
+            <section
+              id="deviations"
+              ref={(el) => registerSectionRef('deviations', el)}
+            >
+              <fieldset disabled={!canEdit('deviations')} className="contents">
+                <DeviationsSection />
+              </fieldset>
+            </section>
+          )}
 
-          <section
-            id="approval-form"
-            ref={(el) => registerSectionRef('approval-form', el)}
-          >
-            <ApprovalFormPreview ref={approvalFormRef} />
-          </section>
+          {show('approval-form') && (
+            <section
+              id="approval-form"
+              ref={(el) => registerSectionRef('approval-form', el)}
+            >
+              <ApprovalFormPreview ref={approvalFormRef} />
+            </section>
+          )}
         </div>
       ) : null}
 

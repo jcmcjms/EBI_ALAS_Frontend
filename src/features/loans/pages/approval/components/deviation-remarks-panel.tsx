@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ChatCenteredText,
   ArrowBendUpLeft,
   Warning,
   Receipt,
+  ArrowCounterClockwise,
 } from '@phosphor-icons/react'
 import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
@@ -17,10 +18,13 @@ import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import {
   getLoanDeviations,
   postDeviationRemark,
+  pushbackWithRevision,
+  requestDeviationUpdate,
   type DeviationRemarkDto,
   type LoanDeviationDto,
 } from '@/src/features/loans/api/loan-review'
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
+import { DeviationUpdateRequestDialog } from './deviation-update-request-dialog'
 
 const ROLE_BADGE: Record<string, string> = {
   Encoder: 'border-slate-300 bg-slate-100 text-slate-700',
@@ -168,7 +172,7 @@ function DeviationThread({
     id ? deviation.remarks.find((r) => r.id === id)?.authorName : undefined
 
   return (
-    <section className="space-y-2 rounded-lg border p-3">
+    <section id={`deviation-${deviation.id}`} className="space-y-2 rounded-lg border p-3 scroll-mt-24">
       <header className="flex items-start gap-2">
         {deviation.isFeeOverride ? (
           <Receipt size={16} weight="fill" className="mt-0.5 text-amber-600" />
@@ -235,36 +239,97 @@ export function DeviationRemarksPanel({
   loanId,
   canWrite,
   frozen,
+  focusDeviationId,
 }: {
   loanId: number | string
   canWrite: boolean
   frozen: boolean
+  focusDeviationId?: string | null
 }) {
+  const qc = useQueryClient()
+  const [updateOpen, setUpdateOpen] = useState(false)
   const deviations = useQuery({
     queryKey: loanKeys.review.deviations(loanId),
     queryFn: () => getLoanDeviations(loanId),
   })
 
-  if (deviations.isLoading) return <Spinner className="size-5" />
   const list = deviations.data ?? []
-  if (list.length === 0)
-    return (
-      <p className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
-        No deviations were declared for this application.
-      </p>
-    )
+
+  const requestUpdate = useMutation({
+    mutationFn: async (instructions: string) => {
+      // Keep the audit/notification endpoint, then push back with only the
+      // Deviations section so the encoder can pick deviations + justifications.
+      await requestDeviationUpdate(loanId, instructions)
+      await pushbackWithRevision(loanId, {
+        sections: [
+          {
+            sectionId: 'deviations',
+            comments: instructions,
+          },
+        ],
+        overallComments: instructions,
+      })
+    },
+    onSuccess: () => {
+      toastSuccess(
+        'Deviation update requested — application returned to the encoder.',
+      )
+      setUpdateOpen(false)
+      qc.invalidateQueries({ queryKey: loanKeys.review.deviations(loanId) })
+      qc.invalidateQueries({ queryKey: loanKeys.review.history(loanId) })
+      qc.invalidateQueries({ queryKey: loanKeys.review.detail(loanId) })
+      qc.invalidateQueries({ queryKey: loanKeys.all })
+    },
+    onError: (e: unknown) => toastError(getErrorMessage(e)),
+  })
+
+  useEffect(() => {
+    if (!focusDeviationId || list.length === 0) return
+    document
+      .getElementById(`deviation-${focusDeviationId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusDeviationId, list])
+
+  if (deviations.isLoading) return <Spinner className="size-5" />
 
   return (
     <div className="space-y-5">
-      {list.map((d) => (
-        <DeviationThread
-          key={d.id}
-          loanId={loanId}
-          deviation={d}
-          canWrite={canWrite}
-          frozen={frozen}
-        />
-      ))}
+      {canWrite && !frozen && (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => setUpdateOpen(true)}
+          >
+            <ArrowCounterClockwise size={14} weight="bold" />
+            Request deviation update
+          </Button>
+        </div>
+      )}
+
+      {list.length === 0 ? (
+        <p className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
+          No deviations were declared for this application.
+        </p>
+      ) : (
+        list.map((d) => (
+          <DeviationThread
+            key={d.id}
+            loanId={loanId}
+            deviation={d}
+            canWrite={canWrite}
+            frozen={frozen}
+          />
+        ))
+      )}
+
+      <DeviationUpdateRequestDialog
+        open={updateOpen}
+        onOpenChange={setUpdateOpen}
+        isPending={requestUpdate.isPending}
+        onSubmit={(instructions) => requestUpdate.mutate(instructions)}
+      />
     </div>
   )
 }
