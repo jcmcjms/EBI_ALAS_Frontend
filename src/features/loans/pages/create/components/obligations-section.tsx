@@ -29,7 +29,6 @@ export function ObligationsSection() {
       step={section.step}
       title={section.label}
       description={section.description}
-      systemSourced
       badge={
         loans.length > 0 ? (
           <Badge variant="secondary">

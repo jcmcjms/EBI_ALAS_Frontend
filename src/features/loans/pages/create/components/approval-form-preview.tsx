@@ -89,7 +89,6 @@ export function ApprovalFormPreview({
       step={section.step}
       title={section.label}
       description={section.description}
-      systemSourced
       icon={<FilePdf size={20} weight="bold" className="text-primary" />}
       badge={
         <div className="flex items-center gap-2">

@@ -51,7 +51,6 @@ export function PersonalInfoSection() {
       step={section.step}
       title={section.label}
       description={section.description}
-      systemSourced
       icon={<LockSimple size={20} weight="bold" className="text-primary" />}
     >
       <div className="space-y-6">

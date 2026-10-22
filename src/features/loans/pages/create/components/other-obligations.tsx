@@ -25,7 +25,6 @@ export function OtherObligationsSection() {
       step={section.step}
       title={section.label}
       description={section.description}
-      systemSourced
       contentClassName="p-0 divide-y"
       badge={
         loans.length > 0 ? (

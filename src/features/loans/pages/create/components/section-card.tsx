@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react'
-import { CloudCheck } from '@phosphor-icons/react'
 
-import { Badge } from '@/src/shared/ui/primitives/badge'
 import {
   Card,
   CardContent,
@@ -17,8 +15,6 @@ interface SectionCardProps {
   description?: string
   icon?: ReactNode
 
-  systemSourced?: boolean
-
   badge?: ReactNode
   contentClassName?: string
   children: ReactNode
@@ -29,7 +25,6 @@ export function SectionCard({
   title,
   description,
   icon,
-  systemSourced,
   badge,
   contentClassName,
   children,
@@ -47,12 +42,6 @@ export function SectionCard({
             <span className="tabular-nums text-muted-foreground">{step}.</span>
             <span>{title}</span>
           </span>
-          {systemSourced && (
-            <Badge variant="outline" className="gap-1 text-xs font-normal">
-              <CloudCheck size={12} weight="bold" />
-              Auto-filled
-            </Badge>
-          )}
           {badge}
         </CardTitle>
         {description && (
