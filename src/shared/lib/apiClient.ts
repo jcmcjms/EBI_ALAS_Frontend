@@ -3,7 +3,7 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { toastError } from '@/src/shared/ui/feedback/toast'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { decodeJwtPayload } from '@/src/shared/lib/jwt.ts'
-import type { AuthTokenResponse } from '@/src/shared/lib/api/types'
+import { refreshAuthSession } from '@/src/shared/lib/auth-refresh'
 import { env } from '@/src/shared/config/env'
 
 const baseURL = env.apiBaseUrl
@@ -87,14 +87,7 @@ async function refreshAccessToken(): Promise<string> {
   }
   isRefreshing = true
   try {
-    const { data: body } = await axios.post<AuthTokenResponse>(
-      '/api/auth/refresh',
-      null,
-      {
-        withCredentials: true,
-        headers: { 'Content-Type': 'application/json' },
-      },
-    )
+    const body = await refreshAuthSession()
     if (body?.accessToken) {
       const newToken: string = body.accessToken
       useAuthStore.getState().setAccessToken(newToken)
@@ -110,6 +103,13 @@ async function refreshAccessToken(): Promise<string> {
   } finally {
     isRefreshing = false
   }
+}
+
+function forceLogoutIfSignedIn(): void {
+  const { user, clearSession } = useAuthStore.getState()
+  if (!user) return
+  clearSession()
+  window.location.href = '/login'
 }
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -215,8 +215,7 @@ apiClient.interceptors.response.use(
       }
       return apiClient(originalRequest)
     } catch {
-      useAuthStore.getState().clearSession()
-      window.location.href = '/login'
+      forceLogoutIfSignedIn()
       return Promise.reject(error)
     }
   },

@@ -1,5 +1,6 @@
 import type { AuthTokenResponse } from '@/src/shared/lib/api/types'
 import { extractUserFromToken } from '@/src/shared/lib/jwt'
+import { refreshAuthSession } from '@/src/shared/lib/auth-refresh'
 
 export interface AuthSession {
   token: string
@@ -29,11 +30,9 @@ export function readLoginSession(
  */
 let pageRestore: Promise<AuthSession | null> | null = null
 
-export function restoreSession(
-  requestRefresh: () => Promise<AuthTokenResponse>,
-): Promise<AuthSession | null> {
+export function restoreSession(): Promise<AuthSession | null> {
   if (!pageRestore) {
-    pageRestore = requestRefresh()
+    pageRestore = refreshAuthSession()
       .then((body) => readLoginSession(body))
       .catch(() => null)
   }
