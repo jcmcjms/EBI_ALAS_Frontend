@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react'
 import { FlexRender, useTable } from '@tanstack/react-table'
-import { Plus } from '@phosphor-icons/react'
 
 import { toastError, toastSuccess } from '@/src/shared/ui/feedback/toast'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
-import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
   CardContent,
@@ -21,10 +19,13 @@ import {
   TableRow,
 } from '@/src/shared/ui/data-display/table'
 import { TablePagination } from '@/src/shared/ui/data-display/table-pagination'
-import { Input } from '@/src/shared/ui/primitives/input'
 import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import { EmptyState, ErrorState } from '@/src/shared/ui/feedback/empty-state'
-import { PERMISSIONS, type BranchResponse, type BranchStatus } from '@/src/shared/lib/api/types'
+import {
+  PERMISSIONS,
+  type BranchResponse,
+  type BranchStatus,
+} from '@/src/shared/lib/api/types'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useBranches } from '@/src/shared/lib/api/branches'
 import {
@@ -35,16 +36,16 @@ import {
 import { columns, features, type BranchesTableMeta } from './branch-columns'
 import { BranchCreateSheet } from './branch-create-sheet'
 import { BranchEditSheet } from './branch-edit-sheet'
+import { BranchStatsCards } from './branch-stats-cards'
+import { BranchesToolbar, type StatusFilter } from './branches-toolbar'
 import { ConfirmActionSheet } from '../../users/components/confirm-action-sheet'
 import type { CreateBranchForm, UpdateBranchForm } from './branch-form-schema'
-
-type StatusFilter = 'all' | BranchStatus
 
 export function BranchesTable() {
   const hasPermission = useAuthStore((s) => s.hasPermission)
   const canManage = hasPermission(PERMISSIONS.branchManage)
 
-  const { data, isLoading, isError, error, refetch } = useBranches()
+  const { data, isLoading, isError, error, isFetching, refetch } = useBranches()
   const createMutation = useCreateBranch()
   const updateMutation = useUpdateBranch()
   const statusMutation = useUpdateBranchStatus()
@@ -81,6 +82,10 @@ export function BranchesTable() {
     onPaginationChange: setPagination,
     meta,
   })
+
+  const totalCount = data?.length ?? 0
+  const activeCount = data?.filter((b) => b.status === 'Active').length ?? 0
+  const inactiveCount = totalCount - activeCount
 
   const totalRows = branches.length
   const firstRow =
@@ -128,115 +133,128 @@ export function BranchesTable() {
   }
 
   return (
-    <Card className="border shadow-sm">
-      <CardHeader className="border-b bg-muted/30 pb-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            Branch Directory
-            <Badge variant="outline" className="ml-1 font-normal">
-              {totalRows} {totalRows === 1 ? 'branch' : 'branches'}
-            </Badge>
-          </CardTitle>
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              value={globalFilter}
-              onChange={(e) => {
-                setGlobalFilter(e.target.value)
-                setPagination((p) => ({ ...p, pageIndex: 0 }))
-              }}
-              placeholder="Search code or name…"
-              className="h-9 w-[200px]"
-            />
-            <div className="flex gap-1">
-              {(['all', 'Active', 'Closed', 'Merged'] as const).map((s) => (
-                <Button
-                  key={s}
-                  variant={statusFilter === s ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => {
-                    setStatusFilter(s)
-                    setPagination((p) => ({ ...p, pageIndex: 0 }))
-                  }}
-                >
-                  {s === 'all' ? 'All' : s}
-                </Button>
-              ))}
-            </div>
-            {canManage && (
-              <Button size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus size={16} />
-                New branch
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Spinner />
-          </div>
-        ) : isError ? (
-          <ErrorState
-            message={getErrorMessage(error)}
-            onRetry={() => refetch()}
-          />
-        ) : totalRows === 0 ? (
-          <EmptyState
-            title="No branches found"
-            hint="No branches match the current filters."
-          />
-        ) : (
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : (
-                        <FlexRender header={header} />
-                      )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      <FlexRender cell={cell} />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-
-      {!isLoading && !isError && totalRows > 0 && (
-        <TablePagination
-          firstRow={firstRow}
-          lastRow={lastRow}
-          totalRows={totalRows}
-          currentPage={pagination.pageIndex + 1}
-          totalPages={totalPages}
-          canPreviousPage={table.getCanPreviousPage()}
-          canNextPage={table.getCanNextPage()}
-          onPreviousPage={() =>
-            setPagination((p) => ({
-              ...p,
-              pageIndex: Math.max(0, p.pageIndex - 1),
-            }))
-          }
-          onNextPage={() =>
-            setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))
-          }
-          entityLabel="branches"
+    <>
+      <div className="space-y-4">
+        <BranchStatsCards
+          totalCount={totalCount}
+          activeCount={activeCount}
+          inactiveCount={inactiveCount}
         />
-      )}
+
+        <Card className="border shadow-sm">
+          <CardHeader className="border-b bg-muted/30 pb-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Branch Directory
+                <Badge variant="outline" className="ml-1 font-normal">
+                  {totalRows} {totalRows === 1 ? 'branch' : 'branches'}
+                </Badge>
+              </CardTitle>
+              <BranchesToolbar
+                globalFilter={globalFilter}
+                onGlobalFilterChange={(value) => {
+                  setGlobalFilter(value)
+                  setPagination((p) => ({ ...p, pageIndex: 0 }))
+                }}
+                statusFilter={statusFilter}
+                onStatusFilterChange={(value) => {
+                  setStatusFilter(value)
+                  setPagination((p) => ({ ...p, pageIndex: 0 }))
+                }}
+                canManage={canManage}
+                onCreate={() => setCreateOpen(true)}
+              />
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader className="bg-muted/40">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow
+                    key={headerGroup.id}
+                    className="border-b hover:bg-transparent"
+                  >
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className="h-9 px-4 text-xs font-semibold text-muted-foreground"
+                      >
+                        {header.isPlaceholder ? null : (
+                          <FlexRender header={header} />
+                        )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="py-12 text-center"
+                    >
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Spinner className="size-4" />
+                        <span>Loading branches…</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : isError ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="p-0">
+                      <ErrorState
+                        message={getErrorMessage(error)}
+                        onRetry={() => refetch()}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : table.getRowModel().rows.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id} className="h-12 px-4 py-2">
+                          <FlexRender cell={cell} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="p-0">
+                      <EmptyState
+                        title="No branches found"
+                        hint="No branches match the current filters."
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+
+          <TablePagination
+            firstRow={firstRow}
+            lastRow={lastRow}
+            totalRows={totalRows}
+            currentPage={pagination.pageIndex + 1}
+            totalPages={totalPages}
+            canPreviousPage={table.getCanPreviousPage()}
+            canNextPage={table.getCanNextPage()}
+            onPreviousPage={() =>
+              setPagination((p) => ({
+                ...p,
+                pageIndex: Math.max(0, p.pageIndex - 1),
+              }))
+            }
+            onNextPage={() =>
+              setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))
+            }
+            isFetching={isFetching}
+          />
+        </Card>
+      </div>
 
       <BranchCreateSheet
         open={createOpen}
@@ -274,6 +292,6 @@ export function BranchesTable() {
         isPending={statusMutation.isPending}
         onConfirm={handleStatusChange}
       />
-    </Card>
+    </>
   )
 }

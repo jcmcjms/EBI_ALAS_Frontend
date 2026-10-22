@@ -185,6 +185,7 @@ export function ProductsTableCard({
         totalPages={totalPages}
         canPreviousPage={table.getCanPreviousPage()}
         canNextPage={table.getCanNextPage()}
+        isFetching={isFetching}
         onPreviousPage={() =>
           setPagination((p) => ({
             ...p,

@@ -16,6 +16,7 @@ import {
 } from '../hooks/use-loan-products'
 import { features, columns } from './product-columns'
 import { ProductsTableCard } from './products-table-card'
+import { ProductStatsCards } from './product-stats-cards'
 import { ProductEditSheet } from './product-edit-sheet'
 import { ImportProductsSheet } from './import-products-sheet'
 import { filterVisibleProducts } from './product-visibility'
@@ -59,6 +60,10 @@ export function ProductsTable() {
         : null,
     [editingCode, products],
   )
+
+  const totalCount = data?.length ?? 0
+  const activeCount = data?.filter((p) => !p.isRetired).length ?? 0
+  const retiredCount = data?.filter((p) => p.isRetired).length ?? 0
 
   const table = useTable({
     features,
@@ -131,6 +136,11 @@ export function ProductsTable() {
   return (
     <>
       <div className="space-y-4">
+        <ProductStatsCards
+          totalCount={totalCount}
+          activeCount={activeCount}
+          retiredCount={retiredCount}
+        />
         <ProductsTableCard
           table={table}
           columnCount={columns.length}
