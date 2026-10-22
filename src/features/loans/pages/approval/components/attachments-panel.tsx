@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Eye,
@@ -48,6 +48,7 @@ interface AttachmentsPanelProps {
   canPushBack: boolean
   pushBackPending: boolean
   onPushBack: (pendingCodes: string[], remarks: string) => void
+  focusDocCode?: string | null
 }
 
 export function AttachmentsPanel({
@@ -57,6 +58,7 @@ export function AttachmentsPanel({
   canPushBack,
   pushBackPending,
   onPushBack,
+  focusDocCode,
 }: AttachmentsPanelProps) {
   const [openThread, setOpenThread] = useState<string | null>(null)
   const [selected, setSelected] = useState<Record<string, boolean>>({})
@@ -80,6 +82,14 @@ export function AttachmentsPanel({
   })
 
   const items: LoanChecklistDocumentDto[] = checklistDocs.data ?? []
+
+  useEffect(() => {
+    if (!focusDocCode || items.length === 0) return
+    setOpenThread(focusDocCode)
+    document
+      .getElementById(`doc-${focusDocCode}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusDocCode, items])
   const pending = useMemo(
     () => items.filter((i) => i.uploadStatus !== 'Uploaded'),
     [items],
@@ -129,8 +139,9 @@ export function AttachmentsPanel({
             const remarkCount = remarksFor(item.idCode).length
             return (
               <li
+                id={`doc-${item.idCode}`}
                 key={`${item.idCode}-${item.docId ?? index}`}
-                className="rounded-md border bg-background"
+                className="scroll-mt-24 rounded-md border bg-background"
               >
                 <div className="flex items-start gap-3 p-3">
                   {canPushBack && isPending && (

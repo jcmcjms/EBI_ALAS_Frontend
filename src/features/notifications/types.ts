@@ -20,6 +20,7 @@ export function mapApiNotification(n: NotificationResponse): AppNotification {
     description: n.body,
     createdAt: n.createdAt,
     read: Boolean(n.readAt),
+    link: n.link ?? undefined,
   }
 }
 

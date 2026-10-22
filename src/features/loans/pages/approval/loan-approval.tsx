@@ -46,6 +46,8 @@ export function LoanApprovalPage() {
     setZoom,
     tab,
     setTab,
+    focusDocCode,
+    focusDeviationId,
     cancelOpen,
     setCancelOpen,
     cancelReason,
@@ -136,7 +138,25 @@ export function LoanApprovalPage() {
         canFlagAtDesk={canFlagAtDesk}
         onFlag={() => setFlagOpen(true)}
         groupLoans={groupLoans}
-        onNavigate={(path: string) => navigate({ href: path })}
+        onNavigate={(path: string) => {
+          if (path === '/loans/queue') {
+            navigate({ to: '/loans/queue' })
+            return
+          }
+          if (path === '/loans/monitoring') {
+            navigate({ to: '/loans/monitoring' })
+            return
+          }
+          const match = path.match(/^\/loans\/approval\/([^/?#]+)/)
+          if (match?.[1]) {
+            navigate({
+              to: '/loans/approval/$loanId',
+              params: { loanId: match[1] },
+            })
+            return
+          }
+          navigate({ to: '/loans/monitoring' })
+        }}
       />
 
       <div className="container mx-auto px-6 py-8">
@@ -237,6 +257,7 @@ export function LoanApprovalPage() {
                       loanId={id}
                       canWrite={!!canWriteRemarks}
                       frozen={frozen}
+                      focusDeviationId={focusDeviationId}
                     />
                   </CardContent>
                 </Card>
@@ -247,6 +268,7 @@ export function LoanApprovalPage() {
                   loanId={id}
                   frozen={frozen}
                   canWriteRemarks={!!canWriteRemarks}
+                  focusDocCode={focusDocCode}
                   canPushBack={
                     (user?.role === 'Evaluator' &&
                       detail.status === 'ForChecking') ||

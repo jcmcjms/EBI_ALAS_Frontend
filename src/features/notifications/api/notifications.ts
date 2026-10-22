@@ -8,6 +8,7 @@ export interface NotificationResponse {
   type: string
   createdAt: string
   readAt?: string | null
+  link?: string | null
 }
 
 export interface InboxQuery {

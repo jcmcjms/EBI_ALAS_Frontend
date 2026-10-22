@@ -76,7 +76,34 @@ export function NotificationsPage() {
     if (autoRead) {
       markReadMutation.mutate(id)
     }
-    if (link) navigate({ href: link })
+    if (!link) return
+
+    const hashIndex = link.indexOf('#')
+    const path = hashIndex >= 0 ? link.slice(0, hashIndex) : link
+    const hash =
+      hashIndex >= 0 ? decodeURIComponent(link.slice(hashIndex + 1)) : undefined
+    const loanIdMatch = path.match(
+      /\/loans\/(?:approval|revision|evaluation)\/([^/?#]+)/,
+    )
+    if (loanIdMatch?.[1]) {
+      const loanId = loanIdMatch[1]
+      if (path.includes('/loans/revision/')) {
+        navigate({
+          to: '/loans/revision/$loanId',
+          params: { loanId },
+          ...(hash ? { hash } : {}),
+        })
+        return
+      }
+      navigate({
+        to: '/loans/approval/$loanId',
+        params: { loanId },
+        ...(hash ? { hash } : {}),
+      })
+      return
+    }
+
+    navigate({ to: path as never, ...(hash ? { hash } : {}) })
   }
 
   const setQueryAndReset = (next: string) => {

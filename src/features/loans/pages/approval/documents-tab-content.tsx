@@ -22,6 +22,7 @@ interface DocumentsTabContentProps {
   onPushBack: (codes: string[], text: string) => void
   recheckPending: boolean
   onRecheck: () => void
+  focusDocCode?: string | null
 }
 
 export function DocumentsTabContent({
@@ -33,6 +34,7 @@ export function DocumentsTabContent({
   onPushBack,
   recheckPending,
   onRecheck,
+  focusDocCode,
 }: DocumentsTabContentProps) {
   return (
     <Card id="document-requirements">
@@ -73,6 +75,7 @@ export function DocumentsTabContent({
           canPushBack={canPushBack}
           pushBackPending={pushBackPending}
           onPushBack={onPushBack}
+          focusDocCode={focusDocCode}
         />
       </CardContent>
     </Card>

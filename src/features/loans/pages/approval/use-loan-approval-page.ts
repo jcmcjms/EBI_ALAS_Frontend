@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useReviewDraft } from '@/src/features/loans/hooks/use-review-draft'
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useParams, useNavigate, useLocation } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { keepPreviousData } from '@tanstack/react-query'
 import {
@@ -55,6 +55,30 @@ export function useLoanApprovalPage() {
 
   const [zoom, setZoom] = useState(1)
   const [tab, setTab] = useState('workflow')
+  const [focusDocCode, setFocusDocCode] = useState<string | null>(null)
+  const [focusDeviationId, setFocusDeviationId] = useState<string | null>(null)
+  const location = useLocation()
+
+  useEffect(() => {
+    const raw = decodeURIComponent(location.hash?.replace(/^#/, '') ?? '')
+    if (!raw) return
+    const [tabName, target] = raw.split(':')
+    if (tabName === 'deviations' || tabName === 'files' || tabName === 'workflow') {
+      setTab(tabName)
+    }
+    if (!target) {
+      setFocusDocCode(null)
+      setFocusDeviationId(null)
+      return
+    }
+    if (tabName === 'files') {
+      setFocusDocCode(target)
+      setFocusDeviationId(null)
+    } else if (tabName === 'deviations') {
+      setFocusDeviationId(target)
+      setFocusDocCode(null)
+    }
+  }, [location.hash])
 
   const [cancelOpen, setCancelOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
@@ -327,6 +351,8 @@ export function useLoanApprovalPage() {
     setZoom,
     tab,
     setTab,
+    focusDocCode,
+    focusDeviationId,
     cancelOpen,
     setCancelOpen,
     cancelReason,
