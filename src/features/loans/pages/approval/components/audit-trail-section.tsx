@@ -96,7 +96,7 @@ export function AuditTrailSection({
             </tr>
             <tr className="[&>th]:border-b [&>th]:border-black [&>th]:px-1.5 [&>th]:py-1 [&>th]:text-left [&>th]:text-xs [&>th]:font-bold">
               <th className="w-[16%]">Date / Time</th>
-              <th className="w-[18%]">Actor</th>
+              <th className="w-[18%]">User</th>
               <th className="w-[28%]">Event</th>
               <th>Remarks</th>
             </tr>

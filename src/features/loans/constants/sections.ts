@@ -45,7 +45,7 @@ export const SECTIONS: SectionDef[] = [
   {
     id: 'obligations',
     step: 4,
-    label: 'Existing Loans',
+    label: 'Outstanding Loans',
     description: 'Active loans for the selected account.',
     systemSourced: true,
   },

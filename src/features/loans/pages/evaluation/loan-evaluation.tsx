@@ -127,6 +127,14 @@ export function LoanEvaluationPage() {
             >
               <ArrowLeft size={18} weight="bold" />
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => navigate({ to: '/loans/queue' })}
+            >
+              Review Desk
+            </Button>
             <h1 className="text-xl font-semibold tracking-tight">
               Loan Evaluation
             </h1>
