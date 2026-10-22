@@ -5,6 +5,7 @@ import { SidebarTrigger } from '@/src/shared/components/layout/sidebar'
 import { getActiveNavTitle } from '@/src/shared/lib/navigation'
 import { useNotificationStore } from '@/src/shared/store/notification-store'
 import { OnlineUsers } from '@/src/app/layout/online-users'
+import { DutyStatusToggle } from '@/src/app/layout/duty-status-toggle'
 
 export function SiteHeader() {
   const { pathname } = useLocation()
@@ -26,6 +27,7 @@ export function SiteHeader() {
         )}
 
         <div className="ml-auto flex items-center gap-1">
+          <DutyStatusToggle />
           <OnlineUsers />
           <Link
             to="/notifications"
