@@ -18,7 +18,7 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import { formatWaiting } from '@/src/shared/lib/format'
 import { useSlaPolicy } from '@/src/features/loans/api/loan-review'
-import { useClaimNext, useDeskQueue } from '@/src/features/loans/hooks/use-desk-queue'
+import { useClaimNext, useDeskQueue, useReleaseClaim } from '@/src/features/loans/hooks/use-desk-queue'
 import { summarizeDeskQueue, formatPhp } from '@/src/features/loans/model/desk-queue'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { NextClientCard, StatCard } from './review-desk-cards'
@@ -37,24 +37,34 @@ export function ReviewDeskPage() {
     refetch,
   } = useDeskQueue()
   const claim = useClaimNext()
+  const release = useReleaseClaim()
   const slaPolicy = useSlaPolicy()
   const currentUserId = useAuthStore((s) => s.user?.userId)
 
-  const currentClaimLoanId = desk?.currentClaim?.applications[0]?.loanId
-
+  // Open the loan only when a claim succeeds — never bounce the officer off
+  // the desk just because a lease is still open (they may wait on the encoder).
   useEffect(() => {
-    if (currentClaimLoanId) {
-      navigate({
-        to: '/loans/approval/$loanId',
-        params: { loanId: String(currentClaimLoanId) },
-        replace: true,
-      })
-    }
-  }, [currentClaimLoanId, navigate])
+    if (!claim.isSuccess || !claim.data?.loanId) return
+    navigate({
+      to: '/loans/approval/$loanId',
+      params: { loanId: String(claim.data.loanId) },
+      replace: true,
+    })
+  }, [claim.isSuccess, claim.data?.loanId, navigate])
 
   const now = Date.now()
   const head = desk?.items[0]
   const queueBehind = useMemo(() => (desk ? desk.items.slice(1) : []), [desk])
+  const currentClaims = useMemo(() => {
+    if (!desk) return []
+    const list = desk.currentClaims?.length
+      ? desk.currentClaims
+      : desk.currentClaim
+        ? [desk.currentClaim]
+        : []
+    return list
+  }, [desk])
+  const hasClaim = currentClaims.length > 0
   const policy = slaPolicy.data ?? null
   const stats = useMemo(
     () => (desk ? summarizeDeskQueue(desk.items, now, policy) : null),
@@ -126,7 +136,7 @@ export function ReviewDeskPage() {
         </Button>
       }
     />
-  ) : desk.currentClaim ? null : (
+  ) : (
     <>
       <DeskHeader
         deskLabel={desk.deskLabel}
@@ -135,7 +145,60 @@ export function ReviewDeskPage() {
       />
 
       <main className="flex flex-1 flex-col">
-        {desk.items.length === 0 ? (
+        <div className="container mx-auto w-full max-w-5xl flex-1 space-y-5 px-6 py-6">
+          {hasClaim && (
+            <section className="rounded-xl border border-primary/30 bg-primary/5 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-primary">
+                    Currently serving ({currentClaims.length})
+                  </p>
+                  <ul className="space-y-1">
+                    {currentClaims.map((c) => (
+                      <li
+                        key={c.groupNo}
+                        className="flex flex-wrap items-center gap-2 text-sm"
+                      >
+                        <span className="font-semibold">{c.clientName}</span>
+                        <span className="text-muted-foreground">
+                          {c.applications.map((a) => a.lamId).join(', ')}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7"
+                          onClick={() => {
+                            const loanId = c.applications[0]?.loanId
+                            if (!loanId) return
+                            navigate({
+                              to: '/loans/approval/$loanId',
+                              params: { loanId: String(loanId) },
+                            })
+                          }}
+                        >
+                          Open
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-muted-foreground">
+                    You can keep taking new clients while these wait (e.g. for the
+                    encoder). Release returns them to the queue.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => release.mutate()}
+                  disabled={release.isPending}
+                >
+                  {release.isPending ? 'Releasing…' : 'Release all claims'}
+                </Button>
+              </div>
+            </section>
+          )}
+
+        {desk.items.length === 0 && !hasClaim ? (
           <DeskMessage
             icon={<Tray size={22} weight="bold" />}
             title="Queue is clear"
@@ -168,7 +231,7 @@ export function ReviewDeskPage() {
             }
           />
         ) : (
-          <div className="container mx-auto w-full max-w-5xl flex-1 space-y-5 px-6 py-6">
+          <>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="space-y-0.5" aria-live="polite">
                 <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight tabular-nums">
@@ -273,10 +336,9 @@ export function ReviewDeskPage() {
                 )}
               </CardContent>
             </Card>
-
-            
-          </div>
+          </>
         )}
+        </div>
       </main>
     </>
   )

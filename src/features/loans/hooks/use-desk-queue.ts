@@ -43,7 +43,10 @@ export interface QueuedClientDto {
 export interface DeskQueueResponse {
   deskLabel: string
   items: QueuedClientDto[]
+  /** First active claim (legacy). Prefer currentClaims. */
   currentClaim: QueuedClientDto | null
+  /** Every client bundle this officer currently holds. */
+  currentClaims?: QueuedClientDto[]
   scopeDescription: string
 }
 

@@ -98,6 +98,10 @@ export function resolveQueueState(
       : undefined
 
   let client = matches(desk?.currentClaim ?? undefined)
+  for (const claim of desk?.currentClaims ?? []) {
+    if (client) break
+    client = matches(claim)
+  }
   for (const item of desk?.items ?? []) {
     if (client) break
     client = matches(item)
