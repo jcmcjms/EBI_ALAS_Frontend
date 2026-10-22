@@ -77,6 +77,7 @@ export interface IncompleteDocsQueueItem {
 export interface DashboardData {
   summary: DashboardSummary
   pendingQueue: PendingQueueItem[]
+  requireRecommendation: boolean
   nowServing: NowServingItem[]
   pushBacks: PushBackItem[]
   approvedLoans: ApprovedLoanItem[]

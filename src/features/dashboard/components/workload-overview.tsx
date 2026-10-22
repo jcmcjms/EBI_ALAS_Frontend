@@ -12,10 +12,20 @@ import {
 } from '@/src/shared/ui/navigation/tabs'
 import { ApprovedLoans } from './approved-loans'
 import { NowServing } from './now-serving'
-import { PendingQueue } from './pending-queue'
+import { PendingQueueTable } from './pending-queue'
 import type { DashboardData } from '../types'
 
+const PENDING_QUEUES = [
+  { key: 'ForRecommendation', title: 'For Recommendation', requiresRecommendation: true },
+  { key: 'ForChecking', title: 'For Checking', requiresRecommendation: false },
+  { key: 'ForApproval', title: 'For Approval', requiresRecommendation: false },
+] as const
+
 export function WorkloadOverview({ data }: { data: DashboardData }) {
+  const queues = PENDING_QUEUES.filter(
+    (q) => !q.requiresRecommendation || data.requireRecommendation,
+  )
+
   return (
     <Card>
       <CardHeader>
@@ -25,7 +35,7 @@ export function WorkloadOverview({ data }: { data: DashboardData }) {
         <Tabs defaultValue="pending" className="w-full">
           <TabsList className="mb-4 grid w-full grid-cols-3">
             <TabsTrigger value="pending" className="text-xs sm:text-sm">
-              Pending ({data.pendingQueue.length})
+              Pending ({data.summary.totalPending})
             </TabsTrigger>
             <TabsTrigger value="in-progress" className="text-xs sm:text-sm">
               In Progress ({data.nowServing.length})
@@ -34,8 +44,14 @@ export function WorkloadOverview({ data }: { data: DashboardData }) {
               Approved ({data.approvedLoans.length})
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="pending" className="mt-0 min-h-[120px]">
-            <PendingQueue data={data.pendingQueue} compact />
+          <TabsContent value="pending" className="mt-0 min-h-[120px] space-y-5">
+            {queues.map((queue) => (
+              <PendingQueueTable
+                key={queue.key}
+                status={queue.key}
+                title={queue.title}
+              />
+            ))}
           </TabsContent>
           <TabsContent value="in-progress" className="mt-0 min-h-[120px]">
             <NowServing data={data.nowServing} compact />

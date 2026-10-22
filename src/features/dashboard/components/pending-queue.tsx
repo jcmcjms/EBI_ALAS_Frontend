@@ -1,21 +1,17 @@
-import { memo, useMemo } from 'react'
+import { memo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import { Button } from '@/src/shared/ui/primitives/button'
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/src/shared/ui/data-display/card'
 import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
 import { cn } from '@/src/shared/lib/utils'
 import { initialsOf } from '@/src/shared/lib/name-utils'
 import { formatWaiting, waitingMinutes } from '@/src/shared/lib/format'
-import type { PendingQueueItem, LoanStatus } from '../types'
+import type { LoanStatus } from '../types'
 import { assessAging } from '@/src/shared/lib/loan-aging'
-import { useAuthStore } from '@/src/shared/store/auth-store'
+import { usePendingQueue } from '../hooks/use-pending-queue'
+
+const PAGE_SIZE = 5
 
 const statusStyles: Record<LoanStatus, string> = {
   'On Going':
@@ -42,58 +38,51 @@ const statusStyles: Record<LoanStatus, string> = {
     'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
 }
 
-interface PendingQueueProps {
-  data: PendingQueueItem[]
-  slaPolicy?: Record<string, number> | null
-  compact?: boolean
+interface PendingQueueTableProps {
+  status: string
+  title: string
 }
 
-export const PendingQueue = memo(function PendingQueue({
-  data,
-  slaPolicy = null,
-  compact = false,
-}: PendingQueueProps) {
+export const PendingQueueTable = memo(function PendingQueueTable({
+  status,
+  title,
+}: PendingQueueTableProps) {
   const navigate = useNavigate()
-  const user = useAuthStore((state) => state.user)
-  const displayData = useMemo(() => data.slice(0, 5), [data])
+  const [page, setPage] = useState(1)
+  const { data, isLoading } = usePendingQueue(status, page, PAGE_SIZE)
+  const items = data?.items ?? []
+  const totalCount = data?.totalCount ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
-  const pendingStatuses = useMemo(
-    () => [...new Set(data.map((d) => d.statusKey))].join(','),
-    [data],
-  )
-
-  const listBody = data.length === 0 ? (
-    compact ? (
-      <p className="py-8 text-center text-sm text-muted-foreground">
-        No pending applications.
-      </p>
-    ) : (
-      <div className="flex flex-col items-center justify-center py-10 text-center">
-        <p className="text-sm text-muted-foreground mb-4">
-          Queue is clear — no pending applications.
-        </p>
-        {user?.role === 'Encoder' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate({ to: '/loans/create' })}
-          >
-            Create New Loan
-          </Button>
-        )}
+  return (
+    <section>
+      <div className="mb-2 flex items-center gap-2">
+        <h4 className="text-sm font-semibold">{title}</h4>
+        <Badge variant="secondary" className="tabular-nums">
+          {totalCount}
+        </Badge>
       </div>
-    )
-  ) : (
+      {isLoading && items.length === 0 ? (
+        <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+          Loading…
+        </p>
+      ) : items.length === 0 ? (
+        <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+          No pending applications.
+        </p>
+      ) : (
+        <div className="overflow-hidden rounded-md border">
           <ul className="divide-y">
-            {displayData.map((item) => {
+            {items.map((item) => {
               const mins = waitingMinutes(item.date)
 
               const assessment = assessAging(
                 item.statusKey as unknown as Parameters<typeof assessAging>[0],
                 item.date,
                 Date.now(),
-                slaPolicy,
+                null,
               )
+
               return (
                 <li key={item.lamId}>
                   <button
@@ -109,96 +98,85 @@ export const PendingQueue = memo(function PendingQueue({
                       item.position === 1 && 'bg-primary/[0.04]',
                     )}
                   >
-                  <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">
-                    #{item.position}
-                  </span>
-                  <Avatar size="sm" className="border">
-                    <AvatarFallback>
-                      {initialsOf(item.clientName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-medium truncate">
-                        {item.lamId}
+                    <span className="w-8 text-center text-sm font-semibold tabular-nums text-muted-foreground">
+                      #{item.position}
+                    </span>
+                    <Avatar size="sm" className="border">
+                      <AvatarFallback>
+                        {initialsOf(item.clientName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2">
+                        <p className="truncate text-sm font-medium">
+                          {item.lamId}
+                        </p>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'h-4 px-1.5 py-0 text-[10px] font-normal',
+                            statusStyles[item.status],
+                          )}
+                        >
+                          {item.status}
+                        </Badge>
+                      </div>
+                      <p
+                        className="truncate text-xs"
+                        title={`${item.clientName} · encoded by ${item.encoderName} · ${item.branch}`}
+                      >
+                        <span className="font-medium text-foreground/90">
+                          {item.clientName}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {' '}
+                          · by {item.encoderName}
+                        </span>
                       </p>
-                      <Badge
-                        variant="outline"
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <span
                         className={cn(
-                          'text-[10px] px-1.5 py-0 h-4 font-normal',
-                          statusStyles[item.status],
+                          'text-sm font-medium tabular-nums',
+                          assessment.tier === 'warning' &&
+                            'text-amber-600 dark:text-amber-400',
+                          assessment.tier === 'breach' &&
+                            'text-red-600 dark:text-red-400',
                         )}
                       >
-                        {item.status}
-                      </Badge>
+                        {formatWaiting(mins)}
+                      </span>
                     </div>
-                    <p
-                      className="text-xs truncate"
-                      title={`${item.clientName} · encoded by ${item.encoderName} · ${item.branch}`}
-                    >
-                      <span className="font-medium text-foreground/90">
-                        {item.clientName}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {' '}
-                        · by {item.encoderName}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span
-                      className={cn(
-                        'text-sm font-medium tabular-nums',
-                        assessment.tier === 'warning' &&
-                          'text-amber-600 dark:text-amber-400',
-                        assessment.tier === 'breach' &&
-                          'text-red-600 dark:text-red-400',
-                      )}
-                    >
-                      {formatWaiting(mins)}
-                    </span>
-                  </div>
                   </button>
                 </li>
               )
             })}
           </ul>
-  )
-
-  if (compact) {
-    return <div id="pending-queue">{listBody}</div>
-  }
-
-  return (
-    <Card id="pending-queue" className="scroll-mt-24 flex flex-col">
-      <CardHeader className="flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          Pending Queue
-          {data.length > 0 && (
-            <Badge variant="secondary" className="tabular-nums">
-              {data.length}
-            </Badge>
+          {totalCount > PAGE_SIZE && (
+            <footer className="flex items-center justify-between border-t px-3 py-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <CaretLeft size={14} /> Prev
+              </Button>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next <CaretRight size={14} />
+              </Button>
+            </footer>
           )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0 flex-1">{listBody}</CardContent>
-      {data.length > 5 && (
-        <CardFooter className="border-t p-3 justify-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              navigate({
-                to: '/loans/monitoring',
-                search: { status: pendingStatuses },
-              })
-            }
-            className="w-full text-sm"
-          >
-            View all {data.length} pending loans
-          </Button>
-        </CardFooter>
+        </div>
       )}
-    </Card>
+    </section>
   )
 })

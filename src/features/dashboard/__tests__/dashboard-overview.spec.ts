@@ -25,6 +25,7 @@ describe('mapDashboardOverview', () => {
     expect(data.approvedLoans).toEqual([])
     expect(data.weeklyTrend).toEqual([])
     expect(data.incompleteDocsQueue).toEqual([])
+    expect(data.requireRecommendation).toBe(true)
     expect(data.fetchedAt).toBeTruthy()
   })
 
@@ -109,5 +110,18 @@ describe('mapDashboardOverview', () => {
       '3f2c1a00-0000-4000-8000-000000000001',
     )
     expect(data.incompleteDocsQueue[0]?.lamId).toBe('LAM-9')
+  })
+
+  it('maps the recommendation workflow flag', () => {
+    const data = mapDashboardOverview({
+      pendingRecommendation: 0,
+      pendingEvaluation: 0,
+      pendingApproval: 0,
+      approvedToday: 0,
+      pushbacks: 0,
+      requireRecommendation: false,
+    })
+
+    expect(data.requireRecommendation).toBe(false)
   })
 })

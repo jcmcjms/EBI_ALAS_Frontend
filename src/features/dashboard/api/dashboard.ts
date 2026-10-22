@@ -1,5 +1,6 @@
 import { apiClient } from '@/src/shared/lib/apiClient'
-import type { DashboardData, LoanStatus } from '../types'
+import type { BackendPageResult } from '@/src/shared/lib/api/types'
+import type { DashboardData, LoanStatus, PendingQueueItem } from '../types'
 
 export interface DashboardOverviewResponse {
   pendingRecommendation: number
@@ -7,6 +8,7 @@ export interface DashboardOverviewResponse {
   pendingApproval: number
   approvedToday: number
   pushbacks: number
+  requireRecommendation?: boolean
   nowServingCount?: number
   flaggedDocuments?: {
     id: string
@@ -84,6 +86,7 @@ export function mapDashboardOverview(
       clientName: p.clientName,
       encoderName: p.encoderName,
     })),
+    requireRecommendation: o.requireRecommendation ?? true,
     nowServing: nowServing.map((s) => ({
       number: s.number,
       checker: s.checker,
@@ -145,4 +148,39 @@ export async function getDashboardOverview(
     dashboardOverviewUrl(date),
   )
   return mapDashboardOverview(res.data)
+}
+
+interface PendingQueueResponseItem {
+  position: number
+  lamId: string
+  branchId: string
+  status: string
+  statusKey: string
+  date: string
+  clientName: string
+  encoderName: string
+}
+
+export async function getPendingQueue(
+  status: string,
+  page: number,
+  pageSize: number,
+): Promise<{ items: PendingQueueItem[]; totalCount: number }> {
+  const res = await apiClient.get<BackendPageResult<PendingQueueResponseItem>>(
+    '/api/dashboard/pending-queue',
+    { params: { status, page, pageSize } },
+  )
+  return {
+    items: res.data.items.map((p) => ({
+      position: p.position,
+      lamId: p.lamId,
+      branch: p.branchId,
+      status: toStatus(p.status),
+      statusKey: p.statusKey,
+      date: p.date,
+      clientName: p.clientName,
+      encoderName: p.encoderName,
+    })),
+    totalCount: res.data.totalCount,
+  }
 }
