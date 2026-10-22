@@ -7,6 +7,7 @@ import {
 import type {
   BackendUserDto,
   CreateUserPayload,
+  ResetPasswordResponse,
   UpdateUserPayload,
   UserImportResult,
   UserQueryParams,
@@ -119,6 +120,29 @@ export async function updateUserAvailability(
     { available },
   )
   return toUserResponse(res.data)
+}
+
+export async function resetPassword(
+  id: string,
+): Promise<ResetPasswordResponse> {
+  const res = await apiClient.post<ResetPasswordResponse>(
+    `/api/users/${id}/reset-password`,
+  )
+  return res.data
+}
+
+export async function forcePasswordReset(id: string): Promise<UserResponse> {
+  const res = await apiClient.post<BackendUserDto>(
+    `/api/users/${id}/force-password-reset`,
+  )
+  return toUserResponse(res.data)
+}
+
+export async function revokeSessions(id: string): Promise<number> {
+  const res = await apiClient.post<{ revokedCount: number }>(
+    `/api/users/${id}/revoke-sessions`,
+  )
+  return res.data.revokedCount
 }
 
 export async function setMyAvailability(

@@ -8,8 +8,11 @@ import type {
 } from '../api/users-types'
 import {
   createUser,
+  forcePasswordReset,
   getUser,
   listUsers,
+  resetPassword,
+  revokeSessions,
   updateUser,
   updateUserAvailability,
   updateUserStatus,
@@ -99,5 +102,23 @@ export function useUpdateUserAvailability() {
     onSuccess: async () => {
       await invalidate()
     },
+  })
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: (id: string) => resetPassword(id),
+  })
+}
+
+export function useForcePasswordReset() {
+  return useMutation({
+    mutationFn: (id: string) => forcePasswordReset(id),
+  })
+}
+
+export function useRevokeSessions() {
+  return useMutation({
+    mutationFn: (id: string) => revokeSessions(id),
   })
 }

@@ -8,7 +8,15 @@ import type {
   UserResponse,
 } from '../api/users-types'
 import { useAuthStore } from '@/src/shared/store/auth-store'
-import { useCreateUser, useUpdateUser, useUpdateUserAvailability, useUpdateUserStatus } from './use-users'
+import {
+  useCreateUser,
+  useForcePasswordReset,
+  useResetPassword,
+  useRevokeSessions,
+  useUpdateUser,
+  useUpdateUserAvailability,
+  useUpdateUserStatus,
+} from './use-users'
 import type { UserProfileChanges } from '../components/user-edit-drawer'
 import type { UserCreatePayload } from '../components/user-create-drawer'
 import type { TemporaryCredential } from '../components/temporary-password-dialog'
@@ -22,10 +30,6 @@ export interface ConfirmActionState {
   onConfirm: () => void
 }
 
-function toastNotAvailable(feature: string) {
-  toastError(`${feature} is not available on this API yet.`)
-}
-
 export function useUserActions() {
   const hasPermission = useAuthStore((s) => s.hasPermission)
   const canSuspendUsers = hasPermission(PERMISSIONS.userSuspend)
@@ -34,6 +38,9 @@ export function useUserActions() {
   const updateUserMutation = useUpdateUser()
   const updateUserStatusMutation = useUpdateUserStatus()
   const updateUserAvailabilityMutation = useUpdateUserAvailability()
+  const resetPasswordMutation = useResetPassword()
+  const forcePasswordResetMutation = useForcePasswordReset()
+  const revokeSessionsMutation = useRevokeSessions()
 
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(
     null,
@@ -106,19 +113,40 @@ export function useUserActions() {
     )
   }
 
-  function handleResetPasswordRequest(user: UserResponse) {
-    void user
-    toastNotAvailable('Password reset')
+  async function handleResetPasswordRequest(user: UserResponse) {
+    try {
+      const result = await resetPasswordMutation.mutateAsync(user.id)
+      setTempCred({
+        username: result.username,
+        temporaryPassword: result.temporaryPassword,
+      })
+    } catch (error) {
+      toastError(getErrorMessage(error))
+    }
   }
 
-  function handleForcePasswordResetRequest(user: UserResponse) {
-    void user
-    toastNotAvailable('Forced password reset')
+  async function handleForcePasswordResetRequest(user: UserResponse) {
+    try {
+      await forcePasswordResetMutation.mutateAsync(user.id)
+      toastSuccess(
+        `${formatFullName(user)} will be required to change their password on next login.`,
+      )
+    } catch (error) {
+      toastError(getErrorMessage(error))
+    }
   }
 
-  function handleRevokeSessionsRequest(user: UserResponse) {
-    void user
-    toastNotAvailable('Session revocation')
+  async function handleRevokeSessionsRequest(user: UserResponse) {
+    try {
+      const count = await revokeSessionsMutation.mutateAsync(user.id)
+      toastSuccess(
+        count > 0
+          ? `Revoked ${count} active session${count === 1 ? '' : 's'} for ${formatFullName(user)}.`
+          : `${formatFullName(user)} has no active sessions.`,
+      )
+    } catch (error) {
+      toastError(getErrorMessage(error))
+    }
   }
 
   async function handleCreateUser(
@@ -188,6 +216,6 @@ export function useUserActions() {
     handleRevokeSessionsRequest,
     handleCreateUser,
     handleUpdateUser,
-    isResetPasswordPending: false,
+    isResetPasswordPending: resetPasswordMutation.isPending,
   }
 }

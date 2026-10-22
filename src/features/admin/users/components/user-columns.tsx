@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-table'
 import {
   CaretDown,
+  Clock,
   Key,
   Pencil,
   ShieldCheck,
@@ -202,9 +203,8 @@ export const columns = columnHelper.columns([
             <DropdownMenuItem
               onClick={() => meta?.onToggleAvailability?.(user)}
             >
-              {user.isAvailable
-                ? 'Mark Unavailable'
-                : 'Mark Available'}
+              <Clock size={14} />
+              {user.isAvailable ? 'Mark Unavailable' : 'Mark Available'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {user.isActive ? (
