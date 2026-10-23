@@ -86,6 +86,7 @@ export function buildUnifiedAuditTrail(
   actions: ApprovalFormActionEntry[] | undefined,
   deviations: LoanDeviationDto[] | undefined,
   documentRemarks: DocumentRemarkDto[] | undefined,
+  documentLabels?: Record<string, string>,
 ): UnifiedAuditEntry[] {
   const entries: UnifiedAuditEntry[] = []
 
@@ -121,11 +122,13 @@ export function buildUnifiedAuditTrail(
 
   if (documentRemarks) {
     for (const remark of documentRemarks) {
+      const label =
+        documentLabels?.[remark.checklistIdCode] ?? remark.checklistIdCode
       entries.push({
         id: `doc-remark-${remark.id}`,
         type: 'document-remark',
         label: 'Document Remark',
-        context: remark.checklistIdCode,
+        context: label,
         actor: remark.authorName,
         timestamp: remark.createdAt,
         content: remark.body,
