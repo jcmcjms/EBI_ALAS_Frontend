@@ -31,11 +31,22 @@ function RevealToggle({
       aria-label={label}
       aria-pressed={revealed}
     >
-      {revealed ? (
-        <EyeSlash size={16} weight="bold" />
-      ) : (
-        <Eye size={16} weight="bold" />
-      )}
+      <span className="relative h-4 w-4 flex items-center justify-center">
+        <Eye
+          size={16}
+          weight="bold"
+          className={`absolute transition-opacity duration-150 ease-in-out ${
+            revealed ? 'opacity-0' : 'opacity-100'
+          }`}
+        />
+        <EyeSlash
+          size={16}
+          weight="bold"
+          className={`absolute transition-opacity duration-150 ease-in-out ${
+            revealed ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      </span>
     </Button>
   )
 }
