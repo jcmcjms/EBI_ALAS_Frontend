@@ -95,7 +95,10 @@ export const preLoanRefSchema = z.object({
 export const ebiReloanSchema = z.object({
   pn: z.string().default(''),
   name: z.string().default(''),
-  existingDeduction: z.number().default(0),
+  existingDeduction: z
+    .number()
+    .min(0, 'Deductions must be a positive amount')
+    .default(0),
   outstandingBalance: z.number().default(0),
   payToClose: z
     .number()

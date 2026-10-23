@@ -88,9 +88,19 @@ export function EbiReloansTable({
               <TableCell className="min-w-0">
                 <Input
                   type="number"
+                  min={0}
+                  step="0.01"
+                  inputMode="decimal"
                   value={row.existingDeduction ?? 0}
-                  readOnly
-                  className="h-8 text-right text-xs bg-muted/50"
+                  onChange={(e) =>
+                    setCell(
+                      `${loanPath}.ebiReloans.${i}.existingDeduction`,
+                      Number(e.target.value || 0),
+                    )
+                  }
+                  placeholder="0.00"
+                  aria-label={`Deductions for ${row.name ?? row.pn ?? `row ${i + 1}`}`}
+                  className="h-8 text-right text-xs"
                 />
               </TableCell>
               <TableCell>
