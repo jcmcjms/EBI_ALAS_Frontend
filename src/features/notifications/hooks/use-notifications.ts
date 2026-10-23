@@ -57,9 +57,8 @@ export function useMarkNotificationRead() {
       markRead(id)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: notificationKeys.all,
-      })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'inbox'] })
     },
     onError: (error) => {
       toastError(getErrorMessage(error))
@@ -80,9 +79,8 @@ export function useMarkAllNotificationsRead() {
       markAllRead()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: notificationKeys.all,
-      })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'inbox'] })
     },
     onError: (error) => {
       toastError(getErrorMessage(error))

@@ -25,33 +25,30 @@ export interface InboxPage {
   unreadCount: number
 }
 
-function isInboxQueryMatch(row: NotificationResponse, params: InboxQuery): boolean {
-  if (params.status === 'unread' && row.readAt) return false
-  if (params.status === 'read' && !row.readAt) return false
-  if (params.type && row.type !== params.type) return false
-  if (params.search) {
-    const q = params.search.toLowerCase()
-    if (!row.title.toLowerCase().includes(q) && !row.body.toLowerCase().includes(q)) {
-      return false
-    }
-  }
-  return true
-}
-
 export async function getNotifications(): Promise<NotificationResponse[]> {
-  const { data } = await apiClient.get<NotificationResponse[]>('/api/notifications')
-  return Array.isArray(data) ? data : []
+  const { data } = await apiClient.get<InboxPage | NotificationResponse[]>(
+    '/api/notifications',
+  )
+  if (Array.isArray(data)) return data
+  return data.items ?? []
 }
 
 export async function getNotificationInbox(
   params: InboxQuery = {},
 ): Promise<InboxPage> {
-  const rows = await getNotifications()
-  const filtered = rows.filter((row) => isInboxQueryMatch(row, params))
+  const { data } = await apiClient.get<InboxPage>('/api/notifications', {
+    params: {
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+      status: params.status && params.status !== 'all' ? params.status : undefined,
+      type: params.type,
+      search: params.search,
+    },
+  })
   return {
-    items: filtered,
-    totalCount: filtered.length,
-    unreadCount: filtered.filter((row) => !row.readAt).length,
+    items: data.items ?? [],
+    totalCount: data.totalCount ?? 0,
+    unreadCount: data.unreadCount ?? 0,
   }
 }
 

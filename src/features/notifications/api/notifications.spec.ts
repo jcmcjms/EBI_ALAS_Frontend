@@ -26,14 +26,40 @@ beforeEach(() => {
 
 describe('getNotifications', () => {
   it('requests GET /api/notifications (not /recent)', async () => {
-    mockedGet.mockResolvedValue({ data: [] })
+    mockedGet.mockResolvedValue({ data: { items: [], totalCount: 0, unreadCount: 0 } })
 
     await getNotifications()
 
     expect(mockedGet).toHaveBeenCalledWith('/api/notifications')
   })
 
-  it('returns mapped rows from a raw array payload', async () => {
+  it('unwraps envelope items and still accepts a raw array', async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: '11111111-1111-1111-1111-111111111111',
+            title: 'Loan submitted',
+            body: 'Ready for recommendation',
+            type: 'Action',
+            createdAt: '2026-10-09T01:00:00Z',
+            readAt: null,
+          },
+        ],
+        totalCount: 1,
+        unreadCount: 1,
+      },
+    })
+
+    const rows = await getNotifications()
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      title: 'Loan submitted',
+      body: 'Ready for recommendation',
+      readAt: null,
+    })
+
     mockedGet.mockResolvedValue({
       data: [
         {
@@ -47,14 +73,7 @@ describe('getNotifications', () => {
       ],
     })
 
-    const rows = await getNotifications()
-
-    expect(rows).toHaveLength(1)
-    expect(rows[0]).toMatchObject({
-      title: 'Loan submitted',
-      body: 'Ready for recommendation',
-      readAt: null,
-    })
+    expect(await getNotifications()).toHaveLength(1)
   })
 })
 
@@ -102,32 +121,61 @@ describe('markAllNotificationsRead', () => {
 })
 
 describe('getNotificationInbox', () => {
-  it('derives inbox page fields from the raw list payload', async () => {
+  it('passes filters and paging to the API', async () => {
     mockedGet.mockResolvedValue({
-      data: [
-        {
-          id: '44444444-4444-4444-4444-444444444444',
-          title: 'A',
-          body: 'B',
-          type: 'Action',
-          createdAt: '2026-10-09T01:00:00Z',
-          readAt: null,
-        },
-        {
-          id: '55555555-5555-5555-5555-555555555555',
-          title: 'C',
-          body: 'D',
-          type: 'Action',
-          createdAt: '2026-10-09T00:00:00Z',
-          readAt: '2026-10-09T00:30:00Z',
-        },
-      ],
+      data: {
+        items: [
+          {
+            id: '44444444-4444-4444-4444-444444444444',
+            title: 'A',
+            body: 'B',
+            type: 'Application',
+            createdAt: '2026-10-09T01:00:00Z',
+            readAt: null,
+          },
+        ],
+        totalCount: 12,
+        unreadCount: 4,
+      },
     })
 
-    const page = await getNotificationInbox()
+    const page = await getNotificationInbox({
+      page: 2,
+      pageSize: 5,
+      status: 'unread',
+      type: 'application',
+      search: 'loan',
+    })
 
-    expect(page.totalCount).toBe(2)
-    expect(page.unreadCount).toBe(1)
-    expect(page.items).toHaveLength(2)
+    expect(mockedGet).toHaveBeenCalledWith('/api/notifications', {
+      params: {
+        page: 2,
+        pageSize: 5,
+        status: 'unread',
+        type: 'application',
+        search: 'loan',
+      },
+    })
+    expect(page.totalCount).toBe(12)
+    expect(page.unreadCount).toBe(4)
+    expect(page.items).toHaveLength(1)
+  })
+
+  it('omits status when filter is all', async () => {
+    mockedGet.mockResolvedValue({
+      data: { items: [], totalCount: 0, unreadCount: 0 },
+    })
+
+    await getNotificationInbox({ status: 'all' })
+
+    expect(mockedGet).toHaveBeenCalledWith('/api/notifications', {
+      params: {
+        page: 1,
+        pageSize: 10,
+        status: undefined,
+        type: undefined,
+        search: undefined,
+      },
+    })
   })
 })
