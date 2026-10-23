@@ -153,6 +153,15 @@ describe('mapLoanDetailToFormData', () => {
     expect(form.outstandingLoans[0].outstandingBalance).toBe(42000)
   })
 
+  it('normalizes decimal interest rates to percent', () => {
+    const detail = baseDetail()
+    detail.interestRate = 0.075
+
+    const form = mapLoanDetailToFormData(detail)
+
+    expect(form.loans[0].parameters.interestRate).toBe(7.5)
+  })
+
   it('maps frozen approvalTermDays / annualRatePercent / policyTermMonths onto loans[0]', () => {
     const form = mapLoanDetailToFormData(baseDetail())
     const loan = form.loans[0]
@@ -233,5 +242,34 @@ describe('mapLoanDetailToFormData', () => {
     expect(form.client.firstName).toBe('Snap')
     expect(form.loans[0].loanNo).toBe('PN-55')
     expect(form.loans[0].parameters.proposedAmount).toBe(50000)
+    expect(form.loans[0].parameters.interestRate).toBe(5)
+  })
+
+  it('normalizes decimal interest rates inside a form snapshot', () => {
+    const detail = baseDetail()
+    detail.cisId = null
+    detail.form = {
+      client: { cisId: 'CIS-1', firstName: 'A', lastName: 'B', netTakeHomePay: 1 },
+      loans: [
+        {
+          loanNo: 'PN-1',
+          parameters: { interestRate: 0.075 },
+          ebiReloans: [],
+          buyOuts: [],
+          incomingLoans: [],
+          verification: { findings: '' },
+          deviations: {
+            hasDeviations: false,
+            deviationDetails: [],
+            deviationJustifications: {},
+          },
+        },
+      ],
+      outstandingLoans: [],
+    }
+
+    const form = mapLoanDetailToFormData(detail)
+
+    expect(form.loans[0].parameters.interestRate).toBe(7.5)
   })
 })

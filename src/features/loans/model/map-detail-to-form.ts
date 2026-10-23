@@ -5,6 +5,7 @@ import {
   DEVIATION_REASONS,
   type DeviationReason,
 } from '../schemas/schema'
+import { toAnnualRatePercent } from './loan-approval-utils'
 
 const DEVIATION_REASON_SET: ReadonlySet<string> = new Set(DEVIATION_REASONS)
 
@@ -29,7 +30,16 @@ export function mapLoanDetailToFormData(
 ): LoanApplicationFormData {
   const snapshot = readFormSnapshot(l.form)
   if (snapshot) {
-    return snapshot
+    return {
+      ...snapshot,
+      loans: snapshot.loans.map((loan) => ({
+        ...loan,
+        parameters: {
+          ...loan.parameters,
+          interestRate: toAnnualRatePercent(loan.parameters?.interestRate),
+        },
+      })),
+    }
   }
 
   const creationTypeCode: 0 | 1 | 2 | 6 =
@@ -88,7 +98,7 @@ export function mapLoanDetailToFormData(
           proposedAmount: l.proposedAmount,
           term: l.termDays,
           policyTermMonths: l.policyTermMonths ?? undefined,
-          interestRate: l.interestRate,
+          interestRate: toAnnualRatePercent(l.interestRate),
           nthpDate: l.nthpDate ?? undefined,
           notarialFee: l.notarialFee ?? 0,
           docStamps: l.docStamps ?? 0,

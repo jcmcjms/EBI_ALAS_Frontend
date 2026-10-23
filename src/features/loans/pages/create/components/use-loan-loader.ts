@@ -21,6 +21,7 @@ import {
   CREATION_TYPE,
   createPerLoanSectionDefaults,
 } from '@/src/features/loans/schemas/schema'
+import { toAnnualRatePercent } from '@/src/features/loans/model/loan-approval-utils'
 
 export function extractProductCode(desc: string | undefined): string | null {
   if (!desc) return null
@@ -254,7 +255,7 @@ export function useLoanLoader(
         product: loan.productWithDescription ?? '',
         purpose: loan.loanPurpose ?? '',
         proposedAmount: loan.principal ?? 0,
-        interestRate: loan.grantedRate ?? 0,
+        interestRate: toAnnualRatePercent(loan.grantedRate),
         term: Math.round(loan.totalTermDays ?? 0),
         policyTermMonths: loan.policyTermMonths ?? undefined,
         nthpDate: pendingNthpDate ? normalizeIsoDate(pendingNthpDate) : undefined,

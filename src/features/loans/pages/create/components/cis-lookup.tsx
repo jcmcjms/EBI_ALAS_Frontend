@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
 import { toastSuccess, toastError, toastInfo } from '@/src/shared/ui/feedback/toast'
-import { IdentificationCard, CloudCheck } from '@phosphor-icons/react'
-
-import { Badge } from '@/src/shared/ui/primitives/badge'
+import { IdentificationCard } from '@phosphor-icons/react'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { getWebLoanByCis } from '@/src/features/loans/api/webloans'
 import {
@@ -257,15 +255,6 @@ export function CISLookup({
               <SubSectionHeading
                 step="1.2"
                 title="Branch & type"
-                actions={
-                  <Badge
-                    variant="outline"
-                    className="gap-1 text-xs font-normal"
-                  >
-                    <CloudCheck size={12} weight="bold" />
-                    System verified
-                  </Badge>
-                }
               />
               {activeLoans.length > 1 ? (
                 <PerLoanTabs

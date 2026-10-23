@@ -8,6 +8,7 @@ import {
 } from '@/src/shared/ui/data-display/tooltip'
 import { cn } from '@/src/shared/lib/utils'
 import type { PendingLoan } from '../../../api/loan-types'
+import { toAnnualRatePercent } from '@/src/features/loans/model/loan-approval-utils'
 import { extractProductCode } from './use-loan-loader'
 
 interface LoanSelectionListProps {
@@ -127,7 +128,9 @@ export function LoanSelectionList({
                         {' · '}
                         Rate:{' '}
                         <span className="font-medium text-foreground">
-                          {l.grantedRate ?? '—'}%
+                          {l.grantedRate == null
+                            ? '—'
+                            : `${toAnnualRatePercent(l.grantedRate)}%`}
                         </span>
                         {l.totalTermDays != null && (
                           <>

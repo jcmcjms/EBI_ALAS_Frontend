@@ -1,10 +1,11 @@
-import { useFormContext } from 'react-hook-form'
+import { useFormContext, useWatch } from 'react-hook-form'
 import { CalendarBlank } from '@phosphor-icons/react'
 
 import { Input } from '@/src/shared/ui/primitives/input'
 import { Label } from '@/src/shared/ui/primitives/label'
 import { cn } from '@/src/shared/lib/utils'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
+import { toAnnualRatePercent } from '@/src/features/loans/model/loan-approval-utils'
 
 interface LoanParametersFieldsProps {
   fieldPrefix: string
@@ -28,6 +29,7 @@ export function LoanParametersFields({
   const policyTermMonthsPath = `${fieldPrefix}.policyTermMonths` as const
   const interestRatePath = `${fieldPrefix}.interestRate` as const
   const nthpDatePath = `${fieldPrefix}.nthpDate` as const
+  const interestRate = useWatch({ name: interestRatePath }) as number | undefined
 
   return (
     <div className="space-y-5">
@@ -106,7 +108,7 @@ export function LoanParametersFields({
             Interest Rate (% p.a.)
           </Label>
           <Input
-            {...register(interestRatePath, { valueAsNumber: true })}
+            value={toAnnualRatePercent(interestRate)}
             type="number"
             step="0.1"
             placeholder="1.5"
