@@ -34,6 +34,10 @@ import {
 } from '@/src/features/loans/constants/sections'
 
 import { sectionErrorCount } from './section-stepper-utils'
+import {
+  collectErrorMessages,
+  formatErrorSummary,
+} from './form-footer-utils'
 import { DesktopStepper, MobileSectionNav, type StepperProps } from './section-nav'
 import { LoanFormSections } from './loan-form-sections'
 import { isCreateFormUnlocked } from './client-confirm-utils'
@@ -208,8 +212,12 @@ export function LoanCreationPage() {
       const first = SECTIONS.find(
         (s) => sectionErrorCount(fieldErrors, s.id) > 0,
       )
+      const messages = collectErrorMessages(fieldErrors)
+      const summary = formatErrorSummary(messages)
       toastError(
-        `${total} field${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} attention before submission.`,
+        summary
+          ? `${summary} — fix before submission.`
+          : `${total} field${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} attention before submission.`,
       )
       if (first) scrollToSection(first.id)
     },
@@ -224,6 +232,7 @@ export function LoanCreationPage() {
   const totalErrors = submitAttempted
     ? SECTIONS.reduce((n, s) => n + sectionErrorCount(errors, s.id), 0)
     : 0
+  const errorMessages = submitAttempted ? collectErrorMessages(errors) : []
 
   const branchTypeCode = useWatch({
     control,
@@ -329,6 +338,7 @@ export function LoanCreationPage() {
 
             <FormFooter
               totalErrors={totalErrors}
+              errorMessages={errorMessages}
               activeSection={activeSection}
               visibleSectionIds={visibleSectionIds}
               canSubmit={canSubmit}

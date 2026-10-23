@@ -6,10 +6,11 @@ import {
 } from '@phosphor-icons/react'
 import { Button } from '@/src/shared/ui/primitives/button'
 import type { SectionId } from '@/src/features/loans/constants/sections'
-import { formFooterMode } from './form-footer-utils'
+import { formFooterMode, formatErrorSummary } from './form-footer-utils'
 
 interface FormFooterProps {
   totalErrors: number
+  errorMessages: string[]
   activeSection: SectionId
   visibleSectionIds: SectionId[]
   canSubmit: boolean
@@ -24,6 +25,7 @@ interface FormFooterProps {
 
 export function FormFooter({
   totalErrors,
+  errorMessages,
   activeSection,
   visibleSectionIds,
   canSubmit,
@@ -79,8 +81,10 @@ export function FormFooter({
                 }
                 className="underline-offset-4 hover:underline"
               >
-                {totalErrors} field{totalErrors === 1 ? '' : 's'} need
-                {totalErrors === 1 ? 's' : ''} attention — jump to first
+                {errorMessages.length > 0
+                  ? formatErrorSummary(errorMessages)
+                  : `${totalErrors} field${totalErrors === 1 ? '' : 's'} need${totalErrors === 1 ? 's' : ''} attention`}
+                {' — jump to first'}
               </button>
             </div>
           ) : (
