@@ -1,5 +1,10 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/src/shared/lib/apiClient'
+import {
+  getWorkflowConfiguration,
+  workflowKeys,
+} from '@/src/shared/lib/api/workflow-shared'
 
 
 export interface SignatureSlotDto {
@@ -51,23 +56,63 @@ export async function getLoanSignatureChain(
   return res.data
 }
 
+export function filterVisibleSignatureSlots(
+  slots: SignatureSlotDto[],
+  requireRecommendation: boolean | undefined,
+): SignatureSlotDto[] {
+  if (requireRecommendation !== false) return slots
+  return slots.filter((s) => s.role.toLowerCase() !== 'recommender')
+}
+
 export function useSignatureChain() {
-  return useQuery({
+  const query = useQuery({
     queryKey: signatureKeys.chain,
     queryFn: getSignatureChain,
     staleTime: 3_600_000,
   })
+  const workflow = useQuery({
+    queryKey: workflowKeys.configuration,
+    queryFn: getWorkflowConfiguration,
+    staleTime: 60_000,
+  })
+  return {
+    ...query,
+    data: useMemo(
+      () =>
+        filterVisibleSignatureSlots(
+          query.data ?? [],
+          workflow.data?.requireRecommendation,
+        ),
+      [query.data, workflow.data?.requireRecommendation],
+    ),
+  }
 }
 
 export function useLoanSignatureChain(loanId?: number | string) {
   const enabled =
     loanId != null && loanId !== '' && loanId !== 'NaN' && loanId !== 'undefined'
-  return useQuery({
+  const query = useQuery({
     queryKey: signatureKeys.loan(loanId ?? 'none'),
     queryFn: () => getLoanSignatureChain(loanId!),
     enabled,
     staleTime: 60_000,
   })
+  const workflow = useQuery({
+    queryKey: workflowKeys.configuration,
+    queryFn: getWorkflowConfiguration,
+    staleTime: 60_000,
+  })
+  return {
+    ...query,
+    data: useMemo(
+      () =>
+        filterVisibleSignatureSlots(
+          query.data ?? [],
+          workflow.data?.requireRecommendation,
+        ),
+      [query.data, workflow.data?.requireRecommendation],
+    ),
+  }
 }
 
 interface DraftUser {
