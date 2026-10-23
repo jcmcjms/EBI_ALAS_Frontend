@@ -49,8 +49,8 @@ export function ApprovalPageHeader({
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => onNavigate('/loans/monitoring')}
-            aria-label="Back to monitoring"
+            onClick={() => onNavigate('/loans/queue')}
+            aria-label="Back to review desk"
           >
             <ArrowLeft size={18} weight="bold" />
           </Button>
