@@ -163,7 +163,11 @@ export function LoanApprovalPage() {
         <div className="mb-6">
           <IncompleteDocumentsAlert
             count={
-              checklist.data?.filter((d) => d.uploadStatus !== 'Uploaded')
+              checklist.data?.filter(
+                (d) =>
+                  d.uploadStatus !== 'Uploaded' &&
+                  d.uploadStatus !== 'Submitted',
+              )
                 .length ?? 0
             }
             onReview={() => {
@@ -229,7 +233,9 @@ export function LoanApprovalPage() {
                   onRetryDraftSave={retryDraftSave}
                   missingDocCount={
                     checklist.data?.filter(
-                      (d) => d.uploadStatus !== 'Uploaded',
+                      (d) =>
+                        d.uploadStatus !== 'Uploaded' &&
+                        d.uploadStatus !== 'Submitted',
                     ).length ?? 0
                   }
                 />

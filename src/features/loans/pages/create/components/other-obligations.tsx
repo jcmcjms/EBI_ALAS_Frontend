@@ -15,6 +15,10 @@ import type {
   BuyOut,
   IncomingLoan,
 } from '@/src/features/loans/schemas/schema'
+import { parseProductCode } from '@/src/features/loans/model/loan-product-display'
+
+/** ATM / salary products do not declare incoming loans on the create form. */
+const HIDES_INCOMING_PRODUCTS = new Set(['C02', 'C21', 'C23', 'C35'])
 
 export function OtherObligationsSection() {
   const { loans } = useActiveLoan()
@@ -71,6 +75,16 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
       control,
       name: `${P}.incomingLoans` as FieldPath<LoanApplicationFormData>,
     }) as IncomingLoan[] | undefined) ?? []
+  const productRaw = useWatch({
+    control,
+    name: `${P}.parameters.product` as FieldPath<LoanApplicationFormData>,
+  }) as string | undefined
+  const loanProductCode = useWatch({
+    control,
+    name: `${P}.productCode` as FieldPath<LoanApplicationFormData>,
+  }) as string | undefined
+  const productCode = parseProductCode(productRaw) || (loanProductCode ?? '')
+  const showIncoming = !HIDES_INCOMING_PRODUCTS.has(productCode)
 
   const setCell = (path: string, value: unknown) =>
     setValue(path as FieldPath<LoanApplicationFormData>, value as never, {
@@ -102,13 +116,15 @@ function OtherObligationsFields({ loanIndex }: { loanIndex: number }) {
         addBuyOut={addBuyOut}
         removeRow={removeRow}
       />
-      <IncomingLoansTable
-        rows={incoming}
-        loanPath={P}
-        setCell={setCell}
-        addIncoming={addIncoming}
-        removeRow={removeRow}
-      />
+      {showIncoming && (
+        <IncomingLoansTable
+          rows={incoming}
+          loanPath={P}
+          setCell={setCell}
+          addIncoming={addIncoming}
+          removeRow={removeRow}
+        />
+      )}
     </>
   )
 }

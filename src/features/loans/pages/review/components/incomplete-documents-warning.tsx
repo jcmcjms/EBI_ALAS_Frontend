@@ -18,7 +18,9 @@ interface Props {
 }
 
 export function IncompleteDocumentsWarning({ checklist, documentFlag }: Props) {
-  const pending = (checklist ?? []).filter((i) => i.uploadStatus !== 'Uploaded')
+  const pending = (checklist ?? []).filter(
+    (i) => i.uploadStatus !== 'Uploaded' && i.uploadStatus !== 'Submitted',
+  )
   const hasFlag = documentFlag != null
   if (!hasFlag && pending.length === 0) return null
 

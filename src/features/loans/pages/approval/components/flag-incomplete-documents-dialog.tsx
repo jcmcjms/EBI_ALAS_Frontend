@@ -43,7 +43,12 @@ export function FlagIncompleteDocumentsDialog({
   useEffect(() => {
     if (open) {
       setSelected(
-        items.filter((i) => i.uploadStatus !== 'Uploaded').map((i) => i.idCode),
+        items
+          .filter(
+            (i) =>
+              i.uploadStatus !== 'Uploaded' && i.uploadStatus !== 'Submitted',
+          )
+          .map((i) => i.idCode),
       )
       setComments('')
       setAttempted(false)
@@ -109,7 +114,8 @@ export function FlagIncompleteDocumentsDialog({
                   <span className="text-xs text-muted-foreground">
                     ({item.idCode})
                   </span>
-                  {item.uploadStatus !== 'Uploaded' && (
+                  {item.uploadStatus !== 'Uploaded' &&
+                    item.uploadStatus !== 'Submitted' && (
                     <Badge variant="secondary" className="ml-2 text-[10px]">
                       not uploaded
                     </Badge>

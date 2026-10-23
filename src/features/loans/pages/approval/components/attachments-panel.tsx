@@ -91,7 +91,10 @@ export function AttachmentsPanel({
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [focusDocCode, items])
   const pending = useMemo(
-    () => items.filter((i) => i.uploadStatus !== 'Uploaded'),
+    () =>
+      items.filter(
+        (i) => i.uploadStatus !== 'Uploaded' && i.uploadStatus !== 'Submitted',
+      ),
     [items],
   )
   const uploadedCount = items.length - pending.length
@@ -134,7 +137,9 @@ export function AttachmentsPanel({
       {items.length > 0 && (
         <ul className="space-y-2">
           {items.map((item, index) => {
-            const isPending = item.uploadStatus !== 'Uploaded'
+            const isPending =
+              item.uploadStatus !== 'Uploaded' &&
+              item.uploadStatus !== 'Submitted'
             const threadOpen = openThread === item.idCode
             const remarkCount = remarksFor(item.idCode).length
             return (
@@ -240,7 +245,11 @@ export function AttachmentsPanel({
                     variant={isPending ? 'outline' : 'default'}
                     className="shrink-0 text-[10px]"
                   >
-                    {isPending ? 'Pending' : 'Uploaded'}
+                    {isPending
+                      ? 'Pending'
+                      : item.uploadStatus === 'Submitted'
+                        ? 'Submitted'
+                        : 'Uploaded'}
                   </Badge>
                 </div>
                 {threadOpen && (
