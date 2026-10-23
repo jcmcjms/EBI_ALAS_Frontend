@@ -39,6 +39,11 @@ const BranchesPage = lazy(() =>
     default: m.BranchesPage,
   })),
 )
+const ApprovalAuthoritiesPage = lazy(() =>
+  import('@/src/features/admin/approval/pages/index').then((m) => ({
+    default: m.ApprovalAuthoritiesPage,
+  })),
+)
 const LoanCreation = lazy(
   () => import('@/src/features/loans/pages/create/index'),
 )
@@ -340,6 +345,19 @@ const adminWorkflowRoute = createRoute({
   ),
 })
 
+const adminApprovalRoute = createRoute({
+  getParentRoute: () => authedShellRoute,
+  path: '/admin/approval',
+  component: () => (
+    <GuardedRoute
+      requiredPermission={PERMISSIONS.workflowManage}
+      featureName="Approval Management"
+    >
+      <ApprovalAuthoritiesPage />
+    </GuardedRoute>
+  ),
+})
+
 const catchAllRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '*',
@@ -360,6 +378,7 @@ const authedRouteTree = authedShellRoute.addChildren([
   adminLoanProductsRoute,
   adminBranchesRoute,
   adminWorkflowRoute,
+  adminApprovalRoute,
 ])
 
 const routeTree = rootRoute.addChildren([

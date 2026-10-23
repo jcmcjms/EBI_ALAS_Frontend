@@ -79,6 +79,11 @@ export const navMain: NavItem[] = [
         url: '/admin/workflow',
         requiredPermission: 'workflow.manage',
       },
+      {
+        title: 'Approval',
+        url: '/admin/approval',
+        requiredPermission: 'workflow.manage',
+      },
     ],
   },
 ]
