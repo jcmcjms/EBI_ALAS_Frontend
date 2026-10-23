@@ -1,32 +1,25 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { PencilSimple, Plus } from '@phosphor-icons/react'
+import { useTable } from '@tanstack/react-table'
 import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/src/shared/ui/data-display/card'
-import { Badge } from '@/src/shared/ui/primitives/badge'
-import { Button } from '@/src/shared/ui/primitives/button'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/src/shared/ui/data-display/table'
-import { Spinner } from '@/src/shared/ui/feedback/spinner'
-import { EmptyState, ErrorState } from '@/src/shared/ui/feedback/empty-state'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/src/shared/ui/navigation/dropdown-menu'
+  approvalAuthorityKeys,
+  createApprovalAuthority,
+  deactivateApprovalAuthority,
+  getApprovalAuthorities,
+  listApproverUsers,
+  setApprovalAuthorityUsers,
+  updateApprovalAuthority,
+  type ApprovalAuthorityDto,
+  type AuthorityLimitsPayload,
+} from '../api/approval-authorities'
+import { features, columns, type ApprovalAuthoritiesTableMeta } from './approval-authority-columns'
+import { ApprovalAuthorityStatsCards } from './approval-authority-stats-cards'
+import { ApprovalAuthoritiesTableCard } from './approval-authorities-table-card'
+import { AuthorityCreateSheet } from './authority-create-sheet'
+import { AuthorityEditSheet } from './authority-edit-sheet'
+import { ApproverAssignmentSheet } from './approver-assignment-sheet'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,32 +30,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/src/shared/ui/feedback/alert-dialog'
-import {
-  approvalAuthorityKeys,
-  createApprovalAuthority,
-  deactivateApprovalAuthority,
-  getApprovalAuthorities,
-  listApproverUsers,
-  SCOPE_LABELS,
-  SEVERITY_LABELS,
-  setApprovalAuthorityUsers,
-  updateApprovalAuthority,
-  type ApprovalAuthorityDto,
-  type AuthorityLimitsPayload,
-} from '../api/approval-authorities'
-import { AuthorityCreateSheet } from './authority-create-sheet'
-import { AuthorityEditSheet } from './authority-edit-sheet'
-import { ApproverAssignmentSheet } from './approver-assignment-sheet'
 
 export function ApprovalAuthoritiesTable() {
   const qc = useQueryClient()
 
+  const [globalFilter, setGlobalFilter] = useState('')
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<ApprovalAuthorityDto | null>(null)
   const [assigning, setAssigning] = useState<ApprovalAuthorityDto | null>(null)
-  const [deactivating, setDeactivating] = useState<ApprovalAuthorityDto | null>(
-    null,
-  )
+  const [deactivating, setDeactivating] = useState<ApprovalAuthorityDto | null>(null)
 
   const authorities = useQuery({
     queryKey: approvalAuthorityKeys.list(),
@@ -157,163 +134,68 @@ export function ApprovalAuthoritiesTable() {
   }
 
   const rows = authorities.data ?? []
+  const totalCount = rows.length
+  const branchCount = rows.filter((r) => r.scopeType <= 1).length
+  const globalCount = rows.filter((r) => r.scopeType === 2).length
+
+  const meta: ApprovalAuthoritiesTableMeta = {
+    canManage: true,
+    onEdit: (a) => setEditing(a),
+    onAssign: (a) => setAssigning(a),
+    onDeactivate: (a) => setDeactivating(a),
+  }
+
+  const table = useTable({
+    features,
+    data: rows,
+    columns,
+    state: { globalFilter, pagination },
+    globalFilterFn: 'includesString',
+    onPaginationChange: setPagination,
+    meta,
+  })
+
+  const totalRows = table.getFilteredRowModel().rows.length
+  const firstRow = totalRows === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1
+  const lastRow = Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalRows)
+  const totalPages = table.getPageCount() || 1
 
   return (
     <>
-      <Card className="border shadow-sm">
-        <CardHeader className="border-b bg-muted/30 pb-3">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              Approval Authorities
-              <Badge variant="outline" className="ml-1 font-normal">
-                {rows.length} {rows.length === 1 ? 'authority' : 'authorities'}
-              </Badge>
-            </CardTitle>
-            <Button
-              size="sm"
-              className="gap-1.5 text-xs"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus size={14} weight="bold" data-icon="inline-start" />
-              New authority
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-muted/40">
-              <TableRow className="border-b hover:bg-transparent">
-                <TableHead className="h-9 px-4 text-xs font-semibold text-muted-foreground">
-                  Authority
-                </TableHead>
-                <TableHead className="h-9 px-4 text-xs font-semibold text-muted-foreground">
-                  Tier
-                </TableHead>
-                <TableHead className="h-9 px-4 text-xs font-semibold text-muted-foreground">
-                  Scope
-                </TableHead>
-                <TableHead className="h-9 px-4 text-xs font-semibold text-muted-foreground">
-                  Max exposure
-                </TableHead>
-                <TableHead className="h-9 px-4 text-xs font-semibold text-muted-foreground">
-                  Max severity
-                </TableHead>
-                <TableHead className="h-9 px-4 text-xs font-semibold text-muted-foreground">
-                  Allows
-                </TableHead>
-                <TableHead className="h-9 px-4 text-xs font-semibold text-muted-foreground">
-                  Approvers
-                </TableHead>
-                <TableHead className="h-9 px-4 text-xs font-semibold text-muted-foreground" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {authorities.isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center">
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                      <Spinner className="size-4" /> Loading authorities…
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : authorities.isError ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="p-0">
-                    <ErrorState
-                      message={getErrorMessage(authorities.error)}
-                      onRetry={() => authorities.refetch()}
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="p-0">
-                    <EmptyState
-                      title="No approval authorities"
-                      hint="Create one to start routing approvals."
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                rows.map((a) => (
-                  <TableRow key={a.key}>
-                    <TableCell className="px-4 py-2 font-medium">
-                      {a.displayName}
-                    </TableCell>
-                    <TableCell className="px-4 py-2 tabular-nums">
-                      Tier {a.tier}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {SCOPE_LABELS[a.scopeType]}
-                    </TableCell>
-                    <TableCell className="px-4 py-2 tabular-nums">
-                      ₱{a.maxTotalExposure.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {SEVERITY_LABELS[a.maxSeverity]}
-                    </TableCell>
-                    <TableCell className="px-4 py-2 text-xs text-muted-foreground">
-                      {[a.allowNew && 'New', a.allowRenewal && 'Renewal']
-                        .filter(Boolean)
-                        .join(' · ') || '—'}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <div className="flex flex-wrap gap-1">
-                        {a.assignedUsers.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">
-                            None
-                          </span>
-                        ) : (
-                          a.assignedUsers.map((u) => (
-                            <Badge
-                              key={u.userId}
-                              variant="outline"
-                              className="font-normal"
-                            >
-                              {u.name}
-                            </Badge>
-                          ))
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <div className="flex justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label={`Actions for ${a.displayName}`}
-                              />
-                            }
-                          >
-                            <PencilSimple size={16} />
-                            <span className="sr-only">Open menu</span>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setEditing(a)}>
-                              Edit limits
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setAssigning(a)}>
-                              Manage approvers
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setDeactivating(a)}
-                            >
-                              Deactivate
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <ApprovalAuthorityStatsCards
+          totalCount={totalCount}
+          branchCount={branchCount}
+          globalCount={globalCount}
+        />
+
+        <ApprovalAuthoritiesTableCard
+          table={table}
+          columnCount={columns.length + 1}
+          isLoading={authorities.isLoading}
+          isError={authorities.isError}
+          errorMessage={getErrorMessage(authorities.error)}
+          isFetching={authorities.isFetching}
+          totalRows={totalRows}
+          firstRow={firstRow}
+          lastRow={lastRow}
+          totalPages={totalPages}
+          pagination={pagination}
+          globalFilter={globalFilter}
+          setPagination={setPagination}
+          setGlobalFilter={setGlobalFilter}
+          onRetry={() => authorities.refetch()}
+          toolbarProps={{
+            search: globalFilter,
+            onSearchChange: (v) => {
+              setGlobalFilter(v)
+              setPagination((p) => ({ ...p, pageIndex: 0 }))
+            },
+            canManage: true,
+            onCreate: () => setCreateOpen(true),
+          }}
+        />
+      </div>
 
       <AuthorityCreateSheet
         open={createOpen}
