@@ -97,14 +97,14 @@ export function PasswordChangeForm({
           <h1 className="text-2xl font-bold">Update your password</h1>
           <p className="text-sm text-muted-foreground">
             {mustChange
-              ? 'Your temporary password must be changed before you can access ALAS.'
+              ? 'Set a new password to start using ALAS.'
               : 'Choose a new password for your account.'}
           </p>
         </div>
 
         <Field>
           <FieldLabel htmlFor="currentPassword">
-            Current Password
+            Current password
           </FieldLabel>
           <div className="relative">
             <Input
@@ -148,7 +148,7 @@ export function PasswordChangeForm({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
+          <FieldLabel htmlFor="newPassword">New password</FieldLabel>
           <div className="relative">
             <Input
               id="newPassword"
@@ -184,7 +184,7 @@ export function PasswordChangeForm({
 
         <Field>
           <FieldLabel htmlFor="confirmPassword">
-            Confirm New Password
+            Confirm new password
           </FieldLabel>
           <div className="relative">
             <Input
@@ -247,7 +247,7 @@ export function PasswordChangeForm({
               className="animate-spin"
             />
           )}
-          {isSubmitting ? 'Updating…' : 'Update Password'}
+          {isSubmitting ? 'Updating…' : 'Update password'}
         </Button>
 
         {!mustChange && (

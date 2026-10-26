@@ -73,7 +73,7 @@ export function WeeklyTrend({ data }: WeeklyTrendProps) {
   return (
     <Card className="flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">7-Day Trend</CardTitle>
+        <CardTitle className="text-sm font-medium">7-day trend</CardTitle>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-sm bg-emerald-500" aria-hidden />

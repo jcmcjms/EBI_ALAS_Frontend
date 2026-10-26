@@ -55,7 +55,6 @@ export function MonitoringToolbar({
 
   return (
     <div className="flex flex-wrap items-center gap-3 gap-y-2 px-4 py-3 border-b bg-muted/20">
-      {}
       <div className="relative min-w-full flex-1 max-w-sm md:min-w-0">
         <MagnifyingGlass
           size={16}
@@ -63,14 +62,13 @@ export function MonitoringToolbar({
           weight="bold"
         />
         <Input
-          placeholder="Search applications..."
+          placeholder="Search applications…"
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           className="pl-9 h-9 bg-background"
         />
       </div>
 
-      {}
       <Popover>
         <PopoverTrigger className="inline-flex items-center gap-2 h-9 w-[240px] justify-start text-left font-normal bg-background border border-input rounded-md px-3 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer">
           <CalendarBlank
@@ -110,13 +108,12 @@ export function MonitoringToolbar({
         </PopoverContent>
       </Popover>
 
-      {}
       <Popover>
         <PopoverTrigger className="inline-flex h-9 min-w-[180px] cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-accent hover:text-accent-foreground">
           <span className="flex items-center gap-2 truncate">
             <Funnel size={14} className="text-muted-foreground" />
             {filters.status.length === 0 ? (
-              <span className="text-muted-foreground">All Statuses</span>
+              <span className="text-muted-foreground">All statuses</span>
             ) : filters.status.length === 1 ? (
               LOAN_STATUS_META[filters.status[0] as LoanStatus].label
             ) : (
@@ -131,7 +128,7 @@ export function MonitoringToolbar({
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted/60"
             onClick={() => onFiltersChange({ ...filters, status: [] })}
           >
-            <span className="text-muted-foreground">All Statuses</span>
+            <span className="text-muted-foreground">All statuses</span>
           </button>
           <div className="my-1 h-px bg-border" />
           <div className="max-h-72 overflow-y-auto">
@@ -183,7 +180,6 @@ export function MonitoringToolbar({
         </PopoverContent>
       </Popover>
 
-      {}
       {roleQueue.length > 0 &&
         (isRoleQueue ? (
           <Badge
@@ -213,7 +209,6 @@ export function MonitoringToolbar({
           </Button>
         ))}
 
-      {}
       {filters.myTurn ? (
         <Badge
           variant="secondary"

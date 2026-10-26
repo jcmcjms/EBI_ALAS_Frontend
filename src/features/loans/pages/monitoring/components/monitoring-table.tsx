@@ -166,7 +166,7 @@ export function MonitoringTable({
                         className="text-destructive"
                       />
                       <div>
-                        Failed to load loan applications.
+                        Couldn't load applications.
                         <div className="text-xs mt-0.5">
                           {error instanceof Error
                             ? error.message
@@ -189,7 +189,7 @@ export function MonitoringTable({
                   <TableCell colSpan={columns.length}>
                     <EmptyState
                       title="No applications found"
-                      hint="Try adjusting your filters."
+                      hint="Try a different search or filter."
                     />
                   </TableCell>
                 </TableRow>

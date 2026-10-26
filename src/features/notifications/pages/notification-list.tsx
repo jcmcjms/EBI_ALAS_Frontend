@@ -37,7 +37,7 @@ export const TYPE_META: Record<
     dot: 'bg-blue-500',
   },
   action: {
-    label: 'Action Required',
+    label: 'Action required',
     icon: WarningCircle,
     iconWrap: 'bg-amber-100 text-amber-600',
     dot: 'bg-amber-500',
@@ -214,7 +214,7 @@ export function NotificationList({
       <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         <p className="text-sm text-muted-foreground">
-          Loading notifications...
+          Loading notifications…
         </p>
       </div>
     )

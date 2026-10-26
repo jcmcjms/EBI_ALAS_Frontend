@@ -55,7 +55,7 @@ export function toTimelineItems(records: Activity[]): TimelineItem[] {
     return {
       id: String(a.id),
       kind,
-      title: `${a.lamId} — ${a.action}`,
+      title: `${a.lamId}: ${a.action}`,
       clientName: a.loanClientName || undefined,
       fromStatus: a.fromStatus || undefined,
       toStatus: a.toStatus || undefined,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
-import { toastSuccess, toastError, toastInfo } from '@/src/shared/ui/feedback/toast'
+import { toastError, toastInfo } from '@/src/shared/ui/feedback/toast'
 import { IdentificationCard } from '@phosphor-icons/react'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import { getWebLoanByCis } from '@/src/features/loans/api/webloans'
@@ -132,7 +132,7 @@ export function CISLookup({
     setConfirmClear(false)
     setSearchQuery('')
     setLookupError(null)
-    toastInfo('Client cleared. Search for a new CIS number.')
+    toastInfo('Client cleared. Search for another CIS number.')
   }
 
   const handleSearchQueryChange = (val: string) => {
@@ -150,7 +150,6 @@ export function CISLookup({
     try {
       const result = await getWebLoanByCis(query)
       applySearchResult(result, query)
-      toastSuccess('Client profile loaded successfully.')
     } catch (error) {
       const message = getErrorMessage(error)
       clearForm()
@@ -250,7 +249,6 @@ export function CISLookup({
               onChangeClient={handleChangeClient}
             />
 
-            {}
             <div className="space-y-3 rounded-md border bg-muted/20 p-4">
               <SubSectionHeading
                 step="1.2"
@@ -300,7 +298,6 @@ export function CISLookup({
               )}
             </div>
 
-            {}
             <ActiveLoansTable
               cisNo={client.cisId}
               accounts={laiAccounts}

@@ -27,7 +27,7 @@ export function DutyStatusToggle() {
         const next = !isAvailable
         setMyDutyAvailability(next)
           .then(() => profileQuery.refetch())
-          .catch(() => toastError('Could not update availability'))
+          .catch(() => toastError("Couldn't update your availability"))
       }}
     >
       <Badge

@@ -127,7 +127,7 @@ export function SecurityTab({ onEditProfile }: SecurityTabProps) {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  PNG on file. It is stamped on the loan workflows you sign.
+                  Added to every loan workflow you sign.
                 </p>
               </div>
               <Button variant="outline" onClick={onEditProfile}>
@@ -143,8 +143,8 @@ export function SecurityTab({ onEditProfile }: SecurityTabProps) {
                 aria-hidden="true"
               />
               <p className="min-w-0 flex-1 text-sm text-amber-900 dark:text-amber-200">
-                No e-signature on file. A PNG signature is required before you
-                can sign loan workflows.
+                No e-signature yet. You need one before you can sign loan
+                workflows.
               </p>
               <Button size="sm" variant="outline" className="shrink-0" onClick={onEditProfile}>
                 Add e-signature
@@ -156,7 +156,7 @@ export function SecurityTab({ onEditProfile }: SecurityTabProps) {
 
       <Card>
         <CardHeader className="border-b bg-muted/30 py-3">
-          <CardTitle className="text-sm">Active Sessions</CardTitle>
+          <CardTitle className="text-sm">Active sessions</CardTitle>
           {otherCount > 0 && (
             <CardAction>
               <Button
@@ -176,13 +176,13 @@ export function SecurityTab({ onEditProfile }: SecurityTabProps) {
             <ListSkeleton rows={3} />
           ) : sessionsQuery.isError ? (
             <ErrorState
-              message="Failed to load active sessions."
+              message="Couldn't load your sessions."
               onRetry={() => sessionsQuery.refetch()}
             />
           ) : sessions.length === 0 ? (
             <EmptyState
               title="No active sessions"
-              hint="Devices signed in to your account will appear here."
+              hint="Devices signed in to your account appear here."
             />
           ) : (
             <>
@@ -271,7 +271,7 @@ export function SecurityTab({ onEditProfile }: SecurityTabProps) {
             <AlertDialogTitle>
               {confirm?.kind === 'others'
                 ? 'Sign out all other devices?'
-                : 'Revoke this session?'}
+                : 'Sign out this device?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirm?.kind === 'others'
@@ -295,10 +295,10 @@ export function SecurityTab({ onEditProfile }: SecurityTabProps) {
               }}
             >
               {confirmPending
-                ? 'Revoking…'
+                ? 'Signing out…'
                 : confirm?.kind === 'others'
-                  ? 'Sign out others'
-                  : 'Revoke session'}
+                  ? `Sign out ${confirm.count} ${confirm.count === 1 ? 'device' : 'devices'}`
+                  : 'Sign out'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

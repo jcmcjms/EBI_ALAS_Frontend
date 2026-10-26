@@ -35,7 +35,7 @@ export function RecentApplicationsList({
   return (
     <Card>
       <CardHeader className="border-b bg-muted/30 py-3">
-        <CardTitle className="text-sm">Recent Applications</CardTitle>
+        <CardTitle className="text-sm">Recent applications</CardTitle>
         <CardAction>
           <Button variant="ghost" size="sm" onClick={onViewAll}>
             View all
@@ -47,13 +47,13 @@ export function RecentApplicationsList({
           <ListSkeleton rows={4} />
         ) : loansQuery.isError ? (
           <ErrorState
-            message="Failed to load your applications."
+            message="Couldn't load your applications."
             onRetry={() => loansQuery.refetch()}
           />
         ) : (loansQuery.data ?? []).length === 0 ? (
           <EmptyState
             title="No applications yet"
-            hint="Applications you encode will be listed here."
+            hint="Applications you create appear here."
             action={
               <Button variant="outline" size="sm" onClick={onNewApplication}>
                 New application

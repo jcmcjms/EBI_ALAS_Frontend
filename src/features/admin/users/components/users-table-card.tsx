@@ -83,7 +83,7 @@ export function UsersTableCard({
       <CardHeader className="border-b bg-muted/30 pb-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
-            User Directory
+            User directory
             <Badge variant="outline" className="font-normal">
               {totalRows} records
             </Badge>

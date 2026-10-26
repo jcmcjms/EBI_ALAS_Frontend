@@ -36,7 +36,7 @@ export function MyApplicationsTab() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30 py-3">
         <div className="flex items-baseline gap-2">
-          <CardTitle className="text-sm">My Loan Applications</CardTitle>
+          <CardTitle className="text-sm">Applications</CardTitle>
           {total > 0 && (
             <span className="text-xs text-muted-foreground tabular-nums">
               {total} {total === 1 ? 'application' : 'applications'}
@@ -51,7 +51,7 @@ export function MyApplicationsTab() {
               className="h-8 gap-1.5 text-xs"
               onClick={() => navigate({ to: '/loans/create' })}
             >
-              New Application
+              New application
             </Button>
           </CardAction>
         )}
@@ -61,14 +61,14 @@ export function MyApplicationsTab() {
           <LoadingState label="Loading applications…" />
         ) : isError ? (
           <ErrorState
-            message="Failed to load your loan applications."
+            message="Couldn't load your loan applications."
             onRetry={() => refetch()}
           />
         ) : !data || data.length === 0 ? (
           <EmptyState
             icon={ClipboardText}
-            title="No loan applications found"
-            hint="Applications you create will appear here along with their latest approval status."
+            title="No applications yet"
+            hint="Applications you create will appear here."
             action={
               canCreate ? (
                 <Button
@@ -97,7 +97,7 @@ export function MyApplicationsTab() {
                 <TableHead>Borrower</TableHead>
                 <TableHead className="text-right">Proposed Amount</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Applied Date</TableHead>
+                <TableHead>Date applied</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>

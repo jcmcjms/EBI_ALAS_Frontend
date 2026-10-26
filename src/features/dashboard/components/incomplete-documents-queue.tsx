@@ -34,7 +34,7 @@ export const IncompleteDocumentsQueue = memo(function IncompleteDocumentsQueue({
             className="size-5 text-amber-600 dark:text-amber-400"
             aria-hidden
           />
-          Flagged Documents
+          Flagged documents
           {data.length > 0 && (
             <Badge variant="secondary" className="tabular-nums">
               {data.length}

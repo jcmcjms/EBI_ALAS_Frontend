@@ -54,9 +54,7 @@ export function PersonalInfoSection() {
       icon={<LockSimple size={20} weight="bold" className="text-muted-foreground" />}
     >
       <div className="space-y-6">
-        {}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">First Name</Label>
             <Input
@@ -82,7 +80,6 @@ export function PersonalInfoSection() {
             />
           </div>
 
-          {}
           <div className="space-y-1.5">
             <Label
               htmlFor="client-suffix"
@@ -103,7 +100,6 @@ export function PersonalInfoSection() {
                 <SelectValue placeholder="Select suffix" />
               </SelectTrigger>
               <SelectContent>
-                {}
                 <SelectItem value="">None</SelectItem>
                 <SelectSeparator />
                 <SelectItem value="Jr.">Jr.</SelectItem>
@@ -132,7 +128,6 @@ export function PersonalInfoSection() {
             />
           </div>
 
-          {}
           <div className="space-y-1.5 md:col-span-3">
             <Label className="text-xs text-muted-foreground">Address</Label>
             <Input
@@ -142,7 +137,6 @@ export function PersonalInfoSection() {
             />
           </div>
 
-          {}
           <div className="space-y-1.5 md:col-span-2">
             <Label className="text-xs text-muted-foreground">Agency Type</Label>
             <Input
@@ -162,7 +156,6 @@ export function PersonalInfoSection() {
             />
           </div>
 
-          {}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">MIS Agency</Label>
             <Input
@@ -190,7 +183,6 @@ export function PersonalInfoSection() {
             />
           </div>
 
-          {}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Region</Label>
             <Input
@@ -221,7 +213,6 @@ export function PersonalInfoSection() {
           </div>
         </div>
 
-        {}
         <div className="border-t pt-6">
           <div className="mb-4 flex items-center gap-2">
             <Buildings size={20} weight="bold" className="text-muted-foreground" />
@@ -232,7 +223,6 @@ export function PersonalInfoSection() {
           </p>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {}
             <div className="space-y-1.5">
               <Label
                 htmlFor="client.school"
@@ -261,7 +251,6 @@ export function PersonalInfoSection() {
               )}
             </div>
 
-            {}
             <div className="space-y-1.5">
               <Label
                 htmlFor="client.referrer"

@@ -33,9 +33,7 @@ export function LoanParametersFields({
 
   return (
     <div className="space-y-5">
-      {}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        {}
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Loan Product</Label>
           <Input
@@ -58,7 +56,6 @@ export function LoanParametersFields({
           />
         </div>
 
-        {}
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">
             Proposed Amount (₱)
@@ -88,7 +85,6 @@ export function LoanParametersFields({
           />
         </div>
 
-        {}
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground flex items-center gap-1">
             <CalendarBlank size={12} weight="bold" /> Policy Term (months)
@@ -119,7 +115,6 @@ export function LoanParametersFields({
           />
         </div>
 
-        {}
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">NTHP Date</Label>
           <Input

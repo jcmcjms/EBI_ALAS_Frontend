@@ -31,9 +31,9 @@ export function useVerifyDocuments(loanId: number | string | null) {
         })
       }
       if (r.complete) {
-        toastSuccess('Documents verified complete.')
+        toastSuccess('All required documents are uploaded.')
       } else {
-        toastError(`${r.missing.length} document(s) still missing.`)
+        toastError(`${r.missing.length} ${r.missing.length === 1 ? 'document is' : 'documents are'} still missing.`)
       }
     },
     onError: (e: Error) => toastError(e.message),

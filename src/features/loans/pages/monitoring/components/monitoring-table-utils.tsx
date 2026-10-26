@@ -65,7 +65,7 @@ export function TimeLapsedIndicator({
       title={
         assessment.slaHours === null
           ? 'No handling SLA for this stage'
-          : `${assessment.label} — ${assessment.pctOfSla?.toFixed(0)}% consumed`
+          : `${assessment.label}: ${assessment.pctOfSla?.toFixed(0)}% of the handling time used`
       }
       aria-label={`Time in stage ${formatElapsed(effectiveNow - new Date(lastActionDate).getTime())}, ${assessment.label}`}
       className={cn(

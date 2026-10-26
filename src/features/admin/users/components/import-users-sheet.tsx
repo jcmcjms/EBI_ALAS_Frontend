@@ -83,7 +83,7 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
         )
       if (importResult.failedImports > 0)
         toastError(
-          `${importResult.failedImports} row${importResult.failedImports === 1 ? '' : 's'} skipped — see the report in the sheet.`,
+          `${importResult.failedImports} row${importResult.failedImports === 1 ? '' : 's'} skipped. See the report below.`,
         )
     } catch (error) {
       toastError(getErrorMessage(error))
@@ -129,7 +129,6 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
           </SheetDescription>
         </SheetHeader>
 
-        {}
         <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 pt-2 pb-4">
           {result ? (
             <div role="status" className="flex flex-col gap-6">
@@ -200,7 +199,6 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                       <Download size={12} weight="bold" /> Error report
                     </Button>
                   </div>
-                  {}
                   <ul className="divide-y rounded-md border">
                     {result.errors.slice(0, VISIBLE_ERRORS).map((error) => (
                       <li
@@ -251,7 +249,7 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {file
-                      ? `${(file.size / 1024).toFixed(0)} KB — ready to import`
+                      ? `${(file.size / 1024).toFixed(0)} KB, ready to import`
                       : 'Up to 10 MB. Use the template for the correct columns.'}
                   </p>
                 </div>
@@ -284,7 +282,6 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
           )}
         </div>
 
-        {}
         <SheetFooter className="-mx-4 mt-auto gap-2 border-t bg-muted/30">
           {result ? (
             <>

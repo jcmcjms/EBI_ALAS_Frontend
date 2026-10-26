@@ -49,11 +49,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
               <div className="space-y-2">
                 <h2 className="text-xl font-semibold tracking-tight text-foreground">
-                  Application Encountered an Error
+                  Something went wrong
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  An unexpected problem occurred while rendering this section.
-                  You can try refreshing the view or returning to the dashboard.
+                  Try again, or reload the page if it keeps happening.
                 </p>
               </div>
 
@@ -78,7 +77,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   className="gap-2"
                 >
                   <ArrowClockwise size={16} weight="bold" />
-                  Try Again
+                  Try again
                 </Button>
                 <Button
                   size="sm"
@@ -86,14 +85,10 @@ export class ErrorBoundary extends Component<Props, State> {
                   className="gap-2"
                 >
                   <House size={16} weight="bold" />
-                  Reload Page
+                  Reload page
                 </Button>
               </div>
             </div>
-
-            <p className="mt-6 text-xs text-muted-foreground">
-              ALAS &bull; Enterprise Bank Inc. Loan Application System
-            </p>
           </div>
         )
       )

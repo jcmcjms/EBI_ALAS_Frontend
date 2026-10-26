@@ -212,7 +212,7 @@ export function useLoanLoader(
 
     if (productCode && selectedProductCodes.has(productCode)) {
       toastError(
-        `Product ${productCode} is already selected. Cannot select multiple loans of the same product.`,
+        `Product ${productCode} is already on this application. You can't add the same product twice.`,
       )
       return
     }

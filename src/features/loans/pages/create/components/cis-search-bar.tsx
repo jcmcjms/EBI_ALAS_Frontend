@@ -27,7 +27,7 @@ export function CisSearchBar({
 }: CisSearchBarProps) {
   return (
     <div className="space-y-4">
-      <SubSectionHeading title="Client Lookup" />
+      <SubSectionHeading title="Client lookup" />
 
       <div className="space-y-2">
         <label

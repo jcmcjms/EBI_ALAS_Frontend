@@ -49,7 +49,7 @@ export function ActivityTab() {
   return (
     <Card>
       <CardHeader className="border-b bg-muted/30 py-3">
-        <CardTitle className="text-sm">Activity History</CardTitle>
+        <CardTitle className="text-sm">Activity history</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="mb-4 flex flex-wrap items-end gap-3">
@@ -142,30 +142,25 @@ export function ActivityTab() {
           <ListSkeleton rows={4} />
         ) : activityQuery.isError ? (
           <ErrorState
-            message="Failed to load activity history."
+            message="Couldn't load your activity history."
             onRetry={() => activityQuery.refetch()}
           />
         ) : items.length === 0 ? (
           <EmptyState
             title={
               hasFilters
-                ? 'No activity matches these filters.'
+                ? 'No activity matches these filters'
                 : 'No activity recorded yet'
             }
             hint={
               hasFilters
                 ? 'Try a wider date range or clear the type filter.'
-                : 'Every action you take on a loan application is logged here for audit.'
+                : 'Actions you take on applications appear here.'
             }
           />
         ) : (
           <>
-            {!hasFilters && items.length === 1 ? (
-              <p className="mb-4 text-sm text-muted-foreground">
-                Showing 1 of 1 event. No other activity recorded in the last 90
-                days.
-              </p>
-            ) : hasFilters ? (
+            {hasFilters ? (
               <p className="mb-4 text-sm text-muted-foreground">
                 Showing {items.length} matching event
                 {items.length === 1 ? '' : 's'}.

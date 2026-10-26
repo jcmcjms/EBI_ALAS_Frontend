@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Link } from '@tanstack/react-router'
 
 import { NavMain } from '@/src/app/layout/nav-main'
 import { NavUser } from '@/src/app/layout/nav-user'
@@ -29,7 +30,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              render={<a href="#" />}
+              render={<Link to="/dashboard" />}
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <img

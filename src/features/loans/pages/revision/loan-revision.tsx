@@ -158,7 +158,7 @@ export function LoanRevisionPage() {
     onError: (error) => {
       const message = getErrorMessage(error)
       if (/modified by another user|row version|conflict/i.test(message)) {
-        toastError('This application was modified by another user. Please reload.')
+        toastError('Someone else changed this application. Reload the page.')
         queryClient.invalidateQueries({ queryKey: loanKeys.review.detail(loanId) })
         queryClient.invalidateQueries({ queryKey: loanKeys.revisionRequests(loanId) })
         return
@@ -218,7 +218,7 @@ export function LoanRevisionPage() {
             <EmptyState
               icon={WarningCircle}
               title="Application not found"
-              hint="The application may have been removed, or the link is stale."
+              hint="The application may have been removed, or this link is out of date."
               action={
                 <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
                   Return to Monitoring
@@ -251,11 +251,11 @@ export function LoanRevisionPage() {
                   </Button>
                   <div>
                     <h1 className="text-lg font-semibold">
-                      Revise Application: {loan.lamId}
+                      Revise application {loan.lamId}
                     </h1>
                     <p className="text-xs text-muted-foreground">
-                      Address evaluator feedback to resubmit
-                      {userBranchName ? ` — ${userBranchName}` : ''}
+                      Address the evaluator's feedback, then resubmit
+                      {userBranchName ? ` · ${userBranchName}` : ''}
                     </p>
                   </div>
                   <span
@@ -272,7 +272,7 @@ export function LoanRevisionPage() {
                   form="revision-form"
                   disabled={!canRevise || reviseMutation.isPending}
                 >
-                  {reviseMutation.isPending ? 'Submitting…' : 'Submit Corrections'}
+                  {reviseMutation.isPending ? 'Submitting…' : 'Submit corrections'}
                 </Button>
               </div>
             </header>

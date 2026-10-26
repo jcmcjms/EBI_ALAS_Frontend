@@ -74,7 +74,7 @@ function BranchEditSheetInner({
       const ok = await onUpdate(branch.code, parsed.data)
       if (ok) onClose()
     } catch (e) {
-      toastError(e instanceof Error ? e.message : 'Failed to update branch')
+      toastError(e instanceof Error ? e.message : "Couldn't save the branch")
     } finally {
       setIsSubmitting(false)
     }

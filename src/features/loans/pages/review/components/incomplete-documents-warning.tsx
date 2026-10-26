@@ -35,15 +35,15 @@ export function IncompleteDocumentsWarning({ checklist, documentFlag }: Props) {
       <Warning />
       <AlertTitle>
         {hasFlag
-          ? `Documents flagged — ${documentFlag.missingCount} requirement(s) missing`
-          : `Incomplete documents — ${pending.length} requirement(s) pending`}
+          ? `Documents flagged: ${documentFlag.missingCount} ${documentFlag.missingCount === 1 ? 'requirement' : 'requirements'} missing`
+          : `Incomplete documents: ${pending.length} ${pending.length === 1 ? 'requirement' : 'requirements'} pending`}
       </AlertTitle>
       <AlertDescription className="space-y-1">
         {hasFlag && (
           <p>
-            Flagged on {new Date(documentFlag.flaggedAt).toLocaleDateString()}.
-            {documentFlag.reason ? ` Reason: ${documentFlag.reason}` : ''} This
-            does not block the workflow. The flag clears when all documents are
+            Flagged on {new Date(documentFlag.flaggedAt).toLocaleDateString()}
+            {documentFlag.reason ? `. Reason: ${documentFlag.reason}` : ''}. You
+            can keep reviewing; the flag clears when all documents are
             uploaded.
           </p>
         )}

@@ -57,29 +57,27 @@ export function UserCreateDrawer({
 
   const handleCreate = async () => {
     if (!form.username.trim()) {
-      toastError('Username is required')
+      toastError('Enter a username')
       return
     }
     if (!USERNAME_PATTERN.test(form.username.trim())) {
-      toastError(
-        'Username must be alphanumeric (letters, numbers, underscores)',
-      )
+      toastError('Use only letters, numbers, and underscores in the username')
       return
     }
     if (form.username.trim().length > 50) {
-      toastError('Username must not exceed 50 characters')
+      toastError('Username must be 50 characters or fewer')
       return
     }
     if (!form.firstName.trim()) {
-      toastError('First name is required')
+      toastError('Enter a first name')
       return
     }
     if (!form.lastName.trim()) {
-      toastError('Last name is required')
+      toastError('Enter a last name')
       return
     }
     if (!form.email.trim()) {
-      toastError('Email is required for password reset')
+      toastError('Enter the email address used for password resets')
       return
     }
     if (!EMAIL_PATTERN.test(form.email.trim())) {
@@ -87,11 +85,11 @@ export function UserCreateDrawer({
       return
     }
     if (!form.branchId) {
-      toastError('Branch is required')
+      toastError('Select a branch')
       return
     }
     if (!form.role) {
-      toastError('Role is required')
+      toastError('Select a role')
       return
     }
 
@@ -127,9 +125,10 @@ export function UserCreateDrawer({
     <Sheet open={open} onOpenChange={(next) => !next && handleCancel()}>
       <SheetContent className="flex flex-col p-0 sm:max-w-[500px]">
         <SheetHeader className="border-b bg-muted/30 p-6 pb-4">
-          <SheetTitle>Create New User</SheetTitle>
+          <SheetTitle>Create user</SheetTitle>
           <SheetDescription>
-            Add a new user to the ALAS system.
+            They sign in with a temporary password and choose a new one at
+            first sign-in.
           </SheetDescription>
         </SheetHeader>
 
@@ -149,7 +148,7 @@ export function UserCreateDrawer({
             onClick={handleCreate}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Creating...' : 'Create User'}
+            {isSubmitting ? 'Creating…' : 'Create user'}
           </Button>
         </SheetFooter>
       </SheetContent>

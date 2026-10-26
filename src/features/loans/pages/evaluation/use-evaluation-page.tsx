@@ -100,10 +100,11 @@ export function useEvaluationPage(id: string) {
       remarks?: string
     }) => evaluateLoan(id, recommend, remarks),
     onSuccess: (_data, { recommend }) => {
-      const actionLabel = recommend
-        ? 'forwarded to Approver'
-        : 'recorded as Not Recommended'
-      toastSuccess(`Application ${actionLabel}.`)
+      toastSuccess(
+        recommend
+          ? 'Application forwarded to the Approver.'
+          : 'Recorded as Not Recommended and forwarded to the Approver.',
+      )
       draft.clear()
       setPendingAction(null)
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
@@ -153,7 +154,7 @@ export function useEvaluationPage(id: string) {
     onSuccess: (r) => {
       toastSuccess(
         r.complete
-          ? 'All requirements uploaded — flag cleared.'
+          ? 'All requirements uploaded. The flag has been cleared.'
           : `Still missing: ${r.missing.join(', ')}`,
       )
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
@@ -170,7 +171,7 @@ export function useEvaluationPage(id: string) {
       flagDocuments(id, { missingRequirementCodes: codes, reason }),
     onSuccess: () => {
       toastSuccess(
-        'Documents flagged — the encoder has been notified. Review continues.',
+        'Documents flagged. The encoder has been notified, and you can keep reviewing.',
       )
       setFlagOpen(false)
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
@@ -190,7 +191,7 @@ export function useEvaluationPage(id: string) {
       overallComments: string
     }) => pushbackWithRevision(id, payload),
     onSuccess: () => {
-      toastSuccess('Application pushed back with revision instructions.')
+      toastSuccess('Application pushed back for revision.')
       setPushbackOpen(false)
       setPendingAction(null)
       draft.clear()
@@ -214,9 +215,7 @@ export function useEvaluationPage(id: string) {
       (action === 'notRecommended' || action === 'recommended') &&
       trimmed.length < 10
     ) {
-      toastError(
-        'Comments are required (minimum 10 characters) for this action.',
-      )
+      toastError('Your remarks need at least 10 characters for this action.')
       return
     }
 

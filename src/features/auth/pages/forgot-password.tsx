@@ -67,11 +67,11 @@ export default function ForgotPassword() {
               <div className="flex flex-col gap-6 text-center">
                 <h2 className="text-2xl font-bold">Check your email</h2>
                 <p className="text-sm text-muted-foreground">
-                  A temporary password was sent to the registered email. Sign in
-                  with it, then choose a new password.
+                  We sent a temporary password to your registered email
+                  address. Sign in with it, then choose a new password.
                 </p>
                 <Button onClick={() => navigate({ to: '/login' })}>
-                  Back to login
+                  Back to sign in
                 </Button>
               </div>
             ) : (
@@ -84,8 +84,8 @@ export default function ForgotPassword() {
                   <div className="flex flex-col items-center gap-1 text-center">
                     <h2 className="text-2xl font-bold">Forgot password?</h2>
                     <p className="text-sm text-balance text-muted-foreground">
-                      Enter your username. We will email a temporary password to
-                      your registered address.
+                      Enter your username and we'll email a temporary password
+                      to your registered address.
                     </p>
                   </div>
 
@@ -93,7 +93,6 @@ export default function ForgotPassword() {
                     <FieldLabel htmlFor="username">Username</FieldLabel>
                     <Input
                       id="username"
-                      placeholder="Username"
                       autoComplete="username"
                       aria-invalid={!!errors.username}
                       {...register('username')}
@@ -126,7 +125,7 @@ export default function ForgotPassword() {
                       to="/login"
                       className="text-muted-foreground hover:text-primary transition-colors"
                     >
-                      Back to login
+                      Back to sign in
                     </Link>
                   </div>
                 </FieldGroup>

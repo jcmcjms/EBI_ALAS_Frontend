@@ -91,11 +91,13 @@ export function WorkflowActionsPanel({
       <CardHeader className="border-b pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           <CheckCircle size={18} weight="bold" className="text-muted-foreground" />
-          Decision Actions
+          Decision
         </CardTitle>
-        <CardDescription className="pt-1 text-xs">
-          {frozen ? 'This application is locked.' : 'Select a decision to proceed.'}
-        </CardDescription>
+        {frozen && (
+          <CardDescription className="pt-1 text-xs">
+            This application is locked.
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent className="space-y-6 pt-4">
         {needsDeskGate &&
@@ -113,12 +115,12 @@ export function WorkflowActionsPanel({
             </div>
           ) : queueState?.ownerName ? (
             <div className="rounded-md border bg-muted/30 p-3 text-sm">
-              Currently with {queueState.ownerName}. You have view-only
-              access until the current review is finished.
+              Currently with {queueState.ownerName}. You can act on this
+              client again once their review is finished.
             </div>
           ) : (
             <div className="rounded-md border bg-muted/30 p-3 text-sm">
-              This client is queued #{queueState?.position ?? '—'} — serve
+              Position {queueState?.position ?? '—'} in the queue. Serve
               clients in order from the Review Desk.
             </div>
           ))}
@@ -129,8 +131,8 @@ export function WorkflowActionsPanel({
             <strong>
               {LOAN_STATUS_META[detailStatus as LoanStatus]?.label ??
                 detailStatus}
-            </strong>{' '}
-            — no further actions.
+            </strong>
+            . No actions available.
           </p>
         )}
 

@@ -37,7 +37,6 @@ export function ProductsToolbar({
 }: ProductsToolbarProps) {
   return (
     <div className="flex items-center gap-2">
-      {}
       <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5">
         <Checkbox
           id="show-retired"
@@ -53,7 +52,6 @@ export function ProductsToolbar({
         </Label>
       </div>
 
-      {}
       <div className="relative">
         <MagnifyingGlass
           size={16}
@@ -68,7 +66,6 @@ export function ProductsToolbar({
         />
       </div>
 
-      {}
       {canManageProducts && (
         <>
           <Button

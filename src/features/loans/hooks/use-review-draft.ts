@@ -166,7 +166,7 @@ export function useReviewDraft({
       // fall back to a reassuring offline message for network failures.
       const message =
         extractValidationMessage(e) ??
-        "Couldn't save your draft to the server. Your text is kept on this device."
+        "Couldn't save your draft online. Your text is safe on this device."
       setState((s) => ({ ...s, status: 'error', errorMessage: message }))
     }
   }, [loanKey])
@@ -244,7 +244,7 @@ export function useReviewDraft({
                   value: local,
                   status: 'idle',
                   errorMessage:
-                    'Saved draft unavailable — restored the copy from this device. It will sync automatically.',
+                    "Couldn't reach your saved draft. Restored the copy from this device; it will sync automatically.",
                 }
               : s,
           )
@@ -258,7 +258,7 @@ export function useReviewDraft({
                 ...s,
                 status: 'idle',
                 errorMessage:
-                  "Couldn't load your saved draft — start typing to save a new one.",
+                  "Couldn't load your saved draft. Start typing to save a new one.",
               }
             : s,
         )

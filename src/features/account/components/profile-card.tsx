@@ -228,8 +228,8 @@ export function ProfileCard({
                       onClick={() => {
                         navigator.clipboard
                           .writeText(row.rawValue!)
-                          .then(() => toastSuccess('Copied to clipboard'))
-                          .catch(() => toastError('Could not copy identifier'))
+                          .then(() => toastSuccess('Copied'))
+                          .catch(() => toastError('Couldn\'t copy'))
                       }}
                     >
                       <Copy size={14} weight="bold" />

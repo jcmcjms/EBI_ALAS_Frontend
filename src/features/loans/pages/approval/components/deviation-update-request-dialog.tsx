@@ -87,7 +87,7 @@ function DeviationUpdateRequestForm({
             value={instructions}
             disabled={isPending}
             maxLength={2000}
-            placeholder="e.g. Add missing deviation for lacking CIBI; correct severity on Age not within prescribed parameters…"
+            placeholder="e.g. Add the missing CIBI deviation; correct the age severity…"
             onChange={(e) => setInstructions(e.target.value)}
           />
           <div className="flex items-center gap-3 text-[11px] text-muted-foreground">

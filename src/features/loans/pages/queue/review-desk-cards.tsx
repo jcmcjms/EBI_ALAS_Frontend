@@ -97,7 +97,7 @@ export function NextClientCard({
             {client.ownerName ? (
               isMine ? (
                 <Badge variant="secondary" className="gap-1">
-                  <PlayCircle size={12} weight="bold" /> handling — resume
+                  <PlayCircle size={12} weight="bold" /> handling
                 </Badge>
               ) : (
                 <Badge variant="secondary" className="gap-1">
@@ -116,7 +116,7 @@ export function NextClientCard({
               aria-keyshortcuts="Enter"
               title={
                 heldByOther
-                  ? `Currently with ${client.ownerName} — available after the lock expires`
+                  ? `Currently with ${client.ownerName}. Available when their review finishes`
                   : isBundle
                     ? `Serve all ${summary.applicationCount} applications of ${client.clientName} together`
                     : undefined

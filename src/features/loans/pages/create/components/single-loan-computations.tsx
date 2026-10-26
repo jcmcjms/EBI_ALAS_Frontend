@@ -59,7 +59,6 @@ export function SingleLoanComputations({
 
   return (
     <div className={BAND_MAIN}>
-      {}
       <div className={cn(B, 'border-r-0 p-2')}>
         <AmtRow
           label={
@@ -195,7 +194,6 @@ export function SingleLoanComputations({
         </div>
       </div>
 
-      {}
       <div className={cn(B, 'p-2')}>
         <div className="font-bold underline">
           Outstanding Loans (do not include accounts for payoff):
@@ -276,7 +274,6 @@ export function SingleLoanComputations({
           </span>
         </div>
 
-        {}
         <div className="mt-3 border border-black">
           <div className="border-b border-black px-1.5 py-0.5 font-bold italic underline">
             Net Pay After Deduction Plus Other Sources of Income

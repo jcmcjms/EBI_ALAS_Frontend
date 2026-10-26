@@ -65,10 +65,10 @@ export function useUpdateProfile() {
     mutationFn: updateAccountProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: accountKeys.profile })
-      toastSuccess('Profile updated successfully')
+      toastSuccess('Profile saved')
     },
     onError: (error) => {
-      toastError(getErrorMessage(error) || 'Failed to update profile')
+      toastError(getErrorMessage(error) || "Couldn't save your profile")
     },
   })
 }
@@ -80,10 +80,10 @@ export function useRevokeSession() {
     mutationFn: revokeAccountSession,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: accountKeys.all })
-      toastSuccess('Session revoked successfully')
+      toastSuccess('Device signed out')
     },
     onError: (error) => {
-      toastError(getErrorMessage(error) || 'Failed to revoke session')
+      toastError(getErrorMessage(error) || "Couldn't sign out that device")
     },
   })
 }
@@ -96,11 +96,11 @@ export function useRevokeOtherSessions() {
     onSuccess: (revokedCount) => {
       queryClient.invalidateQueries({ queryKey: accountKeys.all })
       toastSuccess(
-        `${revokedCount} other session${revokedCount === 1 ? '' : 's'} revoked`,
+        `Signed out ${revokedCount} other ${revokedCount === 1 ? 'device' : 'devices'}`,
       )
     },
     onError: (error) => {
-      toastError(getErrorMessage(error) || 'Failed to revoke other sessions')
+      toastError(getErrorMessage(error) || "Couldn't sign out the other devices")
     },
   })
 }

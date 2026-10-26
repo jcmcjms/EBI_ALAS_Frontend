@@ -27,6 +27,7 @@ import {
   MIN_REMARKS,
   collectRemarksInDialog,
   confirmDescriptionFor,
+  confirmTitleFor,
   type WorkflowButtonDef,
 } from './workflow-constants'
 
@@ -95,7 +96,7 @@ export function ConfirmActionDialog({
       <AlertDialogTrigger render={children ?? defaultTrigger} />
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm: {action.label}</AlertDialogTitle>
+          <AlertDialogTitle>{confirmTitleFor(action)}</AlertDialogTitle>
           <AlertDialogDescription>
             {confirmDescriptionFor(action)}
           </AlertDialogDescription>
@@ -119,8 +120,8 @@ export function ConfirmActionDialog({
             )}
             {remarks.trim().length < MIN_REMARKS && (
               <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <WarningCircle size={12} weight="fill" /> Required (min{' '}
-                {MIN_REMARKS} chars)
+                <WarningCircle size={12} weight="fill" /> At least{' '}
+                {MIN_REMARKS} characters required
               </p>
             )}
           </div>
@@ -140,13 +141,13 @@ export function ConfirmActionDialog({
               <div className="space-y-2">
                 <p className="flex items-center gap-1 text-xs text-destructive">
                   <WarningCircle size={12} weight="fill" />
-                  A saved PNG e-signature is required for this action.
+                  You need an e-signature on file for this action.
                 </p>
                 <Link
                   to="/account"
                   className={buttonVariants({ variant: 'outline', size: 'sm' })}
                 >
-                  Upload signature in profile
+                  Add your signature
                 </Link>
               </div>
             )}
@@ -163,7 +164,7 @@ export function ConfirmActionDialog({
             disabled={!canConfirm}
             onClick={onConfirm}
           >
-            Confirm
+            {action.label}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

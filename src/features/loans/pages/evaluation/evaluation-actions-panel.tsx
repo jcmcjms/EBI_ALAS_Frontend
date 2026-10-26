@@ -141,7 +141,7 @@ export function EvaluationActionsPanel({
               htmlFor="eval-comments"
               className="flex items-center gap-1.5 text-sm font-semibold"
             >
-              Remarks / Evaluation Notes
+              Remarks
               {commentsRequired && (
                 <span className="text-destructive">*</span>
               )}
@@ -150,7 +150,7 @@ export function EvaluationActionsPanel({
               id="eval-comments"
               rows={5}
               disabled={frozen || isPending}
-              placeholder="Provide your evaluation, findings, or conditions for approval…"
+              placeholder="Your findings, and any conditions for approval…"
               value={comments}
               onChange={(e) => onCommentsChange(e.target.value)}
               maxLength={2000}
@@ -158,8 +158,8 @@ export function EvaluationActionsPanel({
             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               {commentsRequired && comments.trim().length < 10 && (
                 <p className="flex items-center gap-1">
-                  <WarningCircle size={12} weight="fill" /> Required for
-                  this action (min 10 characters)
+                  <WarningCircle size={12} weight="fill" /> At least 10
+                  characters required for this action
                 </p>
               )}
               <span className="ml-auto">{comments.length}/2000</span>
@@ -179,13 +179,13 @@ export function EvaluationActionsPanel({
               <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
                 <p className="flex items-center gap-1 font-medium">
                   <WarningCircle size={12} weight="fill" />
-                  A saved PNG e-signature is required to evaluate.
+                  You need an e-signature on file to evaluate.
                 </p>
                 <Link
                   to="/account"
                   className="font-semibold underline underline-offset-2"
                 >
-                  Upload signature in profile
+                  Add your signature
                 </Link>
               </div>
             )}
@@ -205,8 +205,8 @@ export function EvaluationActionsPanel({
 
             {frozen && (
               <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
-                This application is <strong>{status}</strong> — no
-                further actions.
+                This application is <strong>{status}</strong>. No
+                actions available.
               </p>
             )}
 
@@ -219,11 +219,11 @@ export function EvaluationActionsPanel({
                   disabled={!canAct || pendingAction !== null || !hasSignature}
                 >
                   {isPending && pendingAction === 'recommended' ? (
-                    <span className="animate-pulse">Processing...</span>
+                    <span className="animate-pulse">Submitting…</span>
                   ) : (
                     <>
                       <ThumbsUp size={18} weight="bold" />
-                      Recommended for Approval
+                      Recommended for approval
                     </>
                   )}
                 </Button>
@@ -235,11 +235,11 @@ export function EvaluationActionsPanel({
                   disabled={!canAct || pendingAction !== null || !hasSignature}
                 >
                   {isPending && pendingAction === 'notRecommended' ? (
-                    <span className="animate-pulse">Processing...</span>
+                    <span className="animate-pulse">Submitting…</span>
                   ) : (
                     <>
                       <ThumbsDown size={16} />
-                      Not Recommended
+                      Not recommended
                     </>
                   )}
                 </Button>
@@ -251,7 +251,7 @@ export function EvaluationActionsPanel({
                   disabled={!canAct || pendingAction !== null}
                 >
                   <ArrowCounterClockwise size={16} />
-                  Push Back
+                  Push back
                 </Button>
 
                 <Button
@@ -261,7 +261,7 @@ export function EvaluationActionsPanel({
                   onClick={onFlagOpen}
                 >
                   <WarningCircle size={16} />
-                  Flag Incomplete Documents
+                  Flag incomplete documents
                 </Button>
               </>
             ) : (

@@ -15,11 +15,11 @@ export default function Forbidden() {
 
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Access Restricted
+            You don't have access to this page
           </h1>
           <p className="text-sm text-muted-foreground">
-            Your current account role or branch permissions do not allow access
-            to this module. Please switch accounts or consult your system administrator.
+            Your role or branch doesn't allow this page. Ask an administrator
+            if you think you should have access.
           </p>
         </div>
 
@@ -31,7 +31,7 @@ export default function Forbidden() {
             className="gap-2"
           >
             <ArrowLeft size={16} weight="bold" />
-            Go Back
+            Go back
           </Button>
           <Button
             size="sm"
@@ -39,14 +39,10 @@ export default function Forbidden() {
             className="gap-2"
           >
             <House size={16} weight="bold" />
-            Return to Dashboard
+            Go to dashboard
           </Button>
         </div>
       </div>
-
-      <p className="mt-6 text-xs text-muted-foreground">
-        ALAS &bull; Enterprise Bank Inc. Loan Application System
-      </p>
     </div>
   )
 }

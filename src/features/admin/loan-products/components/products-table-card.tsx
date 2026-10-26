@@ -75,7 +75,7 @@ export function ProductsTableCard({
               weight="bold"
               className="text-muted-foreground"
             />
-            Loan Product Catalog
+            Loan product catalog
             <Badge variant="outline" className="ml-1 font-normal">
               {totalRows} {totalRows === 1 ? 'product' : 'products'}
             </Badge>

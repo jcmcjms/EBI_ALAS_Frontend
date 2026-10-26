@@ -55,7 +55,7 @@ export function DeviationsSection() {
     >
       {loans.length === 0 ? (
         <div className="rounded-none border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-          Select loan numbers in Step 1.3 to record deviations and remarks.
+          Select loan numbers under 1.3 Account & preloan to record deviations and remarks.
         </div>
       ) : (
         <PerLoanTabs
@@ -194,7 +194,6 @@ function DeviationsFields({
 
   return (
     <div className="space-y-5">
-      {}
       <div className="flex items-center space-x-3">
         <Checkbox
           id={`hasDeviations-${loanNo}`}
@@ -288,7 +287,6 @@ function DeviationsFields({
         </div>
       )}
 
-      {}
       {hasFeeOverride && (
         <FeeDeviationJustification
           path={path}
@@ -297,7 +295,6 @@ function DeviationsFields({
         />
       )}
 
-      {}
       <DeviationOtherRemarks
         path={path}
         loanIndex={loanIndex}

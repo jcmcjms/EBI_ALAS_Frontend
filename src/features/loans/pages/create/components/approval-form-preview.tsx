@@ -143,24 +143,20 @@ export function ApprovalFormPreview({
       }
       contentClassName="p-0"
     >
-      {}
       <div
         ref={ref}
         id="approval-form-preview"
         data-print-root
         className="bg-white text-black print:bg-white"
       >
-        {}
         {watchedLoans.length === 0 && (
           <div className="p-8 text-center text-muted-foreground">
-            Select loan numbers in Step 1.3 to generate approval forms.
+            Select loan numbers under 1.3 Account & preloan to generate approval forms.
           </div>
         )}
 
-        {}
         {watchedLoans.length > 0 && (
           <>
-            {}
             <div className="bg-muted/30 px-3 pt-2">
               <FormTabStrip
                 idPrefix="approval"
@@ -216,7 +212,6 @@ export function ApprovalFormPreview({
               />
             </div>
 
-            {}
             <ApprovalFormViewport zoom={zoom}>
               <div className="bg-white text-black">
                 {watchedLoans.map((loan, index) => {

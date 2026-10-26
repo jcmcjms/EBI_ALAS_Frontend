@@ -35,13 +35,13 @@ export function describeEvent(e: TimelineEvent): TimelineSentence {
   if (action === 'DocumentsFlagged')
     return { headline: 'Flagged missing documents' }
   if (action === 'DocumentFlagCleared')
-    return { headline: 'Document flag cleared — all requirements uploaded' }
+    return { headline: 'Document flag cleared: all requirements uploaded' }
   if (action === 'PushedBack' || toStatus === 'ForRevision')
     return { headline: 'Returned the application to the encoder for revision' }
   if (action === 'EvaluatedRecommended')
-    return { headline: 'Evaluation complete — recommended for approval' }
+    return { headline: 'Evaluation complete: recommended for approval' }
   if (action === 'EvaluatedNotRecommended')
-    return { headline: 'Evaluation complete — forwarded as NOT recommended' }
+    return { headline: 'Evaluation complete: forwarded as not recommended' }
   if (action === 'Revised' || fromStatus === 'ForRevision') {
     if (toStatus === 'ForRecommendation')
       return { headline: 'Resubmitted for recommendation' }
@@ -59,7 +59,7 @@ export function describeEvent(e: TimelineEvent): TimelineSentence {
     return { headline: `Submitted the application to ${statusLabel(toStatus)}` }
   }
   if (toStatus === 'ForChecking')
-    return { headline: 'Recommended — sent for credit checking' }
+    return { headline: 'Recommended: sent for credit checking' }
   if (toStatus === 'ForApproval')
     return { headline: 'Sent to the approving officer' }
   if (toStatus === 'Approved') return { headline: 'Approved the application' }
@@ -78,7 +78,7 @@ export const relativeTime = (iso: string) =>
 
 const QUEUE_DESK_SENTENCE: Record<string, (owner: string | null) => string> = {
   Recommendation: (o) =>
-    `Waiting at the Recommendation desk${o ? ` — next up: ${o}` : ''}.`,
+    `Waiting at the Recommendation desk${o ? `. Next up: ${o}` : ''}.`,
   Evaluation: (o) =>
     `Waiting at the Credit Checking desk${o ? ` — reviewing: ${o}` : ''}.`,
   Approval: (o) =>

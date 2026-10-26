@@ -224,10 +224,10 @@ export function useLoanApprovalPage() {
     onSuccess: (_d, payload) => {
       toastSuccess(
         payload.action === 'NotRecommend'
-          ? 'Evaluation recorded as Not Recommended — forwarded to Approver.'
+          ? 'Recorded as Not Recommended and forwarded to the Approver.'
           : payload.kind === 'return'
             ? 'Application pushed back to the encoder.'
-            : 'Application forwarded successfully.',
+            : 'Application forwarded.',
       )
       draft.clear()
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
@@ -263,7 +263,7 @@ export function useLoanApprovalPage() {
       flagDocuments(id, { missingRequirementCodes: codes, reason: text }),
     onSuccess: () => {
       toastSuccess(
-        'Documents flagged — the encoder has been notified. Review continues.',
+        'Documents flagged. The encoder has been notified, and you can keep reviewing.',
       )
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
       qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
@@ -286,7 +286,7 @@ export function useLoanApprovalPage() {
     onSuccess: (r) => {
       toastSuccess(
         r.complete
-          ? 'All requirements uploaded — application released to the review queue.'
+          ? 'All requirements uploaded. The application is back in the review queue.'
           : `Still missing: ${r.missing.join(', ')}`,
       )
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
@@ -326,7 +326,7 @@ export function useLoanApprovalPage() {
       qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
       qc.invalidateQueries({ queryKey: loanKeys.all })
     } catch (e) {
-      toastError(e instanceof Error ? e.message : 'Could not cancel.')
+      toastError(e instanceof Error ? e.message : "Couldn't cancel the application.")
       setCancelPending(false)
     }
   }

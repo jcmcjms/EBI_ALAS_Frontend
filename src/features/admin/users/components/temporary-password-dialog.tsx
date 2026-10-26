@@ -102,9 +102,9 @@ export function TemporaryPasswordDialog({
             Temporary password for @{credential.username}
           </DialogTitle>
           <DialogDescription>
-            Share this credential through a secure channel. It is shown
-            <strong> once</strong> and will not be recoverable afterwards. The
-            user must change it at first login.
+            Send this password to the user privately. It is shown
+            <strong> once</strong> and cannot be recovered later. They must
+            change it at first sign-in.
           </DialogDescription>
         </DialogHeader>
 
@@ -142,7 +142,7 @@ export function TemporaryPasswordDialog({
           <p className="text-xs text-muted-foreground" aria-live="polite">
             {copied
               ? 'Copied to clipboard.'
-              : 'Masked by default \u2014 reveal only when the screen is private.'}
+              : 'Hidden by default. Reveal it only when your screen is private.'}
           </p>
 
           {discarding && (
@@ -155,8 +155,8 @@ export function TemporaryPasswordDialog({
                 weight="fill"
                 className="mt-0.5 shrink-0"
               />
-              Closing without copying means the password cannot be viewed again.
-              You would need to reset it once more. Close anyway?
+              If you close without copying, this password can't be shown
+              again and you'll need to reset it. Close anyway?
             </p>
           )}
 
@@ -170,15 +170,14 @@ export function TemporaryPasswordDialog({
               htmlFor="temp-pw-ack"
               className="text-xs font-normal leading-4"
             >
-              I have copied or securely recorded this password and shared it
-              with the user.
+              I've copied this password and shared it with the user.
             </Label>
           </div>
         </div>
 
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={requestClose}>
-            {discarding ? 'Confirm close' : 'Close'}
+            {discarding ? 'Close anyway' : 'Close'}
           </Button>
           <Button size="sm" disabled={!acked} onClick={onDismiss}>
             Done

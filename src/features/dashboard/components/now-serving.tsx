@@ -30,7 +30,7 @@ export function NowServing({
         <p className="px-4 py-10 text-center text-sm text-muted-foreground">
           No one is serving right now
           {pendingCount != null
-            ? ` — ${pendingCount} file${pendingCount === 1 ? '' : 's'} waiting in queue.`
+            ? `. ${pendingCount} ${pendingCount === 1 ? 'application is' : 'applications are'} waiting in the queue.`
             : '.'}
         </p>
       )
@@ -78,7 +78,7 @@ export function NowServing({
     <Card id="now-serving" className="scroll-mt-24 flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl">
-          Now Serving
+          Now serving
           {data.length > 0 && (
             <Badge variant="secondary" className="tabular-nums">
               {data.length}

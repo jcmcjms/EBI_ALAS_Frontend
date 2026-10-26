@@ -37,13 +37,13 @@ export const DashboardSummary = memo(function DashboardSummary({
 
   const stats = [
     {
-      label: 'Pending Applications',
+      label: 'Pending applications',
       value: data.totalPending,
       context: pendingContext,
       isAlert: false,
     },
     {
-      label: 'In Progress',
+      label: 'In progress',
       value: data.nowServing,
       context: 'Currently being reviewed',
       isAlert: false,

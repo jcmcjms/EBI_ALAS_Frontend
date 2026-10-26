@@ -152,15 +152,15 @@ export function ProductEditSheet({
             <div className="min-w-0">
               <SheetTitle className="flex items-center gap-2">
                 <PencilSimple size={16} weight="bold" />
-                Edit Loan Product
+                Edit loan product
               </SheetTitle>
               <SheetDescription className="mt-1">
                 Update policy fields for{' '}
                 <span className="font-semibold text-foreground">
                   {product?.code}
                 </span>{' '}
-                — {product?.description}. Changes apply to new loan applications
-                immediately.
+                ({product?.description}). Changes apply to new loan
+                applications immediately.
               </SheetDescription>
             </div>
             {product && (
@@ -191,7 +191,7 @@ export function ProductEditSheet({
             <section className="space-y-4">
               <SectionHeading
                 title="Eligibility Bounds"
-                description="Min and max principal (₱) and term (days) an AO can request for this product."
+                description="Smallest and largest principal (₱) and term (days) an AO can request for this product."
               />
               <div className="grid grid-cols-2 gap-4">
                 <NumberField
@@ -222,7 +222,7 @@ export function ProductEditSheet({
                   id="maxTermDays"
                   label="Max Term (days)"
                   error={errors.maxTermDays?.message}
-                  hint="Hard ceiling: 2617 days (7 years + 2 months grace period)."
+                  hint="Maximum allowed: 2,617 days (7 years plus a 2-month grace period)."
                   disabled={!canEdit}
                   step="1"
                   {...register('maxTermDays')}
@@ -270,7 +270,7 @@ export function ProductEditSheet({
             <section className="space-y-4">
               <SectionHeading
                 title="Advance Interest Rate"
-                description="Annual rate, stored as a decimal fraction. The disbursement service multiplies this by principal and (termDays / 365) to compute the advance-interest deduction."
+                description="Annual rate as a decimal (12% = 0.12). Used to compute the advance-interest deduction at disbursement."
               />
               <div className="max-w-xs">
                 <NumberField
@@ -294,7 +294,7 @@ export function ProductEditSheet({
             <section className="space-y-4">
               <SectionHeading
                 title="Document Requirements"
-                description="Checklist items created on each new loan for this product. Codes stay stable for remarks and pushback."
+                description="Checklist items added to each new loan for this product."
               />
               {requirementsQuery.isLoading ? (
                 <Spinner className="size-5" />

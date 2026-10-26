@@ -46,7 +46,6 @@ export function UsersToolbar({
   const { data: branches } = useActiveBranches()
   return (
     <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-      {}
       <div className="relative">
         <MagnifyingGlass
           size={16}
@@ -54,14 +53,13 @@ export function UsersToolbar({
           className="absolute top-2.5 left-2.5 text-muted-foreground"
         />
         <Input
-          placeholder="Search name, username..."
+          placeholder="Search by name or username…"
           value={searchInput}
           onChange={(e) => onSearchInputChange(e.target.value)}
           className="h-9 w-full bg-background pl-8 sm:w-[220px]"
         />
       </div>
 
-      {}
       <div className="flex gap-2">
         <Select value={branchFilter} onValueChange={onBranchFilterChange}>
           <SelectTrigger className="h-9 w-[150px] bg-background">
@@ -94,7 +92,6 @@ export function UsersToolbar({
         </Select>
       </div>
 
-      {}
       <div className="flex gap-2 sm:ml-auto">
         {canCreateUsers && (
           <Button

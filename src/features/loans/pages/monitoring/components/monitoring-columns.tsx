@@ -84,13 +84,13 @@ export function buildColumns(
       ),
     }),
     columnHelper.accessor('customerName', {
-      header: 'Customer Name',
+      header: 'Customer name',
       cell: (info) => (
         <span className="font-medium text-sm">{info.getValue()}</span>
       ),
     }),
     columnHelper.accessor('loanType', {
-      header: 'Loan Type',
+      header: 'Loan type',
       cell: (info) => (
         <Badge variant="outline" className="text-xs font-normal">
           {info.getValue()}
@@ -112,7 +112,7 @@ export function buildColumns(
       ),
     }),
     columnHelper.accessor('applicationDate', {
-      header: 'App. Date',
+      header: 'Date applied',
       cell: (info) => (
         <span className="text-xs text-muted-foreground">
           {formatLoanDate(info.getValue())}
@@ -137,7 +137,7 @@ export function buildColumns(
             {flag && (
               <Badge
                 variant="outline"
-                title={`${flag.missingCount} document(s) flagged: ${flag.reason ?? 'no reason provided'}`}
+                title={`${flag.missingCount} ${flag.missingCount === 1 ? 'document' : 'documents'} flagged: ${flag.reason ?? 'no reason given'}`}
                 className="h-5 gap-0.5 border-amber-300 bg-amber-50 px-1 text-[11px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
               >
                 <FileDashed size={10} weight="bold" />
@@ -149,7 +149,7 @@ export function buildColumns(
       },
     }),
     columnHelper.accessor('lastActionDate', {
-      header: 'Time Lapsed',
+      header: 'Time lapsed',
       cell: (info) => (
         <TimeLapsedIndicator
           lastActionDate={info.getValue()}
@@ -159,7 +159,7 @@ export function buildColumns(
       ),
     }),
     columnHelper.accessor('lastActionBy', {
-      header: 'Last Action By',
+      header: 'Last action by',
       cell: (info) => {
         const verb = info.row.original.lastActionVerb
         return (
@@ -175,7 +175,7 @@ export function buildColumns(
       },
     }),
     columnHelper.accessor('assignedApproverName', {
-      header: 'Assigned To',
+      header: 'Assigned to',
       cell: (info) => {
         const row = info.row.original
         const mine = row.isQueueHead && row.queueOwnerName === currentUser?.name

@@ -46,7 +46,7 @@ export function DocumentFlagBadge({ flag, compact }: DocumentFlagBadgeProps) {
           <p className="font-medium">
             {flag.missingCount > 0
               ? `${flag.missingCount} document(s) flagged on ${new Date(flag.flaggedAt).toLocaleDateString()}`
-              : `Flagged on ${new Date(flag.flaggedAt).toLocaleDateString()} — uploads verifying`}
+              : `Flagged on ${new Date(flag.flaggedAt).toLocaleDateString()}. Uploads are being verified.`}
           </p>
           {flag.reason && (
             <p className="text-muted-foreground">{flag.reason}</p>
@@ -81,7 +81,7 @@ export function DocumentFlagBadge({ flag, compact }: DocumentFlagBadgeProps) {
         <p className="font-medium">
           {flag.missingCount > 0
             ? `${flag.missingCount} document(s) flagged on ${new Date(flag.flaggedAt).toLocaleDateString()}`
-            : `Flagged on ${new Date(flag.flaggedAt).toLocaleDateString()} — uploads verifying`}
+            : `Flagged on ${new Date(flag.flaggedAt).toLocaleDateString()}. Uploads are being verified.`}
         </p>
         {flag.reason && <p className="text-muted-foreground">{flag.reason}</p>}
         <p className="text-muted-foreground">

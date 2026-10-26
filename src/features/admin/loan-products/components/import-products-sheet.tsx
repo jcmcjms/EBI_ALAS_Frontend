@@ -52,11 +52,11 @@ export function ImportProductsSheet({
     const selected = event.target.files?.[0]
     if (!selected) return
     if (!selected.name.endsWith('.xlsx')) {
-      toastError('Only .xlsx files are supported.')
+      toastError('Choose an .xlsx file.')
       return
     }
     if (selected.size > MAX_FILE_BYTES) {
-      toastError('File size exceeds the 10 MB limit.')
+      toastError('That file is larger than 10 MB.')
       return
     }
     setFile(selected)
@@ -83,7 +83,7 @@ export function ImportProductsSheet({
           )
         if (importResult.failed > 0)
           toastError(
-            `${importResult.failed} row${importResult.failed === 1 ? '' : 's'} skipped — see the report in the sheet.`,
+            `${importResult.failed} row${importResult.failed === 1 ? '' : 's'} skipped. See the report below.`,
           )
       },
       onError: (error) => {
@@ -228,7 +228,7 @@ export function ImportProductsSheet({
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {file
-                      ? `${(file.size / 1024).toFixed(0)} KB — ready to import`
+                      ? `${(file.size / 1024).toFixed(0)} KB, ready to import`
                       : 'Up to 10 MB. Use the template for the correct columns.'}
                   </p>
                 </div>

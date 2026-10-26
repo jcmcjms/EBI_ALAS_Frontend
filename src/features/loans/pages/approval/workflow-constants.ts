@@ -51,17 +51,33 @@ export function deriveWorkflowAction(def: WorkflowButtonDef): WorkflowAction {
   return base
 }
 
+export function confirmTitleFor(def: WorkflowButtonDef): string {
+  if (def.verdict === 'NotRecommended') return 'Mark as not recommended?'
+  if (def.verdict === 'Recommended') return 'Mark as recommended?'
+  if (def.kind === 'reject') return 'Reject this application?'
+  if (def.kind === 'return') return 'Send this application back for revision?'
+  if (def.to === 'Approved') return 'Approve this loan?'
+  if (def.to === 'ForChecking') return 'Recommend for checking?'
+  return `${def.label}?`
+}
+
 export function confirmDescriptionFor(def: WorkflowButtonDef): string {
   if (def.verdict === 'NotRecommended') {
-    return 'The application still proceeds to the Approver, flagged as NOT RECOMMENDED with your remarks attached.'
+    return 'The application still goes to the Approver, marked as Not Recommended.'
   }
   if (def.kind === 'reject') {
-    return 'This will reject the loan and close the application. The encoder will be notified.'
+    return 'The loan will be rejected and the application closed. The encoder will be notified.'
   }
   if (def.kind === 'return') {
-    return 'This will return the application to the encoder for revision. The encoder will be notified with your remarks.'
+    return 'The application goes back to the encoder with your remarks.'
   }
-  return 'This will approve the loan and move it forward. The encoder will be notified.'
+  if (def.to === 'Approved') {
+    return 'The loan will be approved. The encoder will be notified.'
+  }
+  if (def.to === 'ForChecking') {
+    return 'The application moves to the Evaluator for checking.'
+  }
+  return 'The application moves to the Approver.'
 }
 
 
@@ -74,7 +90,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Recommender',
     from: 'ForRecommendation',
     to: 'ForChecking',
-    label: 'Recommend for Checking',
+    label: 'Recommend for checking',
     kind: 'advance',
     remarksRequired: false,
     confirm: true,
@@ -84,7 +100,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Recommender',
     from: 'ForRecommendation',
     to: 'ForRevision',
-    label: 'Push Back',
+    label: 'Push back',
     kind: 'return',
     remarksRequired: true,
     confirm: true,
@@ -105,7 +121,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Evaluator',
     from: 'ForChecking',
     to: 'ForApproval',
-    label: 'Not Recommended',
+    label: 'Not recommended',
     kind: 'advance',
     verdict: 'NotRecommended',
     remarksRequired: true,
@@ -116,7 +132,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Evaluator',
     from: 'ForChecking',
     to: 'ForRevision',
-    label: 'Push Back',
+    label: 'Push back',
     kind: 'return',
     remarksRequired: true,
     confirm: true,
@@ -126,7 +142,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Approver',
     from: 'ForApproval',
     to: 'Approved',
-    label: 'Approve Loan',
+    label: 'Approve loan',
     kind: 'advance',
     remarksRequired: false,
     confirm: true,
@@ -136,7 +152,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Approver',
     from: 'ForApproval',
     to: 'ForRevision',
-    label: 'Return to Encoder',
+    label: 'Return to encoder',
     kind: 'return',
     remarksRequired: true,
     confirm: true,

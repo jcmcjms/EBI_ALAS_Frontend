@@ -67,7 +67,7 @@ export const columns = columnHelper.columns([
     ),
   }),
   columnHelper.accessor('minAmount', {
-    header: 'Principal Range',
+    header: 'Principal range',
     cell: (info) => {
       const row = info.row.original
       return (
@@ -128,7 +128,7 @@ export const columns = columnHelper.columns([
     },
   }),
   columnHelper.accessor('lastSyncedAt', {
-    header: 'Last Synced',
+    header: 'Last synced',
     cell: (info) => {
       const raw = info.getValue()
       const d = new Date(raw)

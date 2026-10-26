@@ -32,7 +32,7 @@ export function BuyoutAccountsTable({
     <div className="p-4">
       <SubSectionHeading
         step="5.2"
-        title="Buy-Out Accounts (Other FIs)"
+        title="Buy-out accounts (other FIs)"
         icon={
           <CreditCard
             size={16}

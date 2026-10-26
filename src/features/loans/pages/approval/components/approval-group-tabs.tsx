@@ -43,7 +43,7 @@ export function ApprovalGroupTabs({
             hint: `\u2026${l.lamId.slice(-4)}`,
             title: `${l.lamId}, ${statusOf(l.status)}${
               l.unresolvedDocs > 0
-                ? `, ${l.unresolvedDocs} doc(s) open`
+                ? `, ${l.unresolvedDocs} ${l.unresolvedDocs === 1 ? 'doc' : 'docs'} open`
                 : ''
             }`,
             hasWarning: l.unresolvedDocs > 0,

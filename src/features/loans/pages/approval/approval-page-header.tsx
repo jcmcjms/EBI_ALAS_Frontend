@@ -99,7 +99,6 @@ export function ApprovalPageHeader({
               <WarningCircle size={12} weight="fill" /> Escalated
             </Badge>
           )}
-          {}
           {detail.evaluationVerdict === 'EvaluatedNotRecommended' && (
             <Badge
               variant="secondary"
@@ -145,7 +144,6 @@ export function ApprovalPageHeader({
         </div>
       </div>
 
-      {}
       <ApprovalGroupTabs
         loans={groupLoans}
         currentLoanId={id}

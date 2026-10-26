@@ -63,11 +63,11 @@ export const ActionRequired = memo(function ActionRequired({
             aria-hidden
           />
           <CardTitle className="text-base font-semibold">
-            Action Required
+            Action required
           </CardTitle>
         </div>
         <Badge variant="destructive" className="tabular-nums">
-          {totalTasks} {totalTasks === 1 ? 'Task' : 'Tasks'}
+          {totalTasks} {totalTasks === 1 ? 'task' : 'tasks'}
         </Badge>
       </CardHeader>
       <CardContent className="p-0">

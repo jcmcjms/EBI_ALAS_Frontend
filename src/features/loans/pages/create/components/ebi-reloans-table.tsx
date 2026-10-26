@@ -35,7 +35,7 @@ export function EbiReloansTable({
     <div className="p-4">
       <SubSectionHeading
         step="5.1"
-        title="EBI Accounts for Reloans"
+        title="EBI accounts for reloans"
         icon={
           <Bank
             size={16}
@@ -57,7 +57,7 @@ export function EbiReloansTable({
             </TableHead>
             <TableHead
               className="text-right w-[160px]"
-              title="Defaults to the CIS outstanding balance; adjust to the certified payoff amount"
+              title="Pre-filled with the CIS outstanding balance. Change it to the certified payoff amount."
             >
               OB to be paid/closed
             </TableHead>

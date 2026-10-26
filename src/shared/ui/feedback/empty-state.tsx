@@ -77,10 +77,7 @@ export function ErrorState({
         />
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-semibold tracking-tight text-foreground">
-          Unable to Load Data
-        </p>
-        <p className="mx-auto max-w-[360px] text-xs leading-relaxed text-muted-foreground">
+        <p className="mx-auto max-w-[360px] text-sm font-semibold tracking-tight text-foreground">
           {message}
         </p>
       </div>

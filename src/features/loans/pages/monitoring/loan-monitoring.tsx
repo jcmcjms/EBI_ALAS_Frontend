@@ -156,7 +156,6 @@ export function LoanMonitoringPage() {
         }}
       />
 
-      {}
       <AlertDialog
         open={cancelDialog.open}
         onOpenChange={(o) => setCancelDialog((d) => ({ ...d, open: o }))}
@@ -165,11 +164,10 @@ export function LoanMonitoringPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel this application?</AlertDialogTitle>
             <AlertDialogDescription>
-              The client has withdrawn their application for{' '}
+              This closes the application for{' '}
               <strong>{cancelDialog.record?.customerName}</strong> (
-              <code>{cancelDialog.record?.formNumber}</code>). The application
-              will be closed and the reviewer currently handling it will be
-              notified. This action cannot be undone.
+              <code>{cancelDialog.record?.formNumber}</code>). The reviewer
+              handling it will be notified. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -186,7 +184,7 @@ export function LoanMonitoringPage() {
               maxLength={2000}
             />
             <p className="text-[11px] text-muted-foreground tabular-nums">
-              {cancelDialog.reason.trim().length}/2000 — minimum 10
+              {cancelDialog.reason.trim().length}/2000 (minimum 10)
             </p>
           </div>
 
@@ -217,7 +215,7 @@ export function LoanMonitoringPage() {
                   qc.invalidateQueries({ queryKey: loanKeys.all })
                 } catch (e) {
                   toastError(
-                    e instanceof Error ? e.message : 'Could not cancel.',
+                    e instanceof Error ? e.message : "Couldn't cancel the application.",
                   )
                   setCancelDialog((d) => ({ ...d, pending: false }))
                 }

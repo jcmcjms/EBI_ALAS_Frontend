@@ -86,15 +86,15 @@ export function UserEditDrawer({
     if (!user || !isDirty || isSaving) return
 
     if (!profile.firstName.trim()) {
-      toastError('First name is required')
+      toastError('Enter a first name')
       return
     }
     if (!profile.lastName.trim()) {
-      toastError('Last name is required')
+      toastError('Enter a last name')
       return
     }
     if (!profile.email.trim()) {
-      toastError('Email is required for password reset')
+      toastError('Enter the email address used for password resets')
       return
     }
 
@@ -128,7 +128,7 @@ export function UserEditDrawer({
     <Sheet open={!!user} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="flex flex-col p-0 sm:max-w-[500px]">
         <SheetHeader className="border-b bg-muted/30 p-6 pb-4">
-          <SheetTitle>Edit User{fullName ? `: ${fullName}` : ''}</SheetTitle>
+          <SheetTitle>Edit user{fullName ? `: ${fullName}` : ''}</SheetTitle>
           <SheetDescription>
             Manage user profile, roles, and security settings.
           </SheetDescription>
@@ -195,7 +195,7 @@ export function UserEditDrawer({
               onClick={handleSave}
               disabled={!isDirty || isSaving}
             >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? 'Saving…' : 'Save changes'}
             </Button>
           ) : (
             <p className="self-center text-xs text-muted-foreground">

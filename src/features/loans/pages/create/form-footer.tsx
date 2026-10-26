@@ -84,7 +84,7 @@ export function FormFooter({
                 {errorMessages.length > 0
                   ? formatErrorSummary(errorMessages)
                   : `${totalErrors} field${totalErrors === 1 ? '' : 's'} need${totalErrors === 1 ? 's' : ''} attention`}
-                {' — jump to first'}
+                {'. Jump to first'}
               </button>
             </div>
           ) : (
@@ -116,7 +116,7 @@ export function FormFooter({
               disabled={!canSubmit || isSubmitting}
             >
               <PaperPlaneTilt size={16} weight="bold" />
-              {isSubmitting ? 'Submitting…' : 'Submit Application'}
+              {isSubmitting ? 'Submitting…' : 'Submit application'}
             </Button>
           ) : (
             <Button

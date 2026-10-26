@@ -67,7 +67,6 @@ export function FormTabStrip({
 
   return (
     <div className="flex items-end gap-2 print:hidden">
-      {}
       <div className="min-w-0 flex-1 border-b border-border">
         <div
           role="tablist"

@@ -311,7 +311,7 @@ export const loanApplicationSchema = z
           code: z.ZodIssueCode.custom,
           path: ['loans', i, 'deviations', 'feeDeviationJustification'],
           message:
-            "Provide a justification — at least one fee on this loan deviates from the bank's standard rate.",
+            "Add a justification: at least one fee on this loan differs from the bank's standard rate.",
         })
       }
     }

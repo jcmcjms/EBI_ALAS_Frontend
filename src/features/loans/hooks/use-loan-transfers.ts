@@ -39,7 +39,7 @@ export function useLoanTransfers(activeLoanIndex: number | null) {
 
   const requireActive = (): number | null => {
     if (activeLoanIndex === null) {
-      toastError('Select a loan number in Step 1.3 before adding obligations.')
+      toastError('Select a loan number under 1.3 Account & preloan first.')
       return null
     }
     return activeLoanIndex
@@ -92,7 +92,7 @@ export function useLoanTransfers(activeLoanIndex: number | null) {
       if (source === 'outstanding' && target === 'ebi') {
         const rowData = liveOutstanding[rowIndex]
         if (!rowData) {
-          toastError('Could not transfer loan — source row not found.')
+          toastError("Couldn't find that loan to transfer. Refresh and try again.")
           return
         }
         const mapped = mapToEbi(normalize(rowData), 'outstanding')
@@ -107,7 +107,7 @@ export function useLoanTransfers(activeLoanIndex: number | null) {
       } else if (source === 'ebi' && target === 'outstanding') {
         const rowData = liveEbi[rowIndex]
         if (!rowData) {
-          toastError('Could not transfer loan — source row not found.')
+          toastError("Couldn't find that loan to transfer. Refresh and try again.")
           return
         }
         const mapped = mapToOutstanding(normalize(rowData), 'ebi')

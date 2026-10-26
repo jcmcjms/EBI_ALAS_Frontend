@@ -80,7 +80,7 @@ function AuthorityEditSheetInner({
       const ok = await onUpdate(authority.key, parsedFormToPayload(parsed.data))
       if (ok) onClose()
     } catch (e) {
-      toastError(e instanceof Error ? e.message : 'Failed to update authority')
+      toastError(e instanceof Error ? e.message : "Couldn't save the approval authority")
     } finally {
       setIsSubmitting(false)
     }

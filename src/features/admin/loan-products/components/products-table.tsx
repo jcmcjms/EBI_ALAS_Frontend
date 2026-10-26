@@ -75,20 +75,20 @@ export function ProductsTable() {
       onEditProduct: (product) => setEditingCode(product.code),
       onSyncNow: () => {
         if (!canManageProducts) {
-          toastError('You need the loan_product.manage permission to sync.')
+          toastError("You don't have permission to sync products. Ask an administrator for access.")
           return
         }
         setConfirmAction({
-          title: 'Sync from webloan',
+          title: 'Sync from WebLoan',
           description:
-            'Pull the latest loan-product catalog from webloan. The sync will add new products, mark retired ones, and preserve your policy edits on existing rows.',
-          actionLabel: 'Run Sync',
+            'Pull the latest product catalog from WebLoan. New products are added, retired ones marked, and your policy edits on existing products are kept.',
+          actionLabel: 'Sync now',
           onConfirm: () => {
             syncMutation.mutate(undefined, {
               onSuccess: (result) => {
                 toastSuccess(
-                  `Synced ${result.added + result.updated + result.preserved} products — ` +
-                    `${result.added} added, ${result.updated} updated, ${result.preserved} preserved.`,
+                  `Synced ${result.added + result.updated + result.preserved} products: ` +
+                    `${result.added} added, ${result.updated} updated, ${result.preserved} unchanged.`,
                 )
               },
               onError: (e) => toastError(getErrorMessage(e)),

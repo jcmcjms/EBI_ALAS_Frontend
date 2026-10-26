@@ -32,7 +32,7 @@ export function IncomingLoansTable({
     <div className="p-4">
       <SubSectionHeading
         step="5.3"
-        title="Incoming / Undeducted Loans"
+        title="Incoming / undeducted loans"
         icon={
           <ArrowLineDown
             size={16}

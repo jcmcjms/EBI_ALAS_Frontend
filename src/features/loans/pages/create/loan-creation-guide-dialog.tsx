@@ -11,20 +11,20 @@ import {
 
 const STAGES = [
   {
-    title: '1. Client Identification',
+    title: 'Client identification',
     desc: 'Search the CIS registry, confirm the borrower identity, and attach an available preloan account.',
   },
   {
-    title: '2. Financial Details',
+    title: 'Financial details',
     desc: 'Verify personal details, existing obligations, and configure the proposed loan parameters.',
   },
   {
-    title: '3. Verification & Exceptions',
-    desc: 'Record your account officer findings and document any policy deviations with justifications.',
+    title: 'Verification & exceptions',
+    desc: 'Record your findings and document any policy deviations with justifications.',
   },
   {
-    title: '4. Final Review',
-    desc: 'Review the generated Approval Form document and submit the application for processing.',
+    title: 'Final review',
+    desc: 'Review the Approval Form and submit the application.',
   },
 ]
 

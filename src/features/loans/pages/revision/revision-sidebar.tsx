@@ -84,7 +84,7 @@ export function RevisionSidebar({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <ClockCounterClockwise size={18} /> Resubmission Notes
+            <ClockCounterClockwise size={18} /> Resubmission notes
           </CardTitle>
           <CardDescription>
             Required for audit. Briefly explain the corrections made.
@@ -96,7 +96,7 @@ export function RevisionSidebar({
           </Label>
           <Textarea
             id="revision-notes"
-            placeholder="e.g., Updated client NTHP as per new payslip. Attached revised CI."
+            placeholder="e.g. Updated NTHP per the new payslip; attached the revised CI."
             className="min-h-[100px]"
             value={notes}
             aria-invalid={Boolean(notesError)}

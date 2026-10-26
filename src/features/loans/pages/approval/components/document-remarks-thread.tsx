@@ -151,7 +151,6 @@ export function DocumentRemarksThread({
         </div>
       ))}
 
-      {}
       {remarks
         .filter(
           (r) =>

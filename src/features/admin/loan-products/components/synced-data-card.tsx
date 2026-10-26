@@ -35,12 +35,12 @@ export function SyncedDataCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-4 pt-0">
-        <ReadOnlyField label="Product Code" value={product?.code ?? '—'} />
+        <ReadOnlyField label="Product code" value={product?.code ?? '—'} />
         <ReadOnlyField
           label="Description"
           value={product?.description ?? '—'}
         />
-        <ReadOnlyField label="Last Synced" value={lastSyncedDisplay} />
+        <ReadOnlyField label="Last synced" value={lastSyncedDisplay} />
         <ReadOnlyField
           label="Retirement"
           value={

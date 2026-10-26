@@ -116,8 +116,8 @@ export function LoanCreationHeader({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Clear loan form?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will clear all fields and remove the saved draft.
-                      This action cannot be undone.
+                      This clears every field and deletes your saved draft.
+                      This cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

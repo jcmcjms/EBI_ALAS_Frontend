@@ -95,7 +95,6 @@ export function LoanDetailsDrawer({
           </SheetDescription>
         </SheetHeader>
 
-        {}
         {deskSentence && (
           <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground mx-6 mt-3">
             <p>{deskSentence}</p>

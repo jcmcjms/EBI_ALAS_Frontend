@@ -165,21 +165,21 @@ export function LoanCreationPage() {
       )
       if (mismatched.length > 0) {
         toastError(
-          `Loan branch (${mismatched[0].branchCode}) does not match your assigned branch (${userBranchId}). Only loans from your branch can be submitted.`,
+          `The loan branch (${mismatched[0].branchCode}) doesn't match your branch (${userBranchId}). You can only submit loans for your own branch.`,
         )
         return
       }
       const maxLoanableBlock = findMaxLoanableSubmitBlock(data)
       if (maxLoanableBlock) {
         toastError(
-          `Cannot submit ${maxLoanableBlock.loanLabel}: Maximum Loanable Amount does not cover the proposed loan. Adjust the proposed amount or client capacity first.`,
+          `Can't submit ${maxLoanableBlock.loanLabel}: the Maximum Loanable Amount doesn't cover the proposed loan. Lower the amount or adjust client capacity first.`,
         )
         return
       }
       const negativeNetProceedsBlock = findNegativeNetProceedsSubmitBlock(data)
       if (negativeNetProceedsBlock) {
         toastError(
-          `Cannot submit ${negativeNetProceedsBlock.loanLabel}: Net Proceeds to Client is negative. Adjust the proposed amount or obligations first.`,
+          `Can't submit ${negativeNetProceedsBlock.loanLabel}: Net Proceeds to Client is negative. Adjust the proposed amount or obligations first.`,
         )
         return
       }
@@ -202,8 +202,8 @@ export function LoanCreationPage() {
       const summary = formatErrorSummary(messages)
       toastError(
         summary
-          ? `${summary} — fix before submission.`
-          : `${total} field${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} attention before submission.`,
+          ? `${summary}. Fix ${total === 1 ? 'it' : 'them'} before submitting.`
+          : `${total} field${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} attention before submitting.`,
       )
       if (first) scrollToSection(first.id)
     },

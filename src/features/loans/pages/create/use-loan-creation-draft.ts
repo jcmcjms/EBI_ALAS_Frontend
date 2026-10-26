@@ -233,7 +233,7 @@ export function useLoanCreationDraft({
     } catch (e) {
       const message =
         extractValidationMessage(e) ??
-        "Couldn't save your draft to the server. Your work is kept on this device."
+        "Couldn't save your draft online. Your work is safe on this device."
       setErrorMessage(message)
       setStatus('error')
     }
@@ -284,7 +284,7 @@ export function useLoanCreationDraft({
             setSavedAt(at)
             setStatus('saved')
             setErrorMessage(null)
-            toastInfo('Draft restored from the server.')
+            toastInfo('Draft restored from your account.')
             if (cisId) {
               // Overlay refreshed WebLoan fields — persist the merged snapshot.
               dirtyRef.current = true
@@ -324,14 +324,14 @@ export function useLoanCreationDraft({
           setSavedAt(local.savedAt)
           setStatus('idle')
           setErrorMessage(
-            'Saved draft unavailable — restored the copy from this device. It will sync automatically.',
+            "Couldn't reach your saved draft. Restored the copy from this device; it will sync automatically.",
           )
           dirtyRef.current = true
           scheduleSave()
           return
         }
         setStatus('idle')
-        setErrorMessage("Couldn't load your saved draft — start typing to save a new one.")
+        setErrorMessage("Couldn't load your saved draft. Start typing to save a new one.")
       })
   }, [enabled, key, methods, cancelTimer, scheduleSave])
 

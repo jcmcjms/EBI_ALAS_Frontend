@@ -67,7 +67,7 @@ export function LoanEvaluationPage() {
           <WarningCircle size={48} className="mx-auto text-destructive" />
           <h2 className="text-xl font-semibold">Invalid Application ID</h2>
           <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
-            Return to Monitoring
+            Go to Loan Monitoring
           </Button>
         </div>
       </div>
@@ -95,15 +95,15 @@ export function LoanEvaluationPage() {
         <div className="text-center space-y-4 max-w-md">
           <WarningCircle size={48} className="mx-auto text-destructive" />
           <h2 className="text-xl font-semibold">
-            {isForbidden ? 'Access Denied' : 'Failed to Load Application'}
+            {isForbidden ? 'Access denied' : "Couldn't load the application"}
           </h2>
           <p className="text-muted-foreground">
             {isForbidden
-              ? "You don't have permission to view this loan application. This may be because your account doesn't have the required role, or the application belongs to a different branch. Please contact your administrator if you believe this is a mistake."
-              : "We couldn't load this loan application. Please try again or return to the monitoring page."}
+              ? "You don't have permission to view this application. It may belong to another branch, or your role may not allow it. Ask an administrator if you think that's wrong."
+              : "Couldn't load this application. Try again or go back to Loan Monitoring."}
           </p>
           <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
-            Return to Monitoring
+            Go to Loan Monitoring
           </Button>
         </div>
       </div>

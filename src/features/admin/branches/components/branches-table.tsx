@@ -99,7 +99,7 @@ export function BranchesTable() {
   const handleCreate = async (payload: CreateBranchForm) => {
     try {
       await createMutation.mutateAsync(payload)
-      toastSuccess('Branch created successfully')
+      toastSuccess('Branch created')
       return true
     } catch (e) {
       toastError(getErrorMessage(e))
@@ -110,7 +110,7 @@ export function BranchesTable() {
   const handleUpdate = async (code: string, payload: UpdateBranchForm) => {
     try {
       await updateMutation.mutateAsync({ code, payload })
-      toastSuccess('Branch updated successfully')
+      toastSuccess('Branch changes saved')
       return true
     } catch (e) {
       toastError(getErrorMessage(e))
@@ -145,7 +145,7 @@ export function BranchesTable() {
           <CardHeader className="border-b bg-muted/30 pb-3">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <CardTitle className="flex items-center gap-2 text-lg">
-                Branch Directory
+                Branch directory
                 <Badge variant="outline" className="ml-1 font-normal">
                   {totalRows} {totalRows === 1 ? 'branch' : 'branches'}
                 </Badge>
@@ -278,7 +278,10 @@ export function BranchesTable() {
         }
         description={
           confirm
-            ? `Change ${confirm.branch.code} — ${confirm.branch.name} to ${confirm.status}? Closure is blocked while open loans or active users remain assigned.`
+            ? `Change ${confirm.branch.code} (${confirm.branch.name}) to ${confirm.status}?` +
+              (confirm.status === 'Active'
+                ? ''
+                : ' A branch can\'t leave the directory while loans are open or users are assigned.')
             : ''
         }
         actionLabel={

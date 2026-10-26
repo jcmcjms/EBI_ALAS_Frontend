@@ -185,7 +185,7 @@ export function ApplicationTimeline({
       ) : query.isError ? (
         <Alert variant="destructive" className="m-4">
           <WarningCircle />
-          <AlertTitle>Could not load the history</AlertTitle>
+          <AlertTitle>Couldn't load the history</AlertTitle>
           <AlertDescription>
             <Button variant="outline" size="sm" onClick={() => query.refetch()}>
               Try again
@@ -194,8 +194,12 @@ export function ApplicationTimeline({
         </Alert>
       ) : events.length === 0 ? (
         <EmptyState
-          title="No activity yet"
-          hint="Nothing recorded for this filter."
+          title={filter === 'all' ? 'No activity yet' : 'No matching activity'}
+          hint={
+            filter === 'all'
+              ? 'Actions on this application will appear here.'
+              : 'Try a different filter.'
+          }
         />
       ) : (
         <ol className="relative space-y-5 p-4 before:absolute before:bottom-4 before:left-[31px] before:top-4 before:w-px before:bg-border">
@@ -274,7 +278,6 @@ export function ApplicationTimeline({
         </ol>
       )}
 
-      {}
       {query.hasNextPage && (
         <div className="flex justify-center p-3">
           <Button

@@ -207,13 +207,13 @@ export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
   ForIncompleteDocuments: {
     label: 'For Incomplete Documents',
     defaultSlaHours: 24,
-    hint: 'Returned — required documents are incomplete',
+    hint: 'Returned because required documents are incomplete',
     className: loanStatusColors.blue,
   },
   Approved: {
     label: 'Approved',
     defaultSlaHours: null,
-    hint: 'Approved — awaiting disbursement setup',
+    hint: 'Approved, awaiting disbursement setup',
     className: loanStatusColors.green,
   },
   ForDisbursement: {
@@ -237,13 +237,13 @@ export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
   Rejected: {
     label: 'Rejected',
     defaultSlaHours: null,
-    hint: 'Declined — terminal',
+    hint: 'Declined, no further steps',
     className: loanStatusColors.red,
   },
   Cancelled: {
     label: 'Cancelled',
     defaultSlaHours: null,
-    hint: 'Client withdrew — terminal',
+    hint: 'Client withdrew, no further steps',
     className: loanStatusColors.grey + ' line-through',
   },
 }

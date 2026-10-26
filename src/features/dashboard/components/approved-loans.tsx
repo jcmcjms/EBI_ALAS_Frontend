@@ -90,7 +90,7 @@ export function ApprovedLoans({
     <Card id="approved-loans" className="scroll-mt-24 flex flex-col">
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-xl">
-          Approved Loans
+          Approved loans
           {data.length > 0 && (
             <Badge variant="secondary" className="tabular-nums">
               {data.length}

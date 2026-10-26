@@ -53,23 +53,21 @@ export function useUserActions() {
 
   function handleToggleStatusRequest(user: UserResponse) {
     if (!canSuspendUsers) {
-      toastError("You don't have permission to suspend or activate users")
+      toastError("You don't have permission to suspend or activate users. Ask an administrator for access.")
       return
     }
     if (user.isActive) {
       setConfirmAction({
-        title: 'Suspend User Account',
-        description: `Are you sure you want to suspend ${formatFullName(user)}? This will immediately revoke their access to ALAS.`,
-        actionLabel: 'Suspend User',
+        title: `Suspend ${formatFullName(user)}?`,
+        description: 'They lose access to ALAS immediately, until you activate their account again.',
+        actionLabel: 'Suspend',
         destructive: true,
         onConfirm: () => {
           updateUserStatusMutation.mutate(
             { id: user.id, isActive: false },
             {
               onSuccess: () =>
-                toastSuccess(
-                  `${formatFullName(user)}'s account has been suspended`,
-                ),
+                toastSuccess(`Suspended ${formatFullName(user)}`),
               onError: (e) => toastError(getErrorMessage(e)),
             },
           )
@@ -78,17 +76,15 @@ export function useUserActions() {
       })
     } else {
       setConfirmAction({
-        title: 'Activate User Account',
-        description: `Are you sure you want to activate ${formatFullName(user)}? This will restore their access to ALAS.`,
-        actionLabel: 'Activate User',
+        title: `Activate ${formatFullName(user)}?`,
+        description: 'They regain access to ALAS immediately.',
+        actionLabel: 'Activate',
         onConfirm: () => {
           updateUserStatusMutation.mutate(
             { id: user.id, isActive: true },
             {
               onSuccess: () =>
-                toastSuccess(
-                  `${formatFullName(user)}'s account has been activated`,
-                ),
+                toastSuccess(`Activated ${formatFullName(user)}`),
               onError: (e) => toastError(getErrorMessage(e)),
             },
           )
@@ -129,7 +125,7 @@ export function useUserActions() {
     try {
       await forcePasswordResetMutation.mutateAsync(user.id)
       toastSuccess(
-        `${formatFullName(user)} will be required to change their password on next login.`,
+        `${formatFullName(user)} must change their password at next sign-in.`,
       )
     } catch (error) {
       toastError(getErrorMessage(error))
@@ -194,7 +190,7 @@ export function useUserActions() {
         } satisfies UpdateUserPayload,
       })
       toastSuccess(
-        `${changes.firstName} ${changes.lastName} updated successfully`,
+        `${changes.firstName} ${changes.lastName} updated`,
       )
       setSelectedUser(null)
       return true

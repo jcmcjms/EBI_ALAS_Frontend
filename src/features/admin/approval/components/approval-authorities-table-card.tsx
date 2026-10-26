@@ -80,7 +80,7 @@ export function ApprovalAuthoritiesTableCard({
               weight="bold"
               className="text-muted-foreground"
             />
-            Approval Authorities
+            Approval authorities
             <Badge variant="outline" className="ml-1 font-normal">
               {totalRows} {totalRows === 1 ? 'authority' : 'authorities'}
             </Badge>

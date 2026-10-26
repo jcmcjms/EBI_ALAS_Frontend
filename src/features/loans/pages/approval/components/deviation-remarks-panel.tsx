@@ -187,7 +187,6 @@ function DeviationThread({
         </Badge>
       </header>
 
-      {}
       <div className="rounded-md border border-slate-300 bg-slate-50 p-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold">Encoder</span>
@@ -272,7 +271,7 @@ export function DeviationRemarksPanel({
     },
     onSuccess: () => {
       toastSuccess(
-        'Deviation update requested — application returned to the encoder.',
+        'Deviation update requested. The application went back to the encoder.',
       )
       setUpdateOpen(false)
       qc.invalidateQueries({ queryKey: loanKeys.review.deviations(loanId) })

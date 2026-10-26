@@ -86,7 +86,7 @@ export function WorkflowSettingsContent() {
       toastSuccess(
         value
           ? 'Recommendation step enabled for new applications.'
-          : 'Recommendation step disabled — new applications go straight to evaluation.',
+          : 'Recommendation step disabled. New applications go straight to evaluation.',
       )
       setDialogOpen(false)
       setPending(null)
@@ -104,11 +104,10 @@ export function WorkflowSettingsContent() {
     <div className="flex flex-1 flex-col gap-6 p-6">
       <div>
         <h2 className="text-xl font-semibold tracking-tight">
-          Workflow Settings
+          Workflow settings
         </h2>
         <p className="text-sm text-muted-foreground">
-          System-wide loan workflow configuration. Changes apply to new
-          applications immediately.
+          Changes apply to new applications immediately.
         </p>
       </div>
 
@@ -116,12 +115,11 @@ export function WorkflowSettingsContent() {
         <CardHeader className="border-b pb-4">
           <CardTitle className="flex items-center gap-2 text-base">
             <GitBranch size={18} weight="bold" className="text-primary" />
-            Branch Head Recommendation Step
+            Branch head recommendation step
           </CardTitle>
           <CardDescription className="pt-1 text-xs">
-            When enabled, encoders submit to the Recommender (Branch Head)
-            before evaluation. When disabled, submissions go directly to the
-            Evaluator. Loans already awaiting recommendation are never affected.
+            When enabled, new applications go to the Recommender (Branch Head)
+            before evaluation. When disabled, they go straight to the Evaluator.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5 pt-4">
@@ -147,7 +145,7 @@ export function WorkflowSettingsContent() {
                         </>
                       )}
                     {config.data?.source === 'AppConfig' && (
-                      <> · from server configuration (no admin override yet)</>
+                      <> · using the server default (no saved change yet)</>
                     )}
                   </p>
                 </div>
@@ -198,17 +196,10 @@ export function WorkflowSettingsContent() {
                     Applies to <strong>new submissions only</strong>,
                     immediately.
                   </li>
-                  <li>
-                    Loans already in For Recommendation stay actionable by
-                    recommenders.
-                  </li>
-                  <li>
-                    The change is recorded in the audit log with your name.
-                  </li>
                 </ul>
                 {!pending && backlog.isLoading && (
                   <p className="text-xs text-muted-foreground">
-                    Checking backlog…
+                    Checking for waiting applications…
                   </p>
                 )}
                 {!pending && (backlog.data ?? 0) > 0 && (
@@ -218,8 +209,9 @@ export function WorkflowSettingsContent() {
                       weight="fill"
                       className="mt-0.5 shrink-0"
                     />
-                    {backlog.data} application(s) are currently waiting for
-                    recommendation. Recommenders can still process them.
+                    {backlog.data} {backlog.data === 1 ? 'application is' : 'applications are'}{' '}
+                    waiting for recommendation. Recommenders can still process
+                    them.
                   </p>
                 )}
               </div>

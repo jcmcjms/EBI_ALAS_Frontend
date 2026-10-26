@@ -101,13 +101,13 @@ export function describeHistoryEntry(
       }
     case 'EvaluatedRecommended':
       return {
-        title: 'Evaluated — recommended',
+        title: 'Evaluated: recommended',
         category: 'workflow',
         tone: 'success',
       }
     case 'EvaluatedNotRecommended':
       return {
-        title: 'Evaluated — not recommended',
+        title: 'Evaluated: not recommended',
         category: 'workflow',
         tone: 'warning',
       }

@@ -86,7 +86,7 @@ export function LoanApprovalPage() {
           <WarningCircle size={48} className="mx-auto text-destructive" />
           <h2 className="text-xl font-semibold">Invalid Application ID</h2>
           <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
-            Return to Monitoring
+            Go to Loan Monitoring
           </Button>
         </div>
       </div>
@@ -114,15 +114,15 @@ export function LoanApprovalPage() {
         <div className="text-center space-y-4 max-w-md">
           <WarningCircle size={48} className="mx-auto text-destructive" />
           <h2 className="text-xl font-semibold">
-            {isForbidden ? 'Access Denied' : "Couldn't Load Application"}
+            {isForbidden ? 'Access denied' : "Couldn't load the application"}
           </h2>
           <p className="text-muted-foreground">
             {isForbidden
-              ? "You don't have permission to view this loan application. This may be because your account doesn't have the required role, or the application belongs to a different branch. Contact your administrator if you believe this is a mistake."
-              : "We couldn't load this loan application. Try again or return to the monitoring page."}
+              ? "You don't have permission to view this application. It may belong to another branch, or your role may not allow it. Ask an administrator if you think that's wrong."
+              : "Couldn't load this application. Try again or go back to Loan Monitoring."}
           </p>
           <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
-            Return to Monitoring
+            Go to Loan Monitoring
           </Button>
         </div>
       </div>
@@ -196,7 +196,6 @@ export function LoanApprovalPage() {
             onZoomChange={setZoom}
           />
 
-          {}
           <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit lg:self-start">
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="w-full">
@@ -311,7 +310,6 @@ export function LoanApprovalPage() {
         lamId={detail.lamId}
       />
 
-      {}
       <FlagIncompleteDocumentsDialog
         open={flagOpen}
         onOpenChange={setFlagOpen}

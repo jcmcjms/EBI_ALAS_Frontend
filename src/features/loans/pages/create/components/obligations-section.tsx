@@ -40,7 +40,7 @@ export function ObligationsSection() {
     >
       {loans.length === 0 ? (
         <div className="p-6 text-center text-sm text-muted-foreground">
-          Select loan numbers in Step 1.3 to review existing loans per
+          Select loan numbers under 1.3 Account & preloan to review existing loans per
           application.
         </div>
       ) : (

@@ -31,7 +31,7 @@ export function PushBack({ data }: PushBackProps) {
             weight="bold"
             className="text-red-500 dark:text-red-400"
           />
-          Push Back
+          Pushed back
           {data.length > 0 && (
             <Badge
               variant="secondary"

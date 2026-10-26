@@ -70,7 +70,7 @@ export function Dashboard() {
 
       {isError ? (
         <ErrorState
-          message="Dashboard queues and totals could not be loaded. Your last saved work is unaffected."
+          message="Couldn't load your queues and totals."
           onRetry={() => void refetch()}
           className="h-64"
         />

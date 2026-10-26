@@ -109,7 +109,7 @@ export function ReviewDeskPage() {
       icon={<WarningCircle size={22} weight="bold" />}
       tone="destructive"
       title="Couldn't load your desk"
-      description=" Try again in a moment."
+      description="Try again in a moment."
       action={
         <Button
           variant="outline"
@@ -125,7 +125,7 @@ export function ReviewDeskPage() {
     <DeskMessage
       icon={<Info size={22} weight="bold" />}
       title="No queue for your role"
-      description="Your role works from Loan Monitoring — the Review Desk serves Recommender, Evaluator and Approver queues."
+      description="Only Recommender, Evaluator and Approver desks appear here. Track your work in Loan Monitoring."
       action={
         <Button size="sm" onClick={() => navigate({ to: '/loans/monitoring' })}>
           Go to Loan Monitoring
@@ -178,8 +178,8 @@ export function ReviewDeskPage() {
                     ))}
                   </ul>
                   <p className="text-xs text-muted-foreground">
-                    You can keep taking new clients while these wait (e.g. for the
-                    encoder). Release returns them to the queue.
+                    You can take another client while these wait. Releasing
+                    puts a client back in the queue.
                   </p>
                 </div>
                 <Button
@@ -198,7 +198,7 @@ export function ReviewDeskPage() {
           <DeskMessage
             icon={<Tray size={22} weight="bold" />}
             title="Queue is clear"
-            description={`No clients waiting at your ${desk.deskLabel} desk. Bundles promoted for review appear here automatically.`}
+            description={`No clients waiting at your ${desk.deskLabel} desk. New clients appear here automatically.`}
             meta={`Last checked ${formatClock(dataUpdatedAt)} · auto-refreshes every 30s`}
             action={
               <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ export function ReviewDeskPage() {
                 <StatCard
                   label="Loan value"
                   value={formatPhp(stats.totalExposure)}
-                  hint="Total proposed loan amounts in this desk"
+                  hint="Total proposed amount across queued clients"
                 />
               </div>
             )}

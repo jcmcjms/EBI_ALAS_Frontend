@@ -38,3 +38,12 @@ AGENTS.md
 architecture_copypaste.txt
 design_copypaste.txt
 graphify-out/
+
+# Tooling caches & test artifacts
+*.tsbuildinfo
+.eslintcache
+coverage/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/

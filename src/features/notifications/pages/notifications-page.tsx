@@ -138,7 +138,6 @@ export function NotificationsPage() {
   return (
     <div className="flex flex-1 flex-col bg-muted/40">
       <div className="container mx-auto w-full max-w-5xl flex-1 px-6 py-8">
-        {}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
@@ -149,10 +148,6 @@ export function NotificationsPage() {
                 <Badge className="tabular-nums">{unreadCount} unread</Badge>
               )}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Stay up to date with loan applications, approvals and system
-              updates.
-            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -161,7 +156,7 @@ export function NotificationsPage() {
               className="gap-2"
             >
               <Check size={16} weight="bold" />
-              Mark All as Read
+              Mark all as read
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -191,7 +186,6 @@ export function NotificationsPage() {
           </div>
         </div>
 
-        {}
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <div className="relative min-w-0 flex-1 basis-64">
             <MagnifyingGlass
@@ -202,7 +196,7 @@ export function NotificationsPage() {
             <Input
               value={search}
               onChange={(e) => setQueryAndReset(e.target.value)}
-              placeholder="Search notifications..."
+              placeholder="Search notifications…"
               aria-label="Search notifications"
               className="pl-9"
             />
@@ -226,7 +220,7 @@ export function NotificationsPage() {
                 options={[
                   { value: 'all', label: 'Type' },
                   { value: 'application', label: 'Application' },
-                  { value: 'action', label: 'Action Required' },
+                  { value: 'action', label: 'Action required' },
                   { value: 'message', label: 'Message' },
                   { value: 'system', label: 'System' },
                 ]}
@@ -255,7 +249,6 @@ export function NotificationsPage() {
           </Button>
         </div>
 
-        {}
         <Card className="mt-6 overflow-hidden">
           <NotificationList
             items={items}
@@ -268,7 +261,6 @@ export function NotificationsPage() {
           />
         </Card>
 
-        {}
         <div className="mt-4 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             Showing {from} to {to} of {totalCount} notification

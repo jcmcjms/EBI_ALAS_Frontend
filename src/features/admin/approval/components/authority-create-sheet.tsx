@@ -58,7 +58,7 @@ export function AuthorityCreateSheet({
         onClose()
       }
     } catch (e) {
-      toastError(e instanceof Error ? e.message : 'Failed to create authority')
+      toastError(e instanceof Error ? e.message : "Couldn't create the approval authority")
     } finally {
       setIsSubmitting(false)
     }

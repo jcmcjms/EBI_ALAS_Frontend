@@ -70,8 +70,8 @@ export interface ClaimResponse {
 function bundleSummary(result: ClaimResponse): string {
   const count = result.applications?.length ?? 1
   return count > 1
-    ? `Serving ${result.clientName} — ${count} applications in bundle ${result.groupNo}.`
-    : `Serving ${result.clientName} — ${result.lamId}.`
+    ? `Now serving ${result.clientName}: ${count} applications in bundle ${result.groupNo}.`
+    : `Now serving ${result.clientName} (${result.lamId}).`
 }
 
 export function useDeskQueue() {
@@ -102,7 +102,7 @@ export function useClaimNext() {
       if (result) {
         toastSuccess(bundleSummary(result))
       } else {
-        toastInfo('Queue is clear — nothing to serve.')
+        toastInfo('Your queue is clear.')
       }
       qc.invalidateQueries({ queryKey: loanKeys.desk })
       qc.invalidateQueries({ queryKey: loanKeys.all })
@@ -120,7 +120,7 @@ export function useReleaseClaim() {
       await apiClient.post('/api/loans/queue/release')
     },
     onSuccess: () => {
-      toastSuccess('Claim released — the client bundle returned to the queue.')
+      toastSuccess('Claim released. The client is back in the queue.')
       qc.invalidateQueries({ queryKey: loanKeys.desk })
       qc.invalidateQueries({ queryKey: loanKeys.all })
       qc.invalidateQueries({ queryKey: queryKeys.dashboardRoot })

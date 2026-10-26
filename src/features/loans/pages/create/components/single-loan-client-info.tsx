@@ -89,7 +89,6 @@ export function SingleLoanClientInfo({
         <tr>
           <L>Region Code :</L>
           <V blue>{dash(client.region)}</V>
-          {}
           <V blue colSpan={2} rowSpan={3} className="align-bottom">
             PN: {loan.loanNo}
           </V>

@@ -25,7 +25,7 @@ export function FeeDeviationJustification({
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <Label className="text-xs text-muted-foreground">
-            Fee Deviation Justification
+            Fee deviation justification
           </Label>
           {feeJustificationError && (
             <span className="text-xs font-medium text-destructive">
@@ -37,7 +37,7 @@ export function FeeDeviationJustification({
           {...register(
             `${path}.feeDeviationJustification` as FieldPath<LoanApplicationFormData>,
           )}
-          placeholder="Why does the actual fee differ from the bank's standard rate? (e.g. 'Notary charged ₱750 because the loan documents were 4 pages instead of the usual 2.')"
+          placeholder="e.g. Notary charged ₱750 because the documents ran to 4 pages instead of the usual 2"
           rows={3}
           aria-invalid={!!feeJustificationError}
           className={

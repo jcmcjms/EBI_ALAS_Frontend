@@ -163,7 +163,7 @@ export function ProfileEditSheet({
             <Label htmlFor="profile-emergency">Emergency contact</Label>
             <Input
               id="profile-emergency"
-              placeholder="Name — +63 912 345 6789"
+              placeholder="Juan Dela Cruz, +63 912 345 6789"
               value={emergencyContact}
               aria-invalid={Boolean(errors.emergencyContact)}
               aria-describedby={

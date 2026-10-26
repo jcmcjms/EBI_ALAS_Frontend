@@ -99,7 +99,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
             setDutyPending(true)
             setMyDutyAvailability(!isAvailable)
               .then(() => profileQuery.refetch())
-              .catch(() => toastError('Could not update availability'))
+              .catch(() => toastError("Couldn't update your availability"))
               .finally(() => setDutyPending(false))
           },
         }
@@ -178,7 +178,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
       <Card className="mt-6">
         <CardContent>
           <ErrorState
-            message="Failed to load your account profile."
+            message="Couldn't load your profile."
             onRetry={() => profileQuery.refetch()}
           />
         </CardContent>
@@ -235,7 +235,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader className="border-b bg-muted/30 py-3">
-              <CardTitle className="text-sm">Latest Activity</CardTitle>
+              <CardTitle className="text-sm">Latest activity</CardTitle>
               <CardAction>
                 <Button
                   variant="ghost"
@@ -251,13 +251,13 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
                 <LoadingState label="Loading activity…" />
               ) : activityQuery.isError ? (
                 <ErrorState
-                  message="Failed to load recent activity."
+                  message="Couldn't load recent activity."
                   onRetry={() => activityQuery.refetch()}
                 />
               ) : toTimelineItems(activityQuery.data ?? []).length === 0 ? (
                 <EmptyState
                   title="No recent activity"
-                  hint="Actions you take on loan applications will appear here."
+                  hint="Actions you take on applications appear here."
                 />
               ) : (
                 <ActivityTimeline
@@ -276,7 +276,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
 
             <Card>
               <CardHeader className="border-b bg-muted/30 py-3">
-                <CardTitle className="text-sm">Recent Clients</CardTitle>
+                <CardTitle className="text-sm">Recent clients</CardTitle>
                 <CardAction>
                   <Button
                     variant="outline"
@@ -294,13 +294,13 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
                   <LoadingState label="Loading clients…" />
                 ) : clientsQuery.isError ? (
                   <ErrorState
-                    message="Failed to load recent clients."
+                    message="Couldn't load recent clients."
                     onRetry={() => clientsQuery.refetch()}
                   />
                 ) : uniqueClients.length === 0 ? (
                   <EmptyState
                     title="No recent clients"
-                    hint="Clients from your applications will appear here."
+                    hint="Clients from your applications appear here."
                   />
                 ) : (
                   uniqueClients.map((client) => (

@@ -29,7 +29,7 @@ export function WorkloadOverview({ data }: { data: DashboardData }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Workload Overview</CardTitle>
+        <CardTitle className="text-base">Workload overview</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="pending" className="w-full">

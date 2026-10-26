@@ -61,7 +61,7 @@ export function FlagIncompleteDocumentsDialog({
       : undefined
   const commentsError =
     comments.trim().length < 5
-      ? 'Explain what the borrower must submit (min 5 characters).'
+      ? 'Explain what the borrower must submit (at least 5 characters).'
       : undefined
 
   const handleConfirm = () => {
@@ -76,14 +76,14 @@ export function FlagIncompleteDocumentsDialog({
         <AlertDialogHeader>
           <AlertDialogTitle className="gap-2">
             <WarningCircle size={18} weight="fill" className="text-amber-600" />
-            Flag as lacking documents
+            Flag missing documents
           </AlertDialogTitle>
           <AlertDialogDescription>
-            The workflow is not blocked. The encoder is notified and the flag
-            clears automatically once every requirement verifies complete.
+            The encoder is notified about the missing documents. The flag
+            clears once every requirement is uploaded.
             <span className="mt-1 block text-foreground">
-              You retain ownership — continue with Recommend, Not Recommend, or
-              Push Back.
+              You keep the application and can still recommend, return, or
+              push it back.
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>

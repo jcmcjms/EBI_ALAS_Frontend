@@ -125,7 +125,7 @@ export function AttachmentsPanel({
       {checklistDocs.isLoading && <Spinner className="size-5" />}
       {checklistDocs.isError && (
         <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive">
-          Failed to load checklist documents. Please try again.
+          Couldn't load the checklist documents. Try again.
         </p>
       )}
       {!checklistDocs.isLoading && items.length === 0 && (
@@ -290,8 +290,8 @@ export function AttachmentsPanel({
         <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
           <p className="text-[11px] text-muted-foreground">
             {selectedCodes.length === 0
-              ? 'Select the pending requirements to push this file back for documents.'
-              : `${selectedCodes.length} requirement(s) selected.`}
+              ? "Select what's missing, then push the application back."
+              : `${selectedCodes.length} ${selectedCodes.length === 1 ? 'requirement' : 'requirements'} selected.`}
           </p>
           <AlertDialog open={pushBackOpen} onOpenChange={setPushBackOpen}>
             <AlertDialogTrigger
@@ -313,11 +313,10 @@ export function AttachmentsPanel({
                   Push back for incomplete documents?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  The file moves to the{' '}
-                  <strong>Incomplete Documents queue</strong> (encoder&apos;s
-                  desk). The encoder updates the documents in WebLoan; the file
-                  returns to the Checking queue automatically once every
-                  requirement verifies complete.
+                  The application moves to the encoder&apos;s{' '}
+                  <strong>Incomplete Documents</strong> queue. Once every
+                  document is uploaded in WebLoan, it returns to the Checking
+                  queue automatically.
                   <ul className="mt-2 list-disc pl-4 text-left">
                     {pending.map((p) => (
                       <li key={p.idCode}>
@@ -339,12 +338,12 @@ export function AttachmentsPanel({
                   id="pushback-remarks"
                   rows={3}
                   maxLength={2000}
-                  placeholder="What is missing / what the encoder must update in WebLoan…"
+                  placeholder="What's missing, or what the encoder needs to update in WebLoan…"
                   value={pushBackRemarks}
                   onChange={(e) => setPushBackRemarks(e.target.value)}
                 />
                 <p className="text-[11px] tabular-nums text-muted-foreground">
-                  {pushBackRemarks.trim().length}/2000 — minimum {MIN_REMARKS}
+                  {pushBackRemarks.trim().length}/2000 (minimum {MIN_REMARKS})
                 </p>
               </div>
               <AlertDialogFooter>
@@ -362,7 +361,7 @@ export function AttachmentsPanel({
                     setSelected({})
                   }}
                 >
-                  {pushBackPending ? 'Pushing back…' : 'Confirm push-back'}
+                  {pushBackPending ? 'Pushing back…' : 'Push back'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

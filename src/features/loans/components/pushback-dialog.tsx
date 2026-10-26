@@ -103,12 +103,11 @@ function PushbackDialogForm({
               weight="bold"
               className="text-amber-500"
             />
-            Push Back with Revision Instructions
+            Push back for revision
           </DialogTitle>
           <DialogDescription>
-            Return this application to the encoder for revision. Select the
-            sections that need correction — the encoder will see these
-            instructions when they open the application.
+            Select what needs correction. The encoder sees your instructions
+            when they open the application.
           </DialogDescription>
         </DialogHeader>
       </div>
@@ -188,7 +187,7 @@ function PushbackDialogForm({
 
         <div className="mt-4 space-y-2">
           <Label htmlFor="revision-overall" className="text-xs font-semibold">
-            Overall Instructions <span className="text-destructive">*</span>
+            Overall instructions <span className="text-destructive">*</span>
           </Label>
           <Textarea
             id="revision-overall"
@@ -226,11 +225,11 @@ function PushbackDialogForm({
             disabled={!canSubmit}
           >
             {isPending ? (
-              <span className="animate-pulse">Processing…</span>
+              <span className="animate-pulse">Sending…</span>
             ) : (
               <>
                 <ArrowCounterClockwise size={16} />
-                Push Back
+                Push back
               </>
             )}
           </Button>

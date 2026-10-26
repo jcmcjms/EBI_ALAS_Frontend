@@ -52,7 +52,7 @@ export function BranchCreateSheet({
         onClose()
       }
     } catch (e) {
-      toastError(e instanceof Error ? e.message : 'Failed to create branch')
+      toastError(e instanceof Error ? e.message : "Couldn't create the branch")
     } finally {
       setIsSubmitting(false)
     }

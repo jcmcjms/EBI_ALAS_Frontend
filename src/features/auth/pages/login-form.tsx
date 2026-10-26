@@ -9,7 +9,7 @@ import { Input } from '@/src/shared/ui/primitives/input'
 import { Button } from '@/src/shared/ui/primitives/button'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
-import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
+import { toastError } from '@/src/shared/ui/feedback/toast'
 import { loginSchema, type LoginFormData } from '../schemas'
 import { toLoginRequest } from '../login-request'
 import {
@@ -45,13 +45,12 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
 
       if (session) {
         setSession(session.token, session.user)
-        toastSuccess('Login successful')
         navigate({
           to: session.user.mustChangePassword ? '/change-password' : '/dashboard',
           replace: true,
         })
       } else {
-        toastError('Login failed')
+        toastError("Couldn't sign you in. Try again.")
       }
     } catch (error) {
       toastError(getErrorMessage(error))
@@ -66,17 +65,13 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
     >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h2 className="text-2xl font-bold">Login to your account</h2>
-          <p className="text-sm text-balance text-muted-foreground">
-            Enter your username and password to sign in.
-          </p>
+          <h2 className="text-2xl font-bold">Sign in</h2>
         </div>
 
         <Field>
           <FieldLabel htmlFor="username">Username</FieldLabel>
           <Input
             id="username"
-            placeholder="Username"
             autoComplete="username"
             aria-invalid={!!errors.username}
             {...register('username')}
@@ -102,7 +97,6 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Password"
               autoComplete="current-password"
               aria-invalid={!!errors.password}
               {...register('password')}
@@ -119,7 +113,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
           </div>
           {errors.password && (
             <p className="text-xs text-destructive mt-1" role="alert">
-              {errors.password.message ?? 'Enter your password to sign in.'}
+              {errors.password.message ?? 'Enter your password.'}
             </p>
           )}
         </Field>
@@ -129,7 +123,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
             {isSubmitting ? (
               <CircleNotch size={20} weight="bold" className="animate-spin" />
             ) : (
-              'Login'
+              'Sign in'
             )}
           </Button>
         </Field>
