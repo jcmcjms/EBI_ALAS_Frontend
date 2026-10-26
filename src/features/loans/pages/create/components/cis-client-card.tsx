@@ -81,7 +81,7 @@ export function CisClientCard({
         {confirmClear ? (
           <>
             <WarningCircle size={14} weight="fill" />
-            Confirm — clears entered data
+            Confirm
           </>
         ) : (
           <>
