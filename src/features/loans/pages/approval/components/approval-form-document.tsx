@@ -32,6 +32,7 @@ import {
   B,
   dash,
   fullNameOf,
+  SignatureBlock,
   type ApprovalFormActionEntry,
 } from './approval-form-document-utils'
 
@@ -60,6 +61,7 @@ function ApprovalFormDocumentBase({
   loanId,
   loanIndex = 0,
   catLoanClass,
+  signatureSlots,
   lamId,
   lamIdByLoanNo,
   ref,
@@ -259,6 +261,16 @@ function ApprovalFormDocumentBase({
                   ) : null}
                 </div>
               </div>
+
+              {signatureSlots && signatureSlots.length > 0 && (
+                <div className="border-t-2 border-black p-3 break-inside-avoid">
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    {signatureSlots.map((slot) => (
+                      <SignatureBlock key={slot.order} slot={slot} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
