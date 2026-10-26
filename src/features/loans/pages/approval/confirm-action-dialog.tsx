@@ -6,7 +6,8 @@ import {
   WarningCircle,
   XCircle,
 } from '@phosphor-icons/react'
-import { Button } from '@/src/shared/ui/primitives/button'
+import { Link } from '@tanstack/react-router'
+import { Button, buttonVariants } from '@/src/shared/ui/primitives/button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,7 @@ export function ConfirmActionDialog({
   onRemarksChange,
   onConfirm,
   isPending,
+  signatureDataUrl,
   draftStatus,
   draftSavedAt,
   draftError,
@@ -46,6 +48,7 @@ export function ConfirmActionDialog({
   onRemarksChange: (v: string) => void
   onConfirm: () => void
   isPending: boolean
+  signatureDataUrl?: string | null
   draftStatus?: ReviewDraftStatus
   draftSavedAt?: number | null
   draftError?: string | null
@@ -54,6 +57,9 @@ export function ConfirmActionDialog({
 }) {
   const needsRemarks = collectRemarksInDialog(action)
   const remarksOk = !needsRemarks || remarks.trim().length >= MIN_REMARKS
+  const needsSignature = Boolean(action.signs)
+  const hasSignature = Boolean(signatureDataUrl)
+  const canConfirm = remarksOk && (!needsSignature || hasSignature) && !isPending
 
   const defaultTrigger = (
     <Button
@@ -119,6 +125,33 @@ export function ConfirmActionDialog({
             )}
           </div>
         )}
+        {needsSignature && (
+          <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+            <p className="text-xs font-medium text-muted-foreground">
+              Your e-signature on file
+            </p>
+            {hasSignature ? (
+              <img
+                src={signatureDataUrl!}
+                alt="Your saved e-signature"
+                className="h-16 w-full object-contain object-left"
+              />
+            ) : (
+              <div className="space-y-2">
+                <p className="flex items-center gap-1 text-xs text-destructive">
+                  <WarningCircle size={12} weight="fill" />
+                  A saved PNG e-signature is required for this action.
+                </p>
+                <Link
+                  to="/account"
+                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                >
+                  Upload signature in profile
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
@@ -127,7 +160,7 @@ export function ConfirmActionDialog({
                 ? 'bg-destructive text-destructive-foreground'
                 : 'bg-amber-600 text-white hover:bg-amber-700'
             }
-            disabled={!remarksOk || isPending}
+            disabled={!canConfirm}
             onClick={onConfirm}
           >
             Confirm

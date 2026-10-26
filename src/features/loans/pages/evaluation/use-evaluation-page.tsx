@@ -23,6 +23,7 @@ import {
   useLoanSignatureChain,
   signatureKeys,
 } from '@/src/features/loans/api/signatures'
+import { useMySignerSignature } from '@/src/features/loans/api/signer-signature'
 import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import type { RevisionSectionId } from '@/src/features/loans/types/revision-request'
@@ -63,6 +64,7 @@ export function useEvaluationPage(id: string) {
   })
 
   const { data: signatureSlots } = useLoanSignatureChain(id)
+  const { data: mySignature } = useMySignerSignature()
 
   const detail = loan.data
   const frozen = detail ? TERMINAL.includes(detail.status) : false
@@ -257,6 +259,7 @@ export function useEvaluationPage(id: string) {
     checklist,
     history,
     signatureSlots,
+    mySignature,
     detail,
     formData,
     loanClass,

@@ -15,6 +15,7 @@ import {
   useLoanSignatureChain,
   signatureKeys,
 } from '@/src/features/loans/api/signatures'
+import { useMySignerSignature } from '@/src/features/loans/api/signer-signature'
 import {
   getLoanDetail,
   getChecklistDocuments,
@@ -126,6 +127,7 @@ export function useLoanApprovalPage() {
   })
 
   const { data: signatureSlots } = useLoanSignatureChain(id)
+  const { data: mySignature } = useMySignerSignature()
 
   const { data: deviationsData } = useQuery({
     queryKey: loanKeys.review.deviations(id),
@@ -341,6 +343,7 @@ export function useLoanApprovalPage() {
     formData,
     checklist,
     signatureSlots,
+    mySignature,
     deviationsData,
     documentRemarksData,
     groupLoans,

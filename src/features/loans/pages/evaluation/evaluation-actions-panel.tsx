@@ -1,4 +1,5 @@
 import { CheckCircle, ArrowRight, ArrowCounterClockwise, Clock, ThumbsDown, ThumbsUp, WarningCircle } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
 import { RichText } from '@/src/shared/ui/data-display/rich-text'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/shared/ui/data-display/card'
 import { Button } from '@/src/shared/ui/primitives/button'
@@ -33,6 +34,7 @@ interface EvaluationActionsPanelProps {
   onAction: (action: EvaluationAction) => void
   onFlagOpen: () => void
   status: string
+  signatureDataUrl?: string | null
   draftStatus?: ReviewDraftStatus
   draftSavedAt?: number | null
   draftError?: string | null
@@ -53,11 +55,14 @@ export function EvaluationActionsPanel({
   onAction,
   onFlagOpen,
   status,
+  signatureDataUrl,
   draftStatus,
   draftSavedAt,
   draftError,
   onRetryDraftSave,
 }: EvaluationActionsPanelProps) {
+  const hasSignature = Boolean(signatureDataUrl)
+  const signedActionBlocked = showEvaluatorActions && !hasSignature
   return (
     <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit lg:self-start">
       <Card>
@@ -170,6 +175,34 @@ export function EvaluationActionsPanel({
           </div>
 
           <div className="space-y-2">
+            {signedActionBlocked && (
+              <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                <p className="flex items-center gap-1 font-medium">
+                  <WarningCircle size={12} weight="fill" />
+                  A saved PNG e-signature is required to evaluate.
+                </p>
+                <Link
+                  to="/account"
+                  className="font-semibold underline underline-offset-2"
+                >
+                  Upload signature in profile
+                </Link>
+              </div>
+            )}
+
+            {showEvaluatorActions && hasSignature && (
+              <div className="rounded-md border bg-muted/30 p-2">
+                <p className="text-[11px] text-muted-foreground">
+                  Your e-signature on file
+                </p>
+                <img
+                  src={signatureDataUrl!}
+                  alt="Your saved e-signature"
+                  className="mt-1 h-12 w-full object-contain object-left"
+                />
+              </div>
+            )}
+
             {frozen && (
               <p className="rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
                 This application is <strong>{status}</strong> — no
@@ -183,7 +216,7 @@ export function EvaluationActionsPanel({
                   className="w-full gap-2"
                   size="lg"
                   onClick={() => onAction('recommended')}
-                  disabled={!canAct || pendingAction !== null}
+                  disabled={!canAct || pendingAction !== null || !hasSignature}
                 >
                   {isPending && pendingAction === 'recommended' ? (
                     <span className="animate-pulse">Processing...</span>
@@ -199,7 +232,7 @@ export function EvaluationActionsPanel({
                   variant="outline"
                   className="w-full gap-2"
                   onClick={() => onAction('notRecommended')}
-                  disabled={!canAct || pendingAction !== null}
+                  disabled={!canAct || pendingAction !== null || !hasSignature}
                 >
                   {isPending && pendingAction === 'notRecommended' ? (
                     <span className="animate-pulse">Processing...</span>

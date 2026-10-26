@@ -28,6 +28,8 @@ export type WorkflowButtonDef = {
   verdict?: EvaluationVerdict
   remarksRequired: boolean
   confirm?: boolean
+  /** Captures an immutable signature snapshot server-side. */
+  signs?: boolean
 }
 
 const WORKFLOW_ACTION_MAP: Record<string, WorkflowAction> = {
@@ -75,6 +77,8 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     label: 'Recommend for Checking',
     kind: 'advance',
     remarksRequired: false,
+    confirm: true,
+    signs: true,
   },
   {
     role: 'Recommender',
@@ -95,6 +99,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     verdict: 'Recommended',
     remarksRequired: true,
     confirm: true,
+    signs: true,
   },
   {
     role: 'Evaluator',
@@ -105,6 +110,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     verdict: 'NotRecommended',
     remarksRequired: true,
     confirm: true,
+    signs: true,
   },
   {
     role: 'Evaluator',
@@ -124,6 +130,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     kind: 'advance',
     remarksRequired: false,
     confirm: true,
+    signs: true,
   },
   {
     role: 'Approver',

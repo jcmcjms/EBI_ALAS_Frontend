@@ -36,6 +36,7 @@ export function LoanApprovalPage() {
     formData,
     checklist,
     signatureSlots,
+    mySignature,
     deviationsData,
     documentRemarksData,
     groupLoans,
@@ -227,6 +228,7 @@ export function LoanApprovalPage() {
                   act={act}
                   claimById={claimById}
                   detailStatus={detail.status}
+                  signatureDataUrl={mySignature}
                   draftStatus={draftStatus}
                   draftSavedAt={draftSavedAt}
                   draftError={draftError}

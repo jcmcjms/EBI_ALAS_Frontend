@@ -58,6 +58,7 @@ interface WorkflowActionsPanelProps {
   detailStatus: string
 
   missingDocCount?: number
+  signatureDataUrl?: string | null
   draftStatus?: ReviewDraftStatus
   draftSavedAt?: number | null
   draftError?: string | null
@@ -79,6 +80,7 @@ export function WorkflowActionsPanel({
   act,
   claimById,
   detailStatus,
+  signatureDataUrl,
   draftStatus,
   draftSavedAt,
   draftError,
@@ -187,6 +189,7 @@ export function WorkflowActionsPanel({
                 remarks={remarks}
                 onRemarksChange={onRemarksChange}
                 isPending={disabled}
+                signatureDataUrl={signatureDataUrl}
                 draftStatus={draftStatus}
                 draftSavedAt={draftSavedAt}
                 draftError={draftError}

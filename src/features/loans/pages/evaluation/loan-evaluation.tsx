@@ -39,6 +39,7 @@ export function LoanEvaluationPage() {
     checklist,
     history,
     signatureSlots,
+    mySignature,
     detail,
     formData,
     loanClass,
@@ -217,6 +218,7 @@ export function LoanEvaluationPage() {
             canAct={canAct}
             pendingAction={pendingAction}
             isPending={updateStatus.isPending}
+            signatureDataUrl={mySignature}
             onAction={handleAction}
             onFlagOpen={() => setFlagOpen(true)}
             status={detail.status}
