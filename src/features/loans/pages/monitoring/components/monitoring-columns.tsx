@@ -70,7 +70,10 @@ export function buildColumns(
       cell: (info) => (
         <span className="text-xs font-semibold">{info.getValue()}</span>
       ),
-      meta: { className: 'sticky left-0 bg-background z-10 border-r' },
+      meta: {
+        className:
+          'sticky left-0 bg-background z-10 border-r transition-colors group-hover:bg-muted/30',
+      },
     }),
     columnHelper.accessor('branchCode', {
       header: 'Branch',
@@ -135,7 +138,7 @@ export function buildColumns(
               <Badge
                 variant="outline"
                 title={`${flag.missingCount} document(s) flagged: ${flag.reason ?? 'no reason provided'}`}
-                className="h-5 gap-0.5 border-amber-300 bg-amber-50 px-1 text-[10px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
+                className="h-5 gap-0.5 border-amber-300 bg-amber-50 px-1 text-[11px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
               >
                 <FileDashed size={10} weight="bold" />
                 {flag.missingCount}
@@ -163,7 +166,7 @@ export function buildColumns(
           <div className="flex flex-col">
             <span className="text-xs font-medium">{info.getValue()}</span>
             {verb && (
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[11px] text-muted-foreground">
                 {ACTION_LABELS[verb] ?? verb}
               </span>
             )}
@@ -183,9 +186,9 @@ export function buildColumns(
               <div className="flex items-center gap-1.5">
                 <UserCircle size={16} className="text-muted-foreground" />
                 <span className="text-xs font-medium">{row.assignedApproverName}</span>
-                {mine && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">(you)</span>}
+                {mine && <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">(you)</span>}
                 {row.queuePosition != null && (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     #{row.queuePosition}/{row.queueLength}
                   </span>
                 )}
@@ -196,7 +199,7 @@ export function buildColumns(
             return (
               <Badge
                 variant="outline"
-                className="border-amber-300 bg-amber-50 text-amber-800 text-[10px] font-normal"
+                className="border-amber-300 bg-amber-50 text-amber-800 text-[11px] font-normal"
                 title={row.noAuthorityReason}
               >
                 No approver configured
@@ -212,9 +215,9 @@ export function buildColumns(
               <span className="text-xs font-medium">
                 {row.queueOwnerName ?? info.getValue() ?? '—'}
               </span>
-              {mine && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">(you)</span>}
+              {mine && <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">(you)</span>}
               {row.queuePosition != null && (
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground">
                   #{row.queuePosition}/{row.queueLength}
                 </span>
               )}
@@ -229,7 +232,7 @@ export function buildColumns(
               <span className="text-xs text-muted-foreground">
                 Waiting — {row.queueOwnerName ?? 'reviewer'}
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[11px] text-muted-foreground">
                 #{row.queuePosition}/{row.queueLength}
               </span>
             </div>

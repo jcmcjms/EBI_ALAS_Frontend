@@ -1,6 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight } from '@phosphor-icons/react'
 import {
   Sheet,
   SheetContent,
@@ -78,7 +77,7 @@ export function LoanDetailsDrawer({
                 <Badge
                   variant="outline"
                   className={cn(
-                    'text-[10px] font-normal',
+                    'text-[11px] font-normal',
                     LOAN_STATUS_META[detail.data.status as LoanStatus]
                       ?.className,
                   )}
@@ -99,15 +98,9 @@ export function LoanDetailsDrawer({
         {}
         {deskSentence && (
           <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground mx-6 mt-3">
-            <p className="flex items-center gap-2">
-              <span
-                className="size-2 rounded-full bg-emerald-500"
-                aria-hidden
-              />
-              {deskSentence}
-            </p>
+            <p>{deskSentence}</p>
             {record?.queuePosition != null && (
-              <p className="mt-1 pl-4 tabular-nums">
+              <p className="mt-1 tabular-nums">
                 Queue position {record.queuePosition} of {record.queueLength}.
               </p>
             )}
@@ -117,7 +110,7 @@ export function LoanDetailsDrawer({
         <div className="flex-1 overflow-y-auto p-6">
           {applicationId !== null ? (
             <>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              <h3 className="mb-3 text-xs font-semibold text-muted-foreground">
                 Application history
               </h3>
               <ApplicationTimeline loanId={applicationId} variant="inline" />
@@ -132,10 +125,9 @@ export function LoanDetailsDrawer({
         {applicationId && (
           <div className="border-t bg-background p-4">
             <Button
-              className="w-full gap-2"
+              className="w-full"
               onClick={() => navigate({ href: reviewPath })}
             >
-              <ArrowRight size={16} weight="bold" />
               {reviewLabel}
             </Button>
           </div>

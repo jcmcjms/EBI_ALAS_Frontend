@@ -215,7 +215,7 @@ export function ApplicationTimeline({
             return (
               <li key={e.id}>
                 {newDay && (
-                  <p className="mb-3 ml-11 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="mb-3 ml-11 text-[11px] font-semibold text-muted-foreground">
                     {format(new Date(e.occurredAtUtc), 'EEEE, dd MMM yyyy')}
                   </p>
                 )}

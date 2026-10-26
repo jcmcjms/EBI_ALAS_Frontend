@@ -56,7 +56,7 @@ export function MonitoringToolbar({
   return (
     <div className="flex flex-wrap items-center gap-3 gap-y-2 px-4 py-3 border-b bg-muted/20">
       {}
-      <div className="relative flex-1 max-w-sm">
+      <div className="relative min-w-full flex-1 max-w-sm md:min-w-0">
         <MagnifyingGlass
           size={16}
           className="absolute left-3 top-2.5 text-muted-foreground"
@@ -160,7 +160,7 @@ export function MonitoringToolbar({
                 />
                 <span className="flex-1">{LOAN_STATUS_META[s].label}</span>
                 {roleQueue.includes(s) && (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     your queue
                   </span>
                 )}

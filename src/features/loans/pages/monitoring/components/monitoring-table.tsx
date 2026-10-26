@@ -124,7 +124,7 @@ export function MonitoringTable({
                       {header.isPlaceholder ? null : (
                         <div
                           className={cn(
-                            'flex items-center gap-1',
+                            'group/head flex items-center gap-1',
                             header.column.getCanSort() &&
                               'cursor-pointer select-none',
                           )}
@@ -134,9 +134,13 @@ export function MonitoringTable({
                           {{
                             asc: <CaretUp size={14} />,
                             desc: <CaretDown size={14} />,
-                          }[header.column.getIsSorted() as string] ?? (
-                            <CaretUpDown size={14} className="opacity-30" />
-                          )}
+                          }[header.column.getIsSorted() as string] ??
+                            (header.column.getCanSort() ? (
+                              <CaretUpDown
+                                size={14}
+                                className="opacity-0 transition-opacity group-hover/head:opacity-40"
+                              />
+                            ) : null)}
                         </div>
                       )}
                     </TableHead>
