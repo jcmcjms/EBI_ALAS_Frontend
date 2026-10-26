@@ -230,7 +230,7 @@ function PushbackDialogForm({
             ) : (
               <>
                 <ArrowCounterClockwise size={16} />
-                Push Back to Encoder
+                Push Back
               </>
             )}
           </Button>

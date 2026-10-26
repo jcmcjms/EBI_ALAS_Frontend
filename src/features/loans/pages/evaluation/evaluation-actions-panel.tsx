@@ -251,7 +251,7 @@ export function EvaluationActionsPanel({
                   disabled={!canAct || pendingAction !== null}
                 >
                   <ArrowCounterClockwise size={16} />
-                  Push Back to Encoder
+                  Push Back
                 </Button>
 
                 <Button
