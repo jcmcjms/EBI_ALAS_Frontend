@@ -236,10 +236,7 @@ export function useLoanApprovalPage() {
       qc.invalidateQueries({ queryKey: signatureKeys.loan(id) })
     },
     onError: (e: unknown) => {
-      const data = (
-        e as { response?: { data?: { message?: string; errors?: string[] } } }
-      )?.response?.data
-      toastError(data?.message ?? getErrorMessage(e))
+      toastError(getErrorMessage(e))
     },
   })
 

@@ -112,34 +112,32 @@ export function useEvaluationPage(id: string) {
       qc.invalidateQueries({ queryKey: signatureKeys.loan(id) })
     },
     onError: (e: Error) => {
-      if (axios.isAxiosError(e) && e.response?.data) {
-        const data = e.response.data as {
-          message?: string
-          errors?: string[]
-        }
-        const msg = data.message || getErrorMessage(e)
-        const details =
-          Array.isArray(data.errors) && data.errors.length > 0
-            ? data.errors
-            : null
+      const problem = axios.isAxiosError(e)
+        ? (e.response?.data as {
+            detail?: string
+            errors?: string[]
+          } | undefined)
+        : undefined
+      const msg = getErrorMessage(e)
+      const details =
+        Array.isArray(problem?.errors) && problem.errors.length > 0
+          ? problem.errors
+          : null
 
-        if (details) {
-          toastError(
-            <div className="space-y-1.5">
-              <p className="font-semibold">{msg}</p>
-              <ul className="list-disc pl-4 text-xs opacity-90">
-                {details.map((d, i) => (
-                  <li key={i}>{d}</li>
-                ))}
-              </ul>
-            </div>,
-            { timeout: 10_000 },
-          )
-        } else {
-          toastError(msg)
-        }
+      if (details) {
+        toastError(
+          <div className="space-y-1.5">
+            <p className="font-semibold">{msg}</p>
+            <ul className="list-disc pl-4 text-xs opacity-90">
+              {details.map((d, i) => (
+                <li key={i}>{d}</li>
+              ))}
+            </ul>
+          </div>,
+          { timeout: 10_000 },
+        )
       } else {
-        toastError(getErrorMessage(e))
+        toastError(msg)
       }
       setPendingAction(null)
     },
