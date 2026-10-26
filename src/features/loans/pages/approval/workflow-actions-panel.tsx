@@ -101,7 +101,7 @@ export function WorkflowActionsPanel({
         {needsDeskGate &&
           !canAct &&
           (queueState?.isHead && !queueState.ownerName ? (
-            <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 p-3 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-muted/30 p-3 text-sm">
               <span>You&apos;re next in the queue.</span>
               <Button
                 onClick={() => claimById.mutate(String(loanId))}

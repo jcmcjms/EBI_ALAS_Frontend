@@ -176,81 +176,97 @@ export function AttachmentsPanel({
                       className="mt-0.5 shrink-0 text-emerald-500"
                     />
                   )}
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <p className="text-sm font-medium">
-                      {item.checklistDescription ?? item.idCode}
-                    </p>
-                    {!isPending && item.docId && (
-                      <p className="text-xs text-muted-foreground">
-                        {item.docStr && <>Document: {item.docStr} &bull; </>}
-                        {item.contentType && <>{item.contentType} &bull; </>}
-                        {item.uploadedBy && `Uploaded by ${item.uploadedBy}`}
-                        {item.created &&
-                          ` on ${new Date(item.created).toLocaleDateString()}`}
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="min-w-0 text-sm font-medium">
+                        {item.checklistDescription ?? item.idCode}
                       </p>
-                    )}
+                      <Badge
+                        variant={isPending ? 'outline' : 'default'}
+                        className="shrink-0 text-[11px]"
+                      >
+                        {isPending
+                          ? 'Pending'
+                          : item.uploadStatus === 'Submitted'
+                            ? 'Submitted'
+                            : 'Uploaded'}
+                      </Badge>
+                    </div>
+                    {!isPending && item.docId ? (
+                      <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                        {item.docStr ? (
+                          <span className="min-w-0 truncate">
+                            Document: {item.docStr}
+                          </span>
+                        ) : null}
+                        {item.contentType ? (
+                          <span className="shrink-0">{item.contentType}</span>
+                        ) : null}
+                        {item.uploadedBy || item.created ? (
+                          <span className="min-w-0 truncate">
+                            {item.uploadedBy ? `Uploaded by ${item.uploadedBy}` : ''}
+                            {item.created
+                              ? ` on ${new Date(item.created).toLocaleDateString()}`
+                              : ''}
+                          </span>
+                        ) : null}
+                      </p>
+                    ) : null}
                     {isPending && (
                       <p className="text-xs italic text-muted-foreground">
                         No documents uploaded yet
                       </p>
                     )}
-                  </div>
-                  {!isPending && item.docId && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0 gap-1.5"
-                        onClick={() =>
-                          setPreviewDoc({
-                            docId: item.docId!,
-                            fileName: item.docStr ?? `document-${item.docId}`,
-                            contentType:
-                              item.contentType ?? 'application/octet-stream',
-                          })
-                        }
-                      >
-                        <Eye size={14} weight="bold" /> View
-                      </Button>
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      {!isPending && item.docId ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5"
+                            onClick={() =>
+                              setPreviewDoc({
+                                docId: item.docId!,
+                                fileName:
+                                  item.docStr ?? `document-${item.docId}`,
+                                contentType:
+                                  item.contentType ?? 'application/octet-stream',
+                              })
+                            }
+                          >
+                            <Eye size={14} weight="bold" /> View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-1.5"
+                            onClick={() =>
+                              viewChecklistDocument(
+                                item.docId!,
+                                item.docStr ?? `document-${item.docId}`,
+                              )
+                            }
+                          >
+                            <DownloadSimple size={14} weight="bold" /> Download
+                          </Button>
+                        </>
+                      ) : null}
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="shrink-0 gap-1.5"
+                        className="gap-1.5"
+                        aria-expanded={threadOpen}
                         onClick={() =>
-                          viewChecklistDocument(
-                            item.docId!,
-                            item.docStr ?? `document-${item.docId}`,
+                          setOpenThread((t) =>
+                            t === item.idCode ? null : item.idCode,
                           )
                         }
                       >
-                        <DownloadSimple size={14} weight="bold" /> Download
+                        <ChatCenteredText size={14} weight="bold" />
+                        Remarks ({remarkCount})
                       </Button>
-                    </>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="shrink-0 gap-1.5"
-                    aria-expanded={threadOpen}
-                    onClick={() =>
-                      setOpenThread((t) =>
-                        t === item.idCode ? null : item.idCode,
-                      )
-                    }
-                  >
-                    <ChatCenteredText size={14} weight="bold" />
-                    Remarks ({remarkCount})
-                  </Button>
-                  <Badge
-                    variant={isPending ? 'outline' : 'default'}
-                    className="shrink-0 text-[10px]"
-                  >
-                    {isPending
-                      ? 'Pending'
-                      : item.uploadStatus === 'Submitted'
-                        ? 'Submitted'
-                        : 'Uploaded'}
-                  </Badge>
+                    </div>
+                  </div>
                 </div>
                 {threadOpen && (
                   <div className="border-t bg-muted/30 p-3">
@@ -271,7 +287,7 @@ export function AttachmentsPanel({
       )}
 
       {canPushBack && !frozen && pending.length > 0 && (
-        <div className="flex items-center justify-between gap-3 border-t pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
           <p className="text-[11px] text-muted-foreground">
             {selectedCodes.length === 0
               ? 'Select the pending requirements to push this file back for documents.'
