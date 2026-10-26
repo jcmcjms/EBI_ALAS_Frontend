@@ -1,8 +1,9 @@
 import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
 import { Label } from '@/src/shared/ui/primitives/label'
 import type { DeviationReason } from '@/src/features/loans/schemas/schema'
-import type { UseFormRegister, FieldPath } from 'react-hook-form'
+import type { UseFormRegister } from 'react-hook-form'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
+import { deviationJustificationFieldPath } from '@/src/features/loans/model/deviation-justification-path'
 
 interface DeviationItemProps {
   reason: string
@@ -57,9 +58,7 @@ export function DeviationItem({
           </Label>
           <textarea
             id={`${id}-justification`}
-            {...register(
-              `${path}.deviationJustifications.${reason}` as FieldPath<LoanApplicationFormData>,
-            )}
+            {...register(deviationJustificationFieldPath(path, reason))}
             placeholder='Explain why this deviation is allowed (e.g., "Borrower is 66 but has strong co-maker and collateral.").'
             rows={2}
             aria-invalid={!!justificationError}

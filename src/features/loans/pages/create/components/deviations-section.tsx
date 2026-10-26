@@ -24,6 +24,7 @@ import {
   isMajorSeverity,
   isMinorSeverity,
 } from '@/src/shared/lib/api/approval-matrix-shared'
+import { deviationJustificationFieldPath } from '@/src/features/loans/model/deviation-justification-path'
 
 type DeviationsErrors = {
   otherRemarks?: { message?: string }
@@ -166,7 +167,7 @@ function DeviationsFields({
     setValue(`${path}.deviationDetails`, next, { shouldValidate: true })
 
     if (!checked) {
-      setValue(`${path}.deviationJustifications.${reason}`, '', {
+      setValue(deviationJustificationFieldPath(path, reason), '', {
         shouldValidate: false,
       })
     }
