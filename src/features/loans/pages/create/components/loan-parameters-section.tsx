@@ -20,7 +20,7 @@ export function LoanParametersSection({
       step={section.step}
       title={`Loan Parameters ${loanIndex > 0 ? `(Loan ${loanIndex + 1})` : ''}`}
       description={section.description}
-      icon={<CurrencyDollar size={20} weight="bold" className="text-primary" />}
+      icon={<CurrencyDollar size={20} weight="bold" className="text-muted-foreground" />}
     >
       <LoanParametersFields fieldPrefix={fieldPrefix} loanIndex={loanIndex} />
     </SectionCard>

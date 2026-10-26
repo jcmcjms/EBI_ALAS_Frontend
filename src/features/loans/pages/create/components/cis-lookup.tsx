@@ -222,7 +222,7 @@ export function CISLookup({
       title={section.label}
       description={section.description}
       icon={
-        <IdentificationCard size={20} weight="bold" className="text-primary" />
+        <IdentificationCard size={20} weight="bold" className="text-muted-foreground" />
       }
     >
       <div className="space-y-6">

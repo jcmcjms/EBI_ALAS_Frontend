@@ -33,18 +33,23 @@ export function CisClientCard({
   onChangeClient,
 }: CisClientCardProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-md border border-primary/20 bg-primary/5 p-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 p-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground">
         {initials}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">
           {fullName || '—'}
         </p>
-        <p className="truncate text-xs text-muted-foreground">
-          {[agency, position, employeeId && `ID ${employeeId}`]
-            .filter(Boolean)
-            .join(' • ') || 'No agency details on file'}
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+          {agency ? <span className="min-w-0 truncate">{agency}</span> : null}
+          {position ? <span className="min-w-0 truncate">{position}</span> : null}
+          {employeeId ? (
+            <span className="shrink-0 tabular-nums">ID {employeeId}</span>
+          ) : null}
+          {!agency && !position && !employeeId ? (
+            <span>No agency details on file</span>
+          ) : null}
         </p>
       </div>
       <Badge variant="outline" className="tabular-nums">

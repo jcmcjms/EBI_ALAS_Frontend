@@ -100,7 +100,7 @@ export function EbiReloansTable({
                   }
                   placeholder="0.00"
                   aria-label={`Deductions for ${row.name ?? row.pn ?? `row ${i + 1}`}`}
-                  className="h-8 text-right text-xs"
+                  className="h-8 text-right text-xs tabular-nums"
                 />
               </TableCell>
               <TableCell>
@@ -118,10 +118,10 @@ export function EbiReloansTable({
                   }
                   placeholder="0.00"
                   aria-label={`OB to be paid/closed for ${row.name ?? row.pn ?? `row ${i + 1}`}`}
-                  className="h-8 text-right text-xs"
+                  className="h-8 text-right text-xs tabular-nums"
                 />
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right tabular-nums">
                 <TransferActionMenu
                   currentSection="ebi"
                   onTransfer={(target) =>

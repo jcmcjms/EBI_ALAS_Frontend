@@ -2,10 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import type { FieldErrors, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowUp } from '@phosphor-icons/react'
 import { toastError } from '@/src/shared/ui/feedback/toast'
 
-import { Button } from '@/src/shared/ui/primitives/button'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 import type { PreLoanItem } from '../../api/loan-types'
@@ -108,7 +106,6 @@ export function LoanCreationPage() {
 
   const [activeSection, setActiveSection] = useState<SectionId>('cis-lookup')
   const [submitAttempted, setSubmitAttempted] = useState(false)
-  const [showScrollTop, setShowScrollTop] = useState(false)
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
   const registerSectionRef = useCallback(
     (id: SectionId, el: HTMLElement | null) => {
@@ -140,12 +137,6 @@ export function LoanCreationPage() {
   }, [isClientLoaded])
 
   useEffect(() => {
-    const handleScroll = () => setShowScrollTop(window.scrollY > 400)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  useEffect(() => {
     document.body.classList.add('print-form-only')
     return () => document.body.classList.remove('print-form-only')
   }, [])
@@ -163,11 +154,6 @@ export function LoanCreationPage() {
       .querySelector<HTMLElement>('[data-section-heading]')
       ?.focus({ preventScroll: true })
   }, [])
-
-  const scrollToTop = useCallback(
-    () => window.scrollTo({ top: 0, behavior: 'smooth' }),
-    [],
-  )
 
   const onSubmit = useCallback(
     (data: LoanApplicationFormData) => {
@@ -351,18 +337,6 @@ export function LoanCreationPage() {
               onBack={onBack}
             />
 
-            {showScrollTop && (
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                className="fixed bottom-24 right-6 z-30 h-10 w-10 rounded-full shadow-lg"
-                onClick={scrollToTop}
-                aria-label="Scroll to top"
-              >
-                <ArrowUp size={18} weight="bold" />
-              </Button>
-            )}
           </form>
         </LoanTransfersProvider>
       </ActiveLoanProvider>

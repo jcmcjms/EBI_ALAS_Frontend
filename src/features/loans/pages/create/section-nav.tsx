@@ -122,7 +122,7 @@ export function MobileSectionNav({
   )
 
   return (
-    <div className="sticky top-[var(--header-height)] z-20 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:hidden">
+    <div className="sticky top-[var(--header-height)] z-20 border-b bg-background lg:hidden">
       <nav aria-label="Application sections">
         <div className="flex gap-2 overflow-x-auto px-4 py-2">
           {visibleSections.map((section, index) => {
@@ -138,11 +138,11 @@ export function MobileSectionNav({
                 className={cn(
                   'flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                   status === 'active'
-                    ? 'border-primary bg-primary text-primary-foreground'
+                    ? 'border-border bg-muted text-foreground'
                     : status === 'error'
                       ? 'border-destructive/40 bg-destructive/5 text-destructive'
                       : status === 'complete' || status === 'auto'
-                        ? 'border-primary/30 bg-primary/5 text-primary'
+                        ? 'border-border text-foreground'
                         : 'border-border text-muted-foreground',
                   status === 'locked' && 'opacity-50',
                 )}

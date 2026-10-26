@@ -74,7 +74,7 @@ function OutstandingForLoan({ loanIndex }: { loanIndex: number }) {
     <div>
       <div className="flex items-center justify-end px-4 pt-3 text-xs text-muted-foreground">
         Total outstanding:{' '}
-        <span className="ml-1 font-bold text-foreground">
+        <span className="ml-1 font-bold tabular-nums text-foreground">
           ₱{totalOutstanding.toLocaleString()}
         </span>
       </div>
@@ -98,13 +98,13 @@ function OutstandingForLoan({ loanIndex }: { loanIndex: number }) {
             rows.map((loan, i) => (
               <TableRow key={`${loan.pn}-${i}`} className="hover:bg-muted/30">
                 <TableCell className="text-xs">{loan.pn}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right tabular-nums">
                   ₱{(loan.principalBalance ?? 0).toLocaleString()}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right tabular-nums">
                   ₱{(loan.amortization ?? 0).toLocaleString()}
                 </TableCell>
-                <TableCell className="text-right font-semibold">
+                <TableCell className="text-right font-semibold tabular-nums">
                   ₱{(loan.outstandingBalance ?? 0).toLocaleString()}
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">

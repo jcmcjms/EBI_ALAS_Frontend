@@ -137,7 +137,7 @@ export function useSectionProgress(
 
 export function StatusIcon({ status }: { status: SectionStatus }) {
   if (status === 'complete')
-    return <CheckCircle size={20} weight="fill" className="text-primary" />
+    return <CheckCircle size={20} weight="fill" className="text-foreground" />
   if (status === 'error')
     return (
       <WarningCircle size={20} weight="fill" className="text-destructive" />
@@ -145,8 +145,8 @@ export function StatusIcon({ status }: { status: SectionStatus }) {
 
   if (status === 'auto')
     return (
-      <div className="flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
-        <CloudCheck size={12} weight="bold" className="text-primary" />
+      <div className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-muted">
+        <CloudCheck size={12} weight="bold" className="text-muted-foreground" />
         <span className="sr-only">Auto-populated</span>
       </div>
     )
@@ -162,7 +162,7 @@ export function StatusIcon({ status }: { status: SectionStatus }) {
     )
   if (status === 'active')
     return (
-      <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary bg-primary">
+      <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-foreground bg-foreground">
         <div className="h-2 w-2 rounded-full bg-background" />
       </div>
     )

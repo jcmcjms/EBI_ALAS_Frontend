@@ -47,14 +47,14 @@ export function LoanCreationGuideDialog() {
         <DialogHeader>
           <DialogTitle>How loan creation works</DialogTitle>
           <DialogDescription>
-            Applications follow a four-stage workflow. Your progress stays in this
-            session as you move through each section.
+            Applications follow a four-stage workflow. Your draft saves
+            automatically and is restored when you return.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           {STAGES.map((stage, i) => (
             <div key={stage.title} className="flex gap-3">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                 {i === STAGES.length - 1 ? (
                   <CheckCircle size={14} weight="bold" />
                 ) : (

@@ -56,7 +56,7 @@ export function CisSearchBar({
           <Button
             onClick={onLookup}
             disabled={isLoading || !searchQuery.trim()}
-            className="h-10 shrink-0 px-6"
+            className="h-10 shrink-0 px-6 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
           >
             {isLoading ? 'Searching…' : 'Search Client'}
           </Button>

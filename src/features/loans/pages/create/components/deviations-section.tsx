@@ -44,7 +44,7 @@ export function DeviationsSection() {
       step={section.step}
       title={section.label}
       description={section.description}
-      icon={<Warning size={20} weight="bold" className="text-primary" />}
+      icon={<Warning size={20} weight="bold" className="text-muted-foreground" />}
       badge={
         loans.length > 0 ? (
           <Badge variant="secondary">

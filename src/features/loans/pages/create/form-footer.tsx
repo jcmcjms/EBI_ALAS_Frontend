@@ -43,7 +43,7 @@ export function FormFooter({
   )
 
   return (
-    <footer className="sticky bottom-0 z-20 border-t bg-background/95 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <footer className="sticky bottom-0 z-20 border-t bg-background shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       <div className="container mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 px-6">
         <div className="min-w-0 flex-1">
           {maxLoanableBlock ? (
@@ -91,7 +91,7 @@ export function FormFooter({
             <p className="hidden text-sm text-muted-foreground md:block">
               {isLast
                 ? 'Review your application details before submitting.'
-                : 'All changes stay in this session as you work.'}
+                : 'Your draft saves automatically as you work.'}
             </p>
           )}
         </div>

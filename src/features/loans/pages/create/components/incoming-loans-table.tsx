@@ -89,7 +89,7 @@ export function IncomingLoansTable({
                       Number(e.target.value || 0),
                     )
                   }
-                  className="h-8 text-right text-xs"
+                  className="h-8 text-right text-xs tabular-nums"
                 />
               </TableCell>
               <TableCell>
@@ -101,7 +101,7 @@ export function IncomingLoansTable({
                   className="h-8 text-xs"
                 />
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right tabular-nums">
                 <Button
                   type="button"
                   variant="ghost"

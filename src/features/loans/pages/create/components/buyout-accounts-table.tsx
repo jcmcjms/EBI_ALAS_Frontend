@@ -96,7 +96,7 @@ export function BuyoutAccountsTable({
                       Number(e.target.value || 0),
                     )
                   }
-                  className="h-8 text-right text-xs"
+                  className="h-8 text-right text-xs tabular-nums"
                 />
               </TableCell>
               <TableCell>
@@ -109,10 +109,10 @@ export function BuyoutAccountsTable({
                       Number(e.target.value || 0),
                     )
                   }
-                  className="h-8 text-right text-xs"
+                  className="h-8 text-right text-xs tabular-nums"
                 />
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right tabular-nums">
                 <Button
                   type="button"
                   variant="ghost"

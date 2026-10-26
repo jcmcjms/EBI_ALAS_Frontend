@@ -20,7 +20,7 @@ export function LoanParametersTabsSection() {
         title={section.label}
         description={section.description}
         icon={
-          <CurrencyDollar size={20} weight="bold" className="text-primary" />
+          <CurrencyDollar size={20} weight="bold" className="text-muted-foreground" />
         }
       >
         <div className="rounded-none border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
@@ -35,7 +35,7 @@ export function LoanParametersTabsSection() {
       step={section.step}
       title={section.label}
       description={section.description}
-      icon={<CurrencyDollar size={20} weight="bold" className="text-primary" />}
+      icon={<CurrencyDollar size={20} weight="bold" className="text-muted-foreground" />}
       badge={
         <Badge variant="secondary">
           {loans.length} loan{loans.length === 1 ? '' : 's'}

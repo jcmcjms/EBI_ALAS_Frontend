@@ -89,7 +89,7 @@ export function ApprovalFormPreview({
       step={section.step}
       title={section.label}
       description={section.description}
-      icon={<FilePdf size={20} weight="bold" className="text-primary" />}
+      icon={<FilePdf size={20} weight="bold" className="text-muted-foreground" />}
       badge={
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">

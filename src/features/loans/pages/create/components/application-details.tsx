@@ -23,7 +23,7 @@ export function ApplicationDetailsSection() {
     <Card>
       <CardHeader className="pb-3 border-b bg-muted/30">
         <CardTitle className="text-lg flex items-center gap-2">
-          <Bank size={20} weight="bold" className="text-primary" />
+          <Bank size={20} weight="bold" className="text-muted-foreground" />
           Application Details & Routing
         </CardTitle>
       </CardHeader>

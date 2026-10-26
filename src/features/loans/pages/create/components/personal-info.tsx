@@ -51,7 +51,7 @@ export function PersonalInfoSection() {
       step={section.step}
       title={section.label}
       description={section.description}
-      icon={<LockSimple size={20} weight="bold" className="text-primary" />}
+      icon={<LockSimple size={20} weight="bold" className="text-muted-foreground" />}
     >
       <div className="space-y-6">
         {}
@@ -224,7 +224,7 @@ export function PersonalInfoSection() {
         {}
         <div className="border-t pt-6">
           <div className="mb-4 flex items-center gap-2">
-            <Buildings size={20} weight="bold" className="text-primary" />
+            <Buildings size={20} weight="bold" className="text-muted-foreground" />
             <h3 className="text-md font-semibold">Referrer Information</h3>
           </div>
           <p className="mb-6 text-xs text-muted-foreground">

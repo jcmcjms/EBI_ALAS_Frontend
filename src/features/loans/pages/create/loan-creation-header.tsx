@@ -57,8 +57,8 @@ export function LoanCreationHeader({
   const [clearOpen, setClearOpen] = useState(false)
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 px-6">
+    <header className="border-b bg-background">
+      <div className="container mx-auto flex min-h-16 max-w-[1440px] flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-2">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="ghost"
@@ -140,7 +140,7 @@ export function LoanCreationHeader({
           {userBranchId && (
             <Badge
               variant="outline"
-              className="gap-1.5 border-primary/30 bg-primary/5 py-1 text-xs text-primary"
+              className="gap-1.5 border-border bg-muted py-1 text-xs text-foreground"
             >
               <IdentificationBadge size={12} weight="bold" />
               Processing Branch:{' '}

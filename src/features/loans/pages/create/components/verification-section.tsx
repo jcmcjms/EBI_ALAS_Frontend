@@ -20,7 +20,7 @@ export function VerificationSection() {
       step={section.step}
       title={section.label}
       description={section.description}
-      icon={<CheckCircle size={20} weight="bold" className="text-primary" />}
+      icon={<CheckCircle size={20} weight="bold" className="text-muted-foreground" />}
       badge={
         loans.length > 0 ? (
           <Badge variant="secondary">
