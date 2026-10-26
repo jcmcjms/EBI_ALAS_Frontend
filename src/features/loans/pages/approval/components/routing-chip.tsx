@@ -35,7 +35,7 @@ export function RoutingChip({ loanId }: RoutingChipProps) {
         render={
           <Badge
             variant="outline"
-            className="gap-1 border-primary/30 bg-primary/5 text-primary cursor-pointer"
+            className="gap-1 border-border bg-muted cursor-pointer text-foreground"
           >
             <TreeStructure size={12} weight="bold" />
             Tier {routing.requiredApprovalTier}

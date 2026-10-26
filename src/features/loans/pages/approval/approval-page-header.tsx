@@ -41,8 +41,10 @@ export function ApprovalPageHeader({
   groupLoans,
   onNavigate,
 }: ApprovalPageHeaderProps) {
+  const escalated = useEscalationStore((s) => s.isEscalated(id))
+
   return (
-    <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
+    <header className="sticky top-[var(--header-height)] z-30 border-b bg-background">
       <div className="container mx-auto flex h-16 flex-wrap items-center justify-between gap-3 px-6">
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -89,7 +91,7 @@ export function ApprovalPageHeader({
               {deviationCount === 1 ? '' : 's'}
             </Badge>
           )}
-          {useEscalationStore.getState().isEscalated(id) && (
+          {escalated && (
             <Badge
               variant="secondary"
               className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800"

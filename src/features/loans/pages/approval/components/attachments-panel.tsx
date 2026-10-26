@@ -108,7 +108,7 @@ export function AttachmentsPanel({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <ListChecks size={18} className="text-primary" />
+        <ListChecks size={18} className="text-muted-foreground" />
         <h3 className="text-sm font-semibold">Required Documents</h3>
         {items.length > 0 && (
           <Badge variant="secondary" className="text-xs tabular-nums">

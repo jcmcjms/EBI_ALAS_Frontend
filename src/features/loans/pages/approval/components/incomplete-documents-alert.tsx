@@ -38,7 +38,7 @@ export function IncompleteDocumentsAlert({
           onClick={onReview}
           className="h-auto p-0 text-xs font-semibold"
         >
-          Review missing documents →
+          Review missing documents
         </Button>
       </AlertDescription>
     </Alert>

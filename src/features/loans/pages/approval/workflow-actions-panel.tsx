@@ -90,7 +90,7 @@ export function WorkflowActionsPanel({
     <Card>
       <CardHeader className="border-b pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
-          <CheckCircle size={18} weight="bold" className="text-primary" />
+          <CheckCircle size={18} weight="bold" className="text-muted-foreground" />
           Decision Actions
         </CardTitle>
         <CardDescription className="pt-1 text-xs">
@@ -154,7 +154,7 @@ export function WorkflowActionsPanel({
               return (
                 <Button
                   key={`${a.to}-${a.verdict ?? a.kind}`}
-                  className="w-full gap-2 border-amber-500/50 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:text-amber-400"
+                  className="w-full gap-2 border-amber-500/50 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:text-amber-400 disabled:border-border disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
                   variant="outline"
                   disabled={disabled}
                   onClick={onPushback}
@@ -168,7 +168,8 @@ export function WorkflowActionsPanel({
               return (
                 <Button
                   key={`${a.to}-${a.verdict ?? a.kind}`}
-                  className="w-full gap-2"
+                  variant={a.kind === 'reject' ? 'destructive' : 'default'}
+                  className="w-full gap-2 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
                   disabled={disabled}
                   onClick={() =>
                     act.mutate({
@@ -218,7 +219,7 @@ export function WorkflowActionsPanel({
         )}
 
         <div className="space-y-3 border-t pt-4">
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
             <Clock size={12} /> Activity Timeline
           </h3>
           <ApplicationTimeline loanId={loanId} variant="panel" />

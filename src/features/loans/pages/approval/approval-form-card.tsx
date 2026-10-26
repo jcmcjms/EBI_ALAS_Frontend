@@ -72,7 +72,7 @@ export function ApprovalFormCard({
       <div className="fixed inset-0 z-50 flex flex-col bg-background">
         <header className="flex items-center justify-between border-b bg-muted/30 px-6 py-3">
           <div className="flex items-center gap-2">
-            <FilePdf size={20} weight="bold" className="text-primary" />
+            <FilePdf size={20} weight="bold" className="text-muted-foreground" />
             <h2 className="text-lg font-semibold">Approval Form Preview</h2>
           </div>
           <div className="flex items-center gap-2">
@@ -105,7 +105,7 @@ export function ApprovalFormCard({
       <Card className="overflow-hidden">
         <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 p-4">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <FilePdf size={20} weight="bold" className="text-primary" />
+            <FilePdf size={20} weight="bold" className="text-muted-foreground" />
             Approval Form Document
           </CardTitle>
           <div className="flex items-center gap-1.5">

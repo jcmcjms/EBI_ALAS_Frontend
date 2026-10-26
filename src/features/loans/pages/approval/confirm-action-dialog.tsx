@@ -64,9 +64,9 @@ export function ConfirmActionDialog({
   const defaultTrigger = (
     <Button
       className={cn(
-        'w-full gap-2',
+        'w-full gap-2 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100',
         action.verdict === 'NotRecommended' &&
-          'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900',
+          'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900 disabled:border-border disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100',
       )}
       variant={
         action.kind === 'reject'

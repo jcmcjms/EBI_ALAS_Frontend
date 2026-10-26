@@ -44,7 +44,7 @@ export function DocumentsTabContent({
             <ListChecks
               size={18}
               weight="bold"
-              className="text-primary"
+              className="text-muted-foreground"
             />
             Document Requirements
           </CardTitle>

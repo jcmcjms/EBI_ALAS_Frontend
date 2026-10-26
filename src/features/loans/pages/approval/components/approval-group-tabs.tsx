@@ -41,9 +41,9 @@ export function ApprovalGroupTabs({
             value: String(l.id),
             label: l.productCode || l.lamId,
             hint: `\u2026${l.lamId.slice(-4)}`,
-            title: `${l.lamId} \u00b7 ${statusOf(l.status)}${
+            title: `${l.lamId}, ${statusOf(l.status)}${
               l.unresolvedDocs > 0
-                ? ` \u00b7 ${l.unresolvedDocs} doc(s) open`
+                ? `, ${l.unresolvedDocs} doc(s) open`
                 : ''
             }`,
             hasWarning: l.unresolvedDocs > 0,
