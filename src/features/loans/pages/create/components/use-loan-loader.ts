@@ -21,7 +21,10 @@ import {
   CREATION_TYPE,
   createPerLoanSectionDefaults,
 } from '@/src/features/loans/schemas/schema'
-import { toAnnualRatePercent } from '@/src/features/loans/model/loan-approval-utils'
+import {
+  normalizeIsoDate,
+  toAnnualRatePercent,
+} from '@/src/features/loans/model/loan-approval-utils'
 
 export function extractProductCode(desc: string | undefined): string | null {
   if (!desc) return null
@@ -37,16 +40,6 @@ export function seedOutstandingForLoan(
 }
 
 
-export function normalizeIsoDate(value: string): string {
-  const trimmed = value.trim()
-  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10)
-  const d = new Date(trimmed)
-  if (Number.isNaN(d.getTime())) return ''
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 
 export function useLoanLoader(
   cisNo: string,

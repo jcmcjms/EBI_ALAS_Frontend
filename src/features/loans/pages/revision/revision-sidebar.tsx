@@ -99,13 +99,19 @@ export function RevisionSidebar({
             placeholder="e.g., Updated client NTHP as per new payslip. Attached revised CI."
             className="min-h-[100px]"
             value={notes}
+            aria-invalid={Boolean(notesError)}
+            aria-describedby={
+              notesError ? 'revision-notes-error' : undefined
+            }
             disabled={disabled}
             maxLength={2000}
             onChange={(e) => onNotesChange(e.target.value)}
           />
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             {notesError ? (
-              <p className="text-destructive">{notesError}</p>
+              <p id="revision-notes-error" className="text-destructive">
+                {notesError}
+              </p>
             ) : (
               notes.trim().length > 0 &&
               notes.trim().length < 10 && (

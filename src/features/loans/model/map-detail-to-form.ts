@@ -5,7 +5,10 @@ import {
   DEVIATION_REASONS,
   type DeviationReason,
 } from '../schemas/schema'
-import { toAnnualRatePercent } from './loan-approval-utils'
+import {
+  normalizeIsoDate,
+  toAnnualRatePercent,
+} from './loan-approval-utils'
 
 const DEVIATION_REASON_SET: ReadonlySet<string> = new Set(DEVIATION_REASONS)
 
@@ -69,7 +72,7 @@ export function mapLoanDetailToFormData(
       middleName: l.middleName ?? undefined,
       lastName: l.lastName,
       suffix: l.suffix ?? undefined,
-      birthdate: l.birthdate ?? undefined,
+      birthdate: l.birthdate ? normalizeIsoDate(l.birthdate) || undefined : undefined,
       address: l.address ?? undefined,
       agency: l.agency ?? '',
       position: l.position ?? undefined,
@@ -99,7 +102,7 @@ export function mapLoanDetailToFormData(
           term: l.termDays,
           policyTermMonths: l.policyTermMonths ?? undefined,
           interestRate: toAnnualRatePercent(l.interestRate),
-          nthpDate: l.nthpDate ?? undefined,
+          nthpDate: l.nthpDate ? normalizeIsoDate(l.nthpDate) || undefined : undefined,
           notarialFee: l.notarialFee ?? 0,
           docStamps: l.docStamps ?? 0,
           insurance: l.insurance ?? 0,
@@ -112,25 +115,25 @@ export function mapLoanDetailToFormData(
         approvalTermDays: l.approvalTermDays ?? undefined,
         annualRatePercent: l.annualRatePercent ?? undefined,
         cDocStamp: l.cDocStamp ?? undefined,
-        ebiReloans: l.ebiReloans.map((e) => ({
+        ebiReloans: (l.ebiReloans ?? []).map((e) => ({
           pn: e.pn,
           name: e.name,
           existingDeduction: e.existingDeduction,
           outstandingBalance: e.outstandingBalance,
           payToClose: e.payToClose,
         })),
-        buyOuts: l.buyOuts.map((b) => ({
+        buyOuts: (l.buyOuts ?? []).map((b) => ({
           pn: b.pn,
           name: b.name,
           amortization: b.amortization,
           outstandingBalance: b.outstandingBalance,
         })),
-        incomingLoans: l.incomingLoans.map((i) => ({
+        incomingLoans: (l.incomingLoans ?? []).map((i) => ({
           name: i.name,
           deductions: i.deductions,
           remarks: i.remarks,
         })),
-        outstandingLoans: l.outstandingLoans.map((o) => ({
+        outstandingLoans: (l.outstandingLoans ?? []).map((o) => ({
           pn: o.pn,
           principalBalance: o.principalBalance,
           amortization: o.amortization,
@@ -154,7 +157,7 @@ export function mapLoanDetailToFormData(
         },
       },
     ],
-    outstandingLoans: l.outstandingLoans.map((o) => ({
+    outstandingLoans: (l.outstandingLoans ?? []).map((o) => ({
       pn: o.pn,
       principalBalance: o.principalBalance,
       amortization: o.amortization,

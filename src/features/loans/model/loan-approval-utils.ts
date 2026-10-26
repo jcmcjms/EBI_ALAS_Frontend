@@ -148,7 +148,8 @@ export function resolveApprovalTermDays(
 
 export function toAnnualRatePercent(rate?: number | null): number {
   if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) return 0
-  return rate <= 1 ? rate * 100 : rate
+  const percent = rate <= 1 ? rate * 100 : rate
+  return Number(percent.toFixed(4))
 }
 
 export function formatRatePercent(rate: number): string {
@@ -395,4 +396,15 @@ export function buildPrintableDeviationEntries(
   }
 
   return entries
+}
+
+export function normalizeIsoDate(value: string): string {
+  const trimmed = value.trim()
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10)
+  const d = new Date(trimmed)
+  if (Number.isNaN(d.getTime())) return ''
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }

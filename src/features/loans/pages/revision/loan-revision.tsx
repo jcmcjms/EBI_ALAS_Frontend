@@ -11,7 +11,8 @@ import {
   Card,
   CardContent,
 } from '@/src/shared/ui/data-display/card'
-import { Spinner } from '@/src/shared/ui/feedback/spinner'
+import { Skeleton } from '@/src/shared/ui/feedback/skeleton'
+import { EmptyState } from '@/src/shared/ui/feedback/empty-state'
 import {
   toastError,
   toastSuccess,
@@ -181,16 +182,51 @@ export function LoanRevisionPage() {
 
   if (loanQuery.isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Spinner className="size-8" />
+      <div
+        className="min-h-[calc(100vh-var(--header-height))] bg-muted/40"
+        role="status"
+        aria-label="Loading application"
+      >
+        <div className="border-b bg-background">
+          <div className="container mx-auto flex h-16 items-center gap-4 px-6">
+            <Skeleton className="size-8" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-64" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+          </div>
+        </div>
+        <div className="container mx-auto grid grid-cols-1 gap-8 px-6 py-8 lg:grid-cols-3">
+          <div className="space-y-8 lg:col-span-2">
+            <Skeleton className="h-64" />
+            <Skeleton className="h-48" />
+          </div>
+          <div className="space-y-6">
+            <Skeleton className="h-40" />
+            <Skeleton className="h-56" />
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!loanQuery.data) {
     return (
-      <div className="container mx-auto p-6 text-center text-destructive">
-        Application not found.
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={WarningCircle}
+              title="Application not found"
+              hint="The application may have been removed, or the link is stale."
+              action={
+                <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
+                  Return to Monitoring
+                </Button>
+              }
+            />
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -256,6 +292,15 @@ export function LoanRevisionPage() {
                         <strong>{statusLabel(loan.status)}</strong> and cannot be
                         edited.
                       </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {canRevise && editableIds.size === 0 && (
+                  <Card>
+                    <CardContent className="p-4 text-sm text-muted-foreground">
+                      No open correction targets — every section is locked
+                      until a reviewer returns the file with feedback.
                     </CardContent>
                   </Card>
                 )}
