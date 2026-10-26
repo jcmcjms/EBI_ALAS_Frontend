@@ -5,15 +5,14 @@ import { cn } from '@/src/shared/lib/utils'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import { useAccountProfile } from '@/src/features/account/hooks/use-account'
 import { setMyDutyAvailability } from '@/src/features/account/api/account'
-
-const DUTY_ROLES = new Set(['Evaluator', 'Approver', 'Admin'])
+import { isDutyRole } from '@/src/features/account/types'
 
 export function DutyStatusToggle() {
   const role = useAuthStore((s) => s.user?.role)
   const profileQuery = useAccountProfile()
   const isAvailable = profileQuery.data?.isAvailable !== false
 
-  if (!role || !DUTY_ROLES.has(role)) {
+  if (!role || !isDutyRole(role)) {
     return null
   }
 

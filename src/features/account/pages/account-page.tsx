@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { ShieldCheck } from '@phosphor-icons/react'
-import { Button } from '@/src/shared/ui/primitives/button'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import {
   Tabs,
   TabsContent,
@@ -12,29 +11,29 @@ import { SecurityTab } from '../components/security-tab'
 import { ActivityTab } from '../components/activity-tab'
 import { MyApplicationsTab } from '../components/my-applications-tab'
 import { ProfileEditSheet } from '../components/profile-edit-sheet'
-import type { AccountTab } from '../types'
+import { parseAccountTab, type AccountTab } from '../types'
 
 export function AccountPage() {
-  const [tab, setTab] = useState<AccountTab>('overview')
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false }) as { tab?: string }
+  const tab = parseAccountTab(search.tab ?? null)
   const [editOpen, setEditOpen] = useState(false)
+
+  const setTab = (next: AccountTab) => {
+    void navigate({
+      to: '/account',
+      search: (prev: Record<string, unknown>) => ({ ...prev, tab: next }),
+      replace: true,
+    })
+  }
 
   return (
     <div className="flex flex-1 flex-col bg-muted/40">
       <div className="container mx-auto w-full max-w-7xl flex-1 px-6 py-8">
-        {}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">My Account</h1>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => setTab('security')}
-          >
-            <ShieldCheck size={16} weight="bold" />
-            Security settings
-          </Button>
         </div>
 
-        {}
         <Tabs
           value={tab}
           onValueChange={(v) => v && setTab(v as AccountTab)}
@@ -55,7 +54,7 @@ export function AccountPage() {
           </TabsContent>
 
           <TabsContent value="security">
-            <SecurityTab />
+            <SecurityTab onEditProfile={() => setEditOpen(true)} />
           </TabsContent>
 
           <TabsContent value="activity">
@@ -68,7 +67,6 @@ export function AccountPage() {
         </Tabs>
       </div>
 
-      {}
       <ProfileEditSheet open={editOpen} onOpenChange={setEditOpen} />
     </div>
   )

@@ -130,10 +130,13 @@ export function ProfileEditSheet({
               placeholder="name@enterprisebank.ph"
               value={email}
               aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'profile-email-error' : undefined}
               onChange={(e) => setEmail(e.target.value)}
             />
             {errors.email && (
-              <p className="text-xs text-destructive">{errors.email}</p>
+              <p id="profile-email-error" className="text-xs text-destructive">
+                {errors.email}
+              </p>
             )}
           </div>
 
@@ -146,10 +149,13 @@ export function ProfileEditSheet({
               placeholder="+63 912 345 6789"
               value={phone}
               aria-invalid={Boolean(errors.phone)}
+              aria-describedby={errors.phone ? 'profile-phone-error' : undefined}
               onChange={(e) => setPhone(e.target.value)}
             />
             {errors.phone && (
-              <p className="text-xs text-destructive">{errors.phone}</p>
+              <p id="profile-phone-error" className="text-xs text-destructive">
+                {errors.phone}
+              </p>
             )}
           </div>
 
@@ -160,10 +166,18 @@ export function ProfileEditSheet({
               placeholder="Name — +63 912 345 6789"
               value={emergencyContact}
               aria-invalid={Boolean(errors.emergencyContact)}
+              aria-describedby={
+                errors.emergencyContact
+                  ? 'profile-emergency-error'
+                  : undefined
+              }
               onChange={(e) => setEmergencyContact(e.target.value)}
             />
             {errors.emergencyContact && (
-              <p className="text-xs text-destructive">
+              <p
+                id="profile-emergency-error"
+                className="text-xs text-destructive"
+              >
                 {errors.emergencyContact}
               </p>
             )}

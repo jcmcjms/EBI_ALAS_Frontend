@@ -8,6 +8,10 @@ import {
 } from '@tanstack/react-router'
 import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import { ProtectedRoute } from '@/src/features/auth/components/ProtectedRoute'
+import {
+  parseAccountTab,
+  type AccountTab,
+} from '@/src/features/account/types'
 import { FeatureErrorBoundary } from '@/src/app/system/FeatureErrorBoundary'
 import { AppShell } from '@/src/app/layout/AppShell'
 import { PERMISSIONS } from '@/src/shared/lib/api/types'
@@ -132,6 +136,16 @@ function parseMonitoringSearch(
     status: asString(search.status),
     id: asString(search.id),
     flagged: asString(search.flagged),
+  }
+}
+
+type AccountSearch = {
+  tab: AccountTab
+}
+
+function parseAccountSearch(search: Record<string, unknown>): AccountSearch {
+  return {
+    tab: parseAccountTab(typeof search.tab === 'string' ? search.tab : null),
   }
 }
 
@@ -286,6 +300,7 @@ const notificationsRoute = createRoute({
 const accountRoute = createRoute({
   getParentRoute: () => authedShellRoute,
   path: '/account',
+  validateSearch: parseAccountSearch,
   component: () => (
     <GuardedRoute featureName="Account">
       <Account />

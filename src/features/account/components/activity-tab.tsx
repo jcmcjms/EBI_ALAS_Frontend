@@ -1,28 +1,38 @@
 import { useState } from 'react'
 import { Button } from '@/src/shared/ui/primitives/button'
+import { Input } from '@/src/shared/ui/primitives/input'
+import { Label } from '@/src/shared/ui/primitives/label'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/src/shared/ui/data-display/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/src/shared/ui/forms/select'
 import { useAccountActivity } from '../hooks/use-account'
 import { ActivityTimeline, toTimelineItems } from './activity-timeline'
-import { EmptyState, ErrorState, LoadingState } from './account-states'
-import type { ActivityKind } from '../types'
-import { ACTIVITY_META } from '../types'
+import {
+  EmptyState,
+  ErrorState,
+  ListSkeleton,
+} from './account-states'
+import { ACTIVITY_META, type ActivityKind } from '../types'
 
-const ACTION_OPTIONS: { value: ''; label: string }[] = [
-  { value: '', label: 'All types' },
-]
+const ALL_TYPES = 'all'
 
-const KIND_OPTIONS = (
-  Object.keys(ACTIVITY_META) as ActivityKind[]
-).map((kind) => ({ value: kind, label: ACTIVITY_META[kind].label }))
+const KIND_OPTIONS = (Object.keys(ACTIVITY_META) as ActivityKind[]).map(
+  (kind) => ({ value: kind, label: ACTIVITY_META[kind].label }),
+)
 
 export function ActivityTab() {
   const [limit, setLimit] = useState(10)
-  const [action, setAction] = useState('')
+  const [kind, setKind] = useState<string>(ALL_TYPES)
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
 
@@ -30,11 +40,11 @@ export function ActivityTab() {
   const filters = {
     from: from || undefined,
     to: to || undefined,
-    action: action || undefined,
+    action: kind === ALL_TYPES ? undefined : kind,
   }
   const activityQuery = useAccountActivity(limit, rangeInvalid ? {} : filters)
   const items = toTimelineItems(activityQuery.data ?? [])
-  const hasFilters = Boolean(action || from || to)
+  const hasFilters = kind !== ALL_TYPES || Boolean(from || to)
 
   return (
     <Card>
@@ -43,28 +53,45 @@ export function ActivityTab() {
       </CardHeader>
       <CardContent className="pt-6">
         <div className="mb-4 flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Type
-            <select
-              className="h-8 rounded-none border border-input bg-background px-2 text-sm text-foreground"
-              value={action}
-              onChange={(e) => {
-                setAction(e.target.value)
+          <div className="grid gap-1">
+            <Label className="text-xs text-muted-foreground" htmlFor="activity-type">
+              Type
+            </Label>
+            <Select
+              value={kind}
+              onValueChange={(v) => {
+                setKind(String(v))
                 setLimit(10)
               }}
             >
-              {[...ACTION_OPTIONS, ...KIND_OPTIONS].map((opt) => (
-                <option key={opt.value || 'all'} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            From
-            <input
+              <SelectTrigger
+                id="activity-type"
+                className="h-8 w-[150px] bg-background"
+              >
+                <SelectValue placeholder="All types">
+                  {kind === ALL_TYPES
+                    ? 'All types'
+                    : (ACTIVITY_META[kind as ActivityKind]?.label ?? kind)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_TYPES}>All types</SelectItem>
+                {KIND_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1">
+            <Label className="text-xs text-muted-foreground" htmlFor="activity-from">
+              From
+            </Label>
+            <Input
+              id="activity-from"
               type="date"
-              className="h-8 rounded-none border border-input bg-background px-2 text-sm text-foreground"
+              className="h-8 w-auto bg-background"
               value={from}
               max={to || undefined}
               onChange={(e) => {
@@ -72,12 +99,15 @@ export function ActivityTab() {
                 setLimit(10)
               }}
             />
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            To
-            <input
+          </div>
+          <div className="grid gap-1">
+            <Label className="text-xs text-muted-foreground" htmlFor="activity-to">
+              To
+            </Label>
+            <Input
+              id="activity-to"
               type="date"
-              className="h-8 rounded-none border border-input bg-background px-2 text-sm text-foreground"
+              className="h-8 w-auto bg-background"
               value={to}
               min={from || undefined}
               onChange={(e) => {
@@ -85,13 +115,13 @@ export function ActivityTab() {
                 setLimit(10)
               }}
             />
-          </label>
+          </div>
           {hasFilters ? (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                setAction('')
+                setKind(ALL_TYPES)
                 setFrom('')
                 setTo('')
                 setLimit(10)
@@ -103,13 +133,13 @@ export function ActivityTab() {
         </div>
 
         {rangeInvalid ? (
-          <p className="mb-4 text-sm text-destructive">
+          <p role="alert" className="mb-4 text-sm text-destructive">
             Start date must be on or before end date.
           </p>
         ) : null}
 
         {activityQuery.isLoading ? (
-          <LoadingState label="Loading activity…" />
+          <ListSkeleton rows={4} />
         ) : activityQuery.isError ? (
           <ErrorState
             message="Failed to load activity history."

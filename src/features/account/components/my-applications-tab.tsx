@@ -1,10 +1,11 @@
 import { useNavigate } from '@tanstack/react-router'
 import { format } from 'date-fns'
-import { ClipboardText, ArrowRight } from '@phosphor-icons/react'
+import { ClipboardText } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
+  CardAction,
   CardContent,
   CardHeader,
   CardTitle,
@@ -29,19 +30,30 @@ export function MyApplicationsTab() {
   const user = useAuthStore((s) => s.user)
   const canCreate = user?.role === 'Encoder' || user?.role === 'Admin'
 
+  const total = data?.length ?? 0
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30 py-3">
-        <CardTitle className="text-sm">My Loan Applications</CardTitle>
+        <div className="flex items-baseline gap-2">
+          <CardTitle className="text-sm">My Loan Applications</CardTitle>
+          {total > 0 && (
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {total} {total === 1 ? 'application' : 'applications'}
+            </span>
+          )}
+        </div>
         {canCreate && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 gap-1.5 text-xs"
-            onClick={() => navigate({ to: '/loans/create' })}
-          >
-            New Application
-          </Button>
+          <CardAction>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => navigate({ to: '/loans/create' })}
+            >
+              New Application
+            </Button>
+          </CardAction>
         )}
       </CardHeader>
       <CardContent className="p-0">
@@ -79,11 +91,11 @@ export function MyApplicationsTab() {
           />
         ) : (
           <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/40">
+            <TableHeader className="bg-muted/40">
+              <TableRow className="hover:bg-transparent">
                 <TableHead>LAM ID</TableHead>
                 <TableHead>Borrower</TableHead>
-                <TableHead>Proposed Amount</TableHead>
+                <TableHead className="text-right">Proposed Amount</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Applied Date</TableHead>
                 <TableHead className="text-right">Action</TableHead>
@@ -102,17 +114,14 @@ export function MyApplicationsTab() {
                     : '—'
 
                 return (
-                  <TableRow
-                    key={app.id}
-                    className="hover:bg-muted/30 transition-colors"
-                  >
+                  <TableRow key={app.id}>
                     <TableCell className="font-mono text-xs font-semibold">
                       {app.lamId || `#${app.id}`}
                     </TableCell>
                     <TableCell className="font-medium text-foreground">
                       {app.clientName}
                     </TableCell>
-                    <TableCell className="tabular-nums font-medium">
+                    <TableCell className="text-right tabular-nums font-medium">
                       {amountFormatted}
                     </TableCell>
                     <TableCell>
@@ -135,11 +144,15 @@ export function MyApplicationsTab() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 gap-1 text-xs hover:text-primary"
-                        onClick={() => navigate({ to: '/loans/monitoring', search: { id: String(app.id) } })}
+                        className="h-8 text-xs"
+                        onClick={() =>
+                          navigate({
+                            to: '/loans/monitoring',
+                            search: { id: String(app.id) },
+                          })
+                        }
                       >
-                        Details
-                        <ArrowRight size={13} weight="bold" />
+                        View
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -152,4 +165,3 @@ export function MyApplicationsTab() {
     </Card>
   )
 }
-

@@ -29,6 +29,12 @@ export const ACTIVITY_META: Record<
   login: { icon: 'SignIn', label: 'Sign-in' },
 }
 
+export const DUTY_ROLES = ['Evaluator', 'Approver', 'Admin'] as const
+
+export function isDutyRole(role: string | null | undefined): boolean {
+  return Boolean(role) && (DUTY_ROLES as readonly string[]).includes(role!)
+}
+
 export const PASSWORD_POLICY = [
   'Minimum 12 characters',
   'Maximum 128 characters',

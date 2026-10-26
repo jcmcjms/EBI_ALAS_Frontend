@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import {
   CalendarBlank,
@@ -7,17 +7,18 @@ import {
   IdentificationCard,
   MapPin,
   Phone,
-  Sparkle,
+  Warning,
 } from '@phosphor-icons/react'
 import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
 import { Button } from '@/src/shared/ui/primitives/button'
 import {
   Card,
+  CardAction,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/src/shared/ui/data-display/card'
-import { initialsOf } from '@/src/shared/lib/format'
+import { formatRelativeTime, initialsOf } from '@/src/shared/lib/format'
 import { useBranches, findBranchName } from '@/src/shared/lib/api/branches'
 import { useAuthStore } from '@/src/shared/store/auth-store'
 import {
@@ -28,7 +29,7 @@ import {
 } from '../hooks/use-account'
 import { setMyDutyAvailability } from '../api/account'
 import { toastError } from '@/src/shared/ui/feedback/toast'
-import type { AccountTab } from '../types'
+import { isDutyRole, type AccountTab } from '../types'
 import { ActivityTimeline, toTimelineItems } from './activity-timeline'
 import { EmptyState, ErrorState, LoadingState } from './account-states'
 import { ProfileCard } from './profile-card'
@@ -45,9 +46,10 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
   const user = useAuthStore((s) => s.user)
   const profileQuery = useAccountProfile()
   const activityQuery = useAccountActivity(3)
-  const loansQuery = useAccountLoans(3)
-  const clientsQuery = useAccountClients(5)
+  const loansQuery = useAccountLoans(4)
+  const clientsQuery = useAccountClients(4)
   const { data: branches } = useBranches()
+  const [dutyPending, setDutyPending] = useState(false)
 
   const profile = profileQuery.data
 
@@ -78,10 +80,30 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
     () => [
       { label: 'Processed', value: String(profile?.stats.processedLoans ?? 0) },
       { label: 'Pending', value: String(profile?.stats.pendingLoans ?? 0) },
-      { label: 'Approval', value: `${profile?.stats.approvalRate ?? 0}%` },
+      {
+        label: 'Approval',
+        value: String(profile?.stats.approvalRate ?? 0),
+        suffix: '%',
+      },
     ],
     [profile],
   )
+
+  const isAvailable = profile?.isAvailable !== false
+  const duty =
+    profile && isDutyRole(user?.role ?? profile.role)
+      ? {
+          isAvailable,
+          isPending: dutyPending || profileQuery.isFetching,
+          onToggle: () => {
+            setDutyPending(true)
+            setMyDutyAvailability(!isAvailable)
+              .then(() => profileQuery.refetch())
+              .catch(() => toastError('Could not update availability'))
+              .finally(() => setDutyPending(false))
+          },
+        }
+      : null
 
   const clients = clientsQuery.data
   const uniqueClients = useMemo(() => {
@@ -166,38 +188,34 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
 
   return (
     <div className="space-y-6">
-      {}
       {missingFields.length > 0 && (
-        <Card className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base text-amber-900 dark:text-amber-200">
-              <Sparkle size={18} weight="fill" />
-              Complete your profile
-            </CardTitle>
-            <p className="text-sm text-amber-800/80 dark:text-amber-300/80">
-              Adding your contact details ensures account recovery and important
-              notifications.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {missingFields.map((field) => (
-              <div
-                key={field}
-                className="flex items-center justify-between rounded-md border border-amber-500/30 bg-background px-3 py-2"
-              >
-                <span className="text-sm font-medium capitalize">
-                  {field.replace(/-/g, ' ')}
-                </span>
-                <Button size="sm" variant="outline" onClick={onEditProfile}>
-                  Add {field.replace(/-/g, ' ')}
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border border-amber-600/30 bg-amber-50 px-4 py-3 dark:border-amber-500/25 dark:bg-amber-950/30">
+          <Warning
+            size={16}
+            weight="fill"
+            className="shrink-0 text-amber-700 dark:text-amber-400"
+            aria-hidden="true"
+          />
+          <p className="min-w-0 flex-1 text-sm text-amber-900 dark:text-amber-200">
+            Your profile is missing your{' '}
+            {missingFields.length === 1
+              ? missingFields[0]
+              : `${missingFields.slice(0, -1).join(', ')} and ${missingFields.at(-1)}`}
+            . Add {missingFields.length === 1 ? 'it' : 'them'} to keep account
+            recovery and notifications working.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 border-amber-600/40 bg-background text-amber-900 hover:bg-amber-100/60 hover:text-amber-900 dark:border-amber-500/30 dark:bg-transparent dark:text-amber-200 dark:hover:bg-amber-500/10 dark:hover:text-amber-200"
+            onClick={onEditProfile}
+          >
+            Complete profile
+          </Button>
+        </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
         <ProfileCard
           fullName={fullName}
           profilePhotoUrl={profile?.profilePhotoUrl}
@@ -207,28 +225,26 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
           contactRows={contactRows}
           isLoading={profileQuery.isLoading}
           onEditProfile={onEditProfile}
-          isAvailable={profile?.isAvailable}
-          onToggleAvailability={() => {
-            const next = !(profile?.isAvailable !== false)
-            setMyDutyAvailability(next)
-              .then(() => profileQuery.refetch())
-              .catch(() => toastError('Could not update availability'))
-          }}
+          duty={duty}
+          eSignatureOnFile={
+            profile ? Boolean(profile.eSignature) : null
+          }
+          onViewSecurity={() => onOpenTab('security')}
         />
 
-        {}
-        <div className="space-y-6">
-          {}
+        <div className="flex flex-col gap-6">
           <Card>
-            <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
+            <CardHeader className="border-b bg-muted/30 py-3">
               <CardTitle className="text-sm">Latest Activity</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onOpenTab('activity')}
-              >
-                View all
-              </Button>
+              <CardAction>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onOpenTab('activity')}
+                >
+                  View all
+                </Button>
+              </CardAction>
             </CardHeader>
             <CardContent className="pt-6">
               {activityQuery.isLoading ? (
@@ -251,26 +267,27 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
             </CardContent>
           </Card>
 
-          <div className="grid gap-6 xl:grid-cols-2">
+          <div className="grid grid-cols-1 flex-1 gap-6 xl:grid-cols-2">
             <RecentApplicationsList
               loansQuery={loansQuery}
               onNewApplication={() => navigate({ to: '/loans/create' })}
               onViewAll={() => onOpenTab('my-applications')}
             />
 
-            {}
             <Card>
-              <CardHeader className="flex-row items-center justify-between border-b bg-muted/30 py-3">
+              <CardHeader className="border-b bg-muted/30 py-3">
                 <CardTitle className="text-sm">Recent Clients</CardTitle>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  aria-label="Open loan monitoring"
-                  onClick={() => navigate({ to: '/loans/monitoring' })}
-                >
-                  <CaretRight size={14} weight="bold" />
-                </Button>
+                <CardAction>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7"
+                    aria-label="Open loan monitoring"
+                    onClick={() => navigate({ to: '/loans/monitoring' })}
+                  >
+                    <CaretRight size={14} weight="bold" />
+                  </Button>
+                </CardAction>
               </CardHeader>
               <CardContent className="divide-y p-0">
                 {clientsQuery.isLoading ? (
@@ -288,7 +305,7 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
                 ) : (
                   uniqueClients.map((client) => (
                     <div
-                      key={client.cisId}
+                      key={client.cisId ?? client.name}
                       className="flex items-center gap-3 px-4 py-3"
                     >
                       <Avatar>
@@ -300,10 +317,23 @@ export function OverviewTab({ onEditProfile, onOpenTab }: OverviewTabProps) {
                         <p className="truncate text-sm font-medium">
                           {client.name}
                         </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          CIS {client.cisId} • {client.agency}
+                        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {client.cisId ? (
+                            <span className="shrink-0 tabular-nums">
+                              CIS {client.cisId}
+                            </span>
+                          ) : null}
+                          <span className="truncate">{client.agency}</span>
                         </p>
                       </div>
+                      <span
+                        className="shrink-0 text-xs text-muted-foreground"
+                        title={new Date(
+                          client.lastInteraction,
+                        ).toLocaleString()}
+                      >
+                        {formatRelativeTime(client.lastInteraction)}
+                      </span>
                     </div>
                   ))
                 )}
