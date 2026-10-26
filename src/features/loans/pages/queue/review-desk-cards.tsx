@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { Avatar, AvatarFallback } from '@/src/shared/ui/data-display/avatar'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import { Button } from '@/src/shared/ui/primitives/button'
@@ -57,8 +56,7 @@ export function NextClientCard({
       aria-label="Next client up"
       className="relative overflow-hidden rounded-xl border bg-card shadow-sm"
     >
-      <div className="absolute inset-y-0 left-0 w-1 bg-primary" aria-hidden />
-      <div className="flex flex-col gap-4 p-5 pl-6">
+      <div className="flex flex-col gap-4 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <Avatar className="size-10 border">
@@ -107,7 +105,7 @@ export function NextClientCard({
                 </Badge>
               )
             ) : (
-              <Badge variant="outline" className="text-primary">
+              <Badge variant="outline" className="font-normal">
                 next up
               </Badge>
             )}
@@ -130,7 +128,7 @@ export function NextClientCard({
                 <PlayCircle size={16} weight="bold" />
               )}
               Serve client
-              <kbd className="ml-0.5 rounded-sm border border-primary-foreground/40 px-1 text-[10px] font-normal text-primary-foreground/70">
+              <kbd className="ml-0.5 rounded-sm border border-primary-foreground/40 px-1 text-[11px] font-normal text-primary-foreground/70">
                 Enter
               </kbd>
             </Button>
@@ -148,10 +146,18 @@ export function NextClientCard({
             >
               <span className="font-mono font-medium">{app.lamId}</span>
               <StatusBadge status={app.status} />
-              <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                {app.product || app.productCode || '—'}
-                {app.loanType ? ` · ${app.loanType}` : ''}
-                {app.termDays != null ? ` · ${app.termDays} d` : ''}
+              <span className="flex min-w-0 flex-1 items-center gap-2 truncate text-muted-foreground">
+                <span className="truncate">
+                  {app.product || app.productCode || '—'}
+                </span>
+                {app.loanType ? (
+                  <span className="shrink-0">{app.loanType}</span>
+                ) : null}
+                {app.termDays != null ? (
+                  <span className="shrink-0 tabular-nums">
+                    {app.termDays} d
+                  </span>
+                ) : null}
               </span>
               <span className="shrink-0 text-sm font-medium tabular-nums">
                 {formatPhp(app.proposedAmount)}
@@ -196,44 +202,26 @@ export function NextClientCard({
 }
 
 interface StatCardProps {
-  icon: ReactNode
   label: string
   value: string
   hint?: string
   tone?: 'default' | 'destructive'
 }
 
-export function StatCard({
-  icon,
-  label,
-  value,
-  hint,
-  tone = 'default',
-}: StatCardProps) {
+export function StatCard({ label, value, hint, tone = 'default' }: StatCardProps) {
   return (
     <Card className="shadow-none">
-      <CardContent className="flex items-center gap-3 p-4">
-        <span
+      <CardContent className="p-4">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p
           className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-md border',
-            tone === 'destructive'
-              ? 'border-destructive/30 bg-destructive/10 text-destructive'
-              : 'border-border bg-muted/60 text-muted-foreground',
+            'mt-1 truncate text-lg font-semibold tabular-nums tracking-tight',
+            tone === 'destructive' && 'text-destructive',
           )}
+          title={hint}
         >
-          {icon}
-        </span>
-        <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-          <p
-            className="truncate text-lg font-semibold tabular-nums tracking-tight"
-            title={hint}
-          >
-            {value}
-          </p>
-        </div>
+          {value}
+        </p>
       </CardContent>
     </Card>
   )
@@ -250,7 +238,7 @@ interface FactProps {
 export function Fact({ label, value, title, strong, tone = 'default' }: FactProps) {
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <dt className="text-[11px] font-medium text-muted-foreground">
         {label}
       </dt>
       <dd

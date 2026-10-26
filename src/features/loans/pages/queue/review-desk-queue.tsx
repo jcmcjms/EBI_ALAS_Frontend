@@ -34,12 +34,6 @@ export const DeskQueueRow = memo(function DeskQueueRow({
 }: DeskQueueRowProps) {
   const summary = summarizeClient(client, now, slaPolicy)
   const assessment = summary.worstAging
-  const waitTone =
-    assessment.tier === 'breach'
-      ? 'text-destructive'
-      : assessment.tier === 'warning'
-        ? 'text-amber-600 dark:text-amber-400'
-        : 'text-muted-foreground'
   const isBundle = summary.applicationCount > 1
   const lamIds = client.applications.map((a) => a.lamId).join(', ')
 
@@ -74,7 +68,7 @@ export const DeskQueueRow = memo(function DeskQueueRow({
         </div>
         <p
           className="truncate font-mono text-xs text-muted-foreground"
-          title={`${lamIds} · group ${client.groupNo}`}
+          title={`${lamIds}, group ${client.groupNo}`}
         >
           {lamIds}
         </p>
@@ -92,10 +86,7 @@ export const DeskQueueRow = memo(function DeskQueueRow({
           {formatPhp(summary.totalAmount)}
         </span>
         <span
-          className={cn(
-            'flex items-center gap-1 text-xs tabular-nums',
-            waitTone,
-          )}
+          className="flex items-center gap-1 text-xs tabular-nums text-foreground"
           title={assessment.label}
         >
           <Clock size={12} />{' '}
@@ -130,7 +121,7 @@ export function AgingPill({
   return (
     <Badge
       variant="outline"
-      className={cn('h-4 px-1.5 text-[10px] font-normal', AGING_BADGE_CLASS[tier])}
+      className={cn('h-5 px-1.5 text-[11px] font-normal', AGING_BADGE_CLASS[tier])}
     >
       {tier === 'breach' ? 'Overdue' : 'Watch'}
     </Badge>

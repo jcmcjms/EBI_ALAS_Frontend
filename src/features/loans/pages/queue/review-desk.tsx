@@ -2,14 +2,10 @@ import { useEffect, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import {
   ArrowClockwise,
-  Clock,
-  CurrencyCircleDollar,
   Info,
   Queue,
   Stack,
-  Timer,
   Tray,
-  Users,
   WarningCircle,
 } from '@phosphor-icons/react'
 
@@ -147,10 +143,10 @@ export function ReviewDeskPage() {
       <main className="flex flex-1 flex-col">
         <div className="container mx-auto w-full max-w-5xl flex-1 space-y-5 px-6 py-6">
           {hasClaim && (
-            <section className="rounded-xl border border-primary/30 bg-primary/5 p-5">
+            <section className="rounded-xl border border-border bg-muted/30 p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-primary">
+                  <p className="text-xs font-medium text-foreground">
                     Currently serving ({currentClaims.length})
                   </p>
                   <ul className="space-y-1">
@@ -237,13 +233,6 @@ export function ReviewDeskPage() {
                 <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight tabular-nums">
                   {desk.items.length} client
                   {desk.items.length === 1 ? '' : 's'} waiting
-                  <span className="flex items-center gap-1.5 text-[11px] font-normal text-muted-foreground">
-                    <span
-                      className="size-1.5 animate-pulse rounded-full bg-emerald-500"
-                      aria-hidden
-                    />
-                    live
-                  </span>
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   Last checked {formatClock(dataUpdatedAt)}
@@ -265,27 +254,23 @@ export function ReviewDeskPage() {
             </div>
 
             {stats && (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <StatCard
-                  icon={<Users size={16} weight="bold" />}
                   label="Clients in queue"
                   value={String(stats.clientCount)}
                   hint={`${stats.applicationCount} application${stats.applicationCount === 1 ? '' : 's'} across all bundles`}
                 />
                 <StatCard
-                  icon={<Timer size={16} weight="bold" />}
                   label="Longest wait"
                   value={formatWaiting(stats.longestWaitMinutes)}
                 />
                 <StatCard
-                  icon={<Clock size={16} weight="bold" />}
                   label="Overdue files"
                   value={String(stats.slaBreachCount)}
                   hint="Applications past their handling deadline"
                   tone={stats.slaBreachCount > 0 ? 'destructive' : 'default'}
                 />
                 <StatCard
-                  icon={<CurrencyCircleDollar size={16} weight="bold" />}
                   label="Loan value"
                   value={formatPhp(stats.totalExposure)}
                   hint="Total proposed loan amounts in this desk"

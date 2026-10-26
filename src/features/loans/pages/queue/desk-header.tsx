@@ -10,7 +10,7 @@ interface DeskHeaderProps {
 
 export function DeskHeader({ deskLabel, scopeDescription, onBack }: DeskHeaderProps) {
   return (
-    <header className="sticky top-[var(--header-height)] z-30 border-b bg-background/95 backdrop-blur">
+    <header className="sticky top-[var(--header-height)] z-30 border-b bg-background">
       <div className="container mx-auto flex h-14 items-center gap-3 px-6">
         <Button
           variant="ghost"
