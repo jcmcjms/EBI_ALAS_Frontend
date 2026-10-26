@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/src/shared/ui/navigation/dropdown-menu'
 import { Input } from '@/src/shared/ui/primitives/input'
+import { useAuthStore } from '@/src/shared/store/auth-store'
 import { mapApiNotification } from '../types'
 import {
   useNotificationInbox,
@@ -40,6 +41,7 @@ const SEARCH_DEBOUNCE_MS = 300
 
 export function NotificationsPage() {
   const navigate = useNavigate()
+  const isEvaluator = useAuthStore((s) => s.user?.role === 'Evaluator')
 
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
@@ -54,8 +56,8 @@ export function NotificationsPage() {
   const { data, isLoading } = useNotificationInbox({
     page,
     pageSize: PAGE_SIZE,
-    status,
-    type: type === 'all' ? undefined : type,
+    status: isEvaluator ? undefined : status,
+    type: isEvaluator ? 'action' : type === 'all' ? undefined : type,
     search: debouncedSearch.trim() || undefined,
   })
 
@@ -130,7 +132,8 @@ export function NotificationsPage() {
   const to = Math.min(totalCount, page * PAGE_SIZE)
 
   const hasActiveFilters =
-    status !== 'all' || type !== 'all' || debouncedSearch.trim().length > 0
+    (isEvaluator ? false : status !== 'all' || type !== 'all') ||
+    debouncedSearch.trim().length > 0
 
   return (
     <div className="flex flex-1 flex-col bg-muted/40">
@@ -204,28 +207,32 @@ export function NotificationsPage() {
               className="pl-9"
             />
           </div>
-          <FilterMenu<StatusFilter>
-            label="Status"
-            value={status}
-            onChange={setStatusAndReset}
-            options={[
-              { value: 'all', label: 'Status' },
-              { value: 'unread', label: 'Unread' },
-              { value: 'read', label: 'Read' },
-            ]}
-          />
-          <FilterMenu<TypeFilter>
-            label="Type"
-            value={type}
-            onChange={setTypeAndReset}
-            options={[
-              { value: 'all', label: 'Type' },
-              { value: 'application', label: 'Application' },
-              { value: 'action', label: 'Action Required' },
-              { value: 'message', label: 'Message' },
-              { value: 'system', label: 'System' },
-            ]}
-          />
+          {!isEvaluator && (
+            <>
+              <FilterMenu<StatusFilter>
+                label="Status"
+                value={status}
+                onChange={setStatusAndReset}
+                options={[
+                  { value: 'all', label: 'Status' },
+                  { value: 'unread', label: 'Unread' },
+                  { value: 'read', label: 'Read' },
+                ]}
+              />
+              <FilterMenu<TypeFilter>
+                label="Type"
+                value={type}
+                onChange={setTypeAndReset}
+                options={[
+                  { value: 'all', label: 'Type' },
+                  { value: 'application', label: 'Application' },
+                  { value: 'action', label: 'Action Required' },
+                  { value: 'message', label: 'Message' },
+                  { value: 'system', label: 'System' },
+                ]}
+              />
+            </>
+          )}
           <Button
             variant="outline"
             size="icon"
