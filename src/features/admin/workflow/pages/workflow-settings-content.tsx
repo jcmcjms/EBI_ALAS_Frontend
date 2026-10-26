@@ -23,6 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/src/shared/ui/feedback/alert-dialog'
+import { cn } from '@/src/shared/lib/utils'
+import { formatRelativeTime } from '@/src/shared/lib/format'
 
 import {
   getLoanCountByStatus,
@@ -30,40 +32,88 @@ import {
   workflowKeys,
 } from '../api/workflow'
 import { useWorkflowConfiguration } from '../hooks/use-workflow'
-import {
-  LOAN_STATUS_META,
-  type LoanStatus,
-} from '@/src/shared/lib/api/types'
+import { LOAN_STATUS_META } from '@/src/shared/lib/api/types'
+
+const PIPELINE_ROLES = ['Encoder', 'Recommender', 'Evaluator', 'Approver']
+
+function RoleChip({
+  name,
+  state,
+}: {
+  name: string
+  state?: 'added' | 'skipped'
+}) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        'font-normal',
+        state === 'added' && 'border-primary/40 bg-primary/5 font-medium',
+        state === 'skipped' && 'text-muted-foreground opacity-60 line-through',
+      )}
+    >
+      {name}
+    </Badge>
+  )
+}
 
 function PipelinePreview({
   requireRecommendation,
+  diff,
 }: {
   requireRecommendation: boolean
+  diff?: 'added' | 'removed'
 }) {
-  const stages: LoanStatus[] = requireRecommendation
-    ? ['ForRecommendation', 'ForChecking', 'ForApproval', 'Approved']
-    : ['ForChecking', 'ForApproval', 'Approved']
+  const active = PIPELINE_ROLES.filter(
+    (r) => requireRecommendation || r !== 'Recommender',
+  )
 
   return (
     <div
+      role="img"
+      aria-label={`Loan pipeline: ${active.join(', ')}, then Approved${
+        diff === 'removed' ? '. Recommendation step skipped' : ''
+      }`}
       className="flex flex-wrap items-center gap-1.5"
-      aria-label="Pipeline stages"
     >
-      {stages.map((s, i) => (
-        <span key={s} className="flex items-center gap-1.5">
-          {i > 0 && (
-            <span className="text-muted-foreground" aria-hidden>
-              →
-            </span>
-          )}
-          <Badge
-            variant="outline"
-            className={`font-normal ${LOAN_STATUS_META[s].className}`}
-          >
-            {LOAN_STATUS_META[s].label}
-          </Badge>
+      {PIPELINE_ROLES.map((role, i) => {
+        const isRecommender = role === 'Recommender'
+        if (isRecommender && !requireRecommendation && diff !== 'removed') {
+          return null
+        }
+        return (
+          <span key={role} className="flex items-center gap-1.5">
+            {i > 0 && (
+              <span className="text-muted-foreground" aria-hidden>
+                →
+              </span>
+            )}
+            <RoleChip
+              name={role}
+              state={
+                isRecommender
+                  ? diff === 'added'
+                    ? 'added'
+                    : diff === 'removed'
+                      ? 'skipped'
+                      : undefined
+                  : undefined
+              }
+            />
+          </span>
+        )
+      })}
+      <span className="flex items-center gap-1.5">
+        <span className="text-muted-foreground" aria-hidden>
+          →
         </span>
-      ))}
+        <Badge
+          variant="outline"
+          className={cn('font-normal', LOAN_STATUS_META.Approved.className)}
+        >
+          {LOAN_STATUS_META.Approved.label}
+        </Badge>
+      </span>
     </div>
   )
 }
@@ -84,9 +134,7 @@ export function WorkflowSettingsContent() {
     mutationFn: updateWorkflowConfiguration,
     onSuccess: (_d, value) => {
       toastSuccess(
-        value
-          ? 'Recommendation step enabled for new applications.'
-          : 'Recommendation step disabled. New applications go straight to evaluation.',
+        value ? 'Recommendation step enabled.' : 'Recommendation step disabled.',
       )
       setDialogOpen(false)
       setPending(null)
@@ -99,54 +147,65 @@ export function WorkflowSettingsContent() {
   })
 
   const current = config.data?.requireRecommendation ?? true
+  const changedAt = config.data?.updatedAt
+    ? new Date(config.data.updatedAt).toLocaleString()
+    : null
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight">
-          Workflow settings
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Changes apply to new applications immediately.
-        </p>
-      </div>
+      <h1 className="text-xl font-semibold tracking-tight">
+        Workflow settings
+      </h1>
 
       <Card className="max-w-2xl">
         <CardHeader className="border-b pb-4">
           <CardTitle className="flex items-center gap-2 text-base">
             <GitBranch size={18} weight="bold" className="text-primary" />
-            Branch head recommendation step
+            Branch head recommendation
           </CardTitle>
           <CardDescription className="pt-1 text-xs">
-            When enabled, new applications go to the Recommender (Branch Head)
-            before evaluation. When disabled, they go straight to the Evaluator.
+            Decides whether the branch head (Recommender) reviews new
+            applications before credit evaluation.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5 pt-4">
+        <CardContent className="pt-4">
           {config.isLoading ? (
-            <Skeleton className="h-12 w-full" />
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-6 w-2/3" />
+            </div>
           ) : (
-            <>
-              <div className="flex items-center justify-between gap-4 rounded-md border p-4">
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium">
+            <div className="space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
                     Require recommendation before evaluation
+                    <Badge
+                      className={
+                        current
+                          ? 'border-transparent bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                          : 'border-transparent bg-muted text-muted-foreground'
+                      }
+                    >
+                      {current ? 'On' : 'Off'}
+                    </Badge>
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Currently{' '}
-                    <strong>{current ? 'enabled' : 'disabled'}</strong>
+                    Changing this only affects new applications. Loans already
+                    in progress keep their current route.
+                  </p>
+                  <p
+                    className="text-xs text-muted-foreground"
+                    title={changedAt ?? undefined}
+                  >
                     {config.data?.source === 'Database' &&
-                      config.data.updatedByName && (
-                        <>
-                          {' '}
-                          · changed by {config.data.updatedByName}
-                          {config.data.updatedAt &&
-                            ` on ${new Date(config.data.updatedAt).toLocaleString()}`}
-                        </>
-                      )}
-                    {config.data?.source === 'AppConfig' && (
-                      <> · using the server default (no saved change yet)</>
-                    )}
+                    config.data.updatedByName
+                      ? `Changed by ${config.data.updatedByName}${
+                          config.data.updatedAt
+                            ? ` · ${formatRelativeTime(config.data.updatedAt)}`
+                            : ''
+                        }`
+                      : 'Using the built-in default.'}
                   </p>
                 </div>
                 <Switch
@@ -160,13 +219,13 @@ export function WorkflowSettingsContent() {
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 border-t pt-4">
                 <p className="text-xs font-medium text-muted-foreground">
                   Current pipeline
                 </p>
                 <PipelinePreview requireRecommendation={current} />
               </div>
-            </>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -184,39 +243,31 @@ export function WorkflowSettingsContent() {
               {pending ? 'Enable' : 'Disable'} the recommendation step?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              <div className="space-y-2 text-sm">
-                <p>
-                  {pending
-                    ? 'New applications will route Encoder → Recommender → Evaluator → Approver.'
-                    : 'New applications will route Encoder → Evaluator → Approver, skipping the Branch Head.'}
-                </p>
-                <PipelinePreview requireRecommendation={pending ?? current} />
-                <ul className="list-disc space-y-1 pl-4 text-xs text-muted-foreground">
-                  <li>
-                    Applies to <strong>new submissions only</strong>,
-                    immediately.
-                  </li>
-                </ul>
-                {!pending && backlog.isLoading && (
-                  <p className="text-xs text-muted-foreground">
-                    Checking for waiting applications…
-                  </p>
-                )}
-                {!pending && (backlog.data ?? 0) > 0 && (
-                  <p className="flex items-start gap-1.5 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
-                    <Warning
-                      size={14}
-                      weight="fill"
-                      className="mt-0.5 shrink-0"
-                    />
-                    {backlog.data} {backlog.data === 1 ? 'application is' : 'applications are'}{' '}
-                    waiting for recommendation. Recommenders can still process
-                    them.
-                  </p>
-                )}
-              </div>
+              {pending
+                ? 'New applications will go to the branch head before credit evaluation.'
+                : 'New applications will skip the branch head and go straight to the Evaluator.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-3">
+            <PipelinePreview
+              requireRecommendation={pending ?? current}
+              diff={dialogOpen ? (pending ? 'added' : 'removed') : undefined}
+            />
+            {!pending && backlog.isLoading && (
+              <p className="text-xs text-muted-foreground">
+                Checking for waiting applications…
+              </p>
+            )}
+            {!pending && (backlog.data ?? 0) > 0 && (
+              <p className="flex items-start gap-1.5 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-200">
+                <Warning size={14} weight="fill" className="mt-0.5 shrink-0" />
+                {backlog.data}{' '}
+                {backlog.data === 1 ? 'application is' : 'applications are'}{' '}
+                waiting for recommendation. Recommenders can still process
+                them.
+              </p>
+            )}
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
