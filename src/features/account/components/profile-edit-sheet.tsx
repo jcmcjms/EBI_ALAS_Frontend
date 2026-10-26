@@ -11,7 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/src/shared/ui/navigation/sheet'
-import { SignaturePad } from '@/src/shared/ui/forms/signature-pad'
+import { SignatureUpload } from '@/src/shared/ui/forms/signature-upload'
 import { useAccountProfile, useUpdateProfile } from '../hooks/use-account'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -88,7 +88,7 @@ export function ProfileEditSheet({
     if (signatureMissing) {
       setErrors((prev) => ({
         ...prev,
-        signature: 'E-signature is required. Sign the pad to continue.',
+        signature: 'Upload a PNG e-signature to continue.',
       }))
       return
     }
@@ -172,27 +172,12 @@ export function ProfileEditSheet({
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="profile-signature">E-Signature</Label>
-              {signature && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => setSignature(null)}
-                >
-                  Clear
-                </Button>
-              )}
             </div>
-            <SignaturePad
-              value={signature}
-              onChange={setSignature}
-              heightClassName="h-36"
-            />
+            <SignatureUpload value={signature} onChange={setSignature} />
             <p className="text-xs text-muted-foreground">
-              {hasStoredSignature && profile && signature === profile.eSignature
-                ? 'Signature on file. Redraw to replace it.'
-                : 'Sign inside the box. Required until a signature is saved.'}
+              {hasStoredSignature && signature === profile?.eSignature
+                ? 'PNG signature on file. Upload a new file to replace it.'
+                : 'Upload a PNG of your signature. Required for loan approvals.'}
             </p>
             {errors.signature && (
               <p role="alert" className="text-xs text-destructive">
