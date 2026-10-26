@@ -26,6 +26,7 @@ export interface ConfirmActionState {
   title: string
   description: string
   actionLabel: string
+  pendingLabel?: string
   destructive?: boolean
   onConfirm: () => void
 }
@@ -61,6 +62,7 @@ export function useUserActions() {
         title: `Suspend ${formatFullName(user)}?`,
         description: 'They lose access to ALAS immediately, until you activate their account again.',
         actionLabel: 'Suspend',
+        pendingLabel: 'Suspending…',
         destructive: true,
         onConfirm: () => {
           updateUserStatusMutation.mutate(
@@ -79,6 +81,7 @@ export function useUserActions() {
         title: `Activate ${formatFullName(user)}?`,
         description: 'They regain access to ALAS immediately.',
         actionLabel: 'Activate',
+        pendingLabel: 'Activating…',
         onConfirm: () => {
           updateUserStatusMutation.mutate(
             { id: user.id, isActive: true },
@@ -137,8 +140,8 @@ export function useUserActions() {
       const count = await revokeSessionsMutation.mutateAsync(user.id)
       toastSuccess(
         count > 0
-          ? `Revoked ${count} active session${count === 1 ? '' : 's'} for ${formatFullName(user)}.`
-          : `${formatFullName(user)} has no active sessions.`,
+          ? `Signed out ${count} ${count === 1 ? 'device' : 'devices'} for ${formatFullName(user)}.`
+          : `${formatFullName(user)} isn't signed in anywhere.`,
       )
     } catch (error) {
       toastError(getErrorMessage(error))

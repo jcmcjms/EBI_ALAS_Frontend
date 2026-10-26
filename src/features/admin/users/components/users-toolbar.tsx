@@ -67,7 +67,7 @@ export function UsersToolbar({
             <SelectValue placeholder="Branch" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Branches</SelectItem>
+            <SelectItem value="all">All branches</SelectItem>
             {(branches ?? []).map((b) => (
               <SelectItem key={b.code} value={b.code}>
                 {formatBranchLabel(b.code, b.name)}
@@ -82,7 +82,7 @@ export function UsersToolbar({
             <SelectValue placeholder="Role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
+            <SelectItem value="all">All roles</SelectItem>
             {roles.map((r) => (
               <SelectItem key={r.name} value={r.name}>
                 {stripRoleDisplayName(r.displayName)}
@@ -107,7 +107,7 @@ export function UsersToolbar({
         {canCreateUsers && (
           <Button size="sm" className="gap-1.5 text-xs" onClick={onCreateUser}>
             <Plus size={14} weight="bold" data-icon="inline-start" />
-            Add User
+            Add user
           </Button>
         )}
       </div>

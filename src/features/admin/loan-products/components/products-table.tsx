@@ -26,6 +26,7 @@ interface ConfirmActionState {
   title: string
   description: string
   actionLabel: string
+  pendingLabel?: string
   destructive?: boolean
   onConfirm: () => void
 }
@@ -83,6 +84,7 @@ export function ProductsTable() {
           description:
             'Pull the latest product catalog from WebLoan. New products are added, retired ones marked, and your policy edits on existing products are kept.',
           actionLabel: 'Sync now',
+          pendingLabel: 'Syncing…',
           onConfirm: () => {
             syncMutation.mutate(undefined, {
               onSuccess: (result) => {
@@ -189,6 +191,7 @@ export function ProductsTable() {
         title={confirmAction?.title ?? ''}
         description={confirmAction?.description ?? ''}
         actionLabel={confirmAction?.actionLabel ?? ''}
+        pendingLabel={confirmAction?.pendingLabel}
         destructive={confirmAction?.destructive}
         onConfirm={confirmAction?.onConfirm ?? (() => {})}
       />

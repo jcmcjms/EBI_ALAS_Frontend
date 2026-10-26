@@ -76,7 +76,7 @@ function ApproverAssignmentSheetInner({
         <SheetHeader>
           <SheetTitle>Assign approvers</SheetTitle>
           <SheetDescription>
-            Users with the Approver role who can act on the{' '}
+            Choose which users with the Approver role can act on the{' '}
             {authority.displayName} tier.
           </SheetDescription>
         </SheetHeader>
@@ -99,7 +99,7 @@ function ApproverAssignmentSheetInner({
                 </div>
               ) : filteredUsers.length === 0 ? (
                 <p className="py-6 text-sm text-muted-foreground">
-                  {search ? 'No approvers match your search.' : 'No users with the Approver role found.'}
+                  {search ? 'No approvers match your search.' : 'No users have the Approver role yet.'}
                 </p>
               ) : (
                 filteredUsers.map((u) => (

@@ -130,7 +130,8 @@ export function UserEditDrawer({
         <SheetHeader className="border-b bg-muted/30 p-6 pb-4">
           <SheetTitle>Edit user{fullName ? `: ${fullName}` : ''}</SheetTitle>
           <SheetDescription>
-            Manage user profile, roles, and security settings.
+            {user ? `@${user.username} · ` : ''}
+            {user ? (user.isActive ? 'Active account' : 'Suspended account') : ''}
           </SheetDescription>
         </SheetHeader>
 

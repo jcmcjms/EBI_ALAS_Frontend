@@ -102,7 +102,7 @@ export function SectionHeading({
 export function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <Label className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
       <div className="rounded-md border bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground/80">

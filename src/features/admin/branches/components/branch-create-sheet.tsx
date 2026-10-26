@@ -64,8 +64,8 @@ export function BranchCreateSheet({
         <SheetHeader>
           <SheetTitle>Create branch</SheetTitle>
           <SheetDescription>
-            Add a new branch to the directory. The code is permanent and must
-            match core-banking references.
+            Add a branch to the directory. The code is permanent and must
+            match the core banking system.
           </SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-6">

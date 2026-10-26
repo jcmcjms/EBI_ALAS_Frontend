@@ -124,8 +124,8 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
           <SheetTitle>Import users</SheetTitle>
           <SheetDescription>
             Upload an Excel file to create multiple officers at once. Every
-            imported account gets a generated password and must change it on
-            first login.
+            imported account gets a generated password and must change it at
+            first sign-in.
           </SheetDescription>
         </SheetHeader>
 
@@ -160,8 +160,8 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Share these with each officer. They must change the password
-                    on first login.
+                    Share these with each officer. They must change the
+                    password at first sign-in.
                   </p>
                   <ul className="max-h-36 divide-y overflow-y-auto rounded-md border">
                     {result.createdCredentials.map((c) => (
@@ -219,8 +219,8 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                   </ul>
                   {result.errors.length > VISIBLE_ERRORS && (
                     <p className="text-center text-xs text-muted-foreground">
-                      Showing {VISIBLE_ERRORS} of {result.errors.length} —
-                      download the report for the full list.
+                      Showing {VISIBLE_ERRORS} of {result.errors.length}.
+                      Download the report for the full list.
                     </p>
                   )}
                 </section>
@@ -268,10 +268,10 @@ export function ImportUsersSheet({ open, onClose }: ImportUsersSheetProps) {
                 <li>
                   Required: username, first name, last name, branch code, role.
                 </li>
-                <li>Approvers need a valid approval authority as job title.</li>
+                <li>For approvers, the job title must match an approval authority.</li>
                 <li>
-                  Rows that fail validation are skipped, not aborted — see the
-                  report afterwards.
+                  Rows that fail validation are skipped, not aborted. See
+                  the report afterwards.
                 </li>
                 <li>Empty rows in the file are ignored.</li>
                 <li>

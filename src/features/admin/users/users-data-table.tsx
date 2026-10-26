@@ -184,6 +184,7 @@ export function UsersDataTable() {
         title={actions.confirmAction?.title ?? ''}
         description={actions.confirmAction?.description ?? ''}
         actionLabel={actions.confirmAction?.actionLabel ?? ''}
+        pendingLabel={actions.confirmAction?.pendingLabel}
         destructive={actions.confirmAction?.destructive}
         isPending={actions.isResetPasswordPending}
         onConfirm={actions.confirmAction?.onConfirm ?? (() => {})}

@@ -58,7 +58,7 @@ export function CreateUserFormBody({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="create-firstName">First Name *</Label>
+          <Label htmlFor="create-firstName">First name *</Label>
           <Input
             id="create-firstName"
             value={form.firstName}
@@ -68,18 +68,18 @@ export function CreateUserFormBody({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="create-middleName">Middle Name</Label>
+          <Label htmlFor="create-middleName">Middle name</Label>
           <Input
             id="create-middleName"
             value={form.middleName}
             onChange={(e) => onFieldChange('middleName', e.target.value)}
-            placeholder="Optional"
+            placeholder="e.g. Santos"
             className="h-9"
           />
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="create-lastName">Last Name *</Label>
+        <Label htmlFor="create-lastName">Last name *</Label>
         <Input
           id="create-lastName"
           value={form.lastName}
@@ -100,11 +100,11 @@ export function CreateUserFormBody({
           className="h-9"
         />
         <p className="text-xs text-muted-foreground">
-          Used to send temporary passwords for forgot-password resets.
+          Used for password resets.
         </p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="create-branch">Assigned Branch *</Label>
+        <Label htmlFor="create-branch">Branch *</Label>
         <Select
           value={form.branchId}
           onValueChange={(value) => onFieldChange('branchId', value ?? '')}
@@ -123,7 +123,7 @@ export function CreateUserFormBody({
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="create-jobTitle">Job Title</Label>
+        <Label htmlFor="create-jobTitle">Job title</Label>
         <Input
           id="create-jobTitle"
           value={form.jobTitle}
@@ -133,12 +133,11 @@ export function CreateUserFormBody({
           className="h-9"
         />
         <p className="text-xs text-muted-foreground">
-          Shown on presence and signature blocks. Approvers use an approval
-          authority key.
+          Appears on signature blocks and printed approval forms.
         </p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="create-role">Primary Role *</Label>
+        <Label htmlFor="create-role">Primary role *</Label>
         <Select
           value={form.role}
           onValueChange={(value) => onFieldChange('role', value ?? '')}
@@ -155,9 +154,6 @@ export function CreateUserFormBody({
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">
-          A temporary password will be generated for this account.
-        </p>
       </div>
     </div>
   )

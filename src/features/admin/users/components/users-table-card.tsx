@@ -154,11 +154,11 @@ export function UsersTableCard({
                 <TableCell colSpan={columnCount} className="p-0">
                   <EmptyState
                     icon={Users}
-                    title="No users found"
+                    title={hasFilters ? 'No users found' : 'No users yet'}
                     hint={
                       hasFilters
-                        ? 'No user accounts match your search or filter criteria. Try adjusting or clearing your filters.'
-                        : 'There are currently no registered users in this directory.'
+                        ? 'No users match your search or filters.'
+                        : 'No user accounts yet.'
                     }
                     action={
                       hasFilters ? (

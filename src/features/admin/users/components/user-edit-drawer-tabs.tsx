@@ -30,33 +30,33 @@ export function SecurityTab({
           className="h-9 w-full justify-start text-sm"
           onClick={() => user && onForcePasswordReset(user)}
         >
-          Force Password Reset on Next Login
+          Require a new password at next sign-in
         </Button>
         <Button
           variant="outline"
           className="h-9 w-full justify-start text-sm"
           onClick={() => user && onRevokeSessions(user)}
         >
-          Revoke All Active Sessions
+          Sign out all devices
         </Button>
         <Button
           variant="outline"
           className="h-9 w-full justify-start text-sm"
           onClick={() => user && onResetPassword(user)}
         >
-          Send Password Reset Email
+          Send password reset email
         </Button>
       </div>
 
       <div className="space-y-2 border-t pt-4">
-        <Label className="text-red-600">Danger Zone</Label>
+        <Label className="text-red-600">Account status</Label>
         {user?.isActive ? (
           <Button
             variant="destructive"
             className="h-9 w-full justify-start text-sm"
             onClick={() => user && onToggleStatus(user)}
           >
-            Suspend Account
+            Suspend account
           </Button>
         ) : (
           <Button
@@ -64,7 +64,7 @@ export function SecurityTab({
             className="h-9 w-full justify-start text-sm"
             onClick={() => user && onToggleStatus(user)}
           >
-            Reactivate Account
+            Reactivate account
           </Button>
         )}
       </div>

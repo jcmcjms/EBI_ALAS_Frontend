@@ -55,7 +55,7 @@ export function BranchesToolbar({
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="Active">Active</SelectItem>
             <SelectItem value="Closed">Closed</SelectItem>
             <SelectItem value="Merged">Merged</SelectItem>

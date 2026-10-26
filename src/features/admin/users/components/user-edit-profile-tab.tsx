@@ -34,7 +34,7 @@ export function ProfileTab({
     <>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="edit-firstName">First Name *</Label>
+          <Label htmlFor="edit-firstName">First name *</Label>
           <Input
             id="edit-firstName"
             value={profile.firstName}
@@ -44,7 +44,7 @@ export function ProfileTab({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="edit-middleName">Middle Name</Label>
+          <Label htmlFor="edit-middleName">Middle name</Label>
           <Input
             id="edit-middleName"
             value={profile.middleName}
@@ -55,7 +55,7 @@ export function ProfileTab({
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="edit-lastName">Last Name *</Label>
+        <Label htmlFor="edit-lastName">Last name *</Label>
         <Input
           id="edit-lastName"
           value={profile.lastName}
@@ -75,7 +75,7 @@ export function ProfileTab({
           disabled={!canEdit}
         />
         <p className="text-xs text-muted-foreground">
-          Used to send temporary passwords for forgot-password resets.
+          Used for password resets.
         </p>
       </div>
 
@@ -89,7 +89,7 @@ export function ProfileTab({
             disabled
           />
           <p className="text-xs text-muted-foreground">
-            Usernames cannot be changed.
+            The username can't be changed.
           </p>
         </div>
         <div className="space-y-2">
@@ -107,7 +107,7 @@ export function ProfileTab({
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="edit-branch">Assigned Branch</Label>
+        <Label htmlFor="edit-branch">Branch</Label>
         <Select
           value={profile.branchId}
           onValueChange={(value) => onFieldChange('branchId', value ?? '')}
@@ -127,7 +127,7 @@ export function ProfileTab({
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="edit-jobTitle">Job Title</Label>
+        <Label htmlFor="edit-jobTitle">Job title</Label>
         <Input
           id="edit-jobTitle"
           value={profile.jobTitle}

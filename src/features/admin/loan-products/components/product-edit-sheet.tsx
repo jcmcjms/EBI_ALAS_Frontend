@@ -102,17 +102,17 @@ export function ProductEditSheet({
 
     for (const row of cleaned) {
       if (row.description.length === 0) {
-        setRequirementsError(`Description is required for code ${row.code}.`)
+        setRequirementsError(`Add a description for ${row.code}.`)
         return
       }
     }
     const codes = cleaned.map((row) => row.code.toLowerCase())
     if (new Set(codes).size !== codes.length) {
-      setRequirementsError('Document requirement codes must be unique.')
+      setRequirementsError('Each requirement needs its own code.')
       return
     }
     if (cleaned.length > 50) {
-      setRequirementsError('At most 50 document requirements are allowed.')
+      setRequirementsError('You can add up to 50 requirements.')
       return
     }
     setRequirementsError(null)
@@ -191,7 +191,7 @@ export function ProductEditSheet({
             <section className="space-y-4">
               <SectionHeading
                 title="Eligibility Bounds"
-                description="Smallest and largest principal (₱) and term (days) an AO can request for this product."
+                description="Smallest and largest principal (₱) and term (days) an account officer can request for this product."
               />
               <div className="grid grid-cols-2 gap-4">
                 <NumberField
@@ -321,9 +321,8 @@ export function ProductEditSheet({
                   className="mt-0.5 shrink-0"
                 />
                 <span>
-                  You can view this product but the policy fields are read-only
-                  — changes require the <code>loan_product.manage</code>{' '}
-                  permission.
+                  These fields are read-only for you. Ask an administrator for
+                  product management access to change them.
                 </span>
               </div>
             )}

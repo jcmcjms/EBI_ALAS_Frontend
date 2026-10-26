@@ -70,8 +70,8 @@ export function AuthorityCreateSheet({
         <SheetHeader>
           <SheetTitle>New approval authority</SheetTitle>
           <SheetDescription>
-            Define the limits for a new approver tier. Assign users after it is
-            created.
+            Set the limits for a new approver tier. Assign approvers once
+            it's created.
           </SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-6">

@@ -8,15 +8,15 @@ export const authorityFormSchema = z.object({
   displayName: z
     .string()
     .trim()
-    .min(1, 'Display name is required')
+    .min(1, 'Enter a display name')
     .max(100, 'Display name must be at most 100 characters'),
   tier: z.coerce
     .number()
-    .int('Tier must be a whole number')
+    .int('Enter a whole number for the tier')
     .min(1, 'Tier must be at least 1'),
   priority: z.coerce
     .number()
-    .int('Priority must be a whole number')
+    .int('Enter a whole number for the priority')
     .min(0, 'Priority must be 0 or greater'),
   maxTotalExposure: z.coerce
     .number()

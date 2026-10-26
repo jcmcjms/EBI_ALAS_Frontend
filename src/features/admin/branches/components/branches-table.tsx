@@ -271,25 +271,31 @@ export function BranchesTable() {
         onClose={() => setConfirm(null)}
         title={
           confirm?.status === 'Active'
-            ? 'Reopen branch'
+            ? `Reopen branch ${confirm.branch.code}?`
             : confirm?.status === 'Merged'
-              ? 'Mark branch as merged'
-              : 'Close branch'
+              ? `Mark branch ${confirm.branch.code} as merged?`
+              : `Close branch ${confirm?.branch.code ?? ''}?`
         }
         description={
           confirm
-            ? `Change ${confirm.branch.code} (${confirm.branch.name}) to ${confirm.status}?` +
-              (confirm.status === 'Active'
-                ? ''
-                : ' A branch can\'t leave the directory while loans are open or users are assigned.')
+            ? (confirm.status === 'Active'
+                ? `${confirm.branch.name} becomes active again.`
+                : `A branch can't be closed or merged while loans are open or users are assigned to it.`)
             : ''
         }
         actionLabel={
           confirm?.status === 'Active'
             ? 'Reopen'
             : confirm?.status === 'Merged'
-              ? 'Mark merged'
+              ? 'Mark as merged'
               : 'Close branch'
+        }
+        pendingLabel={
+          confirm?.status === 'Active'
+            ? 'Reopening…'
+            : confirm?.status === 'Merged'
+              ? 'Marking as merged…'
+              : 'Closing…'
         }
         destructive={confirm?.status !== 'Active'}
         isPending={statusMutation.isPending}

@@ -23,7 +23,7 @@ export function ProductDocumentRequirementsEditor({
     <div className="space-y-3">
       {value.length === 0 && (
         <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-          No document requirements configured for this product.
+          No document requirements yet.
         </p>
       )}
       {value.map((row, index) => (

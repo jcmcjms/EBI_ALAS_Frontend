@@ -61,6 +61,9 @@ export function AuthorityFormFields({
             value={state.tier}
             onChange={(e) => onChange({ tier: e.target.value })}
           />
+          <p className="text-xs text-muted-foreground">
+            Loans go to the lowest tier that can handle them.
+          </p>
           {errors.tier && (
             <p className="text-xs text-destructive">{errors.tier}</p>
           )}
@@ -74,6 +77,9 @@ export function AuthorityFormFields({
             value={state.priority}
             onChange={(e) => onChange({ priority: e.target.value })}
           />
+          <p className="text-xs text-muted-foreground">
+            Orders tiers with the same number. Lower goes first.
+          </p>
           {errors.priority && (
             <p className="text-xs text-destructive">{errors.priority}</p>
           )}
@@ -89,6 +95,9 @@ export function AuthorityFormFields({
           value={state.maxTotalExposure}
           onChange={(e) => onChange({ maxTotalExposure: e.target.value })}
         />
+        <p className="text-xs text-muted-foreground">
+          Highest loan amount, principal plus interest, this tier can approve.
+        </p>
         {errors.maxTotalExposure && (
           <p className="text-xs text-destructive">{errors.maxTotalExposure}</p>
         )}
@@ -140,7 +149,7 @@ export function AuthorityFormFields({
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+        <div className="flex items-center justify-between gap-4 py-1">
           <Label htmlFor={`${idPrefix}-allowNew`} className="text-sm">
             Allow new loans
           </Label>
@@ -150,7 +159,7 @@ export function AuthorityFormFields({
             onCheckedChange={(v) => onChange({ allowNew: v })}
           />
         </div>
-        <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+        <div className="flex items-center justify-between gap-4 py-1">
           <Label htmlFor={`${idPrefix}-allowRenewal`} className="text-sm">
             Allow renewals
           </Label>

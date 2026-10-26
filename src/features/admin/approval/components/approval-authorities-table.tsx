@@ -225,8 +225,8 @@ export function ApprovalAuthoritiesTable() {
               Deactivate {deactivating?.displayName}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Deactivation is blocked while open loans still reference this
-              tier. Existing history is preserved.
+              This tier can't be deactivated while open loans still use it.
+              Past approvals are kept.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

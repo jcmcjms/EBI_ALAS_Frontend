@@ -86,8 +86,7 @@ function BranchEditSheetInner({
         <SheetHeader>
           <SheetTitle>Edit branch {branch.code}</SheetTitle>
           <SheetDescription>
-            Update the display name and area code. The branch code cannot be
-            changed.
+            The branch code can't be changed.
           </SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-6">

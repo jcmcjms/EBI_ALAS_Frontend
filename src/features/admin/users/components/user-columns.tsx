@@ -186,25 +186,25 @@ export const columns = columnHelper.columns([
           </div>
           <DropdownMenuContent align="end" className="w-[200px]">
             <DropdownMenuItem onClick={() => meta?.onEditUser?.(user)}>
-              <Pencil size={14} /> Edit Details
+              <Pencil size={14} /> Edit details
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => meta?.onResetPassword?.(user)}>
-              <Key size={14} /> Reset Password
+              <Key size={14} /> Reset password
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => meta?.onForcePasswordReset?.(user)}
             >
-              <ShieldCheck size={14} /> Force Password Reset
+              <ShieldCheck size={14} /> Require password change
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => meta?.onRevokeSessions?.(user)}>
-              <SignOut size={14} /> Revoke Sessions
+              <SignOut size={14} /> Sign out all devices
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => meta?.onToggleAvailability?.(user)}
             >
               <Clock size={14} />
-              {user.isAvailable ? 'Mark Unavailable' : 'Mark Available'}
+              {user.isAvailable ? 'Mark unavailable' : 'Mark available'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {user.isActive ? (
@@ -212,11 +212,11 @@ export const columns = columnHelper.columns([
                 variant="destructive"
                 onClick={() => meta?.onToggleStatus?.(user)}
               >
-                <UserCircleMinus size={14} /> Suspend User
+                <UserCircleMinus size={14} /> Suspend user
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem onClick={() => meta?.onToggleStatus?.(user)}>
-                <UserCirclePlus size={14} /> Activate User
+                <UserCirclePlus size={14} /> Activate user
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

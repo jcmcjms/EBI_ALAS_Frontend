@@ -29,7 +29,7 @@ export function RolesTab({
 }: RolesTabProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="edit-role">Primary Role</Label>
+      <Label htmlFor="edit-role">Primary role</Label>
       <Select
         value={profile.role}
         onValueChange={(value) => onFieldChange('role', value ?? '')}
@@ -48,8 +48,7 @@ export function RolesTab({
         </SelectContent>
       </Select>
       <p className="text-xs text-muted-foreground">
-        Role determines the baseline permissions. The full mapping is visible in
-        the Role Matrix.
+        The role decides what this user can do in ALAS.
       </p>
     </div>
   )

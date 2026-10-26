@@ -129,8 +129,8 @@ export function ImportProductsSheet({
           <SheetTitle>Import loan products</SheetTitle>
           <SheetDescription>
             Upload an Excel file to create or update multiple loan products.
-            Existing codes are updated; new codes are created. Checklist
-            documents must be configured separately.
+            Existing codes are updated; new codes are created. Document
+            checklists are not imported. Add them per product afterwards.
           </SheetDescription>
         </SheetHeader>
 
@@ -198,8 +198,8 @@ export function ImportProductsSheet({
                   </ul>
                   {result.errors.length > VISIBLE_ERRORS && (
                     <p className="text-center text-xs text-muted-foreground">
-                      Showing {VISIBLE_ERRORS} of {result.errors.length} —
-                      download the report for the full list.
+                      Showing {VISIBLE_ERRORS} of {result.errors.length}.
+                      Download the report for the full list.
                     </p>
                   )}
                 </section>
@@ -261,7 +261,7 @@ export function ImportProductsSheet({
                   Row numbers in errors match the Excel file (header is row 1).
                 </li>
                 <li>
-                  Checklist documents are not imported — configure after import.
+                  Checklist documents are not imported. Add them per product afterwards.
                 </li>
               </ul>
             </div>

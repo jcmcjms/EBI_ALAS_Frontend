@@ -27,11 +27,11 @@ export function SyncedDataCard({
             weight="bold"
             className="text-muted-foreground"
           />
-          Synced from webloan (read-only)
+          Synced from WebLoan (read-only)
         </CardTitle>
         <CardDescription>
-          Code, description, and retirement status are mirrored from the webloan
-          catalog by the background sync. Run a manual sync to refresh.
+          Code, description, and status come from the WebLoan catalog. Use
+          Sync now to refresh them.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-4 pt-0">
@@ -46,7 +46,7 @@ export function SyncedDataCard({
           value={
             product
               ? product.isRetired
-                ? 'Retired (webloan marked this product expired)'
+                ? 'Retired (WebLoan marked it expired)'
                 : 'Active'
               : '—'
           }

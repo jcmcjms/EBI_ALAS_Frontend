@@ -15,6 +15,7 @@ interface ConfirmActionSheetProps {
   title: string
   description: string
   actionLabel: string
+  pendingLabel?: string
 
   destructive?: boolean
 
@@ -28,6 +29,7 @@ export function ConfirmActionSheet({
   title,
   description,
   actionLabel,
+  pendingLabel,
   destructive = false,
   isPending = false,
   onConfirm,
@@ -82,7 +84,7 @@ export function ConfirmActionSheet({
             {isPending ? (
               <>
                 <CircleNotch size={14} weight="bold" className="animate-spin" />{' '}
-                Generating credential…
+                {pendingLabel ?? 'Working…'}
               </>
             ) : (
               actionLabel

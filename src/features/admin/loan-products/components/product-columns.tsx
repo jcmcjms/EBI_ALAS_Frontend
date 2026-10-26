@@ -179,10 +179,10 @@ export const columns = columnHelper.columns([
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[180px]">
               <DropdownMenuItem onClick={() => meta?.onEditProduct?.(product)}>
-                <PencilSimple size={14} /> Edit Policy
+                <PencilSimple size={14} /> Edit policy
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => meta?.onSyncNow?.()}>
-                <ArrowsClockwise size={14} /> Sync from webloan
+                <ArrowsClockwise size={14} /> Sync from WebLoan
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
