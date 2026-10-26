@@ -34,7 +34,7 @@ export function RevisionSidebar({
 
   return (
     <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-      <Card className="border-l-4 border-l-amber-500">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <ArrowCounterClockwise size={18} weight="bold" className="text-amber-600" />
@@ -69,7 +69,7 @@ export function RevisionSidebar({
                       <Badge variant="secondary" className="text-xs">
                         {s.sectionLabel}
                       </Badge>
-                      <div className="border-l-2 border-amber-300 pl-2">
+                      <div className="border-l-2 border-border pl-2">
                         <RichText value={s.comments} emptyFallback={null} />
                       </div>
                     </div>
@@ -81,7 +81,7 @@ export function RevisionSidebar({
         </CardContent>
       </Card>
 
-      <Card className="border-primary/20 bg-primary/5">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <ClockCounterClockwise size={18} /> Resubmission Notes

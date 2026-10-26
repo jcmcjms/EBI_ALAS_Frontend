@@ -203,7 +203,7 @@ export function LoanRevisionPage() {
       <ActiveLoanProvider loans={loans}>
         <LoanTransfersProvider>
           <div className="min-h-[calc(100vh-var(--header-height))] bg-muted/40">
-            <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 print:hidden">
+            <header className="sticky top-0 z-20 border-b bg-background print:hidden">
               <div className="container mx-auto flex h-16 items-center justify-between px-6">
                 <div className="flex items-center gap-4">
                   <Button
@@ -219,7 +219,7 @@ export function LoanRevisionPage() {
                     </h1>
                     <p className="text-xs text-muted-foreground">
                       Address evaluator feedback to resubmit
-                      {userBranchName ? ` · ${userBranchName}` : ''}
+                      {userBranchName ? ` — ${userBranchName}` : ''}
                     </p>
                   </div>
                   <span
