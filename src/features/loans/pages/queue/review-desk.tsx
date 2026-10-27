@@ -195,8 +195,8 @@ export function ReviewDeskPage() {
           <DeskMessage
             icon={<Tray size={22} weight="bold" />}
             title="Queue is clear"
-            description={`No clients waiting at your ${desk.deskLabel} desk. New clients appear here automatically.`}
-            meta={`Last checked ${formatClock(dataUpdatedAt)} · auto-refreshes every 30s`}
+            description={`No clients waiting at your ${desk.deskLabel} desk.`}
+            meta={`Last checked: ${formatClock(dataUpdatedAt)}`}
             action={
               <div className="flex items-center gap-2">
                 <Button
