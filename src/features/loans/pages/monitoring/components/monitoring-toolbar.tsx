@@ -231,7 +231,7 @@ export function MonitoringToolbar({
           size="sm"
           className="h-9 gap-1.5 text-xs text-muted-foreground"
           onClick={() => onFiltersChange({ ...filters, myTurn: true })}
-          title="Show only the application currently assigned to you"
+          title="Show only applications waiting on you"
         >
           <UserCircle size={12} weight="bold" /> My turn
         </Button>

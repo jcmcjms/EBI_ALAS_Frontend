@@ -170,7 +170,7 @@ export function MonitoringTable({
                         <div className="text-xs mt-0.5">
                           {error instanceof Error
                             ? error.message
-                            : 'Unknown error.'}
+                            : 'Something went wrong.'}
                         </div>
                       </div>
                       <Button

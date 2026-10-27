@@ -80,11 +80,11 @@ const QUEUE_DESK_SENTENCE: Record<string, (owner: string | null) => string> = {
   Recommendation: (o) =>
     `Waiting at the Recommendation desk${o ? `. Next up: ${o}` : ''}.`,
   Evaluation: (o) =>
-    `Waiting at the Credit Checking desk${o ? ` — reviewing: ${o}` : ''}.`,
+    `Waiting at the Evaluation desk${o ? `. ${o} is reviewing` : ''}.`,
   Approval: (o) =>
-    `Waiting at the Approval desk${o ? ` — reviewing: ${o}` : ''}.`,
+    `Waiting at the Approval desk${o ? `. ${o} is reviewing` : ''}.`,
   DocumentCompletion: (o) =>
-    `On hold for missing documents${o ? ` — ${o} is uploading the requirements` : ''}.`,
+    `On hold for missing documents${o ? `. ${o} needs to upload them` : ''}.`,
 }
 
 export function queueDeskSentence(

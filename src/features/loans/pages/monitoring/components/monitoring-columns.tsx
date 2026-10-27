@@ -230,7 +230,7 @@ export function buildColumns(
             <div className="flex items-center gap-1.5">
               <UserCircle size={16} className="text-muted-foreground" />
               <span className="text-xs text-muted-foreground">
-                Waiting — {row.queueOwnerName ?? 'reviewer'}
+                {row.queueOwnerName ? `With ${row.queueOwnerName}` : 'Waiting'}
               </span>
               <span className="text-[11px] text-muted-foreground">
                 #{row.queuePosition}/{row.queueLength}
