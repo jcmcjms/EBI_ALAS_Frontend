@@ -4,6 +4,7 @@ import {
   Eye,
   DownloadSimple,
   CheckCircle,
+  Warning,
   XCircle,
   ListChecks,
   ChatCenteredText,
@@ -34,6 +35,7 @@ import {
   type LoanChecklistDocumentDto,
 } from '@/src/features/loans/api/loan-review'
 import { loanReviewKeys } from '@/src/features/loans/api/loan-review'
+import { isSubmittedWithoutUpload } from '@/src/features/loans/model/checklist-upload-status'
 import { DocumentRemarksThread } from './document-remarks-thread'
 import { DocumentPreviewDialog } from './document-preview-dialog'
 
@@ -140,6 +142,7 @@ export function AttachmentsPanel({
             const isPending =
               item.uploadStatus !== 'Uploaded' &&
               item.uploadStatus !== 'Submitted'
+            const paperOnly = isSubmittedWithoutUpload(item)
             const threadOpen = openThread === item.idCode
             const remarkCount = remarksFor(item.idCode).length
             return (
@@ -168,6 +171,12 @@ export function AttachmentsPanel({
                       size={20}
                       weight="fill"
                       className="mt-0.5 shrink-0 text-muted-foreground"
+                    />
+                  ) : paperOnly ? (
+                    <Warning
+                      size={20}
+                      weight="fill"
+                      className="mt-0.5 shrink-0 text-amber-500"
                     />
                   ) : (
                     <CheckCircle
@@ -215,6 +224,11 @@ export function AttachmentsPanel({
                     {isPending && (
                       <p className="text-xs italic text-muted-foreground">
                         No documents uploaded yet
+                      </p>
+                    )}
+                    {paperOnly && (
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        No documents submitted
                       </p>
                     )}
                     <div className="flex flex-wrap items-center gap-2 pt-0.5">
