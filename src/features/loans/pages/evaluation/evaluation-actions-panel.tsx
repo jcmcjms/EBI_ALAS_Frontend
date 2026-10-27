@@ -261,7 +261,7 @@ export function EvaluationActionsPanel({
                   onClick={onFlagOpen}
                 >
                   <WarningCircle size={16} />
-                  Flag incomplete documents
+                  Incomplete documents
                 </Button>
               </>
             ) : (

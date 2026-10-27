@@ -133,7 +133,7 @@ export function ApprovalPageHeader({
               onClick={onFlag}
               className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
             >
-              <WarningCircle size={16} weight="bold" /> Flag Incomplete
+              <WarningCircle size={16} weight="bold" />Incomplete
               Documents
             </Button>
           )}

@@ -155,7 +155,7 @@ function PushbackDialogForm({
                       {section.label}
                       {isSystemSourced && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
-                          <Lock size={10} weight="fill" /> auto-synced
+                          <Lock size={10} weight="fill" />
                         </span>
                       )}
                     </Label>

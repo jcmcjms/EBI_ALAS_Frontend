@@ -177,10 +177,7 @@ export function ReviewDeskPage() {
                       </li>
                     ))}
                   </ul>
-                  <p className="text-xs text-muted-foreground">
-                    You can take another client while these wait. Releasing
-                    puts a client back in the queue.
-                  </p>
+                 
                 </div>
                 <Button
                   size="sm"
@@ -188,7 +185,7 @@ export function ReviewDeskPage() {
                   onClick={() => release.mutate()}
                   disabled={release.isPending}
                 >
-                  {release.isPending ? 'Releasing…' : 'Release all claims'}
+                  {release.isPending ? 'Releasing…' : 'Release all'}
                 </Button>
               </div>
             </section>
