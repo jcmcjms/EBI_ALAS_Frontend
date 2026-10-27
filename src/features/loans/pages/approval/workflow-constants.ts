@@ -8,6 +8,7 @@ export const TERMINAL = [
   'Cancelled',
 ]
 
+/** Mirrors MinRecommendRemarksLength in LoanWorkflowService. */
 export const MIN_REMARKS = 10
 
 export type WorkflowAction =
@@ -53,31 +54,63 @@ export function deriveWorkflowAction(def: WorkflowButtonDef): WorkflowAction {
 
 export function confirmTitleFor(def: WorkflowButtonDef): string {
   if (def.verdict === 'NotRecommended') return 'Mark as not recommended?'
-  if (def.verdict === 'Recommended') return 'Mark as recommended?'
+  if (def.verdict === 'Recommended') return 'Recommend for approval?'
   if (def.kind === 'reject') return 'Reject this application?'
-  if (def.kind === 'return') return 'Send this application back for revision?'
+  if (def.kind === 'return') return 'Push back to the encoder?'
   if (def.to === 'Approved') return 'Approve this loan?'
   if (def.to === 'ForChecking') return 'Recommend for checking?'
   return `${def.label}?`
 }
 
+/**
+ * One line, the consequence the reviewer is accountable for. Every statement
+ * here is checked against LoanWorkflowService: reject notifies the actor only,
+ * approve and push back notify the encoder, and a not-recommended evaluation
+ * still advances to ForApproval.
+ */
 export function confirmDescriptionFor(def: WorkflowButtonDef): string {
   if (def.verdict === 'NotRecommended') {
-    return 'The application still goes to the Approver, marked as Not Recommended.'
+    return 'The application still goes to the Approver, who makes the final call.'
+  }
+  if (def.verdict === 'Recommended') {
+    return 'Goes to the Approver with your remarks.'
   }
   if (def.kind === 'reject') {
-    return 'The loan will be rejected and the application closed. The encoder will be notified.'
+    return 'This ends the application. It cannot be reopened.'
   }
   if (def.kind === 'return') {
-    return 'The application goes back to the encoder with your remarks.'
+    return 'Leaves your queue until the encoder resubmits.'
   }
   if (def.to === 'Approved') {
-    return 'The loan will be approved. The encoder will be notified.'
+    return 'The loan is approved and the encoder is notified.'
   }
   if (def.to === 'ForChecking') {
-    return 'The application moves to the Evaluator for checking.'
+    return 'Goes to the Evaluator for checking.'
   }
-  return 'The application moves to the Approver.'
+  return 'Goes to the Approver.'
+}
+
+/** The verb shown on the dialog's confirm button. */
+export function confirmActionLabelFor(def: WorkflowButtonDef): string {
+  if (def.verdict === 'NotRecommended') return 'Mark not recommended'
+  if (def.verdict === 'Recommended') return 'Recommend'
+  if (def.kind === 'reject') return 'Reject application'
+  if (def.kind === 'return') return 'Push back'
+  if (def.to === 'Approved') return 'Approve loan'
+  return def.label
+}
+
+/**
+ * Why the remarks field is required, in the reviewer's terms rather than as a
+ * character count. Null when remarks are optional.
+ */
+export function remarksPurposeFor(def: WorkflowButtonDef): string | null {
+  if (!def.remarksRequired) return null
+  if (def.verdict === 'NotRecommended')
+    return 'The Approver reads this before deciding.'
+  if (def.kind === 'reject') return 'Recorded in the application history.'
+  if (def.kind === 'return') return 'The encoder reads this to fix the file.'
+  return 'The Approver reads this before deciding.'
 }
 
 
@@ -110,7 +143,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Evaluator',
     from: 'ForChecking',
     to: 'ForApproval',
-    label: 'Recommended',
+    label: 'Recommend for approval',
     kind: 'advance',
     verdict: 'Recommended',
     remarksRequired: true,
@@ -121,7 +154,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Evaluator',
     from: 'ForChecking',
     to: 'ForApproval',
-    label: 'Not recommended',
+    label: 'Do not recommend',
     kind: 'advance',
     verdict: 'NotRecommended',
     remarksRequired: true,
@@ -152,7 +185,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Approver',
     from: 'ForApproval',
     to: 'ForRevision',
-    label: 'Return to encoder',
+    label: 'Push back',
     kind: 'return',
     remarksRequired: true,
     confirm: true,
@@ -161,7 +194,7 @@ export const WORKFLOW_ACTIONS: WorkflowButtonDef[] = [
     role: 'Approver',
     from: 'ForApproval',
     to: 'Rejected',
-    label: 'Reject',
+    label: 'Reject application',
     kind: 'reject',
     remarksRequired: true,
     confirm: true,

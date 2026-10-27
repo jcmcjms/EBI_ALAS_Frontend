@@ -1,16 +1,13 @@
-import {
-  ArrowCounterClockwise,
-  ListChecks,
-} from '@phosphor-icons/react'
+import { ArrowClockwise, ListChecks } from '@phosphor-icons/react'
 import {
   Card,
   CardAction,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/src/shared/ui/data-display/card'
 import { Button } from '@/src/shared/ui/primitives/button'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import { AttachmentsPanel } from './components/attachments-panel'
 
 interface DocumentsTabContentProps {
@@ -39,19 +36,15 @@ export function DocumentsTabContent({
   return (
     <Card id="document-requirements">
       <CardHeader className="border-b pb-4">
-        <div>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ListChecks
-              size={18}
-              weight="bold"
-              className="text-muted-foreground"
-            />
-            Document Requirements
-          </CardTitle>
-          <CardDescription className="pt-1 text-xs">
-            Checklist of required documents.
-          </CardDescription>
-        </div>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ListChecks
+            size={18}
+            weight="bold"
+            className="text-muted-foreground"
+            aria-hidden
+          />
+          Files
+        </CardTitle>
         <CardAction>
           <Button
             type="button"
@@ -60,10 +53,13 @@ export function DocumentsTabContent({
             className="gap-1.5"
             onClick={onRecheck}
             disabled={recheckPending}
-            title="Re-verify document completeness"
           >
-            <ArrowCounterClockwise size={14} weight="bold" />
-            Re-check documents
+            {recheckPending ? (
+              <Spinner className="size-3.5" aria-hidden />
+            ) : (
+              <ArrowClockwise size={14} weight="bold" aria-hidden />
+            )}
+            Refresh
           </Button>
         </CardAction>
       </CardHeader>

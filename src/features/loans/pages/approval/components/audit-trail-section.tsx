@@ -118,7 +118,7 @@ export function AuditTrailSection({
                     <div className="text-[10px]">
                       {isoDate(event.occurredAtUtc)}
                     </div>
-                    <div className="text-[10px] text-slate-600">
+                    <div className="text-xs text-muted-foreground">
                       {relativeTime(event.occurredAtUtc)}
                     </div>
                   </td>
@@ -127,7 +127,7 @@ export function AuditTrailSection({
                       {event.actorName ?? 'System'}
                     </div>
                     {event.actorRole ? (
-                      <div className="text-[10px] text-slate-600">
+                      <div className="text-xs text-muted-foreground">
                         {event.actorRole}
                       </div>
                     ) : null}
@@ -146,10 +146,10 @@ export function AuditTrailSection({
                     {event.comment ? (
                       <RichText
                         value={event.comment}
-                        emptyFallback={<span className="text-slate-400">—</span>}
+                        emptyFallback={<span className="text-muted-foreground">{dash()}</span>}
                       />
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-muted-foreground">{dash()}</span>
                     )}
                   </td>
                 </tr>
@@ -158,7 +158,7 @@ export function AuditTrailSection({
           </tbody>
         </table>
 
-        <div className="mt-4 px-2 pb-3 text-[10px] italic text-slate-600">
+        <div className="mt-4 px-2 pb-3 text-xs text-muted-foreground">
           End of application history for LAM {dash(lamId)} · PN{' '}
           {dash(primaryLoan.loanNo || data?.outstandingLoans[0]?.pn)}. Generated{' '}
           {new Date().toLocaleString('en-PH', {

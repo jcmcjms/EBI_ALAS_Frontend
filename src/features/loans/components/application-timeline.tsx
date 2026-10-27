@@ -28,36 +28,17 @@ const PAGE_SIZE = 15
 
 type Filter = 'all' | 'workflow' | 'remarks'
 
-const TYPE_ICON: Record<
-  TimelineEvent['type'],
-  { icon: typeof ArrowRight; ring: string }
-> = {
-  workflow: {
-    icon: ArrowRight,
-    ring: 'border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400',
-  },
-  deviation: {
-    icon: WarningCircle,
-    ring: 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400',
-  },
-  deviationRemark: {
-    icon: ChatCircleDots,
-    ring: 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400',
-  },
-  documentRemark: {
-    icon: FileText,
-    ring: 'border-violet-200 bg-violet-50 text-violet-600 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400',
-  },
-  remark: {
-    icon: NotePencil,
-    ring: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-400',
-  },
+// One neutral marker for every event type: the glyph carries the distinction,
+// so a five-colour rainbow added noise rather than meaning.
+const TYPE_ICON: Record<TimelineEvent['type'], { icon: typeof ArrowRight }> = {
+  workflow: { icon: ArrowRight },
+  deviation: { icon: WarningCircle },
+  deviationRemark: { icon: ChatCircleDots },
+  documentRemark: { icon: FileText },
+  remark: { icon: NotePencil },
 }
 
-const DEFAULT_TYPE_ICON = {
-  icon: NotePencil,
-  ring: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-400',
-}
+const DEFAULT_TYPE_ICON = { icon: NotePencil }
 
 const matchesFilter = (e: TimelineEvent, f: Filter) =>
   f === 'all' ||
@@ -209,7 +190,7 @@ export function ApplicationTimeline({
               !prev ||
               format(new Date(prev.occurredAtUtc), 'yyyy-MM-dd') !==
                 format(new Date(e.occurredAtUtc), 'yyyy-MM-dd')
-            const { icon: Icon, ring } =
+            const { icon: Icon } =
               TYPE_ICON[e.type as TimelineEvent['type']] ?? DEFAULT_TYPE_ICON
             const sentence = describeEvent(e)
             const isReturn =
@@ -219,16 +200,13 @@ export function ApplicationTimeline({
             return (
               <li key={e.id}>
                 {newDay && (
-                  <p className="mb-3 ml-11 text-[11px] font-semibold text-muted-foreground">
+                  <p className="mb-3 ml-11 text-xs font-semibold text-muted-foreground">
                     {format(new Date(e.occurredAtUtc), 'EEEE, dd MMM yyyy')}
                   </p>
                 )}
                 <div className="relative flex gap-3">
                   <span
-                    className={cn(
-                      'relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border',
-                      ring,
-                    )}
+                    className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border bg-muted/40 text-muted-foreground"
                     aria-hidden
                   >
                     {isReturn ? (
@@ -245,7 +223,7 @@ export function ApplicationTimeline({
                       {e.actorRole && (
                         <Badge
                           variant="outline"
-                          className="h-4 px-1.5 text-[10px] font-normal"
+                          className="text-xs font-normal"
                         >
                           {e.actorRole}
                         </Badge>
@@ -296,7 +274,7 @@ export function ApplicationTimeline({
         </div>
       )}
       {!query.hasNextPage && loaded.length > 0 && (
-        <p className="p-3 text-center text-[11px] text-muted-foreground">
+        <p className="p-3 text-center text-xs text-muted-foreground">
           Beginning of history
         </p>
       )}

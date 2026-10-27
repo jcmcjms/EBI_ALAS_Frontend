@@ -18,6 +18,7 @@ import {
 import { useMySignerSignature } from '@/src/features/loans/api/signer-signature'
 import {
   getLoanDetail,
+  clearDocumentFlag,
   getChecklistDocuments,
   getDocumentRemarks,
   getLoanDeviations,
@@ -33,8 +34,7 @@ import {
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { queryKeys } from '@/src/shared/lib/query/queryKeys'
 import { toastError, toastSuccess } from '@/src/shared/ui/feedback/toast'
-import { apiClient, getErrorMessage } from '@/src/shared/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
+import { getErrorMessage } from '@/src/shared/lib/apiClient'
 import type { LoanStatus } from '@/src/features/loans/model/loan-status'
 import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
@@ -224,10 +224,10 @@ export function useLoanApprovalPage() {
     onSuccess: (_d, payload) => {
       toastSuccess(
         payload.action === 'NotRecommend'
-          ? 'Recorded as Not Recommended and forwarded to the Approver.'
+          ? 'Marked not recommended and sent to the Approver.'
           : payload.kind === 'return'
-            ? 'Application pushed back to the encoder.'
-            : 'Application forwarded.',
+            ? 'Pushed back to the encoder.'
+            : 'Sent to the next reviewer.',
       )
       draft.clear()
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
@@ -244,7 +244,7 @@ export function useLoanApprovalPage() {
     mutationFn: (payload: CreateRevisionRequestPayload) =>
       pushbackWithRevision(id, payload),
     onSuccess: () => {
-      toastSuccess('Application pushed back with revision instructions.')
+      toastSuccess('Pushed back to the encoder.')
       setPushbackOpen(false)
       draft.clear()
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
@@ -262,9 +262,7 @@ export function useLoanApprovalPage() {
   const pushBackDocs = useMutation({    mutationFn: ({ codes, text }: { codes: string[]; text: string }) =>
       flagDocuments(id, { missingRequirementCodes: codes, reason: text }),
     onSuccess: () => {
-      toastSuccess(
-        'Documents flagged. The encoder has been notified, and you can keep reviewing.',
-      )
+      toastSuccess('Flagged. The encoder has been notified.')
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
       qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
       qc.invalidateQueries({
@@ -276,27 +274,46 @@ export function useLoanApprovalPage() {
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })
 
+  // There is no server-side "verify" endpoint: re-checking means pulling the
+  // checklist and the flag again, since uploads happen in WebLoan.
   const recheck = useMutation({
     mutationFn: async () => {
-      const res = await apiClient.post<
-        ApiResponse<{ complete: boolean; missing: string[] }>
-      >(`/api/loans/${id}/documents/verify`)
-      return unwrapApiData(res.data)
+      await Promise.all([
+        qc.fetchQuery({
+          queryKey: loanKeys.review.checklistDocuments(id),
+          queryFn: () => getChecklistDocuments(id),
+        }),
+        qc.fetchQuery({
+          queryKey: loanKeys.review.detail(id),
+          queryFn: () => getLoanDetail(id),
+        }),
+      ])
     },
-    onSuccess: (r) => {
-      toastSuccess(
-        r.complete
-          ? 'All requirements uploaded. The application is back in the review queue.'
-          : `Still missing: ${r.missing.join(', ')}`,
-      )
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: loanKeys.review.checklistDocuments(id) })
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
-      qc.invalidateQueries({
-        queryKey: loanKeys.review.checklistDocuments(id),
-      })
+    },
+    onError: (e: unknown) => toastError(getErrorMessage(e)),
+  })
+
+  const clearFlag = useMutation({
+    mutationFn: () => clearDocumentFlag(id),
+    onSuccess: () => {
+      toastSuccess('Flag cleared.')
+      qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
+      qc.invalidateQueries({ queryKey: loanKeys.review.timeline(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardRoot })
       qc.invalidateQueries({ queryKey: loanKeys.all })
     },
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })
+
+  const documentFlag = detail?.documentFlag ?? null
+  const canClearFlag =
+    documentFlag !== null &&
+    (user?.role === 'Admin' ||
+      user?.role === 'Encoder' ||
+      String(documentFlag.flaggedById ?? '') === String(user?.userId ?? ''))
 
   const canWriteRemarks =
     user?.role === 'Recommender' ||
@@ -371,6 +388,9 @@ export function useLoanApprovalPage() {
     act,
     pushBackDocs,
     recheck,
+    clearFlag,
+    canClearFlag,
+    documentFlag,
     claimById,
     queueState,
     pushbackOpen,

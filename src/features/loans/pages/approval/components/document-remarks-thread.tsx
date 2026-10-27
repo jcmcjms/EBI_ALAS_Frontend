@@ -5,6 +5,7 @@ import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
 
 import { Button } from '@/src/shared/ui/primitives/button'
+import { formatLoanDateTime } from '@/src/shared/lib/format'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import { Textarea } from '@/src/shared/ui/primitives/textarea'
 
@@ -13,19 +14,6 @@ import {
   postDocumentRemark,
   type DocumentRemarkDto,
 } from '@/src/features/loans/api/loan-review'
-
-const ROLE_BADGE: Record<string, string> = {
-  Recommender:
-    'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400',
-  Evaluator:
-    'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400',
-  Approver:
-    'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400',
-  Admin:
-    'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400',
-  Encoder:
-    'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-400',
-}
 
 function RemarkCard({
   remark,
@@ -39,22 +27,23 @@ function RemarkCard({
   canReply: boolean
 }) {
   return (
-    <div className="rounded-md border bg-background p-2.5">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="bg-background py-2">
+      <div className="flex flex-wrap items-baseline gap-x-2">
         <span className="text-xs font-semibold">{remark.authorName}</span>
-        <Badge
-          variant="outline"
-          className={`text-[10px] ${ROLE_BADGE[remark.authorRole] ?? ''}`}
-        >
+        <Badge variant="outline" className="text-xs font-normal">
           {remark.authorRole}
         </Badge>
-        <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
-          {new Date(remark.createdAt).toLocaleString()}
-        </span>
+        <time
+          dateTime={remark.createdAt}
+          className="ml-auto text-xs text-muted-foreground tabular-nums"
+        >
+          {formatLoanDateTime(remark.createdAt)}
+        </time>
       </div>
       {replyToName && (
-        <p className="mt-0.5 text-[11px] italic text-muted-foreground">
-          in reply to {replyToName}
+        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          <ArrowBendLeftUp size={11} weight="bold" aria-hidden />
+          {replyToName}
         </p>
       )}
       <p className="mt-1 whitespace-pre-wrap text-sm">{remark.body}</p>
@@ -62,10 +51,10 @@ function RemarkCard({
         <Button
           size="sm"
           variant="ghost"
-          className="mt-1 h-6 gap-1 px-2 text-[11px]"
+          className="-ml-2 mt-1 gap-1.5"
           onClick={onReply}
         >
-          <ArrowBendLeftUp size={11} /> Reply
+          <ArrowBendLeftUp size={13} weight="bold" aria-hidden /> Reply
         </Button>
       )}
     </div>
@@ -171,13 +160,13 @@ export function DocumentRemarksThread({
         ))}
 
       {frozen ? (
-        <p className="text-[11px] text-muted-foreground">
-          Remarks are closed for this application.
+        <p className="text-xs text-muted-foreground">
+          This application is decided, so remarks are closed.
         </p>
       ) : canWrite ? (
         <div className="space-y-1.5 pt-1">
           {replyTargetName && (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Replying to <strong>{replyTargetName}</strong>{' '}
               <button
                 type="button"
@@ -196,8 +185,8 @@ export function DocumentRemarksThread({
             onChange={(e) => setBody(e.target.value)}
           />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] tabular-nums text-muted-foreground">
-              {body.trim().length}/2000
+            <span aria-live="polite" className="text-xs text-muted-foreground">
+              {body.trim().length > 1800 ? `${2000 - body.length} characters left` : ''}
             </span>
             <Button
               size="sm"
@@ -211,8 +200,8 @@ export function DocumentRemarksThread({
           </div>
         </div>
       ) : (
-        <p className="text-[11px] text-muted-foreground">
-          Only reviewers and the submitting Encoder can add remarks.
+        <p className="text-xs text-muted-foreground">
+          Only reviewers and the encoder who filed this can add remarks.
         </p>
       )}
     </div>

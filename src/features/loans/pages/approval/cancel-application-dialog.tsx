@@ -40,27 +40,27 @@ export function CancelApplicationDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Cancel this application?</AlertDialogTitle>
           <AlertDialogDescription>
-            This closes the application for{' '}
-            <strong>
-              {firstName} {lastName}
-            </strong>{' '}
-            (<code>{lamId}</code>). The reviewer handling it will be
-            notified. This cannot be undone.
+            {firstName} {lastName} ({lamId}) is closed and cannot be reopened.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-2">
-          <Label htmlFor="cancel-reason">Reason for cancellation *</Label>
+          <Label htmlFor="cancel-reason" className="font-medium">
+            Reason for cancellation
+          </Label>
           <Textarea
             id="cancel-reason"
             rows={3}
-            placeholder="e.g. Client found financing elsewhere\u2026"
+            placeholder="Client found financing elsewhere"
             value={cancelReason}
             onChange={(e) => onCancelReasonChange(e.target.value)}
             maxLength={2000}
+            aria-required
+            aria-describedby="cancel-reason-help"
           />
-          <p className="text-[11px] text-muted-foreground tabular-nums">
-            {cancelReason.trim().length}/2000 (minimum 10)
+          <p id="cancel-reason-help" className="text-xs text-muted-foreground">
+            Required. Recorded in the application history, 10 characters
+            minimum.
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export function CancelApplicationDialog({
             disabled={cancelPending || cancelReason.trim().length < 10}
             onClick={onCancel}
           >
-            {cancelPending ? 'Cancelling\u2026' : 'Cancel application'}
+            {cancelPending ? 'Cancelling…' : 'Cancel application'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

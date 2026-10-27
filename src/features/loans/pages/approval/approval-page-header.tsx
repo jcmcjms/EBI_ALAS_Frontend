@@ -1,14 +1,13 @@
 import {
-  XCircle,
+  ArrowLeft,
   Clock,
+  ThumbsDown,
+  ThumbsUp,
   UserCircle,
   WarningCircle,
-  ThumbsUp,
-  ThumbsDown,
 } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import { Button } from '@/src/shared/ui/primitives/button'
-import { ArrowLeft } from '@phosphor-icons/react'
 import { RoutingChip } from './components/routing-chip'
 import { ApprovalGroupTabs } from './components/approval-group-tabs'
 import { useEscalationStore } from '@/src/features/loans/store/escalationStore'
@@ -19,6 +18,7 @@ import {
   type LoanStatus,
 } from '@/src/features/loans/model/loan-status'
 import { cn } from '@/src/shared/lib/utils'
+import { countNoun } from '@/src/shared/lib/format'
 
 interface ApprovalPageHeaderProps {
   detail: LoanDetailResponse
@@ -42,104 +42,86 @@ export function ApprovalPageHeader({
   onNavigate,
 }: ApprovalPageHeaderProps) {
   const escalated = useEscalationStore((s) => s.isEscalated(id))
+  const statusMeta = LOAN_STATUS_META[detail.status as LoanStatus]
 
   return (
     <header className="sticky top-[var(--header-height)] z-30 border-b bg-background">
       <div className="container mx-auto flex h-16 flex-wrap items-center justify-between gap-3 px-6">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onNavigate('/loans/queue')}
-            aria-label="Back to review desk"
-          >
-            <ArrowLeft size={18} weight="bold" />
-          </Button>
-          <Button
+            type="button"
             variant="outline"
             size="sm"
             className="gap-1.5"
             onClick={() => onNavigate('/loans/queue')}
           >
+            <ArrowLeft size={14} weight="bold" aria-hidden />
             Review Desk
           </Button>
-          <h1 className="text-xl font-semibold tracking-tight">
-            Loan Review &amp; Approval
+          <h1 className="text-xl font-semibold tracking-tight text-balance">
+            Loan review and approval
           </h1>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs font-normal tabular-nums">
             {detail.lamId}
           </Badge>
           <Badge
             variant="outline"
-            className={cn(
-              'gap-1.5',
-              LOAN_STATUS_META[detail.status as LoanStatus]?.className,
-            )}
+            className={cn('gap-1.5', statusMeta?.className)}
+            title={statusMeta?.hint}
           >
-            <Clock size={12} weight="fill" />
-            {LOAN_STATUS_META[detail.status as LoanStatus]?.label ?? detail.status}
+            <Clock size={12} weight="fill" aria-hidden />
+            {statusMeta?.label ?? detail.status}
           </Badge>
           <RoutingChip loanId={id} />
-          {detail.hasDeviations && (
+          {deviationCount > 0 && (
             <Badge
-              variant="secondary"
-              className="gap-1.5 border-amber-200 bg-amber-50 text-amber-700"
+              variant="outline"
+              className="gap-1.5 border-warning-border bg-warning-surface text-warning"
             >
-              <WarningCircle size={12} weight="fill" /> {deviationCount}{' '}
-              deviation
-              {deviationCount === 1 ? '' : 's'}
+              <WarningCircle size={12} weight="fill" aria-hidden />
+              {countNoun(deviationCount, 'deviation')}
             </Badge>
           )}
           {escalated && (
             <Badge
-              variant="secondary"
-              className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800"
+              variant="outline"
+              className="border-warning-border bg-warning-surface text-warning"
             >
-              <WarningCircle size={12} weight="fill" /> Escalated
+              Escalated
             </Badge>
           )}
           {detail.evaluationVerdict === 'EvaluatedNotRecommended' && (
             <Badge
-              variant="secondary"
-              className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800"
+              variant="outline"
+              className="gap-1.5 border-warning-border bg-warning-surface text-warning"
             >
-              <ThumbsDown size={12} weight="fill" /> Evaluator: Not
-              Recommended
+              <ThumbsDown size={12} weight="fill" aria-hidden />
+              Evaluator: not recommended
             </Badge>
           )}
           {detail.evaluationVerdict === 'EvaluatedRecommended' && (
             <Badge
-              variant="secondary"
-              className="gap-1.5 border-emerald-200 bg-emerald-50 text-emerald-700"
+              variant="outline"
+              className="gap-1.5 border-success-border bg-success-surface text-success"
             >
-              <ThumbsUp size={12} weight="fill" /> Evaluator: Recommended
-            </Badge>
-          )}
-          {detail.status === 'Cancelled' && (
-            <Badge
-              variant="secondary"
-              className="gap-1.5 border-slate-400 bg-slate-100 text-slate-700 line-through"
-            >
-              <XCircle size={12} weight="fill" /> Cancelled by client
+              <ThumbsUp size={12} weight="fill" aria-hidden />
+              Evaluator: recommended
             </Badge>
           )}
         </div>
         <div className="flex items-center gap-2">
           {canFlagAtDesk && !frozen && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onFlag}
-              className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
-            >
-              <WarningCircle size={16} weight="bold" />Incomplete
-              Documents
+            <Button type="button" variant="outline" onClick={onFlag}>
+              Flag missing documents
             </Button>
           )}
-          <Badge variant="outline" className="gap-1.5 font-normal">
-            <UserCircle size={14} />
-            {detail.createdByName} (Encoder)
+          <Badge
+            variant="outline"
+            className="gap-1.5 font-normal"
+            title="Encoder who created this application"
+          >
+            <UserCircle size={14} aria-hidden />
+            {detail.createdByName}
           </Badge>
         </div>
       </div>

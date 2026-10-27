@@ -4,16 +4,19 @@ import {
   Eye,
   DownloadSimple,
   CheckCircle,
+  FileDashed,
   Warning,
+  WarningCircle,
   XCircle,
-  ListChecks,
   ChatCenteredText,
-  ArrowCounterClockwise,
 } from '@phosphor-icons/react'
 
 import { Button } from '@/src/shared/ui/primitives/button'
 import { Badge } from '@/src/shared/ui/primitives/badge'
+import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
 import { Spinner } from '@/src/shared/ui/feedback/spinner'
+import { EmptyState, ErrorState } from '@/src/shared/ui/feedback/empty-state'
+import { countNoun } from '@/src/shared/lib/format'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +42,9 @@ import { isSubmittedWithoutUpload } from '@/src/features/loans/model/checklist-u
 import { DocumentRemarksThread } from './document-remarks-thread'
 import { DocumentPreviewDialog } from './document-preview-dialog'
 
-const MIN_REMARKS = 10
+/** Mirrors the minimum the document-flag endpoint enforces on the reason. */
+const MIN_REMARKS = 5
+const MAX_REMARKS = 2000
 
 interface AttachmentsPanelProps {
   loanId: number | string
@@ -66,6 +71,7 @@ export function AttachmentsPanel({
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [pushBackOpen, setPushBackOpen] = useState(false)
   const [pushBackRemarks, setPushBackRemarks] = useState('')
+  const [showRemarksError, setShowRemarksError] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<{
     docId: number
     fileName: string
@@ -103,6 +109,7 @@ export function AttachmentsPanel({
   const selectedCodes = pending
     .filter((p) => selected[p.idCode])
     .map((p) => p.idCode)
+  const remarksTooShort = pushBackRemarks.trim().length < MIN_REMARKS
 
   const remarksFor = (code: string) =>
     (remarksQuery.data ?? []).filter((r) => r.checklistIdCode === code)
@@ -110,8 +117,6 @@ export function AttachmentsPanel({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <ListChecks size={18} className="text-muted-foreground" />
-        <h3 className="text-sm font-semibold">Required Documents</h3>
         {items.length > 0 && (
           <Badge variant="secondary" className="text-xs tabular-nums">
             {uploadedCount}/{items.length} uploaded
@@ -126,14 +131,19 @@ export function AttachmentsPanel({
 
       {checklistDocs.isLoading && <Spinner className="size-5" />}
       {checklistDocs.isError && (
-        <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive">
-          Couldn't load the checklist documents. Try again.
-        </p>
+        <ErrorState
+          className="py-6"
+          message="The document checklist could not be loaded."
+          onRetry={() => checklistDocs.refetch()}
+        />
       )}
       {!checklistDocs.isLoading && items.length === 0 && (
-        <p className="rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
-          No checklist items found for this loan product.
-        </p>
+        <EmptyState
+          className="py-6"
+          icon={FileDashed}
+          title="No documents required"
+          hint="This loan product has no checklist, so there is nothing to verify here."
+        />
       )}
 
       {items.length > 0 && (
@@ -149,19 +159,18 @@ export function AttachmentsPanel({
               <li
                 id={`doc-${item.idCode}`}
                 key={`${item.idCode}-${item.docId ?? index}`}
-                className="scroll-mt-24 rounded-md border bg-background"
+                className="scroll-mt-24 border bg-background"
               >
                 <div className="flex items-start gap-3 p-3">
                   {canPushBack && isPending && (
-                    <input
-                      type="checkbox"
-                      className="mt-1 size-4 accent-primary"
+                    <Checkbox
+                      className="mt-1"
                       aria-label={`Select ${item.checklistDescription ?? item.idCode} as missing`}
                       checked={!!selected[item.idCode]}
-                      onChange={(e) =>
+                      onCheckedChange={(checked) =>
                         setSelected((s) => ({
                           ...s,
-                          [item.idCode]: e.target.checked,
+                          [item.idCode]: checked === true,
                         }))
                       }
                     />
@@ -176,13 +185,13 @@ export function AttachmentsPanel({
                     <Warning
                       size={20}
                       weight="fill"
-                      className="mt-0.5 shrink-0 text-amber-500"
+                      className="mt-0.5 shrink-0 text-warning"
                     />
                   ) : (
                     <CheckCircle
                       size={20}
                       weight="fill"
-                      className="mt-0.5 shrink-0 text-emerald-500"
+                      className="mt-0.5 shrink-0 text-success"
                     />
                   )}
                   <div className="min-w-0 flex-1 space-y-1.5">
@@ -191,11 +200,11 @@ export function AttachmentsPanel({
                         {item.checklistDescription ?? item.idCode}
                       </p>
                       <Badge
-                        variant={isPending ? 'outline' : 'default'}
-                        className="shrink-0 text-[11px]"
+                        variant={isPending ? 'destructive' : 'outline'}
+                        className="shrink-0 text-xs font-normal"
                       >
                         {isPending
-                          ? 'Pending'
+                          ? 'Missing'
                           : item.uploadStatus === 'Submitted'
                             ? 'Submitted'
                             : 'Uploaded'}
@@ -204,12 +213,7 @@ export function AttachmentsPanel({
                     {!isPending && item.docId ? (
                       <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                         {item.docStr ? (
-                          <span className="min-w-0 truncate">
-                            Document: {item.docStr}
-                          </span>
-                        ) : null}
-                        {item.contentType ? (
-                          <span className="shrink-0">{item.contentType}</span>
+                          <span className="min-w-0 truncate">{item.docStr}</span>
                         ) : null}
                         {item.uploadedBy || item.created ? (
                           <span className="min-w-0 truncate">
@@ -221,14 +225,9 @@ export function AttachmentsPanel({
                         ) : null}
                       </p>
                     ) : null}
-                    {isPending && (
-                      <p className="text-xs italic text-muted-foreground">
-                        No documents uploaded yet
-                      </p>
-                    )}
                     {paperOnly && (
-                      <p className="text-xs text-amber-700 dark:text-amber-300">
-                        No documents submitted
+                      <p className="text-xs text-warning">
+                        Marked submitted in WebLoan, but no file is attached.
                       </p>
                     )}
                     <div className="flex flex-wrap items-center gap-2 pt-0.5">
@@ -302,80 +301,100 @@ export function AttachmentsPanel({
 
       {canPushBack && !frozen && pending.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
-          <p className="text-[11px] text-muted-foreground">
+          <p aria-live="polite" className="text-xs text-muted-foreground">
             {selectedCodes.length === 0
-              ? "Select what's missing, then push the application back."
-              : `${selectedCodes.length} ${selectedCodes.length === 1 ? 'requirement' : 'requirements'} selected.`}
+              ? 'Select what is missing to flag it for the encoder.'
+              : `${countNoun(selectedCodes.length, 'requirement')} selected`}
           </p>
           <AlertDialog open={pushBackOpen} onOpenChange={setPushBackOpen}>
             <AlertDialogTrigger
               render={
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  className="gap-1.5"
                   disabled={selectedCodes.length === 0 || pushBackPending}
                 />
               }
             >
-              <ArrowCounterClockwise size={14} weight="bold" />
-              Push back incomplete
+              <WarningCircle size={14} weight="bold" />
+              Flag missing documents
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  Push back for incomplete documents?
+                  Flag {countNoun(selectedCodes.length, 'document')} as missing?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  The application moves to the encoder&apos;s{' '}
-                  <strong>Incomplete Documents</strong> queue. Once every
-                  document is uploaded in WebLoan, it returns to the Checking
-                  queue automatically.
-                  <ul className="mt-2 list-disc pl-4 text-left">
-                    {pending.map((p) => (
-                      <li key={p.idCode}>
-                        {p.checklistDescription ?? p.idCode}
-                        {!selected[p.idCode] && (
-                          <em className="text-muted-foreground">
-                            {' '}
-                            (not selected)
-                          </em>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+                  The encoder is told what to upload. The application stays in
+                  your queue.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <div className="space-y-2">
-                <Label htmlFor="pushback-remarks">Remarks *</Label>
+              <ul className="space-y-1 border-l-2 border-border pl-3 text-xs">
+                {selectedCodes.map((code) => (
+                  <li key={code}>
+                    {pending.find((p) => p.idCode === code)
+                      ?.checklistDescription ?? code}
+                  </li>
+                ))}
+              </ul>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="pushback-remarks"
+                  className="font-medium"
+                >
+                  What the encoder needs to do
+                </Label>
                 <Textarea
                   id="pushback-remarks"
                   rows={3}
-                  maxLength={2000}
-                  placeholder="What's missing, or what the encoder needs to update in WebLoan…"
+                  maxLength={MAX_REMARKS}
+                  placeholder="Upload the signed COE; the payslip is cut off"
                   value={pushBackRemarks}
                   onChange={(e) => setPushBackRemarks(e.target.value)}
+                  onBlur={() => setShowRemarksError(true)}
+                  aria-required
+                  aria-invalid={Boolean(showRemarksError && remarksTooShort)}
+                  aria-describedby="pushback-remarks-help"
                 />
-                <p className="text-[11px] tabular-nums text-muted-foreground">
-                  {pushBackRemarks.trim().length}/2000 (minimum {MIN_REMARKS})
+                <p
+                  id="pushback-remarks-help"
+                  className={
+                    showRemarksError && remarksTooShort
+                      ? 'text-xs text-destructive'
+                      : 'text-xs text-muted-foreground'
+                  }
+                >
+                  {showRemarksError && remarksTooShort
+                    ? 'Add a note so the encoder knows what to upload.'
+                    : `Sent with the notification. ${MIN_REMARKS} characters minimum.`}
                 </p>
               </div>
               <AlertDialogFooter>
-                <AlertDialogCancel>Keep reviewing</AlertDialogCancel>
+                <AlertDialogCancel disabled={pushBackPending}>
+                  Keep reviewing
+                </AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground"
-                  disabled={
-                    pushBackRemarks.trim().length < MIN_REMARKS ||
-                    pushBackPending
-                  }
+                  type="button"
+                  className="gap-2"
+                  disabled={pushBackPending}
                   onClick={() => {
+                    if (remarksTooShort) {
+                      setShowRemarksError(true)
+                      return
+                    }
                     onPushBack(selectedCodes, pushBackRemarks.trim())
                     setPushBackOpen(false)
                     setPushBackRemarks('')
                     setSelected({})
+                    setShowRemarksError(false)
                   }}
                 >
-                  {pushBackPending ? 'Pushing back…' : 'Push back'}
+                  {pushBackPending && (
+                    <Spinner className="size-3.5" aria-hidden />
+                  )}
+                  Flag documents
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

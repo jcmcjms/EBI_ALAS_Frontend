@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  ChatCenteredText,
   ArrowBendUpLeft,
-  Warning,
+  ChatCenteredText,
+  PaperPlaneTilt,
   Receipt,
-  ArrowCounterClockwise,
+  Warning,
 } from '@phosphor-icons/react'
 import { toastSuccess, toastError } from '@/src/shared/ui/feedback/toast'
 import { getErrorMessage } from '@/src/shared/lib/apiClient'
@@ -14,6 +14,7 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import { Textarea } from '@/src/shared/ui/primitives/textarea'
 import { Spinner } from '@/src/shared/ui/feedback/spinner'
+import { formatLoanDateTime } from '@/src/shared/lib/format'
 
 import {
   getLoanDeviations,
@@ -26,133 +27,65 @@ import {
 import { loanKeys } from '@/src/features/loans/api/loan-queries'
 import { DeviationUpdateRequestDialog } from './deviation-update-request-dialog'
 
-const ROLE_BADGE: Record<string, string> = {
-  Encoder: 'border-slate-300 bg-slate-100 text-slate-700',
-  Recommender: 'border-blue-200 bg-blue-50 text-blue-700',
-  Evaluator: 'border-violet-200 bg-violet-50 text-violet-700',
-  Approver: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  Admin: 'border-amber-200 bg-amber-50 text-amber-700',
-}
+const MIN_REMARK = 3
+const MAX_REMARK = 2000
 
-function RoleBadge({ role }: { role: string }) {
-  return (
-    <Badge
-      variant="outline"
-      className={`text-[10px] ${ROLE_BADGE[role] ?? ''}`}
-    >
-      {role}
-    </Badge>
-  )
+/** Carries which half of the two-call deviation request succeeded. */
+class PartialDeviationRequestError extends Error {
+  readonly notified: boolean
+  readonly cause: unknown
+
+  constructor(notified: boolean, cause: unknown) {
+    super('Deviation update request failed part way through.')
+    this.notified = notified
+    this.cause = cause
+  }
 }
 
 function RemarkCard({
   remark,
   replyToName,
+  onReply,
 }: {
   remark: DeviationRemarkDto
   replyToName?: string
+  onReply?: () => void
 }) {
   return (
-    <div className="rounded-md border bg-background p-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="py-2">
+      <div className="flex flex-wrap items-baseline gap-x-2">
         <span className="text-xs font-semibold">{remark.authorName}</span>
-        <RoleBadge role={remark.authorRole} />
-        <span className="ml-auto text-[11px] text-muted-foreground">
-          {new Date(remark.createdAt).toLocaleString()}
-        </span>
+        <Badge variant="outline" className="text-xs font-normal">
+          {remark.authorRole}
+        </Badge>
+        <time
+          dateTime={remark.createdAt}
+          className="ml-auto text-xs text-muted-foreground tabular-nums"
+        >
+          {formatLoanDateTime(remark.createdAt)}
+        </time>
       </div>
       {replyToName && (
-        <p className="mt-1 text-[11px] italic text-muted-foreground">
-          in reply to {replyToName}
+        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          <ArrowBendUpLeft size={11} weight="bold" aria-hidden />
+          {replyToName}
         </p>
       )}
-      <p className="mt-1.5 whitespace-pre-wrap text-sm">{remark.body}</p>
-    </div>
-  )
-}
-
-function ThreadComposer({
-  loanId,
-  deviation,
-  canWrite,
-  frozen,
-  onReply,
-}: {
-  loanId: number | string
-  deviation: LoanDeviationDto
-  canWrite: boolean
-  frozen: boolean
-  onReply?: (remarkId: string) => void
-}) {
-  const qc = useQueryClient()
-  const [body, setBody] = useState('')
-  const [parentId, setParentId] = useState<string | null>(null)
-
-  const send = useMutation({
-    mutationFn: () =>
-      postDeviationRemark(loanId, deviation.id, {
-        body,
-        parentRemarkId: parentId,
-      }),
-    onSuccess: () => {
-      toastSuccess('Remark added.')
-      setBody('')
-      setParentId(null)
-      onReply?.('')
-      qc.invalidateQueries({
-        queryKey: loanKeys.review.deviations(loanId),
-      })
-    },
-    onError: (e: unknown) => toastError(getErrorMessage(e)),
-  })
-
-  if (!canWrite) return null
-  if (frozen)
-    return (
-      <p className="text-[11px] text-muted-foreground">
-        Remarks are closed for this application.
+      <p className="mt-1.5 text-sm whitespace-pre-wrap text-pretty">
+        {remark.body}
       </p>
-    )
-
-  const replyTo = parentId
-    ? deviation.remarks.find((r) => r.id === parentId)?.authorName
-    : undefined
-
-  return (
-    <div className="space-y-2">
-      {replyTo && (
-        <p className="text-[11px] text-muted-foreground">
-          Replying to <strong>{replyTo}</strong>{' '}
-          <button
-            type="button"
-            className="underline"
-            onClick={() => setParentId(null)}
-          >
-            cancel
-          </button>
-        </p>
-      )}
-      <Textarea
-        rows={2}
-        value={body}
-        maxLength={2000}
-        placeholder="Add a remark…"
-        onChange={(e) => setBody(e.target.value)}
-      />
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] text-muted-foreground">
-          {body.trim().length}/2000
-        </span>
+      {onReply && (
         <Button
+          type="button"
           size="sm"
-          className="gap-1.5"
-          disabled={body.trim().length < 3 || send.isPending}
-          onClick={() => send.mutate()}
+          variant="ghost"
+          className="-ml-2 mt-1 gap-1.5"
+          onClick={onReply}
         >
-          <ArrowBendUpLeft size={13} weight="bold" />{' '}
-          {parentId ? 'Reply' : 'Add remark'}
+          <ArrowBendUpLeft size={13} weight="bold" aria-hidden />
+          Reply
         </Button>
-      </div>
+      )}
     </div>
   )
 }
@@ -168,68 +101,140 @@ function DeviationThread({
   canWrite: boolean
   frozen: boolean
 }) {
+  const qc = useQueryClient()
+  const [body, setBody] = useState('')
+  const [parentId, setParentId] = useState<string | null>(null)
+  const fieldRef = useRef<HTMLTextAreaElement>(null)
+
+  const send = useMutation({
+    mutationFn: () =>
+      postDeviationRemark(loanId, deviation.id, {
+        body,
+        parentRemarkId: parentId,
+      }),
+    onSuccess: () => {
+      toastSuccess('Remark added.')
+      setBody('')
+      setParentId(null)
+      qc.invalidateQueries({
+        queryKey: loanKeys.review.deviations(loanId),
+      })
+    },
+    onError: (e: unknown) => toastError(getErrorMessage(e)),
+  })
+
   const nameOf = (id: string | null) =>
     id ? deviation.remarks.find((r) => r.id === id)?.authorName : undefined
 
+  const replyTo = nameOf(parentId)
+  const canPost = body.trim().length >= MIN_REMARK && !send.isPending
+
+  const startReply = (remarkId: string) => {
+    setParentId(remarkId)
+    fieldRef.current?.focus()
+  }
+
   return (
-    <section id={`deviation-${deviation.id}`} className="space-y-2 rounded-lg border p-3 scroll-mt-24">
+    <section
+      id={`deviation-${deviation.id}`}
+      className="scroll-mt-24 space-y-3 border-t pt-3 first:border-t-0 first:pt-0"
+    >
       <header className="flex items-start gap-2">
         {deviation.isFeeOverride ? (
-          <Receipt size={16} weight="fill" className="mt-0.5 text-amber-600" />
+          <Receipt size={16} weight="fill" className="mt-0.5 text-warning" aria-hidden />
         ) : (
-          <Warning size={16} weight="fill" className="mt-0.5 text-amber-600" />
+          <Warning size={16} weight="fill" className="mt-0.5 text-warning" aria-hidden />
         )}
-        <h3 className="text-sm font-semibold leading-snug">
+        <h3 className="text-sm leading-snug font-semibold text-balance">
           {deviation.reasonText}
         </h3>
-        <Badge variant="outline" className="ml-auto shrink-0 gap-1 text-[10px]">
-          <ChatCenteredText size={11} /> {deviation.remarks.length}
-        </Badge>
+        {deviation.remarks.length > 0 && (
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-foreground tabular-nums">
+            <ChatCenteredText size={12} aria-hidden />
+            {deviation.remarks.length}
+          </span>
+        )}
       </header>
 
-      <div className="rounded-md border border-slate-300 bg-slate-50 p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold">Encoder</span>
-          <RoleBadge role="Encoder" />
-          <Badge variant="secondary" className="text-[10px]">
-            Submitted with application
-          </Badge>
-        </div>
-        <p className="mt-1.5 whitespace-pre-wrap text-sm">
-          {deviation.encoderJustification || '\u2014'}
+      <div className="border-l-2 border-border pl-3">
+        <p className="text-xs font-medium text-muted-foreground">
+          Encoder&apos;s justification
+        </p>
+        <p className="mt-1 text-sm whitespace-pre-wrap text-pretty">
+          {deviation.encoderJustification || 'None given.'}
         </p>
       </div>
 
-      <div className="ml-4 space-y-2 border-l-2 border-border pl-3">
-        {deviation.remarks.map((r) => (
-          <div key={r.id} className="space-y-1">
+      {deviation.remarks.length > 0 && (
+        <div className="divide-y border-l-2 border-border pl-3">
+          {deviation.remarks.map((r) => (
             <RemarkCard
+              key={r.id}
               remark={r}
-              replyToName={
-                r.parentRemarkId
-                  ? (nameOf(r.parentRemarkId) ?? 'Encoder')
-                  : 'Encoder'
-              }
+              replyToName={r.parentRemarkId ? nameOf(r.parentRemarkId) : undefined}
+              onReply={canWrite && !frozen ? () => startReply(r.id) : undefined}
             />
-            {canWrite && !frozen && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 gap-1 px-2 text-[11px]"
-                onClick={() => {}}
-              >
-                <ArrowBendUpLeft size={11} /> Reply
-              </Button>
+          ))}
+        </div>
+      )}
+
+      {canWrite &&
+        (frozen ? (
+          <p className="text-xs text-muted-foreground">
+            This application is decided, so remarks are closed.
+          </p>
+        ) : (
+          <div className="space-y-1.5 border-l-2 border-border pl-3">
+            {replyTo && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <ArrowBendUpLeft size={11} weight="bold" aria-hidden />
+                Replying to {replyTo}
+                <button
+                  type="button"
+                  className="underline underline-offset-2 hover:text-foreground"
+                  onClick={() => setParentId(null)}
+                >
+                  cancel
+                </button>
+              </p>
             )}
+            <Textarea
+              ref={fieldRef}
+              rows={2}
+              value={body}
+              maxLength={MAX_REMARK}
+              disabled={send.isPending}
+              aria-label={
+                replyTo ? `Reply to ${replyTo}` : 'Add a remark on this deviation'
+              }
+              placeholder="What the encoder needs to know about this deviation"
+              onChange={(e) => setBody(e.target.value)}
+            />
+            <div className="flex items-center justify-between gap-3">
+              <span aria-live="polite" className="text-xs text-muted-foreground">
+                {body.trim().length > MAX_REMARK - 200
+                  ? `${MAX_REMARK - body.length} characters left`
+                  : ''}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                className="gap-1.5"
+                disabled={!canPost}
+                onClick={() => send.mutate()}
+              >
+                {send.isPending ? (
+                  <Spinner className="size-3.5" aria-hidden />
+                ) : replyTo ? (
+                  <ArrowBendUpLeft size={13} weight="bold" aria-hidden />
+                ) : (
+                  <PaperPlaneTilt size={13} weight="bold" aria-hidden />
+                )}
+                {replyTo ? 'Send reply' : 'Add remark'}
+              </Button>
+            </div>
           </div>
         ))}
-        <ThreadComposer
-          loanId={loanId}
-          deviation={deviation}
-          canWrite={canWrite}
-          frozen={frozen}
-        />
-      </div>
     </section>
   )
 }
@@ -256,30 +261,44 @@ export function DeviationRemarksPanel({
 
   const requestUpdate = useMutation({
     mutationFn: async (instructions: string) => {
-      // Keep the audit/notification endpoint, then push back with only the
-      // Deviations section so the encoder can pick deviations + justifications.
-      await requestDeviationUpdate(loanId, instructions)
-      await pushbackWithRevision(loanId, {
-        sections: [
-          {
-            sectionId: 'deviations',
-            comments: instructions,
-          },
-        ],
-        overallComments: instructions,
-      })
+      // Two endpoints, not one transaction: the first records the request and
+      // notifies the encoder, the second moves the application to ForRevision.
+      // Track which one failed so the reviewer is told the true state.
+      let notified = false
+      try {
+        await requestDeviationUpdate(loanId, instructions)
+        notified = true
+        await pushbackWithRevision(loanId, {
+          sections: [
+            {
+              sectionId: 'deviations',
+              comments: instructions,
+            },
+          ],
+          overallComments: instructions,
+        })
+      } catch (error) {
+        throw new PartialDeviationRequestError(notified, error)
+      }
     },
     onSuccess: () => {
-      toastSuccess(
-        'Deviation update requested. The application went back to the encoder.',
-      )
+      toastSuccess('Sent back to the encoder.')
       setUpdateOpen(false)
       qc.invalidateQueries({ queryKey: loanKeys.review.deviations(loanId) })
       qc.invalidateQueries({ queryKey: loanKeys.review.history(loanId) })
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(loanId) })
       qc.invalidateQueries({ queryKey: loanKeys.all })
     },
-    onError: (e: unknown) => toastError(getErrorMessage(e)),
+    onError: (e: unknown) => {
+      if (e instanceof PartialDeviationRequestError && e.notified) {
+        toastError(
+          'The encoder was notified, but the application did not move back to them. Try again, or push it back from the Decision panel.',
+        )
+        qc.invalidateQueries({ queryKey: loanKeys.review.detail(loanId) })
+        return
+      }
+      toastError(getErrorMessage(e))
+    },
   })
 
   useEffect(() => {
@@ -291,25 +310,44 @@ export function DeviationRemarksPanel({
 
   if (deviations.isLoading) return <Spinner className="size-5" />
 
+  if (deviations.isError) {
+    return (
+      <div className="space-y-2 py-6 text-center">
+        <p className="text-xs text-muted-foreground">
+          The deviations could not be loaded.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => deviations.refetch()}
+        >
+          Try again
+        </Button>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {canWrite && !frozen && (
         <div className="flex justify-end">
           <Button
+            type="button"
             size="sm"
             variant="outline"
             className="gap-1.5"
             onClick={() => setUpdateOpen(true)}
           >
-            <ArrowCounterClockwise size={14} weight="bold" />
+            <ArrowBendUpLeft size={14} weight="bold" aria-hidden />
             Request deviation update
           </Button>
         </div>
       )}
 
       {list.length === 0 ? (
-        <p className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
-          No deviations were declared for this application.
+        <p className="border border-dashed py-6 text-center text-xs text-muted-foreground">
+          No deviations on this application.
         </p>
       ) : (
         list.map((d) => (
