@@ -27,8 +27,6 @@ import { useMySignerSignature } from '@/src/features/loans/api/signer-signature'
 import { mapLoanDetailToFormData } from '@/src/features/loans/model/map-detail-to-form'
 import type { LoanApplicationFormData } from '@/src/features/loans/schemas/schema'
 import type { RevisionSectionId } from '@/src/features/loans/types/revision-request'
-import { apiClient } from '@/src/shared/lib/apiClient'
-import { unwrapApiData, type ApiResponse } from '@/src/shared/lib/api/types'
 
 export type EvaluationAction = 'recommended' | 'notRecommended' | 'pushback'
 
@@ -144,24 +142,26 @@ export function useEvaluationPage(id: string) {
     },
   })
 
+  // There is no server-side "verify" endpoint, and no flag clears itself:
+  // re-checking means pulling the checklist and the flag again.
   const recheck = useMutation({
     mutationFn: async () => {
-      const res = await apiClient.post<
-        ApiResponse<{ complete: boolean; missing: string[] }>
-      >(`/api/loans/${id}/documents/verify`)
-      return unwrapApiData(res.data)
+      await Promise.all([
+        qc.fetchQuery({
+          queryKey: loanKeys.review.checklistDocuments(id),
+          queryFn: () => getChecklistDocuments(id),
+        }),
+        qc.fetchQuery({
+          queryKey: loanKeys.review.detail(id),
+          queryFn: () => getLoanDetail(id),
+        }),
+      ])
     },
-    onSuccess: (r) => {
-      toastSuccess(
-        r.complete
-          ? 'All requirements uploaded. The flag has been cleared.'
-          : `Still missing: ${r.missing.join(', ')}`,
-      )
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: loanKeys.review.detail(id) })
       qc.invalidateQueries({
         queryKey: loanKeys.review.checklistDocuments(id),
       })
-      qc.invalidateQueries({ queryKey: loanKeys.all })
     },
     onError: (e: unknown) => toastError(getErrorMessage(e)),
   })

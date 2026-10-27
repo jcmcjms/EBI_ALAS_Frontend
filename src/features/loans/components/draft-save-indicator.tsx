@@ -39,7 +39,7 @@ export function DraftSaveIndicator({
     <p
       aria-live="polite"
       className={cn(
-        'flex min-h-4 items-center gap-1.5 text-[11px]',
+        'flex min-h-4 items-center gap-1.5 text-xs',
         status === 'error' ? 'text-destructive' : 'text-muted-foreground',
         className,
       )}
@@ -54,10 +54,10 @@ export function DraftSaveIndicator({
           <CheckCircle
             size={12}
             weight="bold"
-            className="shrink-0 text-emerald-600 dark:text-emerald-400"
+            className="shrink-0 text-success"
             aria-hidden
           />
-          <span>Draft saved · {formatSavedClock(savedAt)}</span>
+          <span>Draft saved at {formatSavedClock(savedAt)}</span>
         </>
       ) : status === 'error' ? (
         <>

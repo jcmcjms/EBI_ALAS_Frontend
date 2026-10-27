@@ -132,9 +132,6 @@ export function DocumentPreviewDialog({
             <p className="truncate text-sm font-medium" title={doc.fileName}>
               {doc.fileName}
             </p>
-            <p className="text-[11px] text-muted-foreground">
-              {doc.contentType}
-            </p>
           </div>
           <div className="flex items-center gap-1">
             {previewable && (
@@ -211,12 +208,14 @@ export function DocumentPreviewDialog({
               <WarningCircle
                 size={32}
                 weight="fill"
-                className="text-amber-500"
+                className="text-warning"
+                aria-hidden
               />
-              <h3 className="text-sm font-semibold">Preview not available</h3>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                This file type ({doc.contentType}) cannot be rendered in the
-                browser. Download it to open in the appropriate application.
+              <h3 className="text-sm font-semibold text-balance">
+                This file cannot be previewed
+              </h3>
+              <p className="max-w-sm text-sm text-muted-foreground text-pretty">
+                Download it to open it on your device.
               </p>
               <Button className="gap-2" onClick={handleDownload}>
                 <DownloadSimple size={15} /> Download to view

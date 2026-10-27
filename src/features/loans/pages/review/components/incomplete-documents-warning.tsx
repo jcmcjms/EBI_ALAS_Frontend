@@ -1,7 +1,12 @@
 import { Warning } from '@phosphor-icons/react'
-import { Alert, AlertDescription, AlertTitle } from '@/src/shared/ui/feedback/alert'
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/src/shared/ui/feedback/alert'
 import type { LoanChecklistDocumentDto } from '@/src/features/loans/api/loan-review'
 import { isSubmittedWithoutUpload } from '@/src/features/loans/model/checklist-upload-status'
+import { countNoun, formatLoanDate } from '@/src/shared/lib/format'
 
 const MAX_LISTED = 6
 
@@ -18,73 +23,68 @@ interface Props {
   documentFlag?: DocumentFlag | null
 }
 
+const nameOf = (item: LoanChecklistDocumentDto) =>
+  item.checklistDescription?.trim() || item.idCode
+
+function DocumentList({ items }: { items: LoanChecklistDocumentDto[] }) {
+  const shown = items.slice(0, MAX_LISTED)
+  const rest = items.length - shown.length
+  return (
+    <ul className="mt-1 space-y-0.5">
+      {shown.map((item) => (
+        <li key={item.idCode}>{nameOf(item)}</li>
+      ))}
+      {rest > 0 && (
+        <li className="text-muted-foreground">
+          and {countNoun(rest, 'more')}
+        </li>
+      )}
+    </ul>
+  )
+}
+
 export function IncompleteDocumentsWarning({ checklist, documentFlag }: Props) {
   const pending = (checklist ?? []).filter(
     (i) => i.uploadStatus !== 'Uploaded' && i.uploadStatus !== 'Submitted',
   )
   const paperOnly = (checklist ?? []).filter((i) => isSubmittedWithoutUpload(i))
-  const hasFlag = documentFlag != null
-  if (!hasFlag && pending.length === 0 && paperOnly.length === 0) return null
+  const flag = documentFlag ?? null
 
-  const listed = pending.slice(0, MAX_LISTED)
+  if (!flag && pending.length === 0 && paperOnly.length === 0) return null
+
   return (
     <div className="space-y-2">
-      {(hasFlag || pending.length > 0) && (
-        <Alert
-          variant="destructive"
-          role="status"
-          aria-live="polite"
-          className="border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200 [&_svg]:text-amber-600"
-        >
-          <Warning />
+      {(flag || pending.length > 0) && (
+        <Alert variant="warning" role="status">
+          <Warning weight="fill" />
           <AlertTitle>
-            {hasFlag
-              ? `Documents flagged: ${documentFlag.missingCount} ${documentFlag.missingCount === 1 ? 'requirement' : 'requirements'} missing`
-              : `Incomplete documents: ${pending.length} ${pending.length === 1 ? 'requirement' : 'requirements'} pending`}
+            {flag
+              ? `Flagged ${formatLoanDate(flag.flaggedAt)}: ${countNoun(
+                  flag.missingCount,
+                  'document',
+                )} missing`
+              : `${countNoun(pending.length, 'required document')} missing`}
           </AlertTitle>
-          <AlertDescription className="space-y-1">
-            {hasFlag && (
-              <p>
-                Flagged on {new Date(documentFlag.flaggedAt).toLocaleDateString()}
-                {documentFlag.reason ? `. Reason: ${documentFlag.reason}` : ''}. You
-                can keep reviewing; the flag clears when all documents are
-                uploaded.
-              </p>
+          <AlertDescription>
+            {flag?.reason ? (
+              <p>{flag.reason}</p>
+            ) : (
+              <p>Review can continue while these are outstanding.</p>
             )}
-            {pending.length > 0 && (
-              <p className="text-xs">
-                {listed.map((p) => p.checklistDescription ?? p.idCode).join(' · ')}
-                {pending.length > MAX_LISTED &&
-                  ` · +${pending.length - MAX_LISTED} more`}
-              </p>
-            )}
+            {!flag && pending.length > 0 && <DocumentList items={pending} />}
           </AlertDescription>
         </Alert>
       )}
+
       {paperOnly.length > 0 && (
-        <Alert
-          role="status"
-          aria-live="polite"
-          className="border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200 [&_svg]:text-amber-600"
-        >
-          <Warning />
+        <Alert variant="warning" role="status">
+          <Warning weight="fill" />
           <AlertTitle>
-            Submitted without upload: {paperOnly.length}{' '}
-            {paperOnly.length === 1 ? 'requirement' : 'requirements'}
+            {countNoun(paperOnly.length, 'document')} marked submitted in
+            WebLoan with no file attached
           </AlertTitle>
-          <AlertDescription className="space-y-1">
-            <p>
-              These items count as filed in WebLoan (first amortization) but
-              have no uploaded file.
-            </p>
-            <p className="text-xs">
-              {paperOnly
-                .slice(0, MAX_LISTED)
-                .map((p) => p.checklistDescription ?? p.idCode)
-                .join(' · ')}
-              {paperOnly.length > MAX_LISTED &&
-                ` · +${paperOnly.length - MAX_LISTED} more`}
-            </p>
+          <AlertDescription>
+            <DocumentList items={paperOnly} />
           </AlertDescription>
         </Alert>
       )}

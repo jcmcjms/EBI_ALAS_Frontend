@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { ArrowCounterClockwise, Lock } from '@phosphor-icons/react'
+import { useMemo, useRef, useState } from 'react'
+import { ArrowCounterClockwise } from '@phosphor-icons/react'
 
 import { cn } from '@/src/shared/lib/utils'
 import {
@@ -14,6 +14,7 @@ import { Button } from '@/src/shared/ui/primitives/button'
 import { Checkbox } from '@/src/shared/ui/primitives/checkbox'
 import { Label } from '@/src/shared/ui/primitives/label'
 import { Textarea } from '@/src/shared/ui/primitives/textarea'
+import { Spinner } from '@/src/shared/ui/feedback/spinner'
 import {
   SECTIONS,
   type SectionDef,
@@ -23,10 +24,15 @@ import type {
   RevisionSectionId,
 } from '../types/revision-request'
 
-const FEEDBACK_SECTIONS = SECTIONS.filter(
-  (s): s is SectionDef & { id: RevisionSectionId } =>
-    s.id !== 'approval-form',
+/** Mirrors the minimum the revision endpoint enforces on the comment. */
+const MIN_INSTRUCTIONS = 10
+const MAX_INSTRUCTIONS = 2000
+
+const PICKER_SECTIONS = SECTIONS.filter(
+  (s): s is SectionDef & { id: RevisionSectionId } => s.id !== 'approval-form',
 )
+const EDITABLE = PICKER_SECTIONS.filter((s) => !s.systemSourced)
+const READ_ONLY = PICKER_SECTIONS.filter((s) => s.systemSourced)
 
 interface PushbackDialogProps {
   open: boolean
@@ -43,7 +49,7 @@ export function PushbackDialog({
 }: PushbackDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+      <DialogContent className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         {open && (
           <PushbackDialogForm
             onSubmit={onSubmit}
@@ -56,121 +62,104 @@ export function PushbackDialog({
   )
 }
 
-interface PushbackDialogFormProps {
-  onSubmit: (payload: CreateRevisionRequestPayload) => void
-  isPending: boolean
-  onDismiss: () => void
-}
-
 function PushbackDialogForm({
   onSubmit,
   isPending,
   onDismiss,
-}: PushbackDialogFormProps) {
-  const [overallComments, setOverallComments] = useState('')
+}: {
+  onSubmit: (payload: CreateRevisionRequestPayload) => void
+  isPending: boolean
+  onDismiss: () => void
+}) {
+  const [instructions, setInstructions] = useState('')
   const [selected, setSelected] = useState<
     Partial<Record<RevisionSectionId, boolean>>
   >({})
   const [sectionComments, setSectionComments] = useState<
     Partial<Record<RevisionSectionId, string>>
   >({})
+  const [showError, setShowError] = useState(false)
+  const instructionsRef = useRef<HTMLTextAreaElement>(null)
 
-  const selectedCount = useMemo(
-    () => FEEDBACK_SECTIONS.filter((s) => selected[s.id]).length,
+  const selectedSections = useMemo(
+    () => EDITABLE.filter((s) => selected[s.id]),
     [selected],
   )
 
-  const canSubmit = overallComments.trim().length >= 10 && !isPending
+  const tooShort = instructions.trim().length < MIN_INSTRUCTIONS
 
   const handleSubmit = () => {
-    if (!canSubmit) return
+    if (tooShort) {
+      setShowError(true)
+      instructionsRef.current?.focus()
+      return
+    }
     onSubmit({
-      sections: FEEDBACK_SECTIONS.filter((s) => selected[s.id]).map((s) => ({
+      sections: selectedSections.map((s) => ({
         sectionId: s.id,
         comments: (sectionComments[s.id] ?? '').trim(),
       })),
-      overallComments: overallComments.trim(),
+      overallComments: instructions.trim(),
     })
   }
 
   return (
     <>
-      <div className="shrink-0 border-b px-6 pb-4 pt-6">
+      <div className="shrink-0 border-b px-6 pt-6 pb-4">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-sm">
-            <ArrowCounterClockwise
-              size={16}
-              weight="bold"
-              className="text-amber-500"
-            />
-            Push back for revision
+          <DialogTitle className="text-base font-semibold">
+            Push back to the encoder
           </DialogTitle>
           <DialogDescription>
-            Select what needs correction. The encoder sees your instructions
-            when they open the application.
+            The application leaves your queue until they resubmit.
           </DialogDescription>
         </DialogHeader>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="space-y-2">
-          {FEEDBACK_SECTIONS.map((section) => {
-            const isSystemSourced = section.systemSourced ?? false
-            const isSelected = !!selected[section.id]
-
+      <div className="flex-1 space-y-5 overflow-y-auto px-6 py-4">
+        <fieldset className="space-y-2" disabled={isPending}>
+          <legend className="mb-2 text-xs font-medium">
+            What needs correcting
+          </legend>
+          {EDITABLE.map((section) => {
+            const isSelected = Boolean(selected[section.id])
+            const checkboxId = `revision-${section.id}`
             return (
               <div
                 key={section.id}
                 className={cn(
-                  'rounded-md border p-3 transition-colors',
-                  isSelected && !isSystemSourced
-                    ? 'border-amber-300 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/10'
-                    : 'bg-background',
-                  isSystemSourced && 'opacity-70',
+                  'border p-3 transition-colors',
+                  isSelected && 'border-primary/40 bg-primary/[0.04]',
                 )}
               >
                 <div className="flex items-start gap-2">
                   <Checkbox
-                    id={`revision-${section.id}`}
+                    id={checkboxId}
+                    className="mt-0.5"
                     checked={isSelected}
-                    disabled={isSystemSourced || isPending}
                     onCheckedChange={(v) =>
                       setSelected((prev) => ({
                         ...prev,
                         [section.id]: v === true,
                       }))
                     }
-                    className="mt-0.5"
                   />
                   <div className="min-w-0 flex-1">
                     <Label
-                      htmlFor={`revision-${section.id}`}
-                      className={cn(
-                        'items-start gap-1.5 text-xs font-medium',
-                        isSystemSourced
-                          ? 'cursor-not-allowed opacity-70'
-                          : 'cursor-pointer',
-                      )}
+                      htmlFor={checkboxId}
+                      className="cursor-pointer text-sm font-medium"
                     >
                       {section.label}
-                      {isSystemSourced && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
-                          <Lock size={10} weight="fill" />
-                        </span>
-                      )}
                     </Label>
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                      {section.description}
-                    </p>
                   </div>
                 </div>
-                {isSelected && !isSystemSourced && (
+                {isSelected && (
                   <Textarea
                     rows={2}
-                    className="mt-2 text-xs"
-                    placeholder={`What needs to be revised in "${section.label}"?`}
+                    className="mt-2"
+                    aria-label={`What needs correcting in ${section.label}`}
+                    placeholder="Optional note for this section"
                     value={sectionComments[section.id] ?? ''}
-                    disabled={isPending}
                     maxLength={1000}
                     onChange={(e) =>
                       setSectionComments((prev) => ({
@@ -183,55 +172,56 @@ function PushbackDialogForm({
               </div>
             )
           })}
-        </div>
+          {READ_ONLY.length > 0 && (
+            <p className="pt-1 text-xs text-muted-foreground">
+              {READ_ONLY.map((s) => s.label).join(', ')} come from WebLoan, so
+              the encoder cannot change them here.
+            </p>
+          )}
+        </fieldset>
 
-        <div className="mt-4 space-y-2">
-          <Label htmlFor="revision-overall" className="text-xs font-semibold">
-            Overall instructions <span className="text-destructive">*</span>
+        <div className="space-y-1.5">
+          <Label htmlFor="revision-overall" className="font-medium">
+            What the encoder must fix
           </Label>
           <Textarea
             id="revision-overall"
+            ref={instructionsRef}
             rows={3}
-            placeholder="Summarize what the encoder must fix before resubmitting…"
-            value={overallComments}
-            onChange={(e) => setOverallComments(e.target.value)}
+            placeholder="Term is 36 months but the product caps at 24; resubmit with the corrected term"
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            onBlur={() => setShowError(true)}
             disabled={isPending}
-            maxLength={2000}
+            maxLength={MAX_INSTRUCTIONS}
+            aria-required
+            aria-invalid={Boolean(showError && tooShort)}
+            aria-describedby="revision-overall-help"
           />
-          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-            {overallComments.trim().length > 0 &&
-              overallComments.trim().length < 10 && (
-                <p>Minimum 10 characters required</p>
-              )}
-            {selectedCount > 0 && (
-              <span>
-                {selectedCount} section{selectedCount === 1 ? '' : 's'} flagged
-              </span>
-            )}
-            <span className="ml-auto">{overallComments.length}/2000</span>
-          </div>
+          <p
+            id="revision-overall-help"
+            className={
+              showError && tooShort
+                ? 'text-xs text-destructive'
+                : 'text-xs text-muted-foreground'
+            }
+          >
+            {showError && tooShort
+              ? 'Say what to fix, so the encoder can resubmit without guessing.'
+              : `Sent with the notification. ${MIN_INSTRUCTIONS} characters minimum.`}
+          </p>
         </div>
       </div>
 
       <div className="shrink-0 border-t px-6 py-4">
         <DialogFooter>
-          <Button variant="outline" onClick={onDismiss} disabled={isPending}>
+          <Button type="button" variant="outline" onClick={onDismiss} disabled={isPending}>
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            className="gap-2"
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-          >
-            {isPending ? (
-              <span className="animate-pulse">Sending…</span>
-            ) : (
-              <>
-                <ArrowCounterClockwise size={16} />
-                Push back
-              </>
-            )}
+          <Button type="button" className="gap-2" onClick={handleSubmit} disabled={isPending}>
+            {isPending && <Spinner className="size-3.5" aria-hidden />}
+            <ArrowCounterClockwise size={16} weight="bold" aria-hidden />
+            Push back
           </Button>
         </DialogFooter>
       </div>

@@ -22,6 +22,7 @@ import {
   type LoanStatus,
 } from '@/src/features/loans/model/loan-status'
 import { cn } from '@/src/shared/lib/utils'
+import { countNoun } from '@/src/shared/lib/format'
 
 export function LoanEvaluationPage() {
   const { loanId } = useParams({ strict: false }) as { loanId: string }
@@ -37,7 +38,6 @@ export function LoanEvaluationPage() {
     frozen,
     loan,
     checklist,
-    history,
     signatureSlots,
     mySignature,
     detail,
@@ -153,20 +153,19 @@ export function LoanEvaluationPage() {
               {LOAN_STATUS_META[detail.status as LoanStatus]?.label ??
                 detail.status}
             </Badge>
-            {detail.hasDeviations && (
+            {deviationCount > 0 && (
               <Badge
-                variant="secondary"
-                className="gap-1.5 border-amber-200 bg-amber-50 text-amber-700"
+                variant="outline"
+                className="gap-1.5 border-warning-border bg-warning-surface text-warning"
               >
-                <WarningCircle size={12} weight="fill" /> {deviationCount}{' '}
-                deviation
-                {deviationCount === 1 ? '' : 's'}
+                <WarningCircle size={12} weight="fill" aria-hidden />
+                {countNoun(deviationCount, 'deviation')}
               </Badge>
             )}
           </div>
           <Badge variant="outline" className="gap-1.5 font-normal">
             <UserCircle size={14} />
-            {detail.createdByName} (Encoder)
+            {detail.createdByName}
           </Badge>
         </div>
       </header>
@@ -186,10 +185,13 @@ export function LoanEvaluationPage() {
               className="gap-1.5 shrink-0"
               onClick={() => recheck.mutate()}
               disabled={recheck.isPending}
-              title="Re-verify document completeness"
             >
-              <ArrowCounterClockwise size={14} weight="bold" />
-              Re-check documents
+              {recheck.isPending ? (
+                <Spinner className="size-3.5" aria-hidden />
+              ) : (
+                <ArrowCounterClockwise size={14} weight="bold" aria-hidden />
+              )}
+              Refresh
             </Button>
           )}
         </div>
@@ -204,8 +206,7 @@ export function LoanEvaluationPage() {
           </div>
 
           <EvaluationActionsPanel
-            history={history.data ?? []}
-            historyLoading={history.isLoading}
+            loanId={id}
             comments={comments}
             onCommentsChange={setComments}
             draftStatus={draftStatus}

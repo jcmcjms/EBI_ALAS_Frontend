@@ -1,10 +1,11 @@
-import { FileDashed, Hourglass } from '@phosphor-icons/react'
+import { FileDashed } from '@phosphor-icons/react'
 import { Badge } from '@/src/shared/ui/primitives/badge'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/src/shared/ui/data-display/popover'
+import { countNoun, formatLoanDate } from '@/src/shared/lib/format'
 
 interface DocumentFlagDto {
   flaggedAt: string
@@ -22,71 +23,36 @@ interface DocumentFlagBadgeProps {
 export function DocumentFlagBadge({ flag, compact }: DocumentFlagBadgeProps) {
   if (!flag) return null
 
-  if (compact) {
-    return (
-      <Popover>
-        <PopoverTrigger
-          render={
-            <button type="button" className="inline-flex">
-              <Badge
-                variant="outline"
-                className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 cursor-pointer"
-              >
-                <FileDashed size={12} weight="bold" />
-                {flag.missingCount > 0 ? (
-                  flag.missingCount
-                ) : (
-                  <Hourglass size={12} weight="bold" />
-                )}
-              </Badge>
-            </button>
-          }
-        />
-        <PopoverContent align="start" className="w-80 space-y-2 p-3 text-xs">
-          <p className="font-medium">
-            {flag.missingCount > 0
-              ? `${flag.missingCount} document(s) flagged on ${new Date(flag.flaggedAt).toLocaleDateString()}`
-              : `Flagged on ${new Date(flag.flaggedAt).toLocaleDateString()}. Uploads are being verified.`}
-          </p>
-          {flag.reason && (
-            <p className="text-muted-foreground">{flag.reason}</p>
-          )}
-          <p className="text-muted-foreground">
-            This does not block the workflow. The flag clears when all documents
-            are uploaded.
-          </p>
-        </PopoverContent>
-      </Popover>
-    )
-  }
-
   return (
     <Popover>
       <PopoverTrigger
         render={
-          <button type="button" className="inline-flex">
+          <button
+            type="button"
+            className="inline-flex cursor-pointer"
+            aria-label={`Flagged ${countNoun(flag.missingCount, 'document')} as missing. See details.`}
+          >
             <Badge
               variant="outline"
-              className="gap-1 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 cursor-pointer"
+              className="gap-1 border-warning-border bg-warning-surface text-warning"
             >
-              <FileDashed size={14} weight="bold" />
-              {flag.missingCount > 0
-                ? `${flag.missingCount} doc(s) flagged`
-                : 'flagged — verifying'}
+              <FileDashed size={compact ? 12 : 14} weight="bold" aria-hidden />
+              {compact
+                ? flag.missingCount
+                : countNoun(flag.missingCount, 'document')}
             </Badge>
           </button>
         }
       />
       <PopoverContent align="start" className="w-80 space-y-2 p-3 text-xs">
         <p className="font-medium">
-          {flag.missingCount > 0
-            ? `${flag.missingCount} document(s) flagged on ${new Date(flag.flaggedAt).toLocaleDateString()}`
-            : `Flagged on ${new Date(flag.flaggedAt).toLocaleDateString()}. Uploads are being verified.`}
+          {countNoun(flag.missingCount, 'document')} flagged on{' '}
+          {formatLoanDate(flag.flaggedAt)}
         </p>
         {flag.reason && <p className="text-muted-foreground">{flag.reason}</p>}
         <p className="text-muted-foreground">
-          This does not block the workflow. The flag clears automatically once
-          all documents are uploaded.
+          Review can continue. The flag stays until the flagger, the encoder or
+          an admin clears it.
         </p>
       </PopoverContent>
     </Popover>

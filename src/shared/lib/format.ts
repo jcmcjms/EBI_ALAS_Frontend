@@ -69,3 +69,15 @@ export function formatWaiting(mins: number): string {
 export function waitingMinutes(date: string): number {
   return Math.floor((Date.now() - new Date(date).getTime()) / 60_000)
 }
+
+/**
+ * "3 requirements", "1 requirement". Keeps count and noun in one string so
+ * copy is never stitched together from fragments.
+ */
+export function countNoun(
+  count: number,
+  singular: string,
+  plural = `${singular}s`,
+): string {
+  return `${count} ${count === 1 ? singular : plural}`
+}

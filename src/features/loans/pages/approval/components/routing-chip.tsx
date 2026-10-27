@@ -25,10 +25,6 @@ export function RoutingChip({ loanId }: RoutingChipProps) {
 
   if (!routing || !routing.requiredApprovalTier) return null
 
-  const authorityTitle = routing.matchedRule
-    ? extractAuthorityTitle(routing.matchedRule)
-    : null
-
   return (
     <Popover>
       <PopoverTrigger
@@ -37,9 +33,8 @@ export function RoutingChip({ loanId }: RoutingChipProps) {
             variant="outline"
             className="gap-1 border-border bg-muted cursor-pointer text-foreground"
           >
-            <TreeStructure size={12} weight="bold" />
+            <TreeStructure size={12} weight="bold" aria-hidden />
             Tier {routing.requiredApprovalTier}
-            {authorityTitle && ` · ${authorityTitle}`}
           </Badge>
         }
       />
@@ -48,15 +43,23 @@ export function RoutingChip({ loanId }: RoutingChipProps) {
           <p className="font-medium">{routing.matchedRule}</p>
         )}
         {routing.evaluated && (
-          <p className="text-muted-foreground">
-            Evaluated: {routing.evaluated.cycle} · {routing.evaluated.severity}{' '}
-            deviation · exposure ₱{routing.evaluated.exposure.toLocaleString()}
-          </p>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-muted-foreground">
+            <dt className="font-medium text-foreground">Cycle</dt>
+            <dd>{routing.evaluated.cycle}</dd>
+            <dt className="font-medium text-foreground">Severity</dt>
+            <dd>
+              {routing.evaluated.severity} deviation
+            </dd>
+            <dt className="font-medium text-foreground">Exposure</dt>
+            <dd className="tabular-nums">
+              ₱{routing.evaluated.exposure.toLocaleString()}
+            </dd>
+          </dl>
         )}
         {routing.escalatedFromTier && (
-          <p className="text-amber-700">
-            Tier {routing.escalatedFromTier} matched but has no configured
-            approver — escalated per policy.
+          <p className="text-warning">
+            Tier {routing.escalatedFromTier} matched but has no approver
+            configured, so it escalated per policy.
           </p>
         )}
         {routing.noAuthorityReason && (
@@ -65,9 +68,4 @@ export function RoutingChip({ loanId }: RoutingChipProps) {
       </PopoverContent>
     </Popover>
   )
-}
-
-function extractAuthorityTitle(matchedRule: string): string {
-  const paren = matchedRule.indexOf(' (')
-  return paren > 0 ? matchedRule.slice(0, paren) : matchedRule
 }

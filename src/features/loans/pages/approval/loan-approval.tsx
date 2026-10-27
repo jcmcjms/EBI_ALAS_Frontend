@@ -4,7 +4,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/src/shared/ui/data-display/card'
 import { Button } from '@/src/shared/ui/primitives/button'
 import {
@@ -67,6 +66,9 @@ export function LoanApprovalPage() {
     act,
     pushBackDocs,
     recheck,
+    clearFlag,
+    canClearFlag,
+    documentFlag,
     claimById,
     queueState,
     pushbackOpen,
@@ -81,11 +83,20 @@ export function LoanApprovalPage() {
 
   if (!id || id === 'NaN' || id === 'undefined') {
     return (
-      <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
-        <div className="text-center space-y-4">
-          <WarningCircle size={48} className="mx-auto text-destructive" />
-          <h2 className="text-xl font-semibold">Invalid Application ID</h2>
-          <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
+      <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center px-6">
+        <div className="max-w-sm space-y-3 text-center">
+          <h2 className="text-lg font-semibold text-balance">
+            That application link is incomplete
+          </h2>
+          <p className="text-xs text-muted-foreground text-pretty">
+            Open the application from the Review Desk or Loan Monitoring
+            instead.
+          </p>
+          <Button
+            type="button"
+            className="mx-auto"
+            onClick={() => navigate({ to: '/loans/monitoring' })}
+          >
             Go to Loan Monitoring
           </Button>
         </div>
@@ -95,7 +106,11 @@ export function LoanApprovalPage() {
 
   if (loan.isLoading) {
     return (
-      <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
+      <div
+        role="status"
+        aria-label="Loading the application"
+        className="flex h-[calc(100vh-var(--header-height))] items-center justify-center"
+      >
         <Spinner className="size-8" />
       </div>
     )
@@ -110,20 +125,32 @@ export function LoanApprovalPage() {
         403
 
     return (
-      <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center">
-        <div className="text-center space-y-4 max-w-md">
-          <WarningCircle size={48} className="mx-auto text-destructive" />
-          <h2 className="text-xl font-semibold">
-            {isForbidden ? 'Access denied' : "Couldn't load the application"}
-          </h2>
-          <p className="text-muted-foreground">
+      <div className="flex h-[calc(100vh-var(--header-height))] items-center justify-center px-6">
+        <div className="max-w-sm space-y-3 text-center">
+          <h2 className="text-lg font-semibold text-balance">
             {isForbidden
-              ? "You don't have permission to view this application. It may belong to another branch, or your role may not allow it. Ask an administrator if you think that's wrong."
-              : "Couldn't load this application. Try again or go back to Loan Monitoring."}
+              ? 'You cannot open this application'
+              : 'This application did not load'}
+          </h2>
+          <p className="text-xs text-muted-foreground text-pretty">
+            {isForbidden
+              ? 'It belongs to another branch, or your role does not cover this stage.'
+              : 'The server did not return it. Try again in a moment.'}
           </p>
-          <Button onClick={() => navigate({ to: '/loans/monitoring' })}>
-            Go to Loan Monitoring
-          </Button>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {!isForbidden && (
+              <Button type="button" onClick={() => loan.refetch()}>
+                Try again
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate({ to: '/loans/monitoring' })}
+            >
+              Go to Loan Monitoring
+            </Button>
+          </div>
         </div>
       </div>
     )
@@ -171,6 +198,19 @@ export function LoanApprovalPage() {
               )
                 .length ?? 0
             }
+            missingNames={
+              checklist.data
+                ?.filter(
+                  (d) =>
+                    d.uploadStatus !== 'Uploaded' &&
+                    d.uploadStatus !== 'Submitted',
+                )
+                .map((d) => d.checklistDescription?.trim() || d.idCode) ?? []
+            }
+            flag={documentFlag}
+            canClearFlag={canClearFlag}
+            isClearing={clearFlag.isPending}
+            onClearFlag={() => clearFlag.mutate()}
             onReview={() => {
               setTab('files')
               requestAnimationFrame(() => {
@@ -232,13 +272,6 @@ export function LoanApprovalPage() {
                   draftSavedAt={draftSavedAt}
                   draftError={draftError}
                   onRetryDraftSave={retryDraftSave}
-                  missingDocCount={
-                    checklist.data?.filter(
-                      (d) =>
-                        d.uploadStatus !== 'Uploaded' &&
-                        d.uploadStatus !== 'Submitted',
-                    ).length ?? 0
-                  }
                 />
               </TabsContent>
 
@@ -249,15 +282,10 @@ export function LoanApprovalPage() {
                       <WarningCircle
                         size={18}
                         weight="bold"
-                        className="text-amber-600"
+                        className="text-warning"
                       />
-                      Deviations &amp; Remarks
+                      Deviations
                     </CardTitle>
-                    <CardDescription className="pt-1 text-xs">
-                      Each deviation carries the encoder&apos;s justification;
-                      the recommender and evaluator reply per deviation, and the
-                      encoder can reply to each remark.
-                    </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-4">
                     <DeviationRemarksPanel
